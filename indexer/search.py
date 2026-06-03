@@ -281,6 +281,33 @@ class HybridSearcher:
         tokens = re.findall(r'[\u0900-\u097F]+|[a-zA-Z]+', text.lower())
         return [t for t in tokens if len(t) > 1]
 
+    # \u2500\u2500 Source weighting \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+    # Shailendra Sharma's corpus has two very different tiers:
+    #   \u2022 Curated book commentary (Shiv Sutra, Ojas & Amrita, Yoga & Alchemy,
+    #     Khechari, Gorakh Bodh \u2026): a few dozen dense, high-signal chunks tagged
+    #     category == "yogic-commentary".
+    #   \u2022 ~3,100 conversational darshan Q&A transcripts (id prefix "darshan-").
+    # Without weighting the transcripts swamp the commentary by sheer volume.
+    # These multipliers are applied to fused RRF scores, so they only re-rank
+    # results that already matched the query \u2014 they never inject Sharma content
+    # into an unrelated query.
+    # Curated Sharma book tier is tagged with one of these categories (and only
+    # Sharma's book files use them). `category` is one of the few fields preserved
+    # in both the BM25 chunk_map and the Chroma metadata, so it's the reliable
+    # signal at retrieval time (`bias`/`author` are not stored there).
+    COMMENTARY_CATEGORIES = {"yogic-commentary", "yogic-discourse"}
+    COMMENTARY_BOOST = 1.4   # curated book commentary / discourse
+    DARSHAN_DAMPEN   = 0.85  # bulk conversational transcripts
+
+    def _source_weight(self, chunk: dict[str, Any]) -> float:
+        """Relevance multiplier based on the source tier of a chunk."""
+        if (chunk.get("category") or "").lower() in self.COMMENTARY_CATEGORIES:
+            return self.COMMENTARY_BOOST
+        cid = chunk.get("id", "")
+        if cid.startswith("darshan-") or chunk.get("purana") == "Shailendra Sharma Darshans":
+            return self.DARSHAN_DAMPEN
+        return 1.0
+
     # ── Hybrid Search (RRF Fusion) ─────────────────────────────────────
 
     def hybrid_search(
@@ -290,6 +317,7 @@ class HybridSearcher:
         filters:          dict[str, Any] | None = None,
         semantic_weight:  float                 = 0.6,
         mmr_lambda:       float                 = 0.7,
+        sharma_weighting: bool                  = True,
     ) -> list[SearchResult]:
         """
         Hybrid search combining semantic + BM25 via Reciprocal Rank Fusion,
@@ -331,6 +359,16 @@ class HybridSearcher:
             rrf_scores[doc_id]     = rrf_scores.get(doc_id, 0.0) + kw_weight / (self.rrf_k + rank + 1)
             if doc_id not in chunk_registry:
                 chunk_registry[doc_id] = result.chunk
+
+        # Source-tier weighting: lift curated Sharma commentary and damp bulk
+        # transcripts so high-signal commentary isn't buried by transcript volume.
+        # Applied to fused scores only, so it re-ranks matches without pulling in
+        # off-topic content.
+        if sharma_weighting:
+            for doc_id, chunk in chunk_registry.items():
+                w = self._source_weight(chunk)
+                if w != 1.0:
+                    rrf_scores[doc_id] *= w
 
         # Sort by RRF score (descending) — full candidate pool for MMR
         sorted_ids = sorted(rrf_scores.keys(), key=lambda d: rrf_scores[d], reverse=True)

@@ -94,10 +94,31 @@ class EmbeddingIndexer:
 
     # ── Chunk Loading ─────────────────────────────────────────────────
 
+    # Derived/aggregate files that merely concatenate the per-text JSONL files.
+    # Loading these alongside the per-text files double-counts every chunk, which
+    # inflates the BM25 corpus, skews IDF, and produces duplicate search results.
+    DERIVED_FILES = {
+        "all_chunks.jsonl",            # concatenation of the per-text files
+        "shailendra_sharma_mock.jsonl",  # placeholder/mock data — never index
+    }
+
     def _load_chunks(self) -> list[dict[str, Any]]:
-        """Load all chunks from JSONL files in chunks_dir."""
+        """
+        Load all chunks from the per-text JSONL files in chunks_dir.
+
+        Two coherence safeguards:
+          1. Skip derived aggregate files (e.g. all_chunks.jsonl) — they duplicate
+             the per-text files.
+          2. Deduplicate by chunk id (keep first occurrence) as a belt-and-braces
+             guard against any remaining overlap.
+        """
         all_chunks: list[dict[str, Any]] = []
+        seen_ids: set[str] = set()
+        dup_count = 0
+
         jsonl_files = sorted(self.chunks_dir.glob("*.jsonl"))
+        # Load per-text files first; skip derived aggregates entirely.
+        jsonl_files = [p for p in jsonl_files if p.name not in self.DERIVED_FILES]
 
         if not jsonl_files:
             console.print(f"[yellow]No JSONL files found in {self.chunks_dir}[/yellow]")
@@ -115,15 +136,24 @@ class EmbeddingIndexer:
                         continue
                     try:
                         chunk = json.loads(line)
-                        # Validate required fields
-                        if chunk.get("text") and chunk.get("id"):
-                            all_chunks.append(chunk)
                     except json.JSONDecodeError as e:
                         logger.debug("Skipping bad JSON in %s: %s", path.name, e)
+                        continue
+                    cid = chunk.get("id")
+                    # Validate required fields
+                    if not (chunk.get("text") and cid):
+                        continue
+                    if cid in seen_ids:
+                        dup_count += 1
+                        continue
+                    seen_ids.add(cid)
+                    all_chunks.append(chunk)
             count = len(all_chunks) - count_before
             console.print(f"  {path.name}: [green]{count:,}[/green] chunks")
 
-        console.print(f"\n[bold]Total chunks:[/bold] {len(all_chunks):,}\n")
+        if dup_count:
+            console.print(f"[yellow]Skipped {dup_count:,} duplicate chunk ids[/yellow]")
+        console.print(f"\n[bold]Total unique chunks:[/bold] {len(all_chunks):,}\n")
         return all_chunks
 
     # ── ChromaDB Indexing ─────────────────────────────────────────────
@@ -198,6 +228,33 @@ class EmbeddingIndexer:
 
         console.print(f"[green]✓[/green] Indexed {indexed_count:,} chunks into ChromaDB")
         return indexed_count
+
+    def prune_vector_index(self, chunks: list[dict[str, Any]]) -> int:
+        """
+        Remove vectors from ChromaDB whose ids are no longer in the current corpus.
+
+        Without this, deleting or renaming a chunk file leaves orphaned vectors in
+        the collection (upsert only adds/updates, it never removes). This is what
+        kept the `mock-shailendra-*` placeholders retrievable after they were taken
+        out of the source data. Returns the number of vectors deleted.
+        """
+        col = self._get_collection()
+        corpus_ids = {c["id"] for c in chunks if c.get("id")}
+        existing_ids = self._get_existing_ids()
+        stale = sorted(existing_ids - corpus_ids)
+
+        if not stale:
+            console.print("[dim]No stale vectors to prune[/dim]")
+            return 0
+
+        console.print(f"[yellow]Pruning {len(stale):,} stale vectors from ChromaDB…[/yellow]")
+        # Delete in batches to stay well within ChromaDB limits.
+        for i in range(0, len(stale), 500):
+            col.delete(ids=stale[i : i + 500])
+        console.print(f"[green]✓[/green] Pruned {len(stale):,} stale vectors")
+        if len(stale) <= 20:
+            console.print(f"  removed: {', '.join(stale)}")
+        return len(stale)
 
     def _chunk_to_metadata(self, chunk: dict[str, Any]) -> dict[str, Any]:
         """Convert a chunk dict to ChromaDB-compatible metadata (string values only)."""
@@ -285,14 +342,16 @@ class EmbeddingIndexer:
             return {"vector": 0, "bm25": 0}
 
         vector_count = self.build_vector_index(chunks)
+        pruned_count = self.prune_vector_index(chunks)
         bm25_count   = self.build_bm25_index(chunks)
 
         console.rule("[bold green]Indexing Complete[/bold green]")
         console.print(f"  Vector index: [green]{vector_count:,}[/green] new chunks added")
+        console.print(f"  Pruned:       [green]{pruned_count:,}[/green] stale vectors removed")
         console.print(f"  BM25 index:   [green]{bm25_count:,}[/green] chunks indexed")
         console.print(f"\nStart the server: [cyan]python run.py[/cyan]")
 
-        return {"vector": vector_count, "bm25": bm25_count}
+        return {"vector": vector_count, "pruned": pruned_count, "bm25": bm25_count}
 
 
 # ── CLI ────────────────────────────────────────────────────────────────────

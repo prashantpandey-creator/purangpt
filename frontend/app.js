@@ -80,7 +80,7 @@ const DOM = {
 
 function getApiUrl() {
   if (CONFIG.apiUrl) return CONFIG.apiUrl;
-  if (!window.location.port || window.location.port === '80' || window.location.port === '443') return '';
+  if (!window.location.port || window.location.port === '80' || window.location.port === '443') return window.location.origin;
   return 'http://localhost:8000';
 }
 
@@ -1493,7 +1493,7 @@ function showToast(msg, type='info') {
 
 // ── Settings ───────────────────────────────────────────────────────────────
 function loadSettings() {
-  if (DOM.apiUrlInput) DOM.apiUrlInput.value = CONFIG.apiUrl || 'http://localhost:8000';
+  if (DOM.apiUrlInput) DOM.apiUrlInput.value = CONFIG.apiUrl || getApiUrl();
 
   // Ensure CONFIG.model is a valid value present in both selects
   const VALID_MODELS = [

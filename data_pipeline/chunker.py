@@ -601,7 +601,9 @@ class PuranicChunker:
         dict[str, int]
             Mapping from purana key to chunk count.
         """
-        json_files = sorted(extracted_dir.rglob("*.json"))
+        from pathlib import Path
+        extracted_dir_path = Path(extracted_dir)
+        json_files = sorted(extracted_dir_path.rglob("*.json"))
         if not json_files:
             logger.warning("No extracted JSON files found under %s", extracted_dir)
             return {}

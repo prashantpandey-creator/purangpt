@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "PuranGPT iOS App — AI Oracle of the Sacred Texts",
   "scripts": {
-    "build": "echo 'Web assets ready — run cap sync'",
+    "build": "bash build_ios.sh",
     "cap:add:ios": "npx cap add ios",
     "cap:sync": "npx cap sync",
     "cap:open": "npx cap open ios",

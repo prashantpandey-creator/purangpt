@@ -1,14 +1,14 @@
 {
   "appId": "com.purangpt.app",
   "appName": "PuranGPT",
-  "webDir": "../frontend",
+  "webDir": "www",
   "bundledWebRuntime": false,
   "server": {
     "androidScheme": "https"
   },
-  "ios": {
+    "ios": {
     "contentInset": "automatic",
-    "backgroundColor": "#0B0907",
+    "backgroundColor": "#000000",
     "scrollEnabled": true,
     "limitsNavigationsToAppBoundDomains": false
   },
@@ -16,7 +16,7 @@
     "SplashScreen": {
       "launchShowDuration": 2000,
       "launchAutoHide": true,
-      "backgroundColor": "#0B0907",
+      "backgroundColor": "#000000",
       "androidSplashResourceName": "splash",
       "androidScaleType": "CENTER_CROP",
       "showSpinner": false,
@@ -25,7 +25,7 @@
     },
     "StatusBar": {
       "style": "Dark",
-      "backgroundColor": "#0B0907"
+      "backgroundColor": "#000000"
     },
     "Keyboard": {
       "resize": "body",

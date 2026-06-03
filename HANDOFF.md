@@ -9,7 +9,7 @@ AI-powered scholarly research tool for Hindu sacred texts. Users ask questions a
 - **Backend**: FastAPI + Python, SSE streaming, async
 - **LLM**: Gemini 2.5 Flash (primary, key is valid) + Groq fallback (key currently invalid)
 - **RAG**: ChromaDB (vector) + BM25Okapi hybrid search with MMR diversity reranking
-- **Embeddings**: `intfloat/multilingual-e5-large`
+- **Embeddings**: `intfloat/multilingual-e5-small` (384-dim — set in `.env`; the live ChromaDB collection is 384-dim, so do NOT switch to e5-large without a full collection rebuild, or query/index dimensions will mismatch)
 - **Corpus**: GRETIL Sanskrit texts (31 texts, ~18M chars) + Shailendra Sharma commentaries
 - **Frontend**: Vanilla HTML/CSS/JS, Lucide SVG icons, Crimson Pro + Cinzel + Inter fonts
 - **Design**: VIDA framework (92/100 audit score), 4-level luminance hierarchy, WCAG AA
