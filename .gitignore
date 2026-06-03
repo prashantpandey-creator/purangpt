@@ -1,0 +1,49 @@
+## Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.env
+*.egg-info/
+dist/
+build/
+
+## Secrets
+.env.local
+*.key
+
+## Data — large binary/generated files (not committed)
+data/raw_pdfs/
+data/extracted/
+data/chroma_db/
+data/indexes/
+data/sharma_books/
+*.pkl
+*.faiss
+
+## Raw texts and chunks — too large for GitHub, managed via Railway volume
+data/raw_texts/
+data/chunks/
+
+## Logs & temp
+*.log
+logs/
+/tmp/
+*.bak
+*.backup
+style.css.bak
+
+## OS
+.DS_Store
+Thumbs.db
+.DS_Store?
+
+## Node (iOS app)
+ios_app/node_modules/
+ios_app/ios/
+ios_app/android/
+
+## IDE
+.idea/
+.vscode/
+*.swp

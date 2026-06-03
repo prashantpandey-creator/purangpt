@@ -1,0 +1,35 @@
+# PuranGPT — Railway Production Dockerfile
+# Stripped-down: no PaddleOCR/OpenCV (not needed at runtime, only for pipeline)
+FROM python:3.11-slim
+
+# Minimal system deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install Python deps
+COPY requirements.txt .
+# Install without heavy ML packages (OCR only needed for PDF ingestion pipeline)
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir \
+        fastapi uvicorn[standard] aiohttp aiofiles \
+        python-dotenv sse-starlette \
+        chromadb rank-bm25 sentence-transformers \
+        pymupdf rich tenacity \
+    || pip install --no-cache-dir -r requirements.txt
+
+# Copy app
+COPY . .
+
+# Runtime data directories (persisted via Railway volume)
+RUN mkdir -p data/raw_pdfs data/raw_texts data/chunks data/chroma_db data/indexes data/sharma_books
+RUN touch data_pipeline/__init__.py indexer/__init__.py engine/__init__.py backend/__init__.py 2>/dev/null || true
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=15s --retries=3 \
+    CMD curl -f http://localhost:8000/api/status || exit 1
+
+CMD ["python", "run.py"]

@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PuranGPT — AI Oracle of the Sacred Texts</title>
+  <meta name="description" content="Explore the 18 Mahapuranas, Vedas, Upanishads, and Yogic texts through AI-powered natural language conversations. Instant citations, Sanskrit originals, and deep spiritual insights." />
+  <meta name="keywords" content="Mahapurana, Vedas, Upanishads, Sanskrit, Hindu texts, AI chatbot, spiritual wisdom" />
+  <meta property="og:title" content="PuranGPT — AI Oracle of the Sacred Texts" />
+  <meta property="og:description" content="Ask any question about the 18 Mahapuranas and receive answers with exact verse citations." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet" />
+
+  <!-- Lucide Icons -->
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.383.0/dist/umd/lucide.js" defer></script>
+
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <!-- Ambient background effects -->
+  <div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Mandala decorative element -->
+  <div class="mandala-bg" aria-hidden="true">
+    <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+      <g transform="translate(200,200)">
+        <!-- Outer ring -->
+        <circle r="190" fill="none" stroke="rgba(212,175,55,0.06)" stroke-width="1"/>
+        <circle r="165" fill="none" stroke="rgba(212,175,55,0.04)" stroke-width="0.5"/>
+        <!-- Petals -->
+        <g class="mandala-rotate">
+          <ellipse rx="12" ry="60" fill="none" stroke="rgba(212,175,55,0.08)" stroke-width="0.8" transform="rotate(0) translate(0,-130)"/>
+          <ellipse rx="12" ry="60" fill="none" stroke="rgba(212,175,55,0.08)" stroke-width="0.8" transform="rotate(22.5) translate(0,-130)"/>
+          <ellipse rx="12" ry="60" fill="none" stroke="rgba(212,175,55,0.08)" stroke-width="0.8" transform="rotate(45) translate(0,-130)"/>
+          <ellipse rx="12" ry="60" fill="none" stroke="rgba(212,175,55,0.08)" stroke-width="0.8" transform="rotate(67.5) translate(0,-130)"/>
+          <ellipse rx="12" ry="60" fill="none" stroke="rgba(212,175,55,0.08)" stroke-width="0.8" transform="rotate(90) translate(0,-130)"/>
+          <ellipse rx="12" ry="60" fill="none" stroke="rgba(212,175,55,0.08)" stroke-width="0.8" transform="rotate(112.5) translate(0,-130)"/>
+          <ellipse rx="12" ry="60" fill="none" stroke="rgba(212,175,55,0.08)" stroke-width="0.8" transform="rotate(135) translate(0,-130)"/>
+          <ellipse rx="12" ry="60" fill="none" stroke="rgba(212,175,55,0.08)" stroke-width="0.8" transform="rotate(157.5) translate(0,-130)"/>
+          <ellipse rx="12" ry="60" fill="none" stroke="rgba(212,175,55,0.08)" stroke-width="0.8" transform="rotate(180) translate(0,-130)"/>
+          <ellipse rx="12" ry="60" fill="none" stroke="rgba(212,175,55,0.08)" stroke-width="0.8" transform="rotate(202.5) translate(0,-130)"/>
+          <ellipse rx="12" ry="60" fill="none" stroke="rgba(212,175,55,0.08)" stroke-width="0.8" transform="rotate(225) translate(0,-130)"/>
+          <ellipse rx="12" ry="60" fill="none" stroke="rgba(212,175,55,0.08)" stroke-width="0.8" transform="rotate(247.5) translate(0,-130)"/>
+          <ellipse rx="12" ry="60" fill="none" stroke="rgba(212,175,55,0.08)" stroke-width="0.8" transform="rotate(270) translate(0,-130)"/>
+          <ellipse rx="12" ry="60" fill="none" stroke="rgba(212,175,55,0.08)" stroke-width="0.8" transform="rotate(292.5) translate(0,-130)"/>
+          <ellipse rx="12" ry="60" fill="none" stroke="rgba(212,175,55,0.08)" stroke-width="0.8" transform="rotate(315) translate(0,-130)"/>
+          <ellipse rx="12" ry="60" fill="none" stroke="rgba(212,175,55,0.08)" stroke-width="0.8" transform="rotate(337.5) translate(0,-130)"/>
+        </g>
+        <!-- Inner rings -->
+        <circle r="80" fill="none" stroke="rgba(212,175,55,0.06)" stroke-width="0.5" stroke-dasharray="4,8"/>
+        <circle r="40" fill="none" stroke="rgba(212,175,55,0.08)" stroke-width="0.5"/>
+        <circle r="10" fill="rgba(212,175,55,0.05)"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Top navigation bar -->
+  <nav class="topbar" role="navigation" aria-label="Main navigation">
+    <div class="topbar-left">
+      <div class="logo" aria-label="PuranGPT home">
+        <span class="om-symbol" aria-hidden="true">ॐ</span>
+        <span class="logo-text">PuranGPT</span>
+      </div>
+    </div>
+    <div class="topbar-center">
+      <div class="mode-switcher" role="tablist" aria-label="Interface mode">
+        <button id="btn-chat-mode" class="mode-btn active" role="tab" aria-selected="true" aria-controls="panel-chat" data-mode="chat">
+          <i data-lucide="message-square" class="mode-icon-svg"></i> Chat
+        </button>
+        <button id="btn-search-mode" class="mode-btn" role="tab" aria-selected="false" aria-controls="panel-search" data-mode="search">
+          <i data-lucide="search" class="mode-icon-svg"></i> Instances
+        </button>
+        <button id="btn-explore-mode" class="mode-btn" role="tab" aria-selected="false" aria-controls="panel-explore" data-mode="explore">
+          <i data-lucide="book-open" class="mode-icon-svg"></i> Explore
+        </button>
+        <button id="btn-infer-mode" class="mode-btn" role="tab" aria-selected="false" aria-controls="panel-infer" data-mode="infer">
+          <i data-lucide="sparkles" class="mode-icon-svg"></i> Infer
+        </button>
+        <button id="btn-sanskrit-mode" class="mode-btn" role="tab" aria-selected="false" aria-controls="panel-sanskrit" data-mode="sanskrit">
+          <i data-lucide="languages" class="mode-icon-svg"></i> Sanskrit
+        </button>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="model-switcher-container">
+        <select id="topbar-model-select" class="model-select" aria-label="Select LLM Model" title="Select LLM Model">
+          <option value="auto" selected>Auto (best available)</option>
+          <option value="groq-llama-3.3-70b">Llama 3.3 70B (Groq)</option>
+          <option value="groq-llama-3.1-8b-instant">Llama 3.1 8B (Groq — fast)</option>
+          <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+          <option value="deepseek-chat">DeepSeek V3 (DeepSeek)</option>
+          <option value="deepseek-reasoner">DeepSeek Reasoner R1</option>
+          <option value="together-Qwen/Qwen2.5-72B-Instruct-Turbo">Qwen 2.5 72B (Together)</option>
+          <option value="together-meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo">Llama 3.1 405B (Together)</option>
+          <option value="zhipu-glm-5.1">GLM 5.1 (Zhipu AI)</option>
+        </select>
+      </div>
+      <div class="memory-container" title="Conversation memory">
+        <i data-lucide="brain-circuit" class="memory-icon"></i>
+        <span id="memory-badge" class="memory-badge">New session</span>
+        <button id="clear-memory-btn" class="clear-memory-btn" aria-label="Clear memory" title="Clear memory">
+          <i data-lucide="x" style="width:12px;height:12px"></i>
+        </button>
+      </div>
+      <div class="status-indicator" id="status-indicator" title="System status">
+        <span class="status-dot" id="status-dot"></span>
+        <span class="status-text" id="status-text">Connecting…</span>
+      </div>
+      <button class="settings-btn" id="settings-btn" aria-label="Settings" title="Settings">
+        <i data-lucide="settings-2" style="width:16px;height:16px"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main application container -->
+  <main class="app-container" role="main">
+
+    <!-- ===== CHAT PANEL ===== -->
+    <div id="panel-chat" class="panel active" role="tabpanel" aria-labelledby="btn-chat-mode">
+      <div class="chat-layout">
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar" aria-label="Filters and sources">
+          
+          <div class="sidebar-section">
+            <button id="btn-new-chat" class="btn-new-chat">
+              <i data-lucide="plus" style="width:15px;height:15px"></i> New Chat
+            </button>
+            <h2 class="sidebar-title">Recent Chats</h2>
+            <div id="session-list" class="session-list">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <div class="sidebar-section">
+            <h2 class="sidebar-title">Filter by Text</h2>
+            <div class="purana-filter" id="purana-filter">
+              <label class="filter-label">
+                <input type="checkbox" id="filter-all" checked class="filter-check" /> All Texts
+              </label>
+              <div id="purana-list" class="purana-list" role="group" aria-label="Select Puranas">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <div class="sidebar-section">
+            <h2 class="sidebar-title">Scholar Mode</h2>
+            <div class="mode-select-group" role="radiogroup" aria-label="Query mode">
+              <label class="radio-option">
+                <input type="radio" name="scholar-mode" value="scholar" checked id="mode-scholar" aria-label="Scholar mode" />
+                <span class="radio-label"><i data-lucide="graduation-cap" class="radio-icon"></i> Scholar</span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="scholar-mode" value="deep" id="mode-deep" aria-label="Deep Research mode" />
+                <span class="radio-label"><i data-lucide="microscope" class="radio-icon"></i> Deep Research</span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="scholar-mode" value="nath" id="mode-nath" aria-label="Nath Tantra mode" />
+                <span class="radio-label"><i data-lucide="flame" class="radio-icon"></i> Nath / Tantra</span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="scholar-mode" value="darshana" id="mode-darshana" aria-label="Six Darshanas mode" />
+                <span class="radio-label"><i data-lucide="layers" class="radio-icon"></i> Six Darshanas</span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="scholar-mode" value="comparison" id="mode-comparison" aria-label="Comparison mode" />
+                <span class="radio-label"><i data-lucide="git-compare" class="radio-icon"></i> Compare</span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="scholar-mode" value="translation" id="mode-translation" aria-label="Translation mode" />
+                <span class="radio-label"><i data-lucide="type" class="radio-icon"></i> Translate</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="sidebar-section" id="sources-panel" style="display:none;">
+            <h2 class="sidebar-title">Sources</h2>
+            <div id="sources-list" class="sources-list" aria-live="polite" aria-label="Response sources">
+              <!-- Populated when sources arrive -->
+            </div>
+          </div>
+
+          <div class="sidebar-section">
+            <h2 class="sidebar-title">Index Status</h2>
+            <div class="index-stats" id="index-stats">
+              <div class="stat-item">
+                <span class="stat-label">Texts Indexed</span>
+                <span class="stat-value" id="stat-texts">—</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Total Verses</span>
+                <span class="stat-value" id="stat-verses">—</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">LLM Model</span>
+                <span class="stat-value" id="stat-model">—</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Chat Area -->
+        <div class="chat-area">
+          <!-- Messages container -->
+          <div class="messages-container" id="messages-container" role="log" aria-live="polite" aria-label="Conversation">
+
+            <!-- Welcome screen -->
+            <div class="welcome-screen" id="welcome-screen">
+              <div class="welcome-om">ॐ</div>
+              <h1 class="welcome-title">PuranGPT</h1>
+              <p class="welcome-subtitle">AI Oracle of the Sacred Texts</p>
+              <p class="welcome-desc">Ask anything about the 18 Mahapuranas, Vedas, Upanishads, and Yogic scriptures. Get answers with exact verse citations in Sanskrit, Hindi, and English.</p>
+
+              <div class="suggestion-grid" id="suggestion-grid" aria-label="Suggested questions">
+                <button class="suggestion-card" data-query="Who is Narada Muni and what role does he play across the Puranas?" id="suggest-1">
+                  <i data-lucide="music" class="suggest-icon-svg"></i>
+                  <span class="suggest-text">Who is Narada Muni across all Puranas?</span>
+                </button>
+                <button class="suggestion-card" data-query="Explain the story of Samudra Manthan (churning of the ocean) and list all the items that emerged from it." id="suggest-2">
+                  <i data-lucide="waves" class="suggest-icon-svg"></i>
+                  <span class="suggest-text">The Samudra Manthan — everything that emerged</span>
+                </button>
+                <button class="suggestion-card" data-query="What do the Puranas and Upanishads say about the nature of the Atman (self)?" id="suggest-3">
+                  <i data-lucide="atom" class="suggest-icon-svg"></i>
+                  <span class="suggest-text">The nature of Atman in Puranas &amp; Upanishads</span>
+                </button>
+                <button class="suggestion-card" data-query="List all the Yoga practices and techniques described in the Bhagavad Gita and Yoga Sutras of Patanjali." id="suggest-4">
+                  <i data-lucide="activity" class="suggest-icon-svg"></i>
+                  <span class="suggest-text">Yoga practices in Gita &amp; Yoga Sutras</span>
+                </button>
+                <button class="suggestion-card" data-query="What does the Bhagavata Purana say about Lord Krishna's birth and childhood in Vrindavan?" id="suggest-5">
+                  <i data-lucide="star" class="suggest-icon-svg"></i>
+                  <span class="suggest-text">Krishna's birth &amp; childhood in Bhagavata</span>
+                </button>
+                <button class="suggestion-card" data-query="Compare how different Puranas describe the creation of the universe (Srishti)." id="suggest-6">
+                  <i data-lucide="globe" class="suggest-icon-svg"></i>
+                  <span class="suggest-text">Creation of universe across Puranas</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Chat messages rendered here -->
+          </div>
+
+          <!-- Chat input bar -->
+          <div class="chat-input-bar" role="form" aria-label="Send message">
+            <div class="input-wrapper">
+              <textarea
+                id="chat-input"
+                class="chat-input"
+                placeholder="Ask about any Purana, deity, story, or concept… (Shift+Enter for newline)"
+                rows="1"
+                maxlength="2000"
+                aria-label="Your question"
+                aria-multiline="true"
+              ></textarea>
+              <div class="input-actions">
+                <span class="char-count" id="char-count" aria-live="polite">0/2000</span>
+                <button class="send-btn" id="send-btn" aria-label="Send message" title="Send (Enter)">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="input-hint" aria-hidden="true">
+              <span>Enter to send · Shift+Enter for new line · Responses include verse citations</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== FIND INSTANCES PANEL ===== -->
+    <div id="panel-search" class="panel" role="tabpanel" aria-labelledby="btn-search-mode" hidden>
+      <div class="instances-layout">
+        <div class="instances-header">
+          <h1 class="instances-title">Find All Instances</h1>
+          <p class="instances-desc">Search across all 18 Mahapuranas and sacred texts simultaneously. Every mention, every verse — with exact citations.</p>
+          <div class="instances-search-bar">
+            <input
+              type="text"
+              id="instances-input"
+              class="instances-input"
+              placeholder="e.g. Garuda · Shiva Parvati marriage · Yoga Nidra · Chakras · Hanuman"
+              aria-label="Search topic"
+              autocomplete="off"
+            />
+            <button class="instances-search-btn" id="instances-search-btn" aria-label="Search all texts">
+              Search All Texts
+            </button>
+          </div>
+          <div class="filter-chips" id="filter-chips" role="group" aria-label="Filter by Purana">
+            <button class="chip active" data-filter="all" id="chip-all">All Texts</button>
+            <button class="chip" data-filter="mahapurana" id="chip-mahapurana">18 Mahapuranas</button>
+            <button class="chip" data-filter="veda" id="chip-veda">Vedas</button>
+            <button class="chip" data-filter="upanishad" id="chip-upanishad">Upanishads</button>
+            <button class="chip" data-filter="epic" id="chip-epic">Epics</button>
+            <button class="chip" data-filter="yoga" id="chip-yoga">Yogic Texts</button>
+          </div>
+        </div>
+
+        <div id="instances-results" class="instances-results" role="list" aria-live="polite" aria-label="Search results">
+          <div class="instances-placeholder" id="instances-placeholder">
+            <i data-lucide="book-marked" class="placeholder-icon-svg"></i>
+            <p>Enter a topic above to find every mention across all indexed sacred texts</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== EXPLORE TEXTS PANEL ===== -->
+    <div id="panel-explore" class="panel" role="tabpanel" aria-labelledby="btn-explore-mode" hidden>
+      <div class="explore-layout">
+        <div class="explore-header">
+          <h1 class="explore-title">Sacred Text Library</h1>
+          <p class="explore-desc">Browse all indexed texts — select a Purana to explore by chapter and verse</p>
+        </div>
+
+        <div class="texts-grid" id="texts-grid" role="list" aria-label="Sacred texts library">
+          <!-- Populated dynamically -->
+          <div class="explore-loading" id="explore-loading">
+            <div class="loading-spinner" aria-hidden="true"></div>
+            <p>Loading library…</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SANSKRIT SEARCH PANEL ===== -->
+    <div id="panel-sanskrit" class="panel" role="tabpanel" aria-labelledby="btn-sanskrit-mode" hidden>
+      <div class="sanskrit-layout">
+        <div class="sanskrit-header">
+          <h1 class="sanskrit-title">Sanskrit Full-Text Search</h1>
+          <p class="sanskrit-desc">Search the GRETIL academic corpus (plain UTF-8 Sanskrit, IAST or Devanagari) across all loaded texts.</p>
+          <div class="sanskrit-search-bar">
+            <input
+              type="text"
+              id="sanskrit-input"
+              class="sanskrit-input"
+              placeholder="e.g. śiva, dharma, dhyāna, योग"
+              aria-label="Sanskrit term"
+              autocomplete="off"
+            />
+            <button class="sanskrit-search-btn" id="sanskrit-search-btn" aria-label="Search Sanskrit">
+              Search GRETIL Corpus
+            </button>
+          </div>
+        </div>
+
+        <div id="sanskrit-results" class="sanskrit-results" role="list" aria-live="polite">
+          <div class="sanskrit-placeholder">
+            <i data-lucide="languages" class="placeholder-icon-svg"></i>
+            <p>Enter a Sanskrit term (IAST or Devanagari) to search the academic corpus</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ===== INFER PANEL ===== -->
+    <div id="panel-infer" class="panel" role="tabpanel" aria-labelledby="btn-infer-mode" hidden>
+      <div class="infer-layout">
+        <div class="infer-header">
+          <h1 class="infer-title">Scholarly Inference Engine</h1>
+          <p class="infer-desc">
+            Enter any topic. PuranGPT retrieves passages from <strong>all indexed texts</strong>,
+            then produces original cross-textual inferences — what the combined evidence suggests
+            beyond what any single text says. Ideal for deep research.
+          </p>
+          <div class="infer-search-bar">
+            <input
+              type="text"
+              id="infer-input"
+              class="infer-input"
+              placeholder="e.g. Creation of the universe · Role of Narada · Moksha across traditions · Shiva vs Vishnu cosmology"
+              aria-label="Topic for inference"
+              autocomplete="off"
+            />
+            <button class="infer-btn" id="infer-btn" aria-label="Run inference">
+              Synthesise &amp; Infer
+            </button>
+          </div>
+          <div class="infer-examples">
+            <span class="infer-ex-label">Try:</span>
+            <button class="infer-example-chip" data-q="How does the concept of time (Kala/Yuga) evolve across the Puranas and Upanishads?">Time &amp; Yuga cycles</button>
+            <button class="infer-example-chip" data-q="What original inferences can be drawn about the nature of Maya from Puranic and Vedantic sources?">Maya across traditions</button>
+            <button class="infer-example-chip" data-q="What do the Puranas collectively reveal about the role of women and feminine power (Shakti)?">Shakti &amp; feminine power</button>
+            <button class="infer-example-chip" data-q="How do the Darshanas (Samkhya, Yoga, Vedanta) relate to the cosmogonic myths of the Mahapuranas?">Darshanas vs Puranic myths</button>
+          </div>
+        </div>
+        <div id="infer-status" class="infer-status" hidden></div>
+        <div id="infer-sources" class="infer-sources" hidden></div>
+        <div id="infer-results" class="infer-results" role="region" aria-live="polite">
+          <div class="infer-placeholder">
+            <i data-lucide="microscope" class="placeholder-icon-svg"></i>
+            <p>Enter a research topic above to generate original scholarly inferences from across all indexed texts.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TEXT READER PANEL ===== -->
+    <div id="panel-reader" class="panel" role="tabpanel" aria-labelledby="btn-reader-mode" hidden>
+      <div class="reader-layout">
+        <div class="reader-header">
+          <button id="reader-back-btn" class="reader-nav-btn" aria-label="Back">← Explore</button>
+          <h2 id="reader-title" class="reader-title">Text Title</h2>
+          <div class="reader-pagination">
+            <button id="reader-prev-btn" class="reader-nav-btn">Prev</button>
+            <span id="reader-page-info">Page 1 / ?</span>
+            <button id="reader-next-btn" class="reader-nav-btn">Next</button>
+          </div>
+        </div>
+        <div id="reader-content" class="reader-content">
+          <div class="skt-loading" id="reader-loading" style="display:none">
+            <div class="loading-spinner"></div>
+            <span>Loading text...</span>
+          </div>
+          <div id="reader-lines"></div>
+        </div>
+      </div>
+      <!-- Floating context menu for selection -->
+      <button id="reader-ask-btn" class="reader-ask-btn" hidden>
+        Ask AI to Explain
+      </button>
+    </div>
+  </main>
+
+  <!-- Settings modal -->
+  <div class="modal-overlay" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="settings-title" class="modal-title">Settings</h2>
+        <button class="modal-close" id="settings-close" aria-label="Close settings"><i data-lucide="x" style="width:14px;height:14px;pointer-events:none"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-group">
+          <label class="setting-label" for="model-select">AI Model</label>
+          <select id="model-select" class="setting-select">
+            <option value="auto">Auto (best available key)</option>
+            <option value="groq-llama-3.3-70b">Llama 3.3 70B (Groq)</option>
+            <option value="groq-llama-3.1-8b-instant">Llama 3.1 8B (Groq — fast)</option>
+            <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+            <option value="deepseek-chat">DeepSeek V3 (DeepSeek)</option>
+            <option value="deepseek-reasoner">DeepSeek Reasoner R1</option>
+            <option value="together-Qwen/Qwen2.5-72B-Instruct-Turbo">Qwen 2.5 72B (Together)</option>
+            <option value="together-meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo">Llama 3.1 405B (Together)</option>
+            <option value="zhipu-glm-5.1">GLM 5.1 (Zhipu AI)</option>
+          </select>
+        </div>
+        <div class="setting-group">
+          <label class="setting-label" for="api-url">Backend URL</label>
+          <input type="url" id="api-url" class="setting-input" value="http://localhost:8000" />
+        </div>
+        <div class="setting-group">
+          <label class="setting-label" for="response-lang">Response Language</label>
+          <select id="response-lang" class="setting-select">
+            <option value="english">English (with Sanskrit quotes)</option>
+            <option value="hindi">Hindi</option>
+            <option value="both">Both English & Hindi</option>
+          </select>
+        </div>
+        <div class="setting-group">
+          <label class="setting-label" for="show-sanskrit">Always show Sanskrit original</label>
+          <label class="toggle" for="show-sanskrit-toggle">
+            <input type="checkbox" id="show-sanskrit-toggle" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="setting-group">
+          <label class="setting-label" for="stream-toggle">Stream responses</label>
+          <label class="toggle" for="stream-input">
+            <input type="checkbox" id="stream-input" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" id="settings-save">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Index Progress Banner (shows while texts are being indexed) -->
+  <div class="index-banner hidden" id="index-banner" role="status" aria-live="polite">
+    <i data-lucide="book-open" style="width:16px;height:16px;flex-shrink:0;color:var(--accent)"></i>
+    <div class="index-banner-text">
+      <strong>Indexing Sacred Texts…</strong> — The AI is already answering from deep Puranic knowledge.
+      RAG citations will activate once indexing completes.
+      <span id="banner-progress-text"></span>
+    </div>
+    <div class="index-progress-bar">
+      <div class="index-progress-fill" id="banner-progress-fill" style="width:5%"></div>
+    </div>
+    <button class="index-banner-dismiss" id="banner-dismiss" aria-label="Dismiss"><i data-lucide="x" style="width:14px;height:14px;pointer-events:none"></i></button>
+  </div>
+
+  <!-- Toast notifications -->
+  <div class="toast-container" id="toast-container" aria-live="assertive" role="alert"></div>
+
+  <script src="/static/app.js"></script>
+
+  <div id="citation-tooltip" class="citation-tooltip" hidden>
+    <button class="tooltip-close" id="tooltip-close" aria-label="Close"><i data-lucide="x" style="width:14px;height:14px;pointer-events:none"></i></button>
+    <div class="tooltip-header">
+      <h3 id="tooltip-title">Citation Title</h3>
+    </div>
+    <div class="tooltip-content" id="tooltip-content">
+      <div class="skt-loading" id="tooltip-loading">
+        <div class="loading-spinner"></div>
+        <span>Translating from Sanskrit...</span>
+      </div>
+      <div id="tooltip-text-container" style="display:none">
+        <div class="tooltip-sanskrit" id="tooltip-sanskrit"></div>
+        <div class="tooltip-translation" id="tooltip-translation"></div>
+      </div>
+    </div>
+    <div class="tooltip-footer">
+      <button class="tooltip-btn primary" id="tooltip-open-doc">
+        <i data-lucide="book" style="width:13px;height:13px;vertical-align:-2px;margin-right:4px"></i>Open in Document
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Initialize Lucide icons after DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) lucide.createIcons();
+    });
+    // Re-run after dynamic content updates
+    window._lucideRefresh = () => { if (window.lucide) lucide.createIcons(); };
+  </script>
+</body>
+</html>
