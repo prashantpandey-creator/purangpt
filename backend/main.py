@@ -1627,3 +1627,124 @@ async def admin_get_users(user: dict = Depends(require_role(["admin"]))):
 @app.get("/api/admin/stats")
 async def admin_get_stats(user: dict = Depends(require_role(["admin"]))):
     return get_admin_stats()
+
+
+# ── Billing Endpoints ──────────────────────────────────────────────────────
+
+from backend.billing import (
+    create_stripe_checkout,
+    create_razorpay_order,
+    verify_razorpay_payment,
+    activate_user_subscription,
+    STRIPE_WEBHOOK_SECRET,
+    is_stripe_configured,
+    is_razorpay_configured
+)
+import stripe
+
+class CheckoutRequest(BaseModel):
+    plan: str
+    provider: str
+    success_url: str
+    cancel_url: str
+
+class RazorpayVerifyRequest(BaseModel):
+    razorpay_order_id: str
+    razorpay_payment_id: str
+    razorpay_signature: str
+    plan: str
+
+@app.post("/api/billing/checkout")
+async def billing_checkout(request: CheckoutRequest, user: dict = Depends(require_auth)):
+    try:
+        user_id = user["id"]
+        if request.provider == "stripe":
+            res = create_stripe_checkout(user_id, request.plan, request.success_url, request.cancel_url)
+            return res
+        elif request.provider == "razorpay":
+            res = create_razorpay_order(user_id, request.plan)
+            return res
+        else:
+            raise HTTPException(400, f"Unsupported billing provider: {request.provider}")
+    except Exception as e:
+        logger.error(f"Billing checkout error: {e}")
+        raise HTTPException(500, str(e))
+
+@app.post("/api/billing/razorpay/verify")
+async def razorpay_verify(request: RazorpayVerifyRequest, user: dict = Depends(require_auth)):
+    user_id = user["id"]
+    verified = verify_razorpay_payment(
+        request.razorpay_order_id,
+        request.razorpay_payment_id,
+        request.razorpay_signature
+    )
+    if not verified:
+        raise HTTPException(400, "Payment verification failed")
+        
+    success = activate_user_subscription(
+        user_id=user_id,
+        plan=request.plan,
+        provider="razorpay",
+        external_sub_id=request.razorpay_payment_id
+    )
+    if not success:
+        raise HTTPException(500, "Failed to update subscription profile")
+        
+    return {"success": True}
+
+@app.post("/api/billing/stripe/webhook")
+async def stripe_webhook(req: Request):
+    payload = await req.body()
+    sig_header = req.headers.get("stripe-signature")
+    
+    if not STRIPE_WEBHOOK_SECRET:
+        logger.warning("STRIPE_WEBHOOK_SECRET is not configured. Cannot verify webhook.")
+        raise HTTPException(400, "Webhook secret not configured")
+        
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, STRIPE_WEBHOOK_SECRET
+        )
+    except ValueError as e:
+        raise HTTPException(400, "Invalid payload")
+    except stripe.error.SignatureVerificationError as e:
+        raise HTTPException(400, "Invalid signature")
+        
+    event_type = event["type"]
+    if event_type == "checkout.session.completed":
+        session = event["data"]["object"]
+        user_id = session.get("client_reference_id")
+        if not user_id and session.get("metadata"):
+            user_id = session["metadata"].get("user_id")
+            
+        plan = "pro"
+        if session.get("metadata") and session["metadata"].get("plan"):
+            plan = session["metadata"]["plan"]
+            
+        if user_id:
+            activate_user_subscription(
+                user_id=user_id,
+                plan=plan,
+                provider="stripe",
+                external_sub_id=session.get("subscription") or session.get("id")
+            )
+            
+    return {"status": "success"}
+
+@app.post("/api/billing/dev-simulate-upgrade")
+async def dev_simulate_upgrade(data: dict, user: dict = Depends(require_auth)):
+    user_id = user["id"]
+    plan = data.get("plan", "pro")
+    if plan not in ["free", "pro", "scholar"]:
+        raise HTTPException(400, "Invalid plan")
+        
+    success = activate_user_subscription(
+        user_id=user_id,
+        plan=plan,
+        provider="simulated",
+        external_sub_id=f"sim_{user_id}_{plan}"
+    )
+    if not success:
+        raise HTTPException(500, "Failed to update subscription profile")
+        
+    return {"success": True, "new_role": plan}

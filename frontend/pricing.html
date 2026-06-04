@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="auth.js"></script>
     <style>
@@ -167,6 +168,88 @@
             transition: color 0.2s;
         }
         .nav-back:hover { color: var(--t1); }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(10px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: rgba(25, 21, 17, 0.95);
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            padding: 32px;
+            width: 90%;
+            max-width: 440px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            position: relative;
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: var(--t3);
+            transition: color 0.2s;
+        }
+
+        .close-btn:hover {
+            color: var(--t1);
+        }
+
+        .payment-options {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .payment-opt-btn {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--t1);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .payment-opt-btn:hover {
+            background: rgba(212, 168, 67, 0.08);
+            border-color: var(--saffron);
+            transform: translateY(-2px);
+        }
+        
+        .payment-opt-btn.simulate-btn {
+            border-style: dashed;
+            background: rgba(212, 168, 67, 0.02);
+        }
+        
+        .payment-opt-btn.simulate-btn:hover {
+            background: rgba(212, 168, 67, 0.15);
+        }
     </style>
 </head>
 <body>
@@ -203,7 +286,7 @@
                     <li><i data-lucide="check" class="icon"></i> BYOK (Bring Your Own Key)</li>
                     <li><i data-lucide="check" class="icon"></i> Priority generation speed</li>
                 </ul>
-                <button class="btn btn-primary" onclick="alert('Payments coming in Phase 3!')">Upgrade to Pro</button>
+                <button class="btn btn-primary" id="btn-pro" onclick="openPaymentModal('pro')">Upgrade to Pro</button>
             </div>
 
             <!-- Scholar Plan -->
@@ -216,24 +299,235 @@
                     <li><i data-lucide="check" class="icon"></i> Access to original commentaries</li>
                     <li><i data-lucide="check" class="icon"></i> PDF Export & Citations</li>
                 </ul>
-                <button class="btn" onclick="alert('Payments coming in Phase 3!')">Upgrade to Acharya</button>
+                <button class="btn" id="btn-scholar" onclick="openPaymentModal('scholar')">Upgrade to Acharya</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Method Selection Modal -->
+    <div id="payment-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closePaymentModal()">&times;</span>
+            <h3 style="font-family: 'Outfit', sans-serif; margin-top: 0; margin-bottom: 8px; font-size: 24px; color: var(--t1);">Select Payment Method</h3>
+            <p style="color: var(--t2); margin-bottom: 24px; font-size: 14px;">Choose your preferred billing gateway for <span id="modal-plan-name" style="color: var(--saffron); font-weight: 600; text-transform: capitalize;">pro</span> plan.</p>
+            
+            <div class="payment-options">
+                <button class="payment-opt-btn" onclick="startCheckout('stripe')">
+                    <i data-lucide="credit-card" style="color: var(--saffron);"></i>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 600; color: var(--t1);">Stripe</div>
+                        <div style="font-size: 12px; color: var(--t3);">Cards, Apple Pay, International</div>
+                    </div>
+                </button>
+                
+                <button class="payment-opt-btn" onclick="startCheckout('razorpay')">
+                    <i data-lucide="wallet" style="color: var(--saffron);"></i>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 600; color: var(--t1);">Razorpay</div>
+                        <div style="font-size: 12px; color: var(--t3);">UPI, Netbanking, Cards (India)</div>
+                    </div>
+                </button>
+
+                <button class="payment-opt-btn simulate-btn" onclick="startCheckout('simulate')">
+                    <i data-lucide="terminal" style="color: var(--saffron);"></i>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 600; color: var(--t1);">Developer Simulation</div>
+                        <div style="font-size: 12px; color: var(--t3);">Upgrade instantly for local testing</div>
+                    </div>
+                </button>
             </div>
         </div>
     </div>
 
     <script>
+        let selectedPlan = null;
+        let currentUser = null;
+        let currentProfile = null;
+
         lucide.createIcons();
+        
         onAuthStateChange((user, profile) => {
+            currentUser = user;
+            currentProfile = profile;
+            
             if (!user) {
                 document.getElementById('btn-free').innerText = 'Sign In to Start';
                 document.getElementById('btn-free').onclick = () => window.location.href = '/login.html';
-            } else {
-                if (profile && profile.role === 'free') {
+            } else if (profile) {
+                // Free Plan button status
+                if (profile.role === 'free') {
                     document.getElementById('btn-free').innerText = 'Current Plan';
                     document.getElementById('btn-free').disabled = true;
+                } else {
+                    document.getElementById('btn-free').innerText = 'Seeker (Free)';
+                    document.getElementById('btn-free').disabled = false;
+                    document.getElementById('btn-free').onclick = () => simulatePlanChange('free');
+                }
+
+                // Pro Plan button status
+                if (profile.role === 'pro') {
+                    document.getElementById('btn-pro').innerText = 'Current Plan';
+                    document.getElementById('btn-pro').disabled = true;
+                    document.getElementById('btn-pro').classList.remove('btn-primary');
+                } else {
+                    document.getElementById('btn-pro').innerText = profile.role === 'scholar' ? 'Downgrade to Pro' : 'Upgrade to Pro';
+                    document.getElementById('btn-pro').disabled = false;
+                    document.getElementById('btn-pro').classList.add('btn-primary');
+                }
+
+                // Scholar Plan button status
+                if (profile.role === 'scholar') {
+                    document.getElementById('btn-scholar').innerText = 'Current Plan';
+                    document.getElementById('btn-scholar').disabled = true;
+                } else {
+                    document.getElementById('btn-scholar').innerText = 'Upgrade to Acharya';
+                    document.getElementById('btn-scholar').disabled = false;
                 }
             }
         });
+
+        function openPaymentModal(plan) {
+            if (!currentUser) {
+                window.location.href = '/login.html';
+                return;
+            }
+            selectedPlan = plan;
+            document.getElementById('modal-plan-name').innerText = plan === 'pro' ? 'Scholar (Pro)' : 'Acharya (Max)';
+            document.getElementById('payment-modal').style.display = 'flex';
+        }
+
+        function closePaymentModal() {
+            document.getElementById('payment-modal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside content
+        window.onclick = function(event) {
+            const modal = document.getElementById('payment-modal');
+            if (event.target === modal) {
+                closePaymentModal();
+            }
+        }
+
+        async function startCheckout(provider) {
+            closePaymentModal();
+            if (!currentUser || !selectedPlan) return;
+
+            const token = (await supabase.auth.getSession()).data.session?.access_token;
+            if (!token) {
+                alert("Session expired. Please log in again.");
+                return;
+            }
+
+            if (provider === 'simulate') {
+                await simulatePlanChange(selectedPlan);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${getApiUrl()}/api/billing/checkout`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        plan: selectedPlan,
+                        provider: provider,
+                        success_url: window.location.origin + '/billing.html',
+                        cancel_url: window.location.href
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.detail || "Checkout creation failed");
+
+                if (provider === 'stripe') {
+                    if (data.url) {
+                        window.location.href = data.url;
+                    } else {
+                        throw new Error("No checkout URL returned from Stripe");
+                    }
+                } else if (provider === 'razorpay') {
+                    if (data.mock) {
+                        alert("Razorpay is in Mock Mode. Simulating successful checkout...");
+                        await simulatePlanChange(selectedPlan);
+                    } else {
+                        const options = {
+                            key: data.key_id || "rzp_test_mock", 
+                            amount: data.amount,
+                            currency: data.currency,
+                            name: "PuranGPT",
+                            description: `Upgrade to ${selectedPlan} plan`,
+                            order_id: data.id,
+                            handler: async function (paymentRes) {
+                                try {
+                                    const verifyResponse = await fetch(`${getApiUrl()}/api/billing/razorpay/verify`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'Authorization': `Bearer ${token}`
+                                        },
+                                        body: JSON.stringify({
+                                            razorpay_order_id: data.id,
+                                            razorpay_payment_id: paymentRes.razorpay_payment_id,
+                                            razorpay_signature: paymentRes.razorpay_signature,
+                                            plan: selectedPlan
+                                        })
+                                    });
+                                    const verifyData = await verifyResponse.json();
+                                    if (verifyResponse.ok) {
+                                        alert("Subscription upgraded successfully!");
+                                        window.location.href = "/billing.html";
+                                    } else {
+                                        alert("Signature verification failed: " + verifyData.detail);
+                                    }
+                                } catch (err) {
+                                    alert("Error verifying payment: " + err.message);
+                                }
+                            },
+                            prefill: {
+                                name: currentUser.user_metadata?.full_name || "",
+                                email: currentUser.email || ""
+                            },
+                            theme: {
+                                color: "#d4a843"
+                            }
+                        };
+                        const rzp = new Razorpay(options);
+                        rzp.open();
+                    }
+                }
+            } catch (err) {
+                alert("Checkout error: " + err.message);
+                console.error(err);
+            }
+        }
+
+        async function simulatePlanChange(plan) {
+            const token = (await supabase.auth.getSession()).data.session?.access_token;
+            if (!token) return;
+
+            try {
+                const response = await fetch(`${getApiUrl()}/api/billing/dev-simulate-upgrade`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ plan: plan })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    alert(`Developer Mode: Successfully upgraded to ${plan} plan!`);
+                    window.location.href = "/billing.html";
+                } else {
+                    alert("Simulation failed: " + data.detail);
+                }
+            } catch (err) {
+                alert("Simulation error: " + err.message);
+            }
+        }
     </script>
 </body>
 </html>

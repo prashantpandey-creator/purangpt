@@ -40,21 +40,21 @@ def migrate():
     batch_size = 100
     migrated_count = 0
     
-    # We fetch all IDs first
-    all_data = collection.get(include=["metadatas"])
-    all_ids = all_data["ids"]
+    print(f"Starting migration in batches of {batch_size} using pagination...")
     
-    print(f"Starting migration in batches of {batch_size}...")
-    
-    for i in range(0, len(all_ids), batch_size):
-        batch_ids = all_ids[i:i + batch_size]
-        
-        # Get the embeddings and metadatas for this batch
+    offset = 0
+    while offset < count:
+        # Get the embeddings and metadatas for this batch using limit/offset
         batch_data = collection.get(
-            ids=batch_ids,
+            limit=batch_size,
+            offset=offset,
             include=["embeddings", "metadatas"]
         )
         
+        batch_ids = batch_data["ids"]
+        if not batch_ids:
+            break
+            
         pinecone_vectors = []
         for j in range(len(batch_ids)):
             metadata = batch_data["metadatas"][j]
@@ -72,7 +72,9 @@ def migrate():
             migrated_count += len(batch_ids)
             print(f"Migrated {migrated_count}/{count} ({(migrated_count/count)*100:.1f}%)")
         except Exception as e:
-            print(f"Error upserting batch {i}: {e}")
+            print(f"Error upserting batch at offset {offset}: {e}")
+            
+        offset += batch_size
             
     print("Migration complete!")
 
