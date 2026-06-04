@@ -398,3 +398,127 @@ i[data-lucide]{display:inline-flex;align-items:center;justify-content:center;ver
   .mandala-rotate { animation: none; }
   .orb { animation: none; }
 }
+
+/* ── Mobile Native UX Overhaul ─────────────────────────────────────────── */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+body, html {
+  overscroll-behavior-y: none;
+}
+.messages-container, .instances-results, .explore-content, .sidebar {
+  -webkit-overflow-scrolling: touch;
+}
+button, nav, .sidebar, .topbar {
+  user-select: none;
+  -webkit-user-select: none;
+}
+.mobile-bottom-nav {
+  display: none;
+}
+.sidebar-scrim {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .mobile-menu-btn {
+    display: flex !important;
+    background: transparent;
+    border: none;
+    color: var(--t2);
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    margin-right: 4px;
+    cursor: pointer;
+  }
+  
+  /* Hide desktop-specific topbar elements */
+  .topbar-center, .topbar-right .model-switcher-container, .topbar-right .memory-container, .topbar-right .status-indicator {
+    display: none;
+  }
+  
+  /* Show bottom nav fixed to bottom */
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(56px + env(safe-area-inset-bottom, 0));
+    background: rgba(11,9,7,0.94);
+    border-top: 1px solid var(--b1);
+    backdrop-filter: blur(20px) saturate(1.2);
+    -webkit-backdrop-filter: blur(20px) saturate(1.2);
+    z-index: 100;
+    justify-content: space-around;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  
+  .bottom-nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--t3);
+    font-size: 10px;
+    font-weight: 500;
+    gap: 4px;
+    padding: 8px 0;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .bottom-nav-btn.active {
+    color: var(--accent);
+  }
+  
+  /* Slide-out Sidebar Drawer */
+  .sidebar {
+    display: flex !important;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: -100%;
+    width: 280px !important;
+    max-width: 80vw;
+    z-index: 200;
+    background: var(--bg-base);
+    border-right: 1px solid var(--b1);
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding-top: calc(20px + env(safe-area-inset-top, 0));
+    box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+  }
+  .sidebar.open {
+    left: 0;
+  }
+  
+  /* Scrim backdrop for sidebar */
+  .sidebar-scrim {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 150;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .sidebar-scrim.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  
+  /* Adjust app layout height to account for bottom nav */
+  .chat-layout {
+    height: calc(100vh - var(--nav-h) - env(safe-area-inset-top, 0) - 56px - env(safe-area-inset-bottom, 0)) !important;
+  }
+  .chat-input-bar {
+    padding-bottom: var(--sp-5) !important;
+  }
+}

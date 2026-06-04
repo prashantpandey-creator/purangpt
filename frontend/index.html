@@ -64,6 +64,9 @@
   <!-- Top navigation bar -->
   <nav class="topbar" role="navigation" aria-label="Main navigation">
     <div class="topbar-left">
+      <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Open Menu" style="display:none;">
+        <i data-lucide="menu" style="width:22px;height:22px;pointer-events:none;"></i>
+      </button>
       <div class="logo" aria-label="PuranGPT home">
         <span class="om-symbol" aria-hidden="true">ॐ</span>
         <span class="logo-text">PuranGPT</span>
@@ -127,6 +130,7 @@
       <div class="chat-layout">
 
         <!-- Sidebar -->
+        <div class="sidebar-scrim" id="sidebar-scrim" aria-hidden="true"></div>
         <aside class="sidebar" id="sidebar" aria-label="Filters and sources">
           
           <div class="sidebar-section">
@@ -505,6 +509,22 @@
 
   <!-- Toast notifications -->
   <div class="toast-container" id="toast-container" aria-live="assertive" role="alert"></div>
+
+  <!-- Mobile Bottom Navigation -->
+  <nav class="mobile-bottom-nav" id="mobile-bottom-nav" role="tablist">
+    <button class="bottom-nav-btn active" role="tab" aria-selected="true" data-mode="chat">
+      <i data-lucide="message-square" style="pointer-events:none;"></i><span style="pointer-events:none;">Chat</span>
+    </button>
+    <button class="bottom-nav-btn" role="tab" aria-selected="false" data-mode="search">
+      <i data-lucide="search" style="pointer-events:none;"></i><span style="pointer-events:none;">Search</span>
+    </button>
+    <button class="bottom-nav-btn" role="tab" aria-selected="false" data-mode="explore">
+      <i data-lucide="book-open" style="pointer-events:none;"></i><span style="pointer-events:none;">Explore</span>
+    </button>
+    <button class="bottom-nav-btn" role="tab" aria-selected="false" data-mode="infer">
+      <i data-lucide="sparkles" style="pointer-events:none;"></i><span style="pointer-events:none;">Infer</span>
+    </button>
+  </nav>
 
   <script src="/static/app.js"></script>
 

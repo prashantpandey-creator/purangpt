@@ -41,8 +41,11 @@ const $$ = (sel) => document.querySelectorAll(sel);
 const DOM = {
   btnNewChat:        $('btn-new-chat'),
   sessionList:       $('session-list'),
-  modeBtns:          $$('.mode-btn'),
+  modeBtns:          $$('.mode-btn, .bottom-nav-btn'),
   panels:            $$('.panel'),
+  sidebar:           $('sidebar'),
+  sidebarScrim:      $('sidebar-scrim'),
+  mobileMenuBtn:     $('mobile-menu-btn'),
   statusDot:         $('status-dot'),
   statusText:        $('status-text'),
   messagesContainer: $('messages-container'),
@@ -1537,6 +1540,16 @@ function saveSettings() {
 function bindEvents() {
   DOM.btnNewChat?.addEventListener('click', createNewSession);
   DOM.modeBtns.forEach(b => b.addEventListener('click', () => switchMode(b.dataset.mode)));
+
+  DOM.mobileMenuBtn?.addEventListener('click', () => {
+    DOM.sidebar?.classList.add('open');
+    DOM.sidebarScrim?.classList.add('open');
+  });
+
+  DOM.sidebarScrim?.addEventListener('click', () => {
+    DOM.sidebar?.classList.remove('open');
+    DOM.sidebarScrim?.classList.remove('open');
+  });
 
   DOM.chatInput.addEventListener('input', () => { adjustInputHeight(); updateCharCount(); });
   DOM.chatInput.addEventListener('keydown', e => {
