@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 import chromadb
+from backend.pinecone_client import init_pinecone, upsert_vectors
 from chromadb.config import Settings
 from rank_bm25 import BM25Okapi
 from rich.console import Console

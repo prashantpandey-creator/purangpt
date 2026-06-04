@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 import chromadb
+from backend.pinecone_client import semantic_search as pinecone_search
 from chromadb.config import Settings
 from rank_bm25 import BM25Okapi
 from sentence_transformers import SentenceTransformer

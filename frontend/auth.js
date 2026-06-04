@@ -118,3 +118,33 @@ function isPro() { return ['pro', 'scholar', 'admin'].includes(getRole()); }
 function isScholar() { return ['scholar', 'admin'].includes(getRole()); }
 
 window.addEventListener('DOMContentLoaded', initAuth);
+
+async function signInWithEmail(email) {
+    if (!supabase) initAuth();
+    const { error } = await supabase.auth.signInWithOtp({
+        email: email,
+        options: {
+            // set this to false if you do not want the user to be automatically signed up
+            shouldCreateUser: true,
+        },
+    });
+    return error ? error.message : null;
+}
+
+async function signInWithPhone(phone) {
+    if (!supabase) initAuth();
+    const { error } = await supabase.auth.signInWithOtp({
+        phone: phone,
+    });
+    return error ? error.message : null;
+}
+
+async function verifyOTP(identifier, token, type) {
+    if (!supabase) initAuth();
+    const { data, error } = await supabase.auth.verifyOtp({
+        [type]: identifier,
+        token: token,
+        type: type === 'email' ? 'email' : 'sms',
+    });
+    return error ? error.message : null;
+}
