@@ -17,19 +17,7 @@
   <!-- Lucide Icons -->
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.383.0/dist/umd/lucide.js" defer></script>
 
-  <link rel="stylesheet" href="/static/style.css" />
-
-  <!-- Auth Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="auth.js"></script>
-  <style>
-    .auth-ui { display: flex; align-items: center; gap: 12px; margin-left: 12px; border-left: 1px solid var(--border-light); padding-left: 12px; }
-    .btn-sign-in { background: var(--saffron); color: #000; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 500; cursor: pointer; text-decoration: none; font-size: 13px; }
-    .user-avatar-btn { display: flex; align-items: center; gap: 8px; background: transparent; border: none; cursor: pointer; color: var(--t1); padding: 4px; border-radius: 20px; transition: background 0.2s; text-decoration: none;}
-    .user-avatar-btn:hover { background: var(--b1); }
-    .user-avatar-btn img { width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--saffron); }
-    .user-plan-badge { font-size: 10px; background: rgba(212,168,67,0.2); color: var(--saffron); padding: 2px 6px; border-radius: 8px; border: 1px solid rgba(212,168,67,0.3); text-transform: capitalize; }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <!-- Ambient background effects -->
@@ -127,15 +115,6 @@
       <div class="status-indicator" id="status-indicator" title="System status">
         <span class="status-dot" id="status-dot"></span>
         <span class="status-text" id="status-text">Connecting…</span>
-      </div>
-      
-      <div id="auth-ui-container" class="auth-ui">
-        <a href="/login.html" id="btn-sign-in" class="btn-sign-in" style="display: none;">Sign In</a>
-        <a href="/profile.html" id="user-profile-btn" class="user-avatar-btn" style="display: none;">
-            <img id="topbar-avatar" src="" alt="Avatar">
-            <span id="topbar-name" style="font-size: 13px; font-weight: 500; display: none;"></span>
-            <span id="topbar-plan" class="user-plan-badge"></span>
-        </a>
       </div>
       <button class="settings-btn" id="settings-btn" aria-label="Settings" title="Settings">
         <i data-lucide="settings-2" style="width:16px;height:16px"></i>
@@ -571,7 +550,8 @@
     </button>
   </nav>
 
-  <script src="/static/app.js"></script>
+  <script src="ios_config.js"></script>
+  <script src="app.js"></script>
 
   <div id="citation-tooltip" class="citation-tooltip" hidden>
     <button class="tooltip-close" id="tooltip-close" aria-label="Close"><i data-lucide="x" style="width:14px;height:14px;pointer-events:none"></i></button>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Profile - PuranGPT</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="auth.js"></script>
+    <style>
+        body {
+            background-color: var(--bg-base);
+            color: var(--t1);
+            margin: 0;
+            padding: 40px 20px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--b1);
+            border: 2px solid var(--saffron);
+            object-fit: cover;
+        }
+
+        .user-info h1 {
+            font-family: 'Outfit', sans-serif;
+            margin: 0 0 8px 0;
+            font-size: 32px;
+        }
+
+        .badge {
+            background: rgba(212, 168, 67, 0.2);
+            color: var(--saffron);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            text-transform: capitalize;
+            border: 1px solid rgba(212, 168, 67, 0.3);
+        }
+
+        .card {
+            background: rgba(20, 17, 13, 0.85);
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0 0 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--t1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-box {
+            background: var(--b0);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid var(--border-light);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--saffron);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--t2);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid var(--border-light);
+            background: transparent;
+            color: var(--t1);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover { background: var(--b1); }
+        .btn-primary { background: var(--saffron); color: #000; border: none; }
+        .btn-primary:hover { background: #e6b84d; }
+        .btn-danger { color: #ff4b4b; border-color: rgba(255, 75, 75, 0.3); }
+        .btn-danger:hover { background: rgba(255, 75, 75, 0.1); }
+
+        .nav-back { margin-bottom: 30px; display: inline-flex; align-items: center; gap: 8px; color: var(--t2); text-decoration: none; }
+        .nav-back:hover { color: var(--t1); }
+        
+        /* Progress bar */
+        .progress-bar-bg { width: 100%; height: 8px; background: var(--b1); border-radius: 4px; overflow: hidden; margin-top: 12px; }
+        .progress-bar-fill { height: 100%; background: var(--saffron); transition: width 0.3s; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="nav-back"><i data-lucide="arrow-left"></i> Back to Chat</a>
+        
+        <div class="header">
+            <img id="avatar" class="avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E">
+            <div class="user-info">
+                <h1 id="user-name">Loading...</h1>
+                <span id="user-role" class="badge">Loading</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title"><i data-lucide="activity"></i> Usage Today</h2>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div id="stat-msgs" class="stat-value">-</div>
+                    <div class="stat-label">Messages Used</div>
+                    <div class="progress-bar-bg"><div id="progress-msgs" class="progress-bar-fill" style="width: 0%"></div></div>
+                </div>
+                <div class="stat-box">
+                    <div id="stat-rem" class="stat-value">-</div>
+                    <div class="stat-label">Remaining limit</div>
+                </div>
+            </div>
+            <div style="margin-top: 20px; text-align: right;">
+                <a href="/pricing.html" class="btn btn-primary">Upgrade Plan</a>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2 class="card-title"><i data-lucide="settings"></i> Account Settings</h2>
+            <div style="display: flex; gap: 16px;">
+                <a href="/settings.html" class="btn"><i data-lucide="key"></i> API Keys & Settings</a>
+                <a href="/billing.html" class="btn"><i data-lucide="credit-card"></i> Billing</a>
+            </div>
+        </div>
+
+        <div style="margin-top: 40px; border-top: 1px solid var(--border-light); padding-top: 24px;">
+            <button class="btn btn-danger" onclick="signOut()"><i data-lucide="log-out"></i> Sign Out</button>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        
+        async function loadUsage() {
+            const headers = await getAuthHeaders();
+            try {
+                const res = await fetch('/api/user/usage', { headers });
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('stat-msgs').innerText = data.daily_count;
+                    document.getElementById('stat-rem').innerText = data.remaining === 999999 ? 'Unlimited' : data.remaining;
+                    
+                    if (data.remaining !== 999999) {
+                        const total = data.daily_count + data.remaining;
+                        const pct = (data.daily_count / total) * 100;
+                        document.getElementById('progress-msgs').style.width = pct + '%';
+                    } else {
+                        document.getElementById('progress-msgs').style.width = '100%';
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        onAuthStateChange((user, profile) => {
+            if (!user) {
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            document.getElementById('user-name').innerText = user.user_metadata.full_name || 'User';
+            if (user.user_metadata.avatar_url) {
+                document.getElementById('avatar').src = user.user_metadata.avatar_url;
+            }
+            
+            if (profile) {
+                document.getElementById('user-role').innerText = profile.role + ' Plan';
+            }
+            
+            loadUsage();
+        });
+    </script>
+</body>
+</html>

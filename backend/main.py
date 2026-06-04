@@ -61,6 +61,10 @@ GRETIL_DIR    = Path("./data/raw_texts/gretil")
 FRONTEND_DIR  = Path(__file__).parent.parent / "frontend"
 MAX_HISTORY   = 100  # messages kept in session memory
 
+
+from backend.auth import get_current_user, require_auth, require_role, get_guest_ip, check_guest_rate_limit, increment_guest_usage
+from backend.supabase_client import get_supabase, update_profile, get_admin_stats, get_all_users, encrypt_keys, decrypt_keys, increment_usage, check_rate_limit
+
 from backend.session_manager import SessionManager
 
 # ── Session Memory ─────────────────────────────────────────────────────────
@@ -988,7 +992,7 @@ async def deep_research(query: str, session_id: str) -> AsyncGenerator[str, None
         session_manager.append_messages(session_id, [
             {"role": "user",      "content": query},
             {"role": "assistant", "content": full_text, "is_clarifier": True}
-        ])
+        ], user_id)
         
         yield f"data: {json.dumps({'type':'done'})}\n\n"
         return
@@ -1014,7 +1018,7 @@ async def deep_research(query: str, session_id: str) -> AsyncGenerator[str, None
     session_manager.append_messages(session_id, [
         {"role": "user",      "content": combined_query},
         {"role": "assistant", "content": full_text}
-    ])
+    ], user_id)
     
     # Emit sources (dummy for now as DeepResearchAgent handles links in text)
     yield f"data: {json.dumps({'type':'sources','sources':[]})}\n\n"
@@ -1108,41 +1112,55 @@ async def list_modes():
 
 
 @app.get("/api/sessions")
-async def get_all_sessions():
+async def get_all_sessions(user: dict = Depends(require_auth)):
     """List all saved sessions."""
-    return {"sessions": session_manager.get_all_sessions()}
+    return {"sessions": session_manager.get_all_sessions(user.get("id"))}
 
 @app.get("/api/session/{session_id}")
-async def get_session(session_id: str):
+async def get_session(session_id: str, user: Optional[dict] = Depends(get_current_user)):
     """Get conversation history for a session."""
-    session_data = session_manager.get_session(session_id)
+    user_id = user.get("id") if user else None
+    session_data = session_manager.get_session(session_id, user_id)
     history = session_data.get("history", [])
     return {"session_id": session_id, "message_count": len(history), "history": history[-20:]}
 
-
 @app.delete("/api/session/{session_id}")
-async def clear_session(session_id: str):
+async def clear_session(session_id: str, user: Optional[dict] = Depends(get_current_user)):
     """Clear conversation history."""
-    session_manager.clear_session(session_id)
+    user_id = user.get("id") if user else None
+    session_manager.clear_session(session_id, user_id)
     return {"cleared": True}
 
 
 @app.post("/api/chat")
-async def chat(request: ChatRequest, req: Request):
+async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depends(get_current_user)):
     if not request.query.strip():
         raise HTTPException(400, "Query cannot be empty")
+        
+    # Rate Limiting
+    if not user:
+        # Guest rate limit
+        ip = get_guest_ip(req)
+        allowed, rem = check_guest_rate_limit(ip)
+        if not allowed:
+            raise HTTPException(429, "Guest rate limit exceeded. Please sign in.")
+    else:
+        allowed, rem = check_rate_limit(user.get("id"), user.get("role", "free"))
+        if not allowed:
+            raise HTTPException(429, "Daily message limit exceeded. Please upgrade your plan.")
     if not GROQ_API_KEY and not GEMINI_API_KEY:
         raise HTTPException(503, "No LLM credentials configured")
 
+    user_id = user.get("id") if user else None
     session_id = request.session_id or "default"
     
     if request.truncate_history_from_index is not None:
-        session_manager.truncate_session(session_id, request.truncate_history_from_index)
+        session_manager.truncate_session(session_id, request.truncate_history_from_index, user.get("id") if user else None)
 
     # ── Deep Research Mode ──────────────────────────────────────────────────
     if request.mode == "deep":
         async def deep_gen():
-            async for chunk in deep_research(request.query, session_id):
+            async for chunk in deep_research(request.query, session_id, user.get("id") if user else None):
                 yield {"data": chunk.replace("data: ", "").strip()}
         return EventSourceResponse(deep_gen())
 
@@ -1238,7 +1256,7 @@ async def chat(request: ChatRequest, req: Request):
         session_data = session_manager.append_messages(session_id, [
             {"role": "user",      "content": request.query},
             {"role": "assistant", "content": full_text}
-        ])
+        ], user_id)
         
         # 7. Done signal with source metadata
         yield {"data": json.dumps({
@@ -1544,7 +1562,7 @@ async def infer(request: InferRequest):
         session_manager.append_messages(request.session_id, [
             {"role": "user",      "content": f"[INFER] {request.topic}"},
             {"role": "assistant", "content": "".join(full_response)},
-        ])
+        ], user_id)
         yield {"data": json.dumps({"type": "done"})}
 
     return EventSourceResponse(infer_gen())
@@ -1568,3 +1586,44 @@ async def index_status():
         "vector_docs":     state.searcher.total_documents if state.searcher else 0,
     }
 
+
+# ── Auth Endpoints ────────────────────────────────────────────────────────
+
+@app.get("/api/user/profile")
+async def get_user_profile(user: dict = Depends(require_auth)):
+    return user
+
+@app.put("/api/user/profile")
+async def update_user_profile(data: dict, user: dict = Depends(require_auth)):
+    update_profile(user["id"], data)
+    return {"success": True}
+
+@app.get("/api/user/usage")
+async def get_user_usage(user: dict = Depends(require_auth)):
+    allowed, rem = check_rate_limit(user["id"], user.get("role", "free"))
+    return {
+        "daily_count": user.get("daily_message_count", 0),
+        "remaining": rem,
+        "role": user.get("role", "free")
+    }
+
+@app.put("/api/user/keys")
+async def save_user_keys(data: dict, user: dict = Depends(require_auth)):
+    encrypted = encrypt_keys(data.get("keys", {}))
+    update_profile(user["id"], {"byok_keys": encrypted})
+    return {"success": True}
+
+@app.get("/api/user/keys")
+async def get_user_keys(user: dict = Depends(require_auth)):
+    keys = decrypt_keys(user.get("byok_keys", ""))
+    # Mask keys for security
+    masked = {k: f"{v[:4]}...{v[-4:]}" if len(v) > 10 else "***" for k, v in keys.items() if v}
+    return {"keys": masked}
+
+@app.get("/api/admin/users")
+async def admin_get_users(user: dict = Depends(require_role(["admin"]))):
+    return {"users": get_all_users()}
+
+@app.get("/api/admin/stats")
+async def admin_get_stats(user: dict = Depends(require_role(["admin"]))):
+    return get_admin_stats()

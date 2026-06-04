@@ -1656,36 +1656,3 @@ function bindEvents() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
-
-// Integration with auth.js
-if (typeof onAuthStateChange === 'function') {
-    onAuthStateChange((user, profile) => {
-        const signInBtn = document.getElementById('btn-sign-in');
-        const profileBtn = document.getElementById('user-profile-btn');
-        
-        if (!user) {
-            if(signInBtn) signInBtn.style.display = 'block';
-            if(profileBtn) profileBtn.style.display = 'none';
-        } else {
-            if(signInBtn) signInBtn.style.display = 'none';
-            if(profileBtn) {
-                profileBtn.style.display = 'flex';
-                document.getElementById('topbar-avatar').src = user.user_metadata?.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
-                if(profile && window.innerWidth > 600) {
-                    document.getElementById('topbar-name').innerText = (user.user_metadata?.full_name || 'User').split(' ')[0];
-                    document.getElementById('topbar-name').style.display = 'inline';
-                    document.getElementById('topbar-plan').innerText = profile.role;
-                }
-            }
-            
-            // Load BYOK keys if authenticated
-            if (profile) {
-                getAuthHeaders().then(headers => {
-                    fetch('/api/user/keys', { headers }).then(r => r.json()).then(data => {
-                         // We don't overwrite user's local keys if they exist unless they are empty
-                    }).catch(e => console.error("Could not fetch keys", e));
-                });
-            }
-        }
-    });
-}

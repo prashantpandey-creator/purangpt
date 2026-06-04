@@ -48,3 +48,7 @@ Pillow==11.0.0
 
 # ── Desktop App ────────────────────────────────────────────────────────────
 pywebview==5.3.2
+
+supabase>=2.0.0
+python-jose[cryptography]>=3.3.0
+cryptography>=41.0.0
