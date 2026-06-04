@@ -12,6 +12,7 @@ const CONFIG = {
   sessionId:       getOrCreateSession(),
   // 'auto' lets the backend route to whichever provider has a valid key
   model:           localStorage.getItem('purangpt_model') || 'auto',
+  apiKeys:         JSON.parse(localStorage.getItem('purangpt_keys') || '{}'),
 };
 
 const STATE = {
@@ -70,6 +71,11 @@ const DOM = {
   settingsClose:     $('settings-close'),
   settingsSave:      $('settings-save'),
   apiUrlInput:       $('api-url'),
+  keyGroq:           $('key-groq'),
+  keyTogether:       $('key-together'),
+  keyDeepseek:       $('key-deepseek'),
+  keyGemini:         $('key-gemini'),
+  keyZhipu:          $('key-zhipu'),
   toastContainer:    $('toast-container'),
   suggestionCards:   $$('.suggestion-card'),
   // Sanskrit search panel
@@ -85,6 +91,16 @@ function getApiUrl() {
   if (CONFIG.apiUrl) return CONFIG.apiUrl;
   if (!window.location.port || window.location.port === '80' || window.location.port === '443') return window.location.origin;
   return 'http://localhost:8000';
+}
+
+function getApiHeaders(extra = {}) {
+  const h = { ...extra };
+  if (CONFIG.apiKeys?.groq) h['x-groq-key'] = CONFIG.apiKeys.groq;
+  if (CONFIG.apiKeys?.together) h['x-together-key'] = CONFIG.apiKeys.together;
+  if (CONFIG.apiKeys?.deepseek) h['x-deepseek-key'] = CONFIG.apiKeys.deepseek;
+  if (CONFIG.apiKeys?.gemini) h['x-gemini-key'] = CONFIG.apiKeys.gemini;
+  if (CONFIG.apiKeys?.zhipu) h['x-zhipu-key'] = CONFIG.apiKeys.zhipu;
+  return h;
 }
 
 // ── Texts catalog (with source/language metadata) ─────────────────────────
@@ -187,7 +203,7 @@ async function runInference(topic) {
   try {
     const resp = await fetch(`${getApiUrl()}/api/infer`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getApiHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ topic, top_k: 15 })
     });
 
@@ -597,7 +613,7 @@ async function runDeepResearch(query, typingId, truncateIndex = null) {
     
     const resp = await fetch(`${getApiUrl()}/api/chat`, {
       method:  'POST',
-      headers: {'Content-Type':'application/json', 'Accept':'text/event-stream'},
+      headers: getApiHeaders({'Content-Type':'application/json', 'Accept':'text/event-stream'}),
       body:    JSON.stringify(payload),
       signal:  ctrl.signal,
     });
@@ -709,7 +725,7 @@ async function streamChat(query, mode, typingId, truncateIndex = null) {
     
     const resp = await fetch(`${getApiUrl()}/api/chat`, {
       method:  'POST',
-      headers: {'Content-Type':'application/json', 'Accept':'text/event-stream'},
+      headers: getApiHeaders({'Content-Type':'application/json', 'Accept':'text/event-stream'}),
       body:    JSON.stringify(payload),
     });
     if (!resp.ok) {
@@ -814,7 +830,7 @@ async function searchSanskrit() {
 
   try {
     const res  = await fetch(`${getApiUrl()}/api/sanskrit-search`, {
-      method:'POST', headers:{'Content-Type':'application/json', 'Accept':'text/event-stream'},
+      method:'POST', headers: getApiHeaders({'Content-Type':'application/json', 'Accept':'text/event-stream'}),
       body: JSON.stringify({query, max_results:30}),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
@@ -939,7 +955,7 @@ async function findInstances() {
   try {
     const res  = await fetch(`${getApiUrl()}/api/instances`, {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: getApiHeaders({'Content-Type':'application/json'}),
       body: JSON.stringify({query, max_results:100, model:CONFIG.model})
     });
     const data = await res.json();
@@ -1497,6 +1513,12 @@ function showToast(msg, type='info') {
 // ── Settings ───────────────────────────────────────────────────────────────
 function loadSettings() {
   if (DOM.apiUrlInput) DOM.apiUrlInput.value = CONFIG.apiUrl || getApiUrl();
+  
+  if (DOM.keyGroq) DOM.keyGroq.value = CONFIG.apiKeys.groq || '';
+  if (DOM.keyTogether) DOM.keyTogether.value = CONFIG.apiKeys.together || '';
+  if (DOM.keyDeepseek) DOM.keyDeepseek.value = CONFIG.apiKeys.deepseek || '';
+  if (DOM.keyGemini) DOM.keyGemini.value = CONFIG.apiKeys.gemini || '';
+  if (DOM.keyZhipu) DOM.keyZhipu.value = CONFIG.apiKeys.zhipu || '';
 
   // Ensure CONFIG.model is a valid value present in both selects
   const VALID_MODELS = [
@@ -1523,6 +1545,15 @@ function saveSettings() {
 
   CONFIG.apiUrl = DOM.apiUrlInput?.value?.trim() || '';
   localStorage.setItem('purangpt_api_url', CONFIG.apiUrl);
+
+  CONFIG.apiKeys = {
+    groq: DOM.keyGroq?.value?.trim() || '',
+    together: DOM.keyTogether?.value?.trim() || '',
+    deepseek: DOM.keyDeepseek?.value?.trim() || '',
+    gemini: DOM.keyGemini?.value?.trim() || '',
+    zhipu: DOM.keyZhipu?.value?.trim() || '',
+  };
+  localStorage.setItem('purangpt_keys', JSON.stringify(CONFIG.apiKeys));
 
   if (modelSelect && modelSelect.value) {
     CONFIG.model = modelSelect.value;

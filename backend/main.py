@@ -27,13 +27,18 @@ from typing import Any, AsyncGenerator, Dict, List, Optional
 
 import aiohttp
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 from typing import Union
+
+import contextvars
+
+# Context variable for Bring-Your-Own-Key
+custom_keys_var = contextvars.ContextVar('custom_keys', default={})
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 load_dotenv(Path(__file__).parent.parent / ".env")
@@ -548,6 +553,18 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="PuranGPT", version="2.0.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
+@app.middleware("http")
+async def extract_custom_keys(request: Request, call_next):
+    keys = {
+        "groq": request.headers.get("x-groq-key"),
+        "together": request.headers.get("x-together-key"),
+        "deepseek": request.headers.get("x-deepseek-key"),
+        "gemini": request.headers.get("x-gemini-key"),
+        "zhipu": request.headers.get("x-zhipu-key"),
+    }
+    custom_keys_var.set({k: v for k, v in keys.items() if v})
+    return await call_next(request)
+
 if FRONTEND_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
@@ -628,11 +645,13 @@ class InstancesRequest(BaseModel):
 # ── LLM Streaming ──────────────────────────────────────────────────────────
 import asyncio
 
-async def stream_groq(messages: List[dict], temperature: float = 0.3, max_retries: int = 5, req_model: str = "auto") -> AsyncGenerator[Union[str, dict], None]:
+async def stream_groq(messages: List[dict], temperature: float = 0.3, max_retries: int = 5, req_model: str = "auto", custom_key: str = None) -> AsyncGenerator[Union[str, dict], None]:
     """Stream tokens from Groq API with full conversation messages and rate limit handling."""
+    key = custom_key or GROQ_API_KEY
+    if not key: raise HTTPException(status_code=503, detail="GROQ_API_KEY not configured.")
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Authorization": f"Bearer {key}",
         "Content-Type":  "application/json",
     }
     
@@ -685,14 +704,15 @@ async def stream_groq(messages: List[dict], temperature: float = 0.3, max_retrie
                             continue
                 return  # Successful completion
 
-async def stream_gemini(messages: List[dict], temperature: float = 0.3) -> AsyncGenerator[Union[str, dict], None]:
+async def stream_gemini(messages: List[dict], temperature: float = 0.3, custom_key: str = None) -> AsyncGenerator[Union[str, dict], None]:
     """Stream tokens from Gemini API via its OpenAI-compatible endpoint."""
-    if not GEMINI_API_KEY:
+    key = custom_key or GEMINI_API_KEY
+    if not key:
         raise HTTPException(status_code=503, detail="GEMINI_API_KEY not configured")
         
     url = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
     headers = {
-        "Authorization": f"Bearer {GEMINI_API_KEY}",
+        "Authorization": f"Bearer {key}",
         "Content-Type":  "application/json",
     }
     
@@ -723,11 +743,12 @@ async def stream_gemini(messages: List[dict], temperature: float = 0.3) -> Async
                     except (json.JSONDecodeError, KeyError, IndexError):
                         continue
 
-async def stream_deepseek(messages: List[dict], temperature: float = 0.3, req_model: str = "deepseek-chat") -> AsyncGenerator[Union[str, dict], None]:
-    if not DEEPSEEK_API_KEY:
+async def stream_deepseek(messages: List[dict], temperature: float = 0.3, req_model: str = "deepseek-chat", custom_key: str = None) -> AsyncGenerator[Union[str, dict], None]:
+    key = custom_key or DEEPSEEK_API_KEY
+    if not key:
         raise HTTPException(status_code=503, detail="DEEPSEEK_API_KEY not configured")
     url = "https://api.deepseek.com/chat/completions"
-    headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
+    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
     payload = {"model": req_model, "messages": messages, "stream": True, "temperature": temperature}
     async with aiohttp.ClientSession() as sess:
         async with sess.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=120)) as resp:
@@ -744,11 +765,12 @@ async def stream_deepseek(messages: List[dict], temperature: float = 0.3, req_mo
                         if token: yield token
                     except: continue
 
-async def stream_together(messages: List[dict], temperature: float = 0.3, req_model: str = "Qwen/Qwen2.5-72B-Instruct-Turbo") -> AsyncGenerator[Union[str, dict], None]:
-    if not TOGETHER_API_KEY:
+async def stream_together(messages: List[dict], temperature: float = 0.3, req_model: str = "Qwen/Qwen2.5-72B-Instruct-Turbo", custom_key: str = None) -> AsyncGenerator[Union[str, dict], None]:
+    key = custom_key or TOGETHER_API_KEY
+    if not key:
         raise HTTPException(status_code=503, detail="TOGETHER_API_KEY not configured")
     url = "https://api.together.xyz/v1/chat/completions"
-    headers = {"Authorization": f"Bearer {TOGETHER_API_KEY}", "Content-Type": "application/json"}
+    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
     payload = {"model": req_model, "messages": messages, "stream": True, "temperature": temperature}
     async with aiohttp.ClientSession() as sess:
         async with sess.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=120)) as resp:
@@ -765,11 +787,12 @@ async def stream_together(messages: List[dict], temperature: float = 0.3, req_mo
                         if token: yield token
                     except: continue
 
-async def stream_zhipu(messages: List[dict], temperature: float = 0.3, req_model: str = "glm-5.1") -> AsyncGenerator[Union[str, dict], None]:
-    if not ZHIPU_API_KEY:
+async def stream_zhipu(messages: List[dict], temperature: float = 0.3, req_model: str = "glm-5.1", custom_key: str = None) -> AsyncGenerator[Union[str, dict], None]:
+    key = custom_key or ZHIPU_API_KEY
+    if not key:
         raise HTTPException(status_code=503, detail="ZHIPU_API_KEY not configured")
     url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
-    headers = {"Authorization": f"Bearer {ZHIPU_API_KEY}", "Content-Type": "application/json"}
+    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
     payload = {"model": req_model, "messages": messages, "stream": True, "temperature": temperature}
     async with aiohttp.ClientSession() as sess:
         async with sess.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=120)) as resp:
@@ -786,12 +809,10 @@ async def stream_zhipu(messages: List[dict], temperature: float = 0.3, req_model
                         if token: yield token
                     except: continue
 
-async def stream_llm(messages: List[dict], temperature: float = 0.3, max_retries: int = 5, req_model: str = "auto") -> AsyncGenerator[Union[str, dict], None]:
-    """Route the request to the requested LLM provider.
-
-    If the requested provider's key is known-invalid (detected at startup),
-    automatically falls back to the active working provider.
-    """
+async def stream_llm(messages: List[dict], temperature: float = 0.3, max_retries: int = 5, req_model: str = "auto", custom_keys: dict = None) -> AsyncGenerator[Union[str, dict], None]:
+    """Route the request to the requested LLM provider."""
+    custom_keys = custom_keys or custom_keys_var.get()
+    
     if req_model == "auto":
         # Route to whichever provider is confirmed working
         req_model = "deepseek-chat" if state.active_provider == "deepseek" else \
@@ -800,35 +821,35 @@ async def stream_llm(messages: List[dict], temperature: float = 0.3, max_retries
                     "deepseek-chat"
 
     # If user picked groq but groq key is invalid, silently redirect to active provider
-    if req_model.startswith("groq") and state.active_provider not in ("groq", "unknown"):
+    if req_model.startswith("groq") and state.active_provider not in ("groq", "unknown") and not custom_keys.get("groq"):
         logger.info("Groq key invalid — redirecting '%s' → active provider: %s", req_model, state.active_provider)
         yield {"type": "info", "message": f"Groq key invalid — using {state.active_provider} ({state.active_model}) instead"}
         req_model = "deepseek-chat" if state.active_provider == "deepseek" else \
                     f"gemini-{GEMINI_MODEL}" if state.active_provider == "gemini" else req_model
 
     if req_model.startswith("groq"):
-        if not GROQ_API_KEY: raise HTTPException(status_code=503, detail="GROQ_API_KEY not configured.")
-        async for token in stream_groq(messages, temperature, max_retries, req_model.replace("groq-", "")): yield token
+        if not custom_keys.get("groq") and not GROQ_API_KEY: raise HTTPException(status_code=503, detail="GROQ_API_KEY not configured.")
+        async for token in stream_groq(messages, temperature, max_retries, req_model.replace("groq-", ""), custom_keys.get("groq")): yield token
     elif req_model.startswith("deepseek"):
         model_id = req_model
         if req_model == "deepseek": model_id = "deepseek-chat"
-        async for token in stream_deepseek(messages, temperature, model_id): yield token
+        async for token in stream_deepseek(messages, temperature, model_id, custom_keys.get("deepseek")): yield token
     elif req_model.startswith("together"):
         model_id = req_model.replace("together-", "")
         if req_model == "together": model_id = "Qwen/Qwen2.5-72B-Instruct-Turbo"
-        async for token in stream_together(messages, temperature, model_id): yield token
+        async for token in stream_together(messages, temperature, model_id, custom_keys.get("together")): yield token
     elif req_model.startswith("zhipu"):
         model_id = req_model.replace("zhipu-", "")
         if req_model == "zhipu": model_id = "glm-5.1"
-        async for token in stream_zhipu(messages, temperature, model_id): yield token
+        async for token in stream_zhipu(messages, temperature, model_id, custom_keys.get("zhipu")): yield token
     elif req_model.startswith("gemini"):
-        async for token in stream_gemini(messages, temperature): yield token
+        async for token in stream_gemini(messages, temperature, custom_keys.get("gemini")): yield token
     else:
         # Fallback to configured default
         if LLM_PROVIDER == "gemini":
-            async for token in stream_gemini(messages, temperature): yield token
+            async for token in stream_gemini(messages, temperature, custom_keys.get("gemini")): yield token
         else:
-            async for token in stream_groq(messages, temperature, max_retries, "llama-3.3-70b-versatile"): yield token
+            async for token in stream_groq(messages, temperature, max_retries, req_model, custom_keys.get("groq")): yield token
 
 
 async def call_llm_once(messages: List[dict], temperature: float = 0.2, req_model: str = "auto") -> str:
