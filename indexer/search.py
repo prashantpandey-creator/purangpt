@@ -184,29 +184,63 @@ class HybridSearcher:
         filters: dict[str, Any] | None = None,
     ) -> list[SearchResult]:
         """
-        Dense vector similarity search via ChromaDB.
+        Dense vector similarity search via Pinecone (if configured) or ChromaDB (fallback).
 
         Parameters
         ----------
-        query   : Natural language query (will be embedded by ChromaDB's model)
+        query   : Natural language query (will be embedded)
         top_k   : Maximum number of results to return
-        filters : ChromaDB where-clause, e.g. {"purana": "Bhagavata Purana"}
+        filters : Dict of metadata matches, e.g. {"purana": "Bhagavata Purana"}
         """
-        if not self._collection or not self._embed_model:
-            logger.warning("ChromaDB collection or embed model not loaded; skipping semantic search")
+        if not self._embed_model:
+            logger.warning("Embedding model not loaded; skipping semantic search")
             return []
 
         try:
-            # Generate query embeddings in the correct vector space with required prefix
-            query_emb = self._embed_model.encode([f"query: {query}"], normalize_embeddings=True).tolist()
-            
+            # Generate query embedding with required format/prefix
+            query_emb_list = self._embed_model.encode([f"query: {query}"], normalize_embeddings=True).tolist()
+            query_emb = query_emb_list[0]
+
+            # 1. Try Pinecone search if API key is present
+            from backend.pinecone_client import PINECONE_API_KEY
+            if PINECONE_API_KEY and not PINECONE_API_KEY.startswith("your_"):
+                logger.info("Performing semantic search via Pinecone...")
+                pinecone_filters = None
+                if filters:
+                    pinecone_filters = {}
+                    for k, v in filters.items():
+                        if isinstance(v, dict) and "$eq" in v:
+                            pinecone_filters[k] = v["$eq"]
+                        else:
+                            pinecone_filters[k] = v
+
+                matches = pinecone_search(
+                    query_embedding=query_emb,
+                    top_k=top_k,
+                    filters=pinecone_filters
+                )
+
+                search_results: list[SearchResult] = []
+                for rank, match in enumerate(matches):
+                    metadata = match["metadata"]
+                    doc = metadata.get("text", "")
+                    chunk = {**metadata, "text": doc, "id": match["id"]}
+                    search_results.append(SearchResult(chunk=chunk, score=match["score"], rank=rank))
+                
+                return search_results
+
+            # 2. Fallback to ChromaDB
+            if not self._collection:
+                logger.warning("ChromaDB collection not loaded; skipping semantic search")
+                return []
+
+            logger.info("Performing semantic search via ChromaDB...")
             kwargs: dict[str, Any] = {
-                "query_embeddings": query_emb,
+                "query_embeddings": query_emb_list,
                 "n_results":        min(top_k, self._collection.count() or 1),
                 "include":          ["documents", "metadatas", "distances"],
             }
             if filters:
-                # Build ChromaDB where clause
                 if len(filters) == 1:
                     key, val = next(iter(filters.items()))
                     kwargs["where"] = {key: {"$eq": val}}
@@ -221,7 +255,6 @@ class HybridSearcher:
             distances = results["distances"][0]
 
             for rank, (doc, meta, dist) in enumerate(zip(docs, metas, distances)):
-                # ChromaDB returns L2 distance; convert to similarity score
                 score = 1.0 / (1.0 + dist)
                 chunk = {**meta, "text": doc}
                 search_results.append(SearchResult(chunk=chunk, score=score, rank=rank))
