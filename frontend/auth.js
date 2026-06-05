@@ -24,12 +24,18 @@ function initAuth() {
         if (session) {
             currentUser = session.user;
             currentAccessToken = session.access_token;
+            localStorage.removeItem('purangpt_guest');
             fetchProfile();
         } else {
             currentUser = null;
             currentProfile = null;
             currentAccessToken = null;
             notifyListeners();
+            
+            // Redirect to login page if they are not logged in and not in guest mode
+            if (window.location.pathname !== '/login.html' && localStorage.getItem('purangpt_guest') !== 'true') {
+                window.location.href = '/login.html';
+            }
         }
     });
     
@@ -38,12 +44,18 @@ function initAuth() {
         if (session) {
             currentUser = session.user;
             currentAccessToken = session.access_token;
+            localStorage.removeItem('purangpt_guest');
             fetchProfile();
         } else {
             currentUser = null;
             currentProfile = null;
             currentAccessToken = null;
             notifyListeners();
+            
+            // Redirect to login page if they are not logged in and not in guest mode
+            if (window.location.pathname !== '/login.html' && localStorage.getItem('purangpt_guest') !== 'true') {
+                window.location.href = '/login.html';
+            }
         }
     });
 }
@@ -93,6 +105,7 @@ async function signInWithGoogle() {
 
 async function signOut() {
     if (!supabase) return;
+    localStorage.removeItem('purangpt_guest');
     await supabase.auth.signOut();
     window.location.href = '/login.html';
 }
