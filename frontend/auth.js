@@ -4,7 +4,12 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let supabase;
 let currentUser = null;
 let currentProfile = null;
+let currentAccessToken = null;
 let _authListeners = [];
+
+function getAuthToken() {
+    return currentAccessToken;
+}
 
 function initAuth() {
     if (!window.supabase) {
@@ -18,10 +23,12 @@ function initAuth() {
     supabase.auth.getSession().then(({ data: { session } }) => {
         if (session) {
             currentUser = session.user;
+            currentAccessToken = session.access_token;
             fetchProfile();
         } else {
             currentUser = null;
             currentProfile = null;
+            currentAccessToken = null;
             notifyListeners();
         }
     });
@@ -30,10 +37,12 @@ function initAuth() {
     supabase.auth.onAuthStateChange((event, session) => {
         if (session) {
             currentUser = session.user;
+            currentAccessToken = session.access_token;
             fetchProfile();
         } else {
             currentUser = null;
             currentProfile = null;
+            currentAccessToken = null;
             notifyListeners();
         }
     });

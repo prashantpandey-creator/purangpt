@@ -100,6 +100,13 @@ function getApiHeaders(extra = {}) {
   if (CONFIG.apiKeys?.deepseek) h['x-deepseek-key'] = CONFIG.apiKeys.deepseek;
   if (CONFIG.apiKeys?.gemini) h['x-gemini-key'] = CONFIG.apiKeys.gemini;
   if (CONFIG.apiKeys?.zhipu) h['x-zhipu-key'] = CONFIG.apiKeys.zhipu;
+  
+  if (typeof getAuthToken === 'function') {
+    const token = getAuthToken();
+    if (token) {
+      h['Authorization'] = `Bearer ${token}`;
+    }
+  }
   return h;
 }
 
