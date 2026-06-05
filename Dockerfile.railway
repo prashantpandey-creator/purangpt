@@ -18,7 +18,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
         python-dotenv sse-starlette \
         chromadb rank-bm25 sentence-transformers \
         pymupdf rich tenacity \
-    || pip install --no-cache-dir -r requirements.txt
+        supabase "python-jose[cryptography]" cryptography pinecone stripe razorpay
 
 # Copy app
 COPY . .
