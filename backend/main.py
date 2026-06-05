@@ -1033,6 +1033,20 @@ async def root():
         return FileResponse(str(idx))
     return HTMLResponse("<h1>🕉️ PuranGPT v2</h1>")
 
+@app.get("/landing.html", response_class=HTMLResponse)
+async def landing():
+    f = FRONTEND_DIR / "landing.html"
+    if f.exists():
+        return FileResponse(str(f))
+    return FileResponse(str(FRONTEND_DIR / "index.html"))
+
+@app.get("/login.html", response_class=HTMLResponse)
+async def login_page():
+    f = FRONTEND_DIR / "login.html"
+    if f.exists():
+        return FileResponse(str(f))
+    return FileResponse(str(FRONTEND_DIR / "index.html"))
+
 @app.get("/ios", response_class=HTMLResponse)
 async def ios_frontend():
     idx = FRONTEND_DIR / "generated_ui.html"

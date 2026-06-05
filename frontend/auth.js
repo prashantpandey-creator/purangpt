@@ -32,9 +32,12 @@ function initAuth() {
             currentAccessToken = null;
             notifyListeners();
             
-            // Redirect to login page if they are not logged in and not in guest mode
-            if (window.location.pathname !== '/login.html' && localStorage.getItem('purangpt_guest') !== 'true') {
-                window.location.href = '/login.html';
+            // Redirect to landing page if not logged in and not guest
+            const onLoginPage = window.location.pathname === '/login.html';
+            const onLandingPage = window.location.pathname === '/landing.html' || window.location.pathname === '/';
+            const isGuest = localStorage.getItem('purangpt_guest') === 'true';
+            if (!onLoginPage && !onLandingPage && !isGuest) {
+                window.location.href = '/landing.html';
             }
         }
     });
@@ -52,9 +55,12 @@ function initAuth() {
             currentAccessToken = null;
             notifyListeners();
             
-            // Redirect to login page if they are not logged in and not in guest mode
-            if (window.location.pathname !== '/login.html' && localStorage.getItem('purangpt_guest') !== 'true') {
-                window.location.href = '/login.html';
+            // Redirect to landing page if not logged in and not guest
+            const onLoginPage = window.location.pathname === '/login.html';
+            const onLandingPage = window.location.pathname === '/landing.html' || window.location.pathname === '/';
+            const isGuest = localStorage.getItem('purangpt_guest') === 'true';
+            if (!onLoginPage && !onLandingPage && !isGuest) {
+                window.location.href = '/landing.html';
             }
         }
     });
@@ -107,7 +113,7 @@ async function signOut() {
     if (!supabase) return;
     localStorage.removeItem('purangpt_guest');
     await supabase.auth.signOut();
-    window.location.href = '/login.html';
+    window.location.href = '/landing.html';
 }
 
 async function getAuthHeaders() {

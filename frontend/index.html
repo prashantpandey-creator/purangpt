@@ -76,6 +76,10 @@
   <!-- Top navigation bar -->
   <nav class="topbar" role="navigation" aria-label="Main navigation">
     <div class="topbar-left">
+      <!-- Back to home button -->
+      <a href="/landing.html" id="btn-home" class="btn-home" aria-label="Back to home" title="Home">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </a>
       <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Open Menu" style="display:none;">
         <i data-lucide="menu" style="width:22px;height:22px;pointer-events:none;"></i>
       </button>
@@ -245,29 +249,29 @@
               <p class="welcome-desc">Ask anything about the 18 Mahapuranas, Vedas, Upanishads, and Yogic scriptures. Get answers with exact verse citations in Sanskrit, Hindi, and English.</p>
 
               <div class="suggestion-grid" id="suggestion-grid" aria-label="Suggested questions">
-                <button class="suggestion-card" data-query="Who is Narada Muni and what role does he play across the Puranas?" id="suggest-1">
-                  <i data-lucide="music" class="suggest-icon-svg"></i>
-                  <span class="suggest-text">Who is Narada Muni across all Puranas?</span>
+                <button class="suggestion-card" data-query="Is the body the consciousness of the void? What do the Puranas, Upanishads and Nath tradition say about the relationship between the physical body, consciousness, and the primordial void (Shunya)?" id="suggest-1">
+                  <i data-lucide="circle-dot" class="suggest-icon-svg"></i>
+                  <span class="suggest-text">Is the body the consciousness of the void?</span>
                 </button>
-                <button class="suggestion-card" data-query="Explain the story of Samudra Manthan (churning of the ocean) and list all the items that emerged from it." id="suggest-2">
-                  <i data-lucide="waves" class="suggest-icon-svg"></i>
-                  <span class="suggest-text">The Samudra Manthan — everything that emerged</span>
+                <button class="suggestion-card" data-query="According to Shailendra Sharma and the Nath tradition, what is Khechari Vidya and how does it enable the yogi to access Amrita (nectar of immortality)? What Puranic texts support this?" id="suggest-2">
+                  <i data-lucide="wind" class="suggest-icon-svg"></i>
+                  <span class="suggest-text">Khechari Vidya &amp; the nectar of immortality</span>
                 </button>
-                <button class="suggestion-card" data-query="What do the Puranas and Upanishads say about the nature of the Atman (self)?" id="suggest-3">
-                  <i data-lucide="atom" class="suggest-icon-svg"></i>
-                  <span class="suggest-text">The nature of Atman in Puranas &amp; Upanishads</span>
+                <button class="suggestion-card" data-query="What is the nature of Kundalini Shakti according to the Tantric and Puranic texts? How does Shailendra Sharma describe its awakening and what is the role of the Sushumna nadi?" id="suggest-3">
+                  <i data-lucide="zap" class="suggest-icon-svg"></i>
+                  <span class="suggest-text">Kundalini Shakti — Tantric &amp; Puranic view</span>
                 </button>
-                <button class="suggestion-card" data-query="List all the Yoga practices and techniques described in the Bhagavad Gita and Yoga Sutras of Patanjali." id="suggest-4">
-                  <i data-lucide="activity" class="suggest-icon-svg"></i>
-                  <span class="suggest-text">Yoga practices in Gita &amp; Yoga Sutras</span>
+                <button class="suggestion-card" data-query="What do the Nath Sampradaya texts and Gorakh Bodh say about the Tenth Door (Dasham Dwar) — the gateway beyond the nine apertures of the body? How does one reach it in meditation?" id="suggest-4">
+                  <i data-lucide="door-open" class="suggest-icon-svg"></i>
+                  <span class="suggest-text">The Tenth Door (Dasham Dwar) in Nath Yoga</span>
                 </button>
-                <button class="suggestion-card" data-query="What does the Bhagavata Purana say about Lord Krishna's birth and childhood in Vrindavan?" id="suggest-5">
-                  <i data-lucide="star" class="suggest-icon-svg"></i>
-                  <span class="suggest-text">Krishna's birth &amp; childhood in Bhagavata</span>
+                <button class="suggestion-card" data-query="According to Shailendra Sharma, what is the deepest meaning of Shiva — is Shiva a person, a principle, or pure consciousness? What do the Shiva Purana and Tantric texts say?" id="suggest-5">
+                  <i data-lucide="flame" class="suggest-icon-svg"></i>
+                  <span class="suggest-text">Who or what is Shiva — person or pure consciousness?</span>
                 </button>
-                <button class="suggestion-card" data-query="Compare how different Puranas describe the creation of the universe (Srishti)." id="suggest-6">
-                  <i data-lucide="globe" class="suggest-icon-svg"></i>
-                  <span class="suggest-text">Creation of universe across Puranas</span>
+                <button class="suggestion-card" data-query="What is Ojas and how is it transformed into Tejas and Varna (inner radiance) through yogic practice? What do the Puranas and Yoga texts say about the transmutation of sexual energy into spiritual power?" id="suggest-6">
+                  <i data-lucide="sun" class="suggest-icon-svg"></i>
+                  <span class="suggest-text">Ojas, Tejas &amp; the alchemy of inner energy</span>
                 </button>
               </div>
             </div>
@@ -596,7 +600,24 @@
   </div>
 
   <script>
-    // Initialize Lucide icons after DOM is ready
+    // ── Auth gate: redirect to landing if not logged in or guest ──
+    (function() {
+      const isGuest = localStorage.getItem('purangpt_guest') === 'true';
+      if (isGuest) return; // guest allowed in
+      // Check Supabase session quickly from localStorage (works without network)
+      const supabaseKey = 'sb-qpnbjhahxvjwncscyrde-auth-token';
+      try {
+        const raw = localStorage.getItem(supabaseKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.access_token) return; // logged in
+        }
+      } catch(e) {}
+      // No session and not guest → redirect to landing
+      window.location.replace('/landing.html');
+    })();
+
+    // ── Initialize Lucide icons after DOM is ready ──
     document.addEventListener('DOMContentLoaded', () => {
       if (window.lucide) lucide.createIcons();
     });

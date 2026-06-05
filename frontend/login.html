@@ -1,370 +1,511 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Login - PuranGPT</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-        let currentAuthType = '';
-        let currentAuthTarget = '';
-        
-        function switchTab(tab) {
-            document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById('tab-google').style.display = 'none';
-            document.getElementById('tab-email').style.display = 'none';
-            document.getElementById('tab-phone').style.display = 'none';
-            document.getElementById('tab-' + tab).style.display = 'block';
-        }
-        
-        async function handleEmailAuth() {
-            const email = document.getElementById('email-input').value;
-            if(!email) return;
-            const err = await signInWithEmail(email);
-            if(err) alert(err);
-            else {
-                document.getElementById('email-msg').style.display = 'block';
-                showOTPModal('email', email);
-            }
-        }
-        
-        async function handlePhoneAuth() {
-            const phone = document.getElementById('phone-input').value;
-            if(!phone) return;
-            const err = await signInWithPhone(phone);
-            if(err) alert(err);
-            else showOTPModal('phone', phone);
-        }
-        
-        function showOTPModal(type, target) {
-            currentAuthType = type;
-            currentAuthTarget = target;
-            document.getElementById('otp-target').innerText = target;
-            document.getElementById('otp-modal').style.display = 'flex';
-        }
-        
-        async function submitOTP() {
-            const token = document.getElementById('otp-input').value;
-            if(token.length !== 6) return;
-            const err = await verifyOTP(currentAuthTarget, token, currentAuthType);
-            if(err) alert(err);
-            else {
-                document.getElementById('otp-modal').style.display = 'none';
-                // Auth state change will handle redirect
-            }
-        }
-</script>
-    <script src="auth.js">
-        let currentAuthType = '';
-        let currentAuthTarget = '';
-        
-        function switchTab(tab) {
-            document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById('tab-google').style.display = 'none';
-            document.getElementById('tab-email').style.display = 'none';
-            document.getElementById('tab-phone').style.display = 'none';
-            document.getElementById('tab-' + tab).style.display = 'block';
-        }
-        
-        async function handleEmailAuth() {
-            const email = document.getElementById('email-input').value;
-            if(!email) return;
-            const err = await signInWithEmail(email);
-            if(err) alert(err);
-            else {
-                document.getElementById('email-msg').style.display = 'block';
-                showOTPModal('email', email);
-            }
-        }
-        
-        async function handlePhoneAuth() {
-            const phone = document.getElementById('phone-input').value;
-            if(!phone) return;
-            const err = await signInWithPhone(phone);
-            if(err) alert(err);
-            else showOTPModal('phone', phone);
-        }
-        
-        function showOTPModal(type, target) {
-            currentAuthType = type;
-            currentAuthTarget = target;
-            document.getElementById('otp-target').innerText = target;
-            document.getElementById('otp-modal').style.display = 'flex';
-        }
-        
-        async function submitOTP() {
-            const token = document.getElementById('otp-input').value;
-            if(token.length !== 6) return;
-            const err = await verifyOTP(currentAuthTarget, token, currentAuthType);
-            if(err) alert(err);
-            else {
-                document.getElementById('otp-modal').style.display = 'none';
-                // Auth state change will handle redirect
-            }
-        }
-</script>
-    <style>
-        body {
-            background-color: var(--bg-base);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            overflow: hidden;
-        }
-        
-        /* Mandala background effect */
-        .bg-mandala {
-            position: absolute;
-            width: 150vw;
-            height: 150vw;
-            max-width: 1000px;
-            max-height: 1000px;
-            background: radial-gradient(circle, rgba(212, 168, 67, 0.05) 0%, rgba(11, 9, 7, 0) 70%);
-            border-radius: 50%;
-            z-index: -1;
-            animation: pulse 10s infinite alternate ease-in-out;
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 0.5; }
-            100% { transform: scale(1.1); opacity: 0.8; }
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Sign In — PuranGPT</title>
+  <meta name="description" content="Sign in to PuranGPT to explore the 18 Mahapuranas and sacred texts through AI." />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&family=Noto+Sans+Devanagari:wght@300;400&display=swap" rel="stylesheet" />
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Auth helpers (auth.js sets up supabase client, signInWithGoogle etc.) -->
+  <script src="/static/auth.js"></script>
 
-        .login-card {
-            background: rgba(20, 17, 13, 0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--border-light);
-            border-radius: 24px;
-            padding: 48px;
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            animation: slideUp 0.5s ease-out;
-        }
-        
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+  <style>
+    :root {
+      --bg-page:     #0B0907;
+      --bg-base:     #111009;
+      --bg-surface:  #181510;
+      --bg-elevated: #1F1C13;
+      --t1: #EDE8D8;
+      --t2: #9A8E70;
+      --t3: #635a44;
+      --b0: rgba(255,248,220,0.04);
+      --b1: rgba(255,248,220,0.09);
+      --b2: rgba(255,248,220,0.16);
+      --accent:       #C4961F;
+      --accent-light: #E2B84A;
+      --accent-ghost: rgba(196,150,31,0.10);
+      --font-ui:      'Inter', -apple-system, sans-serif;
+      --font-display: 'Cinzel', Georgia, serif;
+      --font-deva:    'Noto Sans Devanagari', sans-serif;
+      --ease: cubic-bezier(0.16,1,0.3,1);
+    }
 
-        .logo {
-            font-family: 'Outfit', sans-serif;
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--t1);
-            margin-bottom: 8px;
-        }
-        
-        .logo span {
-            color: var(--saffron);
-        }
-        
-        .tagline {
-            color: var(--t3);
-            font-size: 14px;
-            margin-bottom: 40px;
-        }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%; min-height: 100vh;
+      background: var(--bg-page);
+      color: var(--t1);
+      font-family: var(--font-ui);
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow: hidden;
+    }
 
-        .btn-google {
-            background: var(--b1);
-            color: var(--t1);
-            border: 1px solid var(--border-light);
-            border-radius: 12px;
-            padding: 14px 24px;
-            width: 100%;
-            font-family: 'Inter', sans-serif;
-            font-size: 16px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-bottom: 24px;
-        }
-        
-        .btn-google:hover {
-            background: rgba(255, 255, 255, 0.05);
-            border-color: var(--t3);
-        }
-        
-        .divider {
-            display: flex;
-            align-items: center;
-            color: var(--t3);
-            font-size: 12px;
-            margin: 24px 0;
-        }
-        
-        .divider::before, .divider::after {
-            content: '';
-            flex: 1;
-            border-bottom: 1px solid var(--border-light);
-        }
-        
-        .divider::before { margin-right: 12px; }
-        .divider::after { margin-left: 12px; }
+    /* Ambient glow */
+    .bg-glow {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background: radial-gradient(ellipse 70% 60% at 50% 30%, rgba(196,150,31,0.07) 0%, transparent 70%);
+    }
+    .bg-mandala {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      width: min(800px, 120vw); height: min(800px, 120vw);
+      pointer-events: none; z-index: 0; opacity: 0.08;
+      animation: mandala-spin 90s linear infinite;
+    }
+    @keyframes mandala-spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
 
-        .btn-guest {
-            background: transparent;
-            color: var(--t2);
-            border: none;
-            font-family: 'Inter', sans-serif;
-            font-size: 15px;
-            cursor: pointer;
-            text-decoration: underline;
-            transition: color 0.2s;
-        }
-        
-        .btn-guest:hover {
-            color: var(--t1);
-        }
-        
-        .guest-note {
-            color: var(--t3);
-            font-size: 12px;
-            margin-top: 8px;
-        }
-    
-        .form-group { margin-bottom: 16px; text-align: left; }
-        .form-group label { display: block; margin-bottom: 8px; color: var(--t2); font-size: 14px; }
-        .form-group input { width: 100%; padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-light); color: var(--t1); border-radius: 8px; box-sizing: border-box; }
-        .form-group input:focus { outline: none; border-color: var(--saffron); }
-        .btn-submit { background: var(--saffron); color: #000; border: none; border-radius: 12px; padding: 14px 24px; width: 100%; font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; margin-bottom: 16px; }
-        .btn-submit:hover { background: #e6b84d; }
-        .auth-tabs { display: flex; gap: 8px; margin-bottom: 24px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 12px; }
-        .auth-tab { flex: 1; padding: 10px; border-radius: 8px; font-size: 14px; color: var(--t2); cursor: pointer; text-align: center; border: none; background: transparent; transition: all 0.2s; }
-        .auth-tab.active { background: rgba(255,255,255,0.1); color: var(--t1); font-weight: 500; }
-        
-        .otp-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 100; align-items: center; justify-content: center; }
-        .otp-content { background: var(--b0); padding: 32px; border-radius: 16px; border: 1px solid var(--border-light); width: 100%; max-width: 320px; text-align: center; }
-</style>
+    /* Card */
+    .card {
+      position: relative; z-index: 1;
+      background: rgba(18, 15, 10, 0.92);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--b1);
+      border-radius: 24px;
+      padding: 44px 40px 36px;
+      width: 100%; max-width: 400px;
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,248,220,0.04);
+      animation: card-in 0.5s var(--ease) both;
+    }
+    @keyframes card-in {
+      from { opacity: 0; transform: translateY(20px) scale(0.98); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* Logo */
+    .logo {
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; margin-bottom: 8px;
+    }
+    .logo-om {
+      font-family: var(--font-deva); font-size: 36px;
+      color: var(--accent); line-height: 1;
+    }
+    .logo-text {
+      font-family: var(--font-display); font-size: 22px;
+      font-weight: 700; letter-spacing: 0.1em; color: var(--t1);
+    }
+    .tagline {
+      color: var(--t3); font-size: 13px;
+      margin-bottom: 36px; letter-spacing: 0.05em;
+    }
+
+    /* Tab switcher */
+    .tabs {
+      display: flex; gap: 4px; margin-bottom: 28px;
+      background: rgba(0,0,0,0.25); padding: 4px;
+      border-radius: 12px;
+    }
+    .tab {
+      flex: 1; padding: 9px;
+      border: none; background: transparent;
+      color: var(--t3); font-family: var(--font-ui);
+      font-size: 13px; font-weight: 500;
+      border-radius: 8px; cursor: pointer;
+      transition: all 0.2s var(--ease);
+    }
+    .tab.active {
+      background: rgba(255,255,255,0.08);
+      color: var(--t1);
+    }
+    .tab:hover:not(.active) { color: var(--t2); }
+
+    /* Tab panels */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Google button */
+    .btn-google {
+      width: 100%; display: flex; align-items: center;
+      justify-content: center; gap: 12px;
+      background: var(--bg-elevated); border: 1px solid var(--b2);
+      border-radius: 12px; padding: 14px 20px;
+      color: var(--t1); font-family: var(--font-ui);
+      font-size: 15px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s var(--ease);
+      margin-bottom: 0;
+    }
+    .btn-google:hover {
+      background: var(--bg-surface);
+      border-color: var(--t2);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    }
+
+    /* Form elements */
+    .form-group { margin-bottom: 16px; text-align: left; }
+    .form-label {
+      display: block; margin-bottom: 7px;
+      color: var(--t2); font-size: 13px; font-weight: 500;
+    }
+    .form-input {
+      width: 100%; padding: 12px 14px;
+      background: rgba(0,0,0,0.25); border: 1px solid var(--b2);
+      border-radius: 10px; color: var(--t1);
+      font-family: var(--font-ui); font-size: 15px;
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(196,150,31,0.12);
+    }
+    .form-input::placeholder { color: var(--t3); }
+
+    /* Primary submit button */
+    .btn-primary {
+      width: 100%; padding: 13px 20px;
+      background: var(--accent); border: none; border-radius: 12px;
+      color: #0B0907; font-family: var(--font-ui);
+      font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s var(--ease);
+    }
+    .btn-primary:hover {
+      background: var(--accent-light);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(196,150,31,0.3);
+    }
+    .btn-primary:disabled {
+      opacity: 0.5; cursor: not-allowed; transform: none;
+    }
+
+    /* Success message */
+    .msg-success {
+      display: none; margin-top: 12px;
+      background: rgba(61,140,94,0.12); border: 1px solid rgba(61,140,94,0.3);
+      border-radius: 8px; padding: 10px 14px;
+      color: #6ecf96; font-size: 13px; line-height: 1.5;
+    }
+    .msg-error {
+      display: none; margin-top: 12px;
+      background: rgba(140,61,61,0.12); border: 1px solid rgba(140,61,61,0.3);
+      border-radius: 8px; padding: 10px 14px;
+      color: #cf6e6e; font-size: 13px;
+    }
+
+    /* Divider */
+    .divider {
+      display: flex; align-items: center;
+      color: var(--t3); font-size: 11px;
+      letter-spacing: 0.08em; margin: 28px 0;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1;
+      border-top: 1px solid var(--b1);
+    }
+    .divider::before { margin-right: 12px; }
+    .divider::after  { margin-left: 12px; }
+
+    /* Guest button */
+    .btn-guest {
+      width: 100%; padding: 12px 20px;
+      background: var(--b0); border: 1px solid var(--b1);
+      border-radius: 12px; color: var(--t2);
+      font-family: var(--font-ui); font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s var(--ease);
+      margin-bottom: 8px;
+    }
+    .btn-guest:hover {
+      background: var(--b1); color: var(--t1);
+    }
+    .guest-note {
+      color: var(--t3); font-size: 11px; line-height: 1.5;
+    }
+
+    /* OTP overlay */
+    .otp-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(6px);
+      z-index: 200; align-items: center; justify-content: center;
+    }
+    .otp-overlay.visible { display: flex; }
+    .otp-card {
+      background: var(--bg-base); border: 1px solid var(--b2);
+      border-radius: 20px; padding: 36px 32px;
+      width: 100%; max-width: 320px;
+      text-align: center;
+      animation: card-in 0.3s var(--ease) both;
+    }
+    .otp-title { font-family: var(--font-display); font-size: 18px; margin-bottom: 8px; }
+    .otp-sub {
+      color: var(--t2); font-size: 13px; margin-bottom: 24px; line-height: 1.5;
+    }
+    .otp-sub strong { color: var(--accent-light); }
+    .otp-input {
+      width: 100%; text-align: center; font-size: 28px;
+      letter-spacing: 12px; padding: 14px;
+      background: rgba(0,0,0,0.3); border: 1px solid var(--b2);
+      border-radius: 10px; color: var(--t1);
+      font-family: var(--font-ui); outline: none;
+      margin-bottom: 16px;
+      transition: border-color 0.2s;
+    }
+    .otp-input:focus { border-color: var(--accent); }
+    .btn-cancel {
+      background: none; border: none; color: var(--t3);
+      font-family: var(--font-ui); font-size: 13px;
+      cursor: pointer; text-decoration: underline;
+      margin-top: 12px; transition: color 0.2s;
+    }
+    .btn-cancel:hover { color: var(--t2); }
+
+    /* Back to landing */
+    .back-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      position: absolute; top: 20px; left: 20px;
+      color: var(--t3); text-decoration: none; font-size: 13px;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--accent-light); }
+
+    @media (max-width: 440px) {
+      .card { padding: 36px 24px 28px; border-radius: 20px; }
+    }
+  </style>
 </head>
 <body>
-    <div class="bg-mandala"></div>
-    
-    <div class="login-card">
-        <div class="logo">ॐ Puran<span>GPT</span></div>
-        <div class="tagline">Illuminating Vedic Wisdom through AI</div>
-        
-        
-        <div class="auth-tabs">
-            <button class="auth-tab active" onclick="switchTab('google')">Google</button>
-            <button class="auth-tab" onclick="switchTab('email')">Email</button>
-            <button class="auth-tab" onclick="switchTab('phone')">Phone</button>
-        </div>
-        
-        <div id="tab-google">
-            <button class="btn-google" onclick="signInWithGoogle()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                </svg>
-                Sign in with Google
-            </button>
-        </div>
-        
-        <div id="tab-email" style="display: none;">
-            <div class="form-group">
-                <label>Email Address</label>
-                <input type="email" id="email-input" placeholder="you@example.com">
-            </div>
-            <button class="btn-submit" onclick="handleEmailAuth()">Send Magic Link / OTP</button>
-            <div id="email-msg" style="font-size: 12px; color: #4ade80; display: none;">Link & OTP sent! Check your inbox.</div>
-        </div>
-        
-        <div id="tab-phone" style="display: none;">
-            <div class="form-group">
-                <label>Phone Number</label>
-                <input type="tel" id="phone-input" placeholder="+1234567890">
-            </div>
-            <button class="btn-submit" onclick="handlePhoneAuth()">Send SMS OTP</button>
-        </div>
+  <!-- Ambient -->
+  <div class="bg-glow" aria-hidden="true"></div>
+  <svg class="bg-mandala" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <g transform="translate(200,200)">
+      <circle r="195" fill="none" stroke="rgba(212,175,55,1)" stroke-width="0.5"/>
+      <circle r="155" fill="none" stroke="rgba(212,175,55,0.6)" stroke-width="0.4" stroke-dasharray="3,6"/>
+      <circle r="110" fill="none" stroke="rgba(212,175,55,0.5)" stroke-width="0.3"/>
+      <g>
+        <ellipse rx="8" ry="50" fill="none" stroke="rgba(212,175,55,0.8)" stroke-width="0.6" transform="rotate(0)   translate(0,-125)"/>
+        <ellipse rx="8" ry="50" fill="none" stroke="rgba(212,175,55,0.8)" stroke-width="0.6" transform="rotate(22.5) translate(0,-125)"/>
+        <ellipse rx="8" ry="50" fill="none" stroke="rgba(212,175,55,0.8)" stroke-width="0.6" transform="rotate(45)  translate(0,-125)"/>
+        <ellipse rx="8" ry="50" fill="none" stroke="rgba(212,175,55,0.8)" stroke-width="0.6" transform="rotate(67.5) translate(0,-125)"/>
+        <ellipse rx="8" ry="50" fill="none" stroke="rgba(212,175,55,0.8)" stroke-width="0.6" transform="rotate(90)  translate(0,-125)"/>
+        <ellipse rx="8" ry="50" fill="none" stroke="rgba(212,175,55,0.8)" stroke-width="0.6" transform="rotate(112.5) translate(0,-125)"/>
+        <ellipse rx="8" ry="50" fill="none" stroke="rgba(212,175,55,0.8)" stroke-width="0.6" transform="rotate(135) translate(0,-125)"/>
+        <ellipse rx="8" ry="50" fill="none" stroke="rgba(212,175,55,0.8)" stroke-width="0.6" transform="rotate(157.5) translate(0,-125)"/>
+        <ellipse rx="8" ry="50" fill="none" stroke="rgba(212,175,55,0.8)" stroke-width="0.6" transform="rotate(180) translate(0,-125)"/>
+        <ellipse rx="8" ry="50" fill="none" stroke="rgba(212,175,55,0.8)" stroke-width="0.6" transform="rotate(202.5) translate(0,-125)"/>
+        <ellipse rx="8" ry="50" fill="none" stroke="rgba(212,175,55,0.8)" stroke-width="0.6" transform="rotate(225) translate(0,-125)"/>
+        <ellipse rx="8" ry="50" fill="none" stroke="rgba(212,175,55,0.8)" stroke-width="0.6" transform="rotate(247.5) translate(0,-125)"/>
+        <ellipse rx="8" ry="50" fill="none" stroke="rgba(212,175,55,0.8)" stroke-width="0.6" transform="rotate(270) translate(0,-125)"/>
+        <ellipse rx="8" ry="50" fill="none" stroke="rgba(212,175,55,0.8)" stroke-width="0.6" transform="rotate(292.5) translate(0,-125)"/>
+        <ellipse rx="8" ry="50" fill="none" stroke="rgba(212,175,55,0.8)" stroke-width="0.6" transform="rotate(315) translate(0,-125)"/>
+        <ellipse rx="8" ry="50" fill="none" stroke="rgba(212,175,55,0.8)" stroke-width="0.6" transform="rotate(337.5) translate(0,-125)"/>
+      </g>
+    </g>
+  </svg>
 
-        
-        <div class="divider">OR</div>
-        
-        <button class="btn-guest" onclick="localStorage.setItem('purangpt_guest', 'true'); window.location.href='/'">Continue as Guest</button>
-        <div class="guest-note">10 free messages per day. No history saved.</div>
+  <!-- Back to landing -->
+  <a href="/landing.html" class="back-link" aria-label="Back to home">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Home
+  </a>
+
+  <!-- Main card -->
+  <div class="card" role="main">
+    <div class="logo" aria-label="PuranGPT">
+      <span class="logo-om" aria-hidden="true">ॐ</span>
+      <span class="logo-text">PuranGPT</span>
     </div>
-    
-    <script>
+    <p class="tagline">Illuminating Vedic Wisdom through AI</p>
+
+    <!-- Tabs -->
+    <div class="tabs" role="tablist" aria-label="Sign in method">
+      <button class="tab active" id="tab-google-btn" role="tab" aria-selected="true" aria-controls="panel-google" onclick="switchTab('google', this)">Google</button>
+      <button class="tab" id="tab-email-btn" role="tab" aria-selected="false" aria-controls="panel-email" onclick="switchTab('email', this)">Email</button>
+      <button class="tab" id="tab-phone-btn" role="tab" aria-selected="false" aria-controls="panel-phone" onclick="switchTab('phone', this)">Phone</button>
+    </div>
+
+    <!-- Google panel -->
+    <div class="tab-panel active" id="panel-google" role="tabpanel" aria-labelledby="tab-google-btn">
+      <button class="btn-google" id="google-btn" onclick="handleGoogle()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Continue with Google
+      </button>
+    </div>
+
+    <!-- Email panel -->
+    <div class="tab-panel" id="panel-email" role="tabpanel" aria-labelledby="tab-email-btn">
+      <div class="form-group">
+        <label class="form-label" for="email-input">Email Address</label>
+        <input type="email" id="email-input" class="form-input"
+          placeholder="you@example.com" autocomplete="email"
+          onkeydown="if(event.key==='Enter') handleEmail()" />
+      </div>
+      <button class="btn-primary" id="email-btn" onclick="handleEmail()">Send Magic Link</button>
+      <div class="msg-success" id="email-success">
+        ✓ Check your inbox — we sent a magic link &amp; 6-digit code to sign you in.
+      </div>
+      <div class="msg-error" id="email-error"></div>
+    </div>
+
+    <!-- Phone panel -->
+    <div class="tab-panel" id="panel-phone" role="tabpanel" aria-labelledby="tab-phone-btn">
+      <div class="form-group">
+        <label class="form-label" for="phone-input">Phone Number</label>
+        <input type="tel" id="phone-input" class="form-input"
+          placeholder="+91 9876543210" autocomplete="tel"
+          onkeydown="if(event.key==='Enter') handlePhone()" />
+      </div>
+      <button class="btn-primary" id="phone-btn" onclick="handlePhone()">Send SMS OTP</button>
+      <div class="msg-error" id="phone-error"></div>
+    </div>
+
+    <div class="divider">OR</div>
+
+    <button class="btn-guest" id="guest-btn" onclick="enterAsGuest()">
+      Continue as Guest
+    </button>
+    <p class="guest-note">10 free messages per day · No history saved</p>
+  </div>
+
+  <!-- OTP overlay -->
+  <div class="otp-overlay" id="otp-overlay" role="dialog" aria-modal="true" aria-labelledby="otp-title">
+    <div class="otp-card">
+      <h2 class="otp-title" id="otp-title">Enter Verification Code</h2>
+      <p class="otp-sub">We sent a 6-digit code to<br/><strong id="otp-target-display"></strong></p>
+      <input type="text" class="otp-input" id="otp-code-input"
+        maxlength="6" inputmode="numeric" pattern="[0-9]*"
+        placeholder="000000"
+        onkeydown="if(event.key==='Enter') submitOTP()"
+        aria-label="6-digit verification code" />
+      <button class="btn-primary" id="otp-verify-btn" onclick="submitOTP()">Verify</button>
+      <br/>
+      <button class="btn-cancel" onclick="closeOTP()">Cancel</button>
+      <div class="msg-error" id="otp-error" style="margin-top: 12px;"></div>
+    </div>
+  </div>
+
+  <script>
+    // ── State ──
+    let _otpType   = '';   // 'email' | 'phone'
+    let _otpTarget = '';
+
+    // ── Auth redirect: if already logged in, skip login ──
+    window.addEventListener('DOMContentLoaded', () => {
+      // auth.js registers a listener; if user exists, go to app
+      if (typeof onAuthStateChange === 'function') {
         onAuthStateChange((user) => {
-            if (user) {
-                window.location.href = '/';
-            }
+          if (user) window.location.replace('/');
         });
-    
-        let currentAuthType = '';
-        let currentAuthTarget = '';
-        
-        function switchTab(tab) {
-            document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById('tab-google').style.display = 'none';
-            document.getElementById('tab-email').style.display = 'none';
-            document.getElementById('tab-phone').style.display = 'none';
-            document.getElementById('tab-' + tab).style.display = 'block';
-        }
-        
-        async function handleEmailAuth() {
-            const email = document.getElementById('email-input').value;
-            if(!email) return;
-            const err = await signInWithEmail(email);
-            if(err) alert(err);
-            else {
-                document.getElementById('email-msg').style.display = 'block';
-                showOTPModal('email', email);
-            }
-        }
-        
-        async function handlePhoneAuth() {
-            const phone = document.getElementById('phone-input').value;
-            if(!phone) return;
-            const err = await signInWithPhone(phone);
-            if(err) alert(err);
-            else showOTPModal('phone', phone);
-        }
-        
-        function showOTPModal(type, target) {
-            currentAuthType = type;
-            currentAuthTarget = target;
-            document.getElementById('otp-target').innerText = target;
-            document.getElementById('otp-modal').style.display = 'flex';
-        }
-        
-        async function submitOTP() {
-            const token = document.getElementById('otp-input').value;
-            if(token.length !== 6) return;
-            const err = await verifyOTP(currentAuthTarget, token, currentAuthType);
-            if(err) alert(err);
-            else {
-                document.getElementById('otp-modal').style.display = 'none';
-                // Auth state change will handle redirect
-            }
-        }
-</script>
+      }
+    });
 
-    <div id="otp-modal" class="otp-modal">
-        <div class="otp-content">
-            <h3 style="margin-top:0;">Enter OTP</h3>
-            <p style="font-size: 14px; color: var(--t2); margin-bottom: 20px;">We sent a 6-digit code to your <span id="otp-target"></span>.</p>
-            <div class="form-group">
-                <input type="text" id="otp-input" placeholder="123456" maxlength="6" style="text-align: center; font-size: 24px; letter-spacing: 8px;">
-            </div>
-            <button class="btn-submit" onclick="submitOTP()">Verify</button>
-            <button class="btn-guest" onclick="document.getElementById('otp-modal').style.display='none'">Cancel</button>
-        </div>
-    </div>
+    // ── Tab switcher ──
+    function switchTab(name, btn) {
+      document.querySelectorAll('.tab').forEach(t => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
+      document.getElementById('panel-' + name).classList.add('active');
+    }
+
+    // ── Google ──
+    async function handleGoogle() {
+      const btn = document.getElementById('google-btn');
+      btn.disabled = true;
+      btn.textContent = 'Redirecting…';
+      await signInWithGoogle();
+      btn.disabled = false;
+      btn.textContent = 'Continue with Google';
+    }
+
+    // ── Email magic link ──
+    async function handleEmail() {
+      const email = document.getElementById('email-input').value.trim();
+      if (!email) { showError('email-error', 'Please enter your email address.'); return; }
+      const btn = document.getElementById('email-btn');
+      btn.disabled = true; btn.textContent = 'Sending…';
+      clearError('email-error');
+      const err = await signInWithEmail(email);
+      btn.disabled = false; btn.textContent = 'Send Magic Link';
+      if (err) {
+        showError('email-error', err);
+      } else {
+        document.getElementById('email-success').style.display = 'block';
+        showOTP('email', email);
+      }
+    }
+
+    // ── Phone OTP ──
+    async function handlePhone() {
+      const phone = document.getElementById('phone-input').value.trim();
+      if (!phone) { showError('phone-error', 'Please enter your phone number.'); return; }
+      const btn = document.getElementById('phone-btn');
+      btn.disabled = true; btn.textContent = 'Sending…';
+      clearError('phone-error');
+      const err = await signInWithPhone(phone);
+      btn.disabled = false; btn.textContent = 'Send SMS OTP';
+      if (err) {
+        showError('phone-error', err);
+      } else {
+        showOTP('phone', phone);
+      }
+    }
+
+    // ── OTP modal ──
+    function showOTP(type, target) {
+      _otpType   = type;
+      _otpTarget = target;
+      document.getElementById('otp-target-display').textContent = target;
+      document.getElementById('otp-code-input').value = '';
+      clearError('otp-error');
+      document.getElementById('otp-overlay').classList.add('visible');
+      setTimeout(() => document.getElementById('otp-code-input').focus(), 100);
+    }
+    function closeOTP() {
+      document.getElementById('otp-overlay').classList.remove('visible');
+    }
+    async function submitOTP() {
+      const code = document.getElementById('otp-code-input').value.trim();
+      if (code.length !== 6) { showError('otp-error', 'Please enter the 6-digit code.'); return; }
+      const btn = document.getElementById('otp-verify-btn');
+      btn.disabled = true; btn.textContent = 'Verifying…';
+      clearError('otp-error');
+      const err = await verifyOTP(_otpTarget, code, _otpType);
+      btn.disabled = false; btn.textContent = 'Verify';
+      if (err) {
+        showError('otp-error', 'Invalid code. Please try again.');
+      }
+      // On success, auth.js onAuthStateChange fires and redirects to '/'
+    }
+
+    // ── Guest ──
+    function enterAsGuest() {
+      localStorage.setItem('purangpt_guest', 'true');
+      window.location.replace('/');
+    }
+
+    // ── Helpers ──
+    function showError(id, msg) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+    function clearError(id) {
+      const el = document.getElementById(id);
+      if (el) { el.textContent = ''; el.style.display = 'none'; }
+    }
+
+    // Close OTP overlay when clicking outside
+    document.getElementById('otp-overlay').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeOTP();
+    });
+  </script>
 </body>
 </html>
