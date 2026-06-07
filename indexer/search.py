@@ -119,22 +119,10 @@ class HybridSearcher:
         logger.info("Initializing HybridSearcher…")
 
         # ── ChromaDB ───────────────────────────────────────────────────
-        self._chroma_client = chromadb.PersistentClient(
-            path=str(self.db_dir),
-            settings=Settings(anonymized_telemetry=False),
-        )
-        try:
-            self._collection = self._chroma_client.get_collection(self.collection_name)
-            logger.info(
-                "Loaded ChromaDB collection '%s' with %d documents",
-                self.collection_name,
-                self._collection.count(),
-            )
-        except Exception as e:
-            logger.warning(
-                "ChromaDB collection '%s' not found: %s. Semantic search will be unavailable.",
-                self.collection_name, e,
-            )
+        # Bypass ChromaDB on local Mac to avoid sqlite3 SIGSEGV. We have Pinecone configured.
+        self._chroma_client = None
+        self._collection = None
+        logger.info("ChromaDB bypassed locally to avoid sqlite3 segfaults. Using Pinecone.")
 
         # ── BM25 + Chunk Map ──────────────────────────────────────────
         bm25_path     = self.index_dir / "bm25_index.pkl"

@@ -1039,6 +1039,7 @@ async def deep_research(query: str, session_id: str) -> AsyncGenerator[str, None
 
 # ── Routes ─────────────────────────────────────────────────────────────────
 @app.get("/", response_class=HTMLResponse)
+@app.get("/index.html", response_class=HTMLResponse)
 async def root():
     idx = FRONTEND_DIR / "index.html"
     if idx.exists():
