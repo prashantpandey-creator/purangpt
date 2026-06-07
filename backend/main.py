@@ -1046,26 +1046,16 @@ async def root():
         return FileResponse(str(idx))
     return HTMLResponse("<h1>🕉️ PuranGPT v2</h1>")
 
-@app.get("/landing.html", response_class=HTMLResponse)
-async def landing():
-    f = FRONTEND_DIR / "landing.html"
-    if f.exists():
+@app.get("/{filename}")
+async def serve_frontend_root_file(filename: str):
+    # Ignore API routes and static route
+    if filename.startswith("api") or filename == "static":
+        raise HTTPException(404, "Not Found")
+        
+    f = FRONTEND_DIR / filename
+    if f.exists() and f.is_file():
         return FileResponse(str(f))
-    return FileResponse(str(FRONTEND_DIR / "index.html"))
-
-@app.get("/login.html", response_class=HTMLResponse)
-async def login_page():
-    f = FRONTEND_DIR / "login.html"
-    if f.exists():
-        return FileResponse(str(f))
-    return FileResponse(str(FRONTEND_DIR / "index.html"))
-
-@app.get("/ios", response_class=HTMLResponse)
-async def ios_frontend():
-    idx = FRONTEND_DIR / "generated_ui.html"
-    if idx.exists():
-        return FileResponse(str(idx))
-    return HTMLResponse("<h1>iOS UI not found</h1>")
+    raise HTTPException(404, "Not Found")
 
 
 @app.get("/api/status")
