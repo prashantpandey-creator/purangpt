@@ -63,7 +63,7 @@ MAX_HISTORY   = 100  # messages kept in session memory
 
 
 from backend.auth import get_current_user, require_auth, require_role, get_guest_id, check_guest_rate_limit, increment_guest_usage
-from backend.supabase_client import get_supabase, update_profile, get_admin_stats, get_all_users, encrypt_keys, decrypt_keys, increment_usage, check_rate_limit
+from backend.supabase_client import get_supabase, update_profile, get_admin_stats, get_all_users, encrypt_keys, decrypt_keys, increment_usage, check_rate_limit, check_research_limit, increment_research_usage
 
 from backend.session_manager import SessionManager
 
@@ -1163,6 +1163,9 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
     if not request.query.strip():
         raise HTTPException(400, "Query cannot be empty")
         
+    # Check BYOK
+    is_byok = bool(custom_keys_var.get())
+    
     # Rate Limiting
     if not user:
         # Guest rate limit
@@ -1171,7 +1174,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         if not allowed:
             raise HTTPException(429, "Guest rate limit exceeded. Please sign in.")
     else:
-        allowed, rem = check_rate_limit(user.get("id"), user.get("role", "free"))
+        allowed, rem = check_rate_limit(user.get("id"), user.get("role", "free"), is_byok=is_byok)
         if not allowed:
             raise HTTPException(429, "Daily message limit exceeded. Please upgrade your plan.")
     if not GROQ_API_KEY and not GEMINI_API_KEY:
@@ -1185,12 +1188,13 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
 
     # ── Deep Research Mode ──────────────────────────────────────────────────
     if request.mode == "deep":
-        if user and user.get("role", "free") == "free":
-            from backend.supabase_client import get_profile
-            profile = get_profile(user.get("id"))
-            if profile and profile.get("research_session_count", 0) >= 3:
-                raise HTTPException(403, "Free research session limit reached. Please upgrade to Pro.")
-            increment_research_session_usage(user.get("id"))
+        if user:
+            r_allowed, r_rem = check_research_limit(user.get("id"), user.get("role", "free"), is_byok=is_byok)
+            if not r_allowed:
+                raise HTTPException(403, "Daily deep research limit reached. Please upgrade to Pro or provide your own API key.")
+            increment_research_usage(user.get("id"))
+        else:
+            raise HTTPException(401, "Please sign in to use Deep Research.")
             
         async def deep_gen():
             async for chunk in deep_research(request.query, session_id, user.get("id") if user else None):
@@ -1644,11 +1648,26 @@ async def update_user_profile(data: dict, user: dict = Depends(require_auth)):
 
 @app.get("/api/user/usage")
 async def get_user_usage(user: dict = Depends(require_auth)):
-    allowed, rem = check_rate_limit(user["id"], user.get("role", "free"))
+    from backend.supabase_client import get_profile
+    is_byok = bool(custom_keys_var.get())
+    profile = get_profile(user["id"]) or {}
+    
+    msg_allowed, msg_rem = check_rate_limit(user["id"], user.get("role", "free"), is_byok=is_byok)
+    res_allowed, res_rem = check_research_limit(user["id"], user.get("role", "free"), is_byok=is_byok)
+    
     return {
-        "daily_count": user.get("daily_message_count", 0),
-        "remaining": rem,
-        "role": user.get("role", "free")
+        "role": user.get("role", "free"),
+        "is_byok": is_byok,
+        "messages": {
+            "used": profile.get("daily_message_count", 0),
+            "remaining": msg_rem,
+            "limit": profile.get("daily_message_count", 0) + msg_rem if msg_rem != 999999 else "Unlimited"
+        },
+        "research": {
+            "used": profile.get("deep_research_count", 0),
+            "remaining": res_rem,
+            "limit": profile.get("deep_research_count", 0) + res_rem if res_rem != 999999 else "Unlimited"
+        }
     }
 
 @app.put("/api/user/keys")

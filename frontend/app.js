@@ -154,6 +154,7 @@ async function init() {
   await checkStatus();
   await fetchSessions();
   updateMemoryBadge();
+  updateLimits();
 }
 
 // ── Mode Switching ─────────────────────────────────────────────────────────
@@ -170,6 +171,7 @@ function switchMode(m) {
   });
   if (m === 'explore') renderExploreGrid();
   if (m === 'infer')   initInferPanel();
+  updateLimits();
 }
 
 // ── Infer Panel ─────────────────────────────────────────────────────────────
@@ -276,7 +278,48 @@ function renderMarkdown(md) {
     .replace(/<p>(<[hul])/g, '$1');
 }
 
-// ── Status ─────────────────────────────────────────────────────────────────
+// ── Status & Limits ─────────────────────────────────────────────────────────
+async function updateLimits() {
+  const badge = $('limit-badge');
+  if (!badge) return;
+  try {
+    const res = await fetch(`${getApiUrl()}/api/user/usage`, { headers: await getAuthHeaders() });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.is_byok) {
+         badge.style.display = 'inline-block';
+         badge.innerHTML = '✨ BYOK Unlimited';
+         return;
+      }
+      
+      let msgText = '';
+      if (STATE.activeMode === 'deep') {
+         const used = data.research.used;
+         const limit = data.research.limit;
+         msgText = limit === 'Unlimited' ? 'Research: Unlimited' : `Research: ${limit - used} left`;
+         if (limit !== 'Unlimited' && used >= limit) {
+             msgText = 'Research limit reached';
+             badge.style.color = '#ff4444';
+         } else {
+             badge.style.color = 'var(--accent)';
+         }
+      } else {
+         const used = data.messages.used;
+         const limit = data.messages.limit;
+         msgText = limit === 'Unlimited' ? 'Messages: Unlimited' : `Messages: ${limit - used} left`;
+         if (limit !== 'Unlimited' && used >= limit) {
+             msgText = 'Message limit reached';
+             badge.style.color = '#ff4444';
+         } else {
+             badge.style.color = 'var(--accent)';
+         }
+      }
+      badge.style.display = 'inline-block';
+      badge.textContent = msgText;
+    }
+  } catch(e) {}
+}
+
 async function checkStatus() {
   setStatus('loading', 'Connecting…');
   try {
@@ -749,7 +792,14 @@ async function runDeepResearch(query, typingId, truncateIndex = null) {
     }
   } catch (err) {
     removeTypingIndicator(typingId);
-    if (err.name !== 'AbortError') appendErrorMessage(err.message);
+    if (err.name !== 'AbortError') {
+        appendErrorMessage(err.message);
+        if (err.message.includes('upgrade')) {
+            setTimeout(() => { window.location.href = '/pricing.html'; }, 2000);
+        } else if (err.message.includes('Guest limit') || err.message.includes('Guest rate limit')) {
+            setTimeout(() => { window.location.href = '/login.html'; }, 2000);
+        }
+    }
   } finally {
     STATE.isGenerating   = false;
     DOM.sendBtn.disabled = false;

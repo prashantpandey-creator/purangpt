@@ -68,16 +68,16 @@ def update_profile(user_id: str, data: dict):
     except Exception as e:
         logger.error(f"Error updating profile for {user_id}: {e}")
 
-def check_rate_limit(user_id: str, role: str) -> tuple[bool, int]:
+def check_rate_limit(user_id: str, role: str, is_byok: bool = False) -> tuple[bool, int]:
     """Check if the user has exceeded their daily message limit."""
-    if role in ["pro", "scholar", "admin"]:
+    if role in ["pro", "scholar", "admin"] or is_byok:
         return True, 999999
         
     profile = get_profile(user_id)
     if not profile:
         return False, 0
         
-    limit = 30 if role == "free" else 10 # Default fallback
+    limit = 10 # Free tier limit
     
     # Check if we need to reset the daily count
     last_reset = profile.get("daily_reset_at")
@@ -92,11 +92,26 @@ def check_rate_limit(user_id: str, role: str) -> tuple[bool, int]:
         supabase = get_supabase()
         supabase.table("profiles").update({
             "daily_message_count": 0,
+            "deep_research_count": 0,
             "daily_reset_at": now.isoformat()
         }).eq("id", user_id).execute()
         return True, limit
         
     count = profile.get("daily_message_count", 0)
+    return count < limit, limit - count
+
+def check_research_limit(user_id: str, role: str, is_byok: bool = False) -> tuple[bool, int]:
+    """Check if the user has exceeded their daily deep research limit."""
+    if is_byok:
+        return True, 999999
+        
+    limit = 50 if role in ["pro", "scholar", "admin"] else 3
+    
+    profile = get_profile(user_id)
+    if not profile:
+        return False, 0
+        
+    count = profile.get("deep_research_count", 0)
     return count < limit, limit - count
 
 def increment_usage(user_id: str, session_id: str = None, model: str = None):
@@ -114,6 +129,18 @@ def increment_usage(user_id: str, session_id: str = None, model: str = None):
             supabase.table("profiles").update({"daily_message_count": new_count}).eq("id", user_id).execute()
     except Exception as e:
         logger.error(f"Error incrementing usage for {user_id}: {e}")
+        
+def increment_research_usage(user_id: str):
+    """Increment the user's daily deep research count."""
+    supabase = get_supabase()
+    if not supabase: return
+    try:
+        profile = get_profile(user_id)
+        if profile:
+            new_count = profile.get("deep_research_count", 0) + 1
+            supabase.table("profiles").update({"deep_research_count": new_count}).eq("id", user_id).execute()
+    except Exception as e:
+        logger.error(f"Error incrementing research usage for {user_id}: {e}")
         
     # 2. Add to usage_logs
     try:
