@@ -433,6 +433,7 @@ function createNewSession() {
 
 // ── Purana Filter ──────────────────────────────────────────────────────────
 function renderPuranaFilter() {
+  if (!DOM.puranFilter || !DOM.filterAll) return;
   DOM.puranFilter.innerHTML = SACRED_TEXTS.filter(t => t.cat === 'mahapurana').map(t => `
     <label class="filter-label">
       <input type="checkbox" class="filter-check purana-check" value="${t.id}" id="filter-${t.id}" />

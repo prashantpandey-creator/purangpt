@@ -55,8 +55,8 @@ GROQ_MODEL    = os.getenv("GROQ_MODEL",   "llama-3.3-70b-versatile")
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY", "")
 ZHIPU_API_KEY    = os.getenv("ZHIPU_API_KEY", "")
-DB_DIR        = os.getenv("DB_DIR",    "./data/chroma_db")
-INDEX_DIR     = os.getenv("INDEX_DIR", "./data/indexes")
+INDEX_DIR     = os.getenv("INDEX_DIR",   "./data/indexes")
+INDEX_URL     = os.getenv("INDEX_URL",   "https://purangpt.s3.us-east-1.amazonaws.com/purangpt-indexes-v2.tar.gz")
 GRETIL_DIR    = Path("./data/raw_texts/gretil")
 FRONTEND_DIR  = Path(__file__).parent.parent / "frontend"
 MAX_HISTORY   = 100  # messages kept in session memory
@@ -531,7 +531,7 @@ async def lifespan(app: FastAPI):
     # Try to load vector search index
     try:
         from indexer.search import HybridSearcher
-        searcher = HybridSearcher(db_dir=DB_DIR, index_dir=INDEX_DIR)
+        searcher = HybridSearcher(index_dir=INDEX_DIR)
         searcher.initialize()
         state.searcher = searcher
         state.index_ready = True
