@@ -577,6 +577,9 @@
   <script>
     // ── Auth gate: redirect to landing if not logged in or guest ──
     (function() {
+      // If returning from an OAuth redirect, allow it to pass so Supabase can process the token
+      if (window.location.hash.includes('access_token=')) return;
+      
       const isGuest = localStorage.getItem('purangpt_guest') === 'true';
       if (isGuest) return; // guest allowed in
       // Check Supabase session quickly from localStorage (works without network)
