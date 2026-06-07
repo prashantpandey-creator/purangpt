@@ -1691,6 +1691,19 @@ if (typeof onAuthStateChange === 'function') {
             if(signInBtn) signInBtn.style.display = 'block';
             if(sidebarSignIn) sidebarSignIn.style.display = 'block';
             if(profileBtn) profileBtn.style.display = 'none';
+            
+            // Check if they are a guest
+            if (localStorage.getItem('purangpt_guest') === 'true') {
+                if (document.getElementById('messages-container').children.length === 0) {
+                    const msgEl = appendAssistantMessage('', false);
+                    msgEl.querySelector('.message-bubble').innerHTML = `
+                        <div style="background: rgba(255,165,0,0.1); border: 1px solid rgba(255,165,0,0.3); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+                            <strong>Guest Session Active</strong><br>
+                            You are signed in as a guest. You are limited to 10 free messages in this session, and your history will not be saved.
+                        </div>
+                    `;
+                }
+            }
         } else {
             if(signInBtn) signInBtn.style.display = 'none';
             if(sidebarSignIn) sidebarSignIn.style.display = 'none';
