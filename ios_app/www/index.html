@@ -18,6 +18,18 @@
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.383.0/dist/umd/lucide.js" defer></script>
 
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Auth Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <style>
+    .auth-ui { display: flex; align-items: center; gap: 12px; margin-left: 12px; border-left: 1px solid var(--border-light); padding-left: 12px; }
+    .btn-sign-in { background: var(--saffron); color: #000; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 500; cursor: pointer; text-decoration: none; font-size: 13px; }
+    .user-avatar-btn { display: flex; align-items: center; gap: 8px; background: transparent; border: none; cursor: pointer; color: var(--t1); padding: 4px; border-radius: 20px; transition: background 0.2s; text-decoration: none;}
+    .user-avatar-btn:hover { background: var(--b1); }
+    .user-avatar-btn img { width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--saffron); }
+    .user-plan-badge { font-size: 10px; background: rgba(212,168,67,0.2); color: var(--saffron); padding: 2px 6px; border-radius: 8px; border: 1px solid rgba(212,168,67,0.3); text-transform: capitalize; }
+  </style>
 </head>
 <body>
   <!-- Ambient background effects -->
@@ -64,6 +76,10 @@
   <!-- Top navigation bar -->
   <nav class="topbar" role="navigation" aria-label="Main navigation">
     <div class="topbar-left">
+      <!-- Back to home button -->
+      <a href="landing.html" id="btn-home" class="btn-home" aria-label="Back to home" title="Home">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </a>
       <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Open Menu" style="display:none;">
         <i data-lucide="menu" style="width:22px;height:22px;pointer-events:none;"></i>
       </button>
@@ -86,25 +102,10 @@
         <button id="btn-infer-mode" class="mode-btn" role="tab" aria-selected="false" aria-controls="panel-infer" data-mode="infer">
           <i data-lucide="sparkles" class="mode-icon-svg"></i> Infer
         </button>
-        <button id="btn-sanskrit-mode" class="mode-btn" role="tab" aria-selected="false" aria-controls="panel-sanskrit" data-mode="sanskrit">
-          <i data-lucide="languages" class="mode-icon-svg"></i> Sanskrit
-        </button>
       </div>
     </div>
     <div class="topbar-right">
-      <div class="model-switcher-container">
-        <select id="topbar-model-select" class="model-select" aria-label="Select LLM Model" title="Select LLM Model">
-          <option value="auto" selected>Auto (best available)</option>
-          <option value="groq-llama-3.3-70b">Llama 3.3 70B (Groq)</option>
-          <option value="groq-llama-3.1-8b-instant">Llama 3.1 8B (Groq — fast)</option>
-          <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-          <option value="deepseek-chat">DeepSeek V3 (DeepSeek)</option>
-          <option value="deepseek-reasoner">DeepSeek Reasoner R1</option>
-          <option value="together-Qwen/Qwen2.5-72B-Instruct-Turbo">Qwen 2.5 72B (Together)</option>
-          <option value="together-meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo">Llama 3.1 405B (Together)</option>
-          <option value="zhipu-glm-5.1">GLM 5.1 (Zhipu AI)</option>
-        </select>
-      </div>
+      <!-- Removed Model Selector per user request -->
       <div class="memory-container" title="Conversation memory">
         <i data-lucide="brain-circuit" class="memory-icon"></i>
         <span id="memory-badge" class="memory-badge">New session</span>
@@ -115,6 +116,15 @@
       <div class="status-indicator" id="status-indicator" title="System status">
         <span class="status-dot" id="status-dot"></span>
         <span class="status-text" id="status-text">Connecting…</span>
+      </div>
+      
+      <div id="auth-ui-container" class="auth-ui">
+        <a href="login.html" id="btn-sign-in" class="btn-sign-in">Sign In</a>
+        <a href="profile.html" id="user-profile-btn" class="user-avatar-btn" style="display: none;">
+            <img id="topbar-avatar" src="" alt="Avatar">
+            <span id="topbar-name" style="font-size: 13px; font-weight: 500; display: none;"></span>
+            <span id="topbar-plan" class="user-plan-badge"></span>
+        </a>
       </div>
       <button class="settings-btn" id="settings-btn" aria-label="Settings" title="Settings">
         <i data-lucide="settings-2" style="width:16px;height:16px"></i>
@@ -137,23 +147,13 @@
             <button id="btn-new-chat" class="btn-new-chat">
               <i data-lucide="plus" style="width:15px;height:15px"></i> New Chat
             </button>
+            <a href="login.html" id="sidebar-sign-in" class="btn-sign-in" style="width: 100%; text-align: center; margin-top: 12px; margin-bottom: 12px;">Sign In</a>
             <h2 class="sidebar-title">Recent Chats</h2>
             <div id="session-list" class="session-list">
               <!-- Rendered via JS -->
             </div>
           </div>
 
-          <div class="sidebar-section">
-            <h2 class="sidebar-title">Filter by Text</h2>
-            <div class="purana-filter" id="purana-filter">
-              <label class="filter-label">
-                <input type="checkbox" id="filter-all" checked class="filter-check" /> All Texts
-              </label>
-              <div id="purana-list" class="purana-list" role="group" aria-label="Select Puranas">
-                <!-- Populated dynamically -->
-              </div>
-            </div>
-          </div>
 
           <div class="sidebar-section">
             <h2 class="sidebar-title">Scholar Mode</h2>
@@ -224,29 +224,29 @@
               <p class="welcome-desc">Ask anything about the 18 Mahapuranas, Vedas, Upanishads, and Yogic scriptures. Get answers with exact verse citations in Sanskrit, Hindi, and English.</p>
 
               <div class="suggestion-grid" id="suggestion-grid" aria-label="Suggested questions">
-                <button class="suggestion-card" data-query="Who is Narada Muni and what role does he play across the Puranas?" id="suggest-1">
-                  <i data-lucide="music" class="suggest-icon-svg"></i>
-                  <span class="suggest-text">Who is Narada Muni across all Puranas?</span>
+                <button class="suggestion-card" data-query="Is the body the consciousness of the void? What do the Puranas, Upanishads and Nath tradition say about the relationship between the physical body, consciousness, and the primordial void (Shunya)?" id="suggest-1">
+                  <i data-lucide="circle-dot" class="suggest-icon-svg"></i>
+                  <span class="suggest-text">Is the body the consciousness of the void?</span>
                 </button>
-                <button class="suggestion-card" data-query="Explain the story of Samudra Manthan (churning of the ocean) and list all the items that emerged from it." id="suggest-2">
-                  <i data-lucide="waves" class="suggest-icon-svg"></i>
-                  <span class="suggest-text">The Samudra Manthan — everything that emerged</span>
+                <button class="suggestion-card" data-query="According to Shailendra Sharma and the Nath tradition, what is Khechari Vidya and how does it enable the yogi to access Amrita (nectar of immortality)? What Puranic texts support this?" id="suggest-2">
+                  <i data-lucide="wind" class="suggest-icon-svg"></i>
+                  <span class="suggest-text">Khechari Vidya &amp; the nectar of immortality</span>
                 </button>
-                <button class="suggestion-card" data-query="What do the Puranas and Upanishads say about the nature of the Atman (self)?" id="suggest-3">
-                  <i data-lucide="atom" class="suggest-icon-svg"></i>
-                  <span class="suggest-text">The nature of Atman in Puranas &amp; Upanishads</span>
+                <button class="suggestion-card" data-query="What is the nature of Kundalini Shakti according to the Tantric and Puranic texts? How does Shailendra Sharma describe its awakening and what is the role of the Sushumna nadi?" id="suggest-3">
+                  <i data-lucide="zap" class="suggest-icon-svg"></i>
+                  <span class="suggest-text">Kundalini Shakti — Tantric &amp; Puranic view</span>
                 </button>
-                <button class="suggestion-card" data-query="List all the Yoga practices and techniques described in the Bhagavad Gita and Yoga Sutras of Patanjali." id="suggest-4">
-                  <i data-lucide="activity" class="suggest-icon-svg"></i>
-                  <span class="suggest-text">Yoga practices in Gita &amp; Yoga Sutras</span>
+                <button class="suggestion-card" data-query="What do the Nath Sampradaya texts and Gorakh Bodh say about the Tenth Door (Dasham Dwar) — the gateway beyond the nine apertures of the body? How does one reach it in meditation?" id="suggest-4">
+                  <i data-lucide="door-open" class="suggest-icon-svg"></i>
+                  <span class="suggest-text">The Tenth Door (Dasham Dwar) in Nath Yoga</span>
                 </button>
-                <button class="suggestion-card" data-query="What does the Bhagavata Purana say about Lord Krishna's birth and childhood in Vrindavan?" id="suggest-5">
-                  <i data-lucide="star" class="suggest-icon-svg"></i>
-                  <span class="suggest-text">Krishna's birth &amp; childhood in Bhagavata</span>
+                <button class="suggestion-card" data-query="According to Shailendra Sharma, what is the deepest meaning of Shiva — is Shiva a person, a principle, or pure consciousness? What do the Shiva Purana and Tantric texts say?" id="suggest-5">
+                  <i data-lucide="flame" class="suggest-icon-svg"></i>
+                  <span class="suggest-text">Who or what is Shiva — person or pure consciousness?</span>
                 </button>
-                <button class="suggestion-card" data-query="Compare how different Puranas describe the creation of the universe (Srishti)." id="suggest-6">
-                  <i data-lucide="globe" class="suggest-icon-svg"></i>
-                  <span class="suggest-text">Creation of universe across Puranas</span>
+                <button class="suggestion-card" data-query="What is Ojas and how is it transformed into Tejas and Varna (inner radiance) through yogic practice? What do the Puranas and Yoga texts say about the transmutation of sexual energy into spiritual power?" id="suggest-6">
+                  <i data-lucide="sun" class="suggest-icon-svg"></i>
+                  <span class="suggest-text">Ojas, Tejas &amp; the alchemy of inner energy</span>
                 </button>
               </div>
             </div>
@@ -303,14 +303,6 @@
               Search All Texts
             </button>
           </div>
-          <div class="filter-chips" id="filter-chips" role="group" aria-label="Filter by Purana">
-            <button class="chip active" data-filter="all" id="chip-all">All Texts</button>
-            <button class="chip" data-filter="mahapurana" id="chip-mahapurana">18 Mahapuranas</button>
-            <button class="chip" data-filter="veda" id="chip-veda">Vedas</button>
-            <button class="chip" data-filter="upanishad" id="chip-upanishad">Upanishads</button>
-            <button class="chip" data-filter="epic" id="chip-epic">Epics</button>
-            <button class="chip" data-filter="yoga" id="chip-yoga">Yogic Texts</button>
-          </div>
         </div>
 
         <div id="instances-results" class="instances-results" role="list" aria-live="polite" aria-label="Search results">
@@ -328,6 +320,21 @@
         <div class="explore-header">
           <h1 class="explore-title">Sacred Text Library</h1>
           <p class="explore-desc">Browse all indexed texts — select a Purana to explore by chapter and verse</p>
+          <div class="explore-search-bar">
+            <input 
+              type="text" 
+              id="explore-search-input" 
+              class="explore-search-input" 
+              placeholder="Search texts by name, tradition, or language..." 
+              aria-label="Search sacred texts" 
+              autocomplete="off"
+            />
+          </div>
+        </div>
+
+        <div id="explore-empty-state" class="explore-empty-state" hidden>
+          <i data-lucide="search-X" class="placeholder-icon-svg" style="width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+          <p>No texts found matching your search.</p>
         </div>
 
         <div class="texts-grid" id="texts-grid" role="list" aria-label="Sacred texts library">
@@ -464,14 +471,6 @@
           <label class="setting-label" for="api-url">Backend URL</label>
           <input type="url" id="api-url" class="setting-input" value="http://localhost:8000" />
         </div>
-        <div class="setting-group">
-          <label class="setting-label" for="response-lang">Response Language</label>
-          <select id="response-lang" class="setting-select">
-            <option value="english">English (with Sanskrit quotes)</option>
-            <option value="hindi">Hindi</option>
-            <option value="both">Both English & Hindi</option>
-          </select>
-        </div>
 
         <!-- Bring Your Own Key Section -->
         <h3 style="margin:24px 0 12px;font-size:12px;text-transform:uppercase;color:var(--t3);letter-spacing:0.05em;border-bottom:1px solid var(--b0);padding-bottom:8px">API Keys (BYOK - Overrides Server)</h3>
@@ -576,7 +575,24 @@
   </div>
 
   <script>
-    // Initialize Lucide icons after DOM is ready
+    // ── Auth gate: redirect to landing if not logged in or guest ──
+    (function() {
+      const isGuest = localStorage.getItem('purangpt_guest') === 'true';
+      if (isGuest) return; // guest allowed in
+      // Check Supabase session quickly from localStorage (works without network)
+      const supabaseKey = 'sb-qpnbjhahxvjwncscyrde-auth-token';
+      try {
+        const raw = localStorage.getItem(supabaseKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.access_token) return; // logged in
+        }
+      } catch(e) {}
+      // No session and not guest → redirect to landing
+      window.location.replace('landing.html');
+    })();
+
+    // ── Initialize Lucide icons after DOM is ready ──
     document.addEventListener('DOMContentLoaded', () => {
       if (window.lucide) lucide.createIcons();
     });

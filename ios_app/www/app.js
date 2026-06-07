@@ -16,15 +16,14 @@ const CONFIG = {
 };
 
 const STATE = {
-  currentMode:    'chat',
-  isGenerating:   false,
-  scholarMode:    'scholar',
-  historyCount:   0,
-  gretilTexts:    0,
+  activeMode: 'chat',
+  isGenerating: false,
+  isRecording: false,
+  historyCount: 0,
+  userPrompts: [],
+  promptIndex: -1,
+  gretilTexts: 0,
 };
-
-let chatHistory = [];
-let historyIndex = -1;
 
 function getOrCreateSession() {
   let id = localStorage.getItem('purangpt_session');
@@ -66,6 +65,8 @@ const DOM = {
   instancesResults:  $('instances-results'),
   filterChips:       $$('.chip'),
   textsGrid:         $('texts-grid'),
+  exploreSearchInput:$('explore-search-input'),
+  exploreEmptyState: $('explore-empty-state'),
   settingsBtn:       $('settings-btn'),
   settingsModal:     $('settings-modal'),
   settingsClose:     $('settings-close'),
@@ -100,6 +101,13 @@ function getApiHeaders(extra = {}) {
   if (CONFIG.apiKeys?.deepseek) h['x-deepseek-key'] = CONFIG.apiKeys.deepseek;
   if (CONFIG.apiKeys?.gemini) h['x-gemini-key'] = CONFIG.apiKeys.gemini;
   if (CONFIG.apiKeys?.zhipu) h['x-zhipu-key'] = CONFIG.apiKeys.zhipu;
+  
+  if (typeof getAuthToken === 'function') {
+    const token = getAuthToken();
+    if (token) {
+      h['Authorization'] = `Bearer ${token}`;
+    }
+  }
   return h;
 }
 
@@ -150,8 +158,8 @@ async function init() {
 
 // ── Mode Switching ─────────────────────────────────────────────────────────
 function switchMode(m) {
-  if (STATE.currentMode === m) return;
-  STATE.currentMode = m;
+  if (STATE.activeMode === m) return;
+  STATE.activeMode = m;
   DOM.modeBtns.forEach(b => {
     b.classList.toggle('active', b.dataset.mode === m);
     b.setAttribute('aria-selected', String(b.dataset.mode === m));
@@ -280,13 +288,10 @@ async function checkStatus() {
       : `${provider} · ${modelShort}`;
     setStatus(d.status === 'degraded' ? 'degraded' : 'online', statusLabel);
 
-    // If auto mode, update topbar to show what's actually being used
     if (CONFIG.model === 'auto') {
-      const topbar = $('topbar-model-select');
-      if (topbar) {
-        const infoOpt = topbar.querySelector('option[value="auto"]');
+        // Mocking logic to keep structure aligned
+        const infoOpt = { textContent: `Auto → ${provider} (${modelShort})` };
         if (infoOpt) infoOpt.textContent = `Auto → ${provider} (${modelShort})`;
-      }
     }
 
     DOM.statTexts.textContent  = d.gretil_texts  ? `${d.gretil_texts} texts (GRETIL)` : (d.texts_indexed || '—');
@@ -421,14 +426,48 @@ function renderExploreGrid() {
           <div class="text-card-sanskrit">${t.sk}</div>
           <div class="text-card-meta">
             <span class="source-badge lang-badge">${t.lang}</span>
-            <span class="source-badge bias-badge ${t.bias === '✅' ? 'bias-ok' : 'bias-warn'}>${t.bias === '✅' ? 'Verified' : 'Sectarian'}</span>
+            <span class="source-badge bias-badge ${t.bias === '✅' ? 'bias-ok' : 'bias-warn'}">${t.bias === '✅' ? 'Verified' : 'Sectarian'}</span>
             <span class="source-badge trad-badge">${t.trad}</span>
           </div>
         </article>`).join('')}
       </div>
     </div>`).join('');
 
-  if (window._lucideRefresh) window._lucideRefresh();}
+  if (window._lucideRefresh) window._lucideRefresh();
+
+  // Attach search listener
+  if (DOM.exploreSearchInput) {
+    DOM.exploreSearchInput.addEventListener('input', (e) => {
+      const term = e.target.value.toLowerCase().trim();
+      const groups = DOM.textsGrid.querySelectorAll('.text-group');
+      let totalVisible = 0;
+
+      groups.forEach(group => {
+        let groupVisible = 0;
+        const cards = group.querySelectorAll('.text-card');
+        cards.forEach(card => {
+          const text = (card.dataset.name || card.textContent || '').toLowerCase();
+          if (text.includes(term) || term === '') {
+            card.style.display = 'flex';
+            groupVisible++;
+            totalVisible++;
+          } else {
+            card.style.display = 'none';
+          }
+        });
+        group.style.display = groupVisible > 0 ? 'block' : 'none';
+      });
+
+      if (totalVisible === 0) {
+        DOM.textsGrid.hidden = true;
+        if (DOM.exploreEmptyState) DOM.exploreEmptyState.hidden = false;
+      } else {
+        DOM.textsGrid.hidden = false;
+        if (DOM.exploreEmptyState) DOM.exploreEmptyState.hidden = true;
+      }
+    });
+  }
+}
 
 async function openTextDetail(id, citationRef = null, line_idx = null) {
   const t = SACRED_TEXTS.find(x => x.id === id);
@@ -461,7 +500,7 @@ async function openTextDetail(id, citationRef = null, line_idx = null) {
     DOM.chatInput.value = `Give me a comprehensive scholarly introduction to the ${t.name} (${t.sk}): its age, authorship traditions, structure, sectarian allegiance (${t.trad}), main themes, and most significant contributions to Indian philosophy and religious tradition.`;
   }
   adjustInputHeight();
-  sendMessage();
+  handleSend();
 }
 
 // ── Reader Mode ────────────────────────────────────────────────────────────
@@ -471,10 +510,7 @@ let currentReaderTotal = 1;
 let currentReaderTitle = '';
 
 function openReader(data, t, targetLineInPage = -1) {
-  DOM.panels.forEach(p => p.hidden = true);
-  const readerPanel = document.getElementById('panel-reader');
-  if(readerPanel) readerPanel.hidden = false;
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  switchMode('reader');
 
   currentReaderTextId = data.text_id;
   currentReaderPage = data.page;
@@ -559,7 +595,7 @@ document.getElementById('reader-content')?.addEventListener('mouseup', () => {
       switchMode('chat');
       DOM.chatInput.value = `Explain this passage from ${currentReaderTitle}:\n\n"${text}"\n\nWhat is its meaning and significance?`;
       adjustInputHeight();
-      sendMessage();
+      handleSend();
     };
   } else {
     btn.hidden = true;
@@ -571,6 +607,10 @@ document.getElementById('reader-content')?.addEventListener('mouseup', () => {
 function sendSuggestion(btn) {
   DOM.chatInput.value = btn.textContent.trim();
   adjustInputHeight();
+  handleSend();
+}
+
+function handleSend() {
   sendMessage();
 }
 
@@ -578,10 +618,11 @@ async function sendMessage(truncateIndex = null) {
   const query = DOM.chatInput.value.trim();
   if (!query || STATE.isGenerating) return;
 
+  STATE.userPrompts.push(query);
+  STATE.promptIndex = -1;
+
   hideWelcome();
   appendUserMessage(query);
-  chatHistory.push(query);
-  historyIndex = -1;
   DOM.chatInput.value = '';
   adjustInputHeight();
   updateCharCount();
@@ -671,7 +712,6 @@ async function runDeepResearch(query, typingId, truncateIndex = null) {
             } else {
                bubbleEl.innerHTML = renderMarkdown(accText);
             }
-            scrollToBottom();
           } else if (evt.type === 'sources') {
             statusEl.style.display = 'none';
             renderSourcesWithMeta(evt.sources||[]);
@@ -736,7 +776,6 @@ async function streamChat(query, mode, typingId, truncateIndex = null) {
     removeTypingIndicator(typingId);
     const msgEl    = appendAssistantMessage('', true);
     const bubbleEl = msgEl.querySelector('.message-bubble');
-    const contentEl = msgEl.querySelector('.message-content');
 
     const reader  = resp.body.getReader();
     const decoder = new TextDecoder();
@@ -754,14 +793,7 @@ async function streamChat(query, mode, typingId, truncateIndex = null) {
         const raw = line.slice(6).trim();
         try {
           const evt = JSON.parse(raw);
-          if (evt.type === 'info') {
-             const infoEl = document.createElement('div');
-             infoEl.className = 'chat-info-toast';
-             infoEl.style.cssText = 'font-size:0.85em; color:var(--text-muted); font-style:italic; margin-bottom:8px;';
-             infoEl.textContent = 'ℹ️ ' + evt.message;
-             bubbleEl.appendChild(infoEl);
-             scrollToBottom();
-          } else if (evt.type === 'token') {
+          if (evt.type === 'token') {
             accText += evt.content;
             if (accText.includes('[SUGGESTIONS]')) {
                const parts = accText.split('[SUGGESTIONS]');
@@ -769,7 +801,6 @@ async function streamChat(query, mode, typingId, truncateIndex = null) {
             } else {
                bubbleEl.innerHTML = renderMarkdown(accText);
             }
-            scrollToBottom();
           } else if (evt.type === 'sources') {
             renderSourcesWithMeta(evt.sources||[]);
           } else if (evt.type === 'done') {
@@ -938,7 +969,7 @@ function askAboutSanskrit(textName, passage, btn) {
   switchMode('chat');
   DOM.chatInput.value = `Explain this Sanskrit passage from ${textName}: "${passage}"${translation ? `\n\nContext translation: "${translation}"` : ''}\n\nGive the meaning word-by-word, the full context in the text, and its significance.`;
   adjustInputHeight();
-  sendMessage();
+  handleSend();
 }
 
 // ── Find Instances ─────────────────────────────────────────────────────────
@@ -1274,7 +1305,7 @@ function askDeeper(btn) {
   const deepRadio = document.getElementById('mode-deep');
   if (deepRadio) deepRadio.checked = true;
   switchMode('chat');
-  sendMessage();
+  handleSend();
 }
 
 function searchSanskritFor(btn) {
@@ -1343,24 +1374,11 @@ function openCitationLink(event, ref) {
     switchMode('chat');
     DOM.chatInput.value = `Explain this citation in detail: ${ref}`;
     adjustInputHeight();
-    sendMessage();
+    handleSend();
   }
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
-function openCitation(event, ref) {
-  const refLower = ref.toLowerCase();
-  const text = SACRED_TEXTS.find(t => refLower.includes(t.name.toLowerCase()));
-  if (text) {
-    showCitationTooltip(event, text.id, text.name, ref);
-  } else {
-    switchMode('chat');
-    DOM.chatInput.value = `Can you provide more details and context about this citation: ${ref}?`;
-    adjustInputHeight();
-    sendMessage();
-  }
-}
-
 async function showCitationTooltip(event, textId, textName, ref) {
   const tooltip = document.getElementById('citation-tooltip');
   if (!tooltip) return;
@@ -1536,12 +1554,11 @@ function loadSettings() {
   const modelSelect = $('model-select');
   if (modelSelect) modelSelect.value = CONFIG.model;
 
-  const topbarModelSelect = $('topbar-model-select');
-  if (topbarModelSelect) topbarModelSelect.value = CONFIG.model;
+  // const topbarModelSelect = $('topbar-model-select');
+  // if (topbarModelSelect) topbarModelSelect.value = CONFIG.model;
 }
 function saveSettings() {
   const modelSelect      = $('model-select');
-  const topbarModelSelect = $('topbar-model-select');
 
   CONFIG.apiUrl = DOM.apiUrlInput?.value?.trim() || '';
   localStorage.setItem('purangpt_api_url', CONFIG.apiUrl);
@@ -1559,7 +1576,7 @@ function saveSettings() {
     CONFIG.model = modelSelect.value;
     localStorage.setItem('purangpt_model', CONFIG.model);
     // Keep topbar in sync
-    if (topbarModelSelect) topbarModelSelect.value = CONFIG.model;
+    // if (topbarModelSelect) topbarModelSelect.value = CONFIG.model;
   }
 
   DOM.settingsModal.hidden = true;
@@ -1589,25 +1606,27 @@ function bindEvents() {
       sendMessage(); 
     }
     if (e.key === 'ArrowUp') {
-      if (chatHistory.length > 0 && historyIndex < chatHistory.length - 1) {
-        historyIndex++;
-        DOM.chatInput.value = chatHistory[chatHistory.length - 1 - historyIndex];
+      if (STATE.userPrompts.length > 0 && STATE.promptIndex < STATE.userPrompts.length - 1) {
+        STATE.promptIndex++;
+        DOM.chatInput.value = STATE.userPrompts[STATE.userPrompts.length - 1 - STATE.promptIndex];
         adjustInputHeight();
         updateCharCount();
         e.preventDefault();
       }
     }
     if (e.key === 'ArrowDown') {
-      if (historyIndex > 0) {
-        historyIndex--;
-        DOM.chatInput.value = chatHistory[chatHistory.length - 1 - historyIndex];
+      if (STATE.promptIndex > 0) {
+        STATE.promptIndex--;
+        DOM.chatInput.value = STATE.userPrompts[STATE.userPrompts.length - 1 - STATE.promptIndex];
         adjustInputHeight();
         updateCharCount();
-      } else if (historyIndex === 0) {
-        historyIndex = -1;
+        e.preventDefault();
+      } else if (STATE.promptIndex === 0) {
+        STATE.promptIndex = -1;
         DOM.chatInput.value = '';
         adjustInputHeight();
         updateCharCount();
+        e.preventDefault();
       }
     }
   });
@@ -1636,17 +1655,21 @@ function bindEvents() {
   DOM.settingsSave?.addEventListener('click', saveSettings);
   DOM.settingsModal?.addEventListener('click', e => { if(e.target===DOM.settingsModal) DOM.settingsModal.hidden=true; });
 
-  DOM.clearMemoryBtn?.addEventListener('click', clearMemory);
-
-  const topbarModelSelect = $('topbar-model-select');
-  if (topbarModelSelect) {
-    topbarModelSelect.addEventListener('change', (e) => {
-      CONFIG.model = e.target.value;
-      localStorage.setItem('purangpt_model', CONFIG.model);
-      const settingsModelSelect = $('model-select');
-      if (settingsModelSelect) settingsModelSelect.value = CONFIG.model;
+  // Handle iOS Keyboard resizing
+  if (window.Capacitor && window.Capacitor.Plugins.Keyboard) {
+    const Keyboard = window.Capacitor.Plugins.Keyboard;
+    Keyboard.addListener('keyboardWillShow', (info) => {
+      document.body.style.paddingBottom = `${info.keyboardHeight}px`;
+      scrollToBottom();
+    });
+    Keyboard.addListener('keyboardWillHide', () => {
+      document.body.style.paddingBottom = '0px';
     });
   }
+
+  DOM.clearMemoryBtn?.addEventListener('click', clearMemory);
+
+  // Removed topbarModelSelect listener
 
   document.addEventListener('keydown', e => {
     if (e.key==='Escape' && !DOM.settingsModal?.hidden) DOM.settingsModal.hidden=true;
@@ -1656,3 +1679,39 @@ function bindEvents() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+// Integration with auth.js
+if (typeof onAuthStateChange === 'function') {
+    onAuthStateChange((user, profile) => {
+        const signInBtn = document.getElementById('btn-sign-in');
+        const sidebarSignIn = document.getElementById('sidebar-sign-in');
+        const profileBtn = document.getElementById('user-profile-btn');
+        
+        if (!user) {
+            if(signInBtn) signInBtn.style.display = 'block';
+            if(sidebarSignIn) sidebarSignIn.style.display = 'block';
+            if(profileBtn) profileBtn.style.display = 'none';
+        } else {
+            if(signInBtn) signInBtn.style.display = 'none';
+            if(sidebarSignIn) sidebarSignIn.style.display = 'none';
+            if(profileBtn) {
+                profileBtn.style.display = 'flex';
+                document.getElementById('topbar-avatar').src = user.user_metadata?.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
+                if(profile && window.innerWidth > 600) {
+                    document.getElementById('topbar-name').innerText = (user.user_metadata?.full_name || 'User').split(' ')[0];
+                    document.getElementById('topbar-name').style.display = 'inline';
+                    document.getElementById('topbar-plan').innerText = profile.role;
+                }
+            }
+            
+            // Load BYOK keys if authenticated
+            if (profile) {
+                getAuthHeaders().then(headers => {
+                    fetch('/api/user/keys', { headers }).then(r => r.json()).then(data => {
+                         // We don't overwrite user's local keys if they exist unless they are empty
+                    }).catch(e => console.error("Could not fetch keys", e));
+                });
+            }
+        }
+    });
+}

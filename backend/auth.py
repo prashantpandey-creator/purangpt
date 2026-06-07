@@ -59,8 +59,12 @@ def require_role(allowed_roles: list):
         return user
     return role_checker
 
-def get_guest_ip(request: Request) -> str:
-    """Extract client IP for guest rate limiting."""
+def get_guest_id(request: Request) -> str:
+    """Extract client Device ID for guest rate limiting."""
+    device_id = request.headers.get("X-Device-ID")
+    if device_id:
+        return device_id
+    # Fallback to IP if no device ID
     forwarded = request.headers.get("X-Forwarded-For")
     if forwarded:
         return forwarded.split(",")[0]
@@ -70,23 +74,23 @@ def get_guest_ip(request: Request) -> str:
 _guest_usage = {}
 from datetime import datetime, timezone
 
-def check_guest_rate_limit(ip: str) -> tuple[bool, int]:
-    """Check if guest IP has exceeded 10 messages/day."""
+def check_guest_rate_limit(guest_id: str) -> tuple[bool, int]:
+    """Check if guest has exceeded 10 messages/day."""
     now = datetime.now(timezone.utc)
     today = now.date().isoformat()
     
-    if ip not in _guest_usage:
-        _guest_usage[ip] = {"date": today, "count": 0}
+    if guest_id not in _guest_usage:
+        _guest_usage[guest_id] = {"date": today, "count": 0}
         
     # Reset if new day
-    if _guest_usage[ip]["date"] != today:
-        _guest_usage[ip] = {"date": today, "count": 0}
+    if _guest_usage[guest_id]["date"] != today:
+        _guest_usage[guest_id] = {"date": today, "count": 0}
         
-    count = _guest_usage[ip]["count"]
+    count = _guest_usage[guest_id]["count"]
     if count >= 10:
         return False, 0
     return True, 10 - count
 
-def increment_guest_usage(ip: str):
-    if ip in _guest_usage:
-        _guest_usage[ip]["count"] += 1
+def increment_guest_usage(guest_id: str):
+    if guest_id in _guest_usage:
+        _guest_usage[guest_id]["count"] += 1

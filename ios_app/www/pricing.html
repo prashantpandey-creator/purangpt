@@ -312,14 +312,6 @@
             <p style="color: var(--t2); margin-bottom: 24px; font-size: 14px;">Choose your preferred billing gateway for <span id="modal-plan-name" style="color: var(--saffron); font-weight: 600; text-transform: capitalize;">pro</span> plan.</p>
             
             <div class="payment-options">
-                <button class="payment-opt-btn" onclick="startCheckout('appstore')" id="btn-appstore">
-                    <i data-lucide="apple" style="color: var(--saffron);"></i>
-                    <div style="text-align: left;">
-                        <div style="font-weight: 600; color: var(--t1);">App Store (In-App Purchase)</div>
-                        <div style="font-size: 12px; color: var(--t3);">Secure payment via your Apple ID</div>
-                    </div>
-                </button>
-                
                 <button class="payment-opt-btn" onclick="startCheckout('stripe')">
                     <i data-lucide="credit-card" style="color: var(--saffron);"></i>
                     <div style="text-align: left;">
@@ -428,34 +420,6 @@
 
             if (provider === 'simulate') {
                 await simulatePlanChange(selectedPlan);
-                return;
-            }
-
-            if (provider === 'appstore') {
-                if (window.Capacitor && window.Capacitor.Plugins.Purchases) {
-                    try {
-                        // Using RevenueCat to trigger Apple IAP
-                        // The backend expects the plan to map to specific product identifiers
-                        const productId = selectedPlan === 'pro' ? 'purangpt_pro_monthly' : 'purangpt_acharya_monthly';
-                        
-                        const Purchases = window.Capacitor.Plugins.Purchases;
-                        // The user must be logged into RevenueCat with their Supabase ID
-                        await Purchases.logIn({ appUserID: currentUser.id });
-                        
-                        const { customerInfo } = await Purchases.purchaseProduct({ productIdentifier: productId });
-                        
-                        if (typeof customerInfo.entitlements.active[selectedPlan] !== 'undefined') {
-                            alert("Subscription successful!");
-                            window.location.href = "billing.html";
-                        }
-                    } catch (err) {
-                        if (!err.userCancelled) {
-                            alert("App Store Purchase error: " + err.message);
-                        }
-                    }
-                } else {
-                    alert("App Store payments are only available in the iOS App.");
-                }
                 return;
             }
 

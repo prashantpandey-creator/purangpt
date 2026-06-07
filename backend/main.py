@@ -62,7 +62,7 @@ FRONTEND_DIR  = Path(__file__).parent.parent / "frontend"
 MAX_HISTORY   = 100  # messages kept in session memory
 
 
-from backend.auth import get_current_user, require_auth, require_role, get_guest_ip, check_guest_rate_limit, increment_guest_usage
+from backend.auth import get_current_user, require_auth, require_role, get_guest_id, check_guest_rate_limit, increment_guest_usage
 from backend.supabase_client import get_supabase, update_profile, get_admin_stats, get_all_users, encrypt_keys, decrypt_keys, increment_usage, check_rate_limit
 
 from backend.session_manager import SessionManager
@@ -126,27 +126,23 @@ When a verse is available in the retrieved passages:
 3. Word-by-word translation
 4. Full meaning in English
 
-**NEVER invent verse numbers.** If uncertain, say "approximately Ch. X" or "the tradition records this but the exact verse is not in the retrieved passages."
-
-Flag known interpolations with ⚠️ and cite the scholar (Rocher, Hazra, Doniger).
-
 ### 💬 Researched Quotes
 Pull the most illuminating direct quotes from the retrieved passages.
 Format each as a blockquote with attribution:
 > "Exact passage text..."
 > — *Text name, Chapter X*
 
-If Shailendra Sharma's commentary is in the sources, quote it here with:
-> "..."
-> — *Sri Sri Shailendra Sharma (source)*
+Keep responses highly concise and avoid repeating the same citation or Sanskrit verses multiple times.
+
+### 🚫 Corrupted Text Warning
+If a retrieved text chunk appears corrupted, incoherent, or like a random string of characters (OCR errors), explicitly IGNORE it and do not quote it. Do not attempt to force an answer from corrupted text.
 
 ### 🔗 Cross-Textual Analysis
 Compare how multiple traditions/texts address this. Show agreements and contradictions.
 Reference ALL relevant texts from the retrieved passages.
 
 ### 🤖 General Knowledge & Modern Commentary
-Only here: knowledge from training not present in retrieved passages. Clearly marked.
-Give high scholarly preference to Sri Sri Shailendra Sharma's yogic insights.
+Only mention modern commentators like Sri Sri Shailendra Sharma if the user explicitly asks or the retrieved context heavily features their specific interpretation.
 
 ### 🔮 Synthesis & Conclusion
 Integrate all evidence. State what is established vs disputed.
@@ -183,9 +179,6 @@ Quote relevant passages DIRECTLY from the retrieved texts. For each:
 - Then full meaning
 - Citation: *(Text · Section · Ch. X · Verse Y)*
 
-### 🔗 Cross-Textual Analysis
-Compare how different texts and traditions treat this topic. Map agreements AND contradictions.
-Which Puranas agree? Where do Shaiva and Vaishnava accounts diverge? Where does the Vedic layer (Upanishads) differ from the Puranic layer?
 
 ### 💡 Original Inferences & Scholarly Insights
 Go beyond what the texts literally say. What does the *pattern* of evidence suggest?
@@ -199,14 +192,15 @@ Explain WHY a tradition would have inserted or modified a passage.
 ### 🔬 Darshana Perspective
 Analyze through the lens of the classical Darshanas — especially Samkhya (Purusha/Prakriti), Yoga (citta-vritti-nirodha), and Vedanta (Brahman/Maya). How do the philosophical schools interpret or contextualize what the Puranas say?
 
-### 🧘 Sri Sri Shailendra Sharma's Perspective
-If applicable, contrast the Puranic/mythological narrative with the yogic and experiential insights from Sri Sri Shailendra Sharma (Yogeshwari, Yoga Darshan, Shiva Sutra commentaries). His realizations often reveal the inner (adhyatmic) meaning beneath the outer (adhidaivik) narrative.
+### 🧘 Modern Yogic Perspective
+If the user explicitly asks about specific commentators (e.g., Sri Sri Shailendra Sharma) or if the retrieved search context heavily centers around their specific yogic interpretation, include their insights. Otherwise, focus on the primary texts.
+
+**Keep responses highly concise and organized. Do not repeat the same citation or Sanskrit verses multiple times.**
 
 ### 🤖 General Knowledge & Modern Commentary
 Only here: knowledge from your training not present in the retrieved passages. Clearly marked as such.
 
-### 📖 Synthesis & Conclusion
-Integrate all evidence. State what is established vs disputed. Give the researcher a clear picture of current scholarly understanding.
+
 
 **STRICT KNOWLEDGE BOUNDARY**: NEVER mix retrieved-text knowledge with general knowledge in the same paragraph. Separate them strictly under the headings above.
 
@@ -875,12 +869,30 @@ def format_history(history: List[dict]) -> str:
     current_chars = 0
     lines = []
 
-    for msg in reversed(history[-20:]):
+    for msg in reversed(history[-10:]):
         role = "User" if msg["role"] == "user" else "PuranGPT"
         content = msg['content']
-        # Truncate extremely long individual messages
-        if len(content) > 1200:
-            content = content[:1200] + "... [truncated]"
+        
+        # INTELLIGENT FIX: Retain ONLY the Summary part of PuranGPT's previous answers.
+        # This gives the LLM context of what the user was already told, but completely
+        # strips out the heavy Sanskrit citations and quotes that cause RAG overfitting.
+        if role == "PuranGPT":
+            if "### 📋 Summary" in content:
+                # Extract just the summary section
+                parts = content.split("### 📋 Summary")
+                if len(parts) > 1:
+                    summary_part = parts[1].split("### 📚 Citations")[0].strip()
+                    # Keep only the first 250 characters of the summary just to be safe
+                    if len(summary_part) > 250:
+                        summary_part = summary_part[:250] + "..."
+                    content = f"(Summary of previous answer): {summary_part}"
+                else:
+                    continue # Couldn't parse, drop it
+            else:
+                # If no summary header found, keep a tiny snippet
+                if len(content) > 100:
+                    content = content[:100] + "..."
+                content = f"(Summary of previous answer): {content}"
             
         line = f"**{role}**: {content}"
         
@@ -1154,8 +1166,8 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
     # Rate Limiting
     if not user:
         # Guest rate limit
-        ip = get_guest_ip(req)
-        allowed, rem = check_guest_rate_limit(ip)
+        guest_id = get_guest_id(req)
+        allowed, rem = check_guest_rate_limit(guest_id)
         if not allowed:
             raise HTTPException(429, "Guest rate limit exceeded. Please sign in.")
     else:
@@ -1173,6 +1185,13 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
 
     # ── Deep Research Mode ──────────────────────────────────────────────────
     if request.mode == "deep":
+        if user and user.get("role", "free") == "free":
+            from backend.supabase_client import get_profile
+            profile = get_profile(user.get("id"))
+            if profile and profile.get("research_session_count", 0) >= 3:
+                raise HTTPException(403, "Free research session limit reached. Please upgrade to Pro.")
+            increment_research_session_usage(user.get("id"))
+            
         async def deep_gen():
             async for chunk in deep_research(request.query, session_id, user.get("id") if user else None):
                 yield {"data": chunk.replace("data: ", "").strip()}
@@ -1271,6 +1290,9 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             {"role": "user",      "content": request.query},
             {"role": "assistant", "content": full_text}
         ], user_id)
+        
+        if not user:
+            increment_guest_usage(get_guest_id(req))
         
         # 7. Done signal with source metadata
         yield {"data": json.dumps({
@@ -1520,16 +1542,24 @@ Topic for analysis: **{topic}**
 """
 
 @app.post("/api/infer")
-async def infer(request: InferRequest):
+async def infer(request: InferRequest, user: Optional[dict] = Depends(get_current_user)):
     """
     Original inference and scholarly synthesis endpoint.
     Retrieves passages from all indexed sources and produces structured analysis
     that goes beyond citation — draws cross-textual inferences.
     """
+    if not user:
+        raise HTTPException(401, "Sign in required for Scholarly Inference.")
+        
+    role = user.get("role", "free")
+    if not check_inference_limit(user.get("id"), role):
+        raise HTTPException(403, "Free trial for Scholarly Inference exhausted. Please upgrade to Pro.")
+        
     if not request.topic.strip():
         raise HTTPException(400, "Topic cannot be empty")
 
     async def infer_gen() -> AsyncGenerator[dict, None]:
+        increment_inference_usage(user.get("id"))
         # 1. Wide retrieval from both vector index and GRETIL
         all_passages = []
         if state.searcher and state.index_ready:
@@ -1744,6 +1774,48 @@ async def stripe_webhook(req: Request):
             )
             
     return {"status": "success"}
+
+@app.post("/api/billing/revenuecat/webhook")
+async def revenuecat_webhook(req: Request):
+    try:
+        # RevenueCat sends JSON webhooks for lifecycle events
+        # We can configure an Authorization header in the RevenueCat dashboard for security
+        auth_header = req.headers.get("Authorization")
+        expected_auth = os.getenv("REVENUECAT_WEBHOOK_AUTH", "")
+        if expected_auth and auth_header != expected_auth:
+            raise HTTPException(401, "Unauthorized webhook source")
+
+        payload = await req.json()
+        event = payload.get("event", {})
+        event_type = event.get("type")
+        
+        # app_user_id maps to our Supabase user_id
+        user_id = event.get("app_user_id")
+        entitlement = event.get("entitlement_id") # e.g. 'pro', 'scholar'
+        
+        if event_type in ["INITIAL_PURCHASE", "RENEWAL"]:
+            if user_id and entitlement:
+                from backend.billing import activate_user_subscription
+                activate_user_subscription(
+                    user_id=user_id,
+                    plan=entitlement,
+                    provider="revenuecat",
+                    external_sub_id=event.get("transaction_id")
+                )
+        elif event_type in ["EXPIRATION", "CANCELLATION"]:
+            # Handle downgrade logic
+            supabase = get_supabase()
+            if supabase and user_id:
+                supabase.table("profiles").update({
+                    "role": "free",
+                    "subscription_status": "canceled",
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }).eq("id", user_id).execute()
+                
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"RevenueCat webhook error: {e}")
+        raise HTTPException(500, "Internal Server Error")
 
 @app.post("/api/billing/dev-simulate-upgrade")
 async def dev_simulate_upgrade(data: dict, user: dict = Depends(require_auth)):
