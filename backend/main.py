@@ -1040,10 +1040,15 @@ async def deep_research(query: str, session_id: str) -> AsyncGenerator[str, None
 # ── Routes ─────────────────────────────────────────────────────────────────
 @app.get("/", response_class=HTMLResponse)
 @app.get("/index.html", response_class=HTMLResponse)
-async def root():
+async def index_html_page():
     idx = FRONTEND_DIR / "index.html"
     if idx.exists():
-        return FileResponse(str(idx))
+        headers = {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
+        return FileResponse(idx, headers=headers)
     return HTMLResponse("<h1>🕉️ PuranGPT v2</h1>")
 
 @app.get("/auth.js")
@@ -1057,8 +1062,13 @@ async def serve_auth_js():
 async def landing():
     f = FRONTEND_DIR / "landing.html"
     if f.exists():
-        return FileResponse(str(f))
-    return FileResponse(str(FRONTEND_DIR / "index.html"))
+        headers = {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
+        return FileResponse(f, headers=headers)
+    raise HTTPException(404, "Frontend not built.")
 
 @app.get("/login.html", response_class=HTMLResponse)
 async def login_page():
