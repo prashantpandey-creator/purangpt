@@ -11,9 +11,6 @@ llama-index-llms-ollama==0.5.0
 llama-index-llms-openai==0.3.18
 llama-index-embeddings-huggingface==0.5.0
 
-# ── Vector Database ────────────────────────────────────────────────────────
-chromadb==0.5.23
-
 # ── Keyword Search ─────────────────────────────────────────────────────────
 rank-bm25==0.2.2
 

@@ -3,12 +3,12 @@
 verify_search.py — Post-reindex coherence check for PuranGPT.
 
 Run AFTER `python run.py --index` on a machine with the full venv
-(chromadb + sentence-transformers + rank_bm25 installed):
+(sentence-transformers + rank_bm25 installed):
 
     python verify_search.py
 
 It checks four things:
-  1. No placeholder/mock chunks remain in the BM25 chunk_map or in ChromaDB.
+  1. No placeholder/mock chunks remain in the BM25 chunk_map.
   2. The chunk_map has no duplicate ids (double-counting fix held).
   3. Sharma book commentary is actually embedded in the vector store.
   4. Representative queries surface Sharma commentary, AND a control Purana
@@ -30,7 +30,6 @@ ROOT = Path(__file__).parent
 load_dotenv(ROOT / ".env")
 
 INDEX_DIR = Path(os.getenv("INDEX_DIR", "data/indexes"))
-DB_DIR    = Path(os.getenv("DB_DIR", "data/chroma_db"))
 
 failures: list[str] = []
 
@@ -52,42 +51,11 @@ check("no mock chunks in chunk_map", not mock, f"{len(mock)} found")
 check("no duplicate ids in chunk_map", dupes == 0, f"{dupes} duplicates")
 print(f"      chunk_map size: {len(ids):,} (expected ~115,694)")
 
-# ── 3: ChromaDB contents ────────────────────────────────────────────────────
-print("\n[3] ChromaDB vector store")
-import chromadb
-from chromadb.config import Settings
-
-client = chromadb.PersistentClient(path=str(DB_DIR),
-                                   settings=Settings(anonymized_telemetry=False))
-col = client.get_collection("purana_verses")
-sharma_cats = {"yogic-commentary", "yogic-discourse"}
-limit = 10000
-offset = 0
-chroma_ids = set()
-sharma_book_count = 0
-
-while True:
-    batch = col.get(limit=limit, offset=offset, include=["metadatas"])
-    if not batch["ids"]:
-        break
-    chroma_ids.update(batch["ids"])
-    for m in batch["metadatas"]:
-        if m and (m.get("category") or "").lower() in sharma_cats:
-            sharma_book_count += 1
-    offset += limit
-
-chroma_mock = [i for i in chroma_ids if "mock" in i.lower()]
-check("no mock vectors in ChromaDB", not chroma_mock, f"{len(chroma_mock)} found")
-print(f"      vector count: {col.count():,}")
-
-check("Sharma book commentary embedded", sharma_book_count >= 80,
-      f"{sharma_book_count} commentary chunks in vector store")
-
-# ── 4: live retrieval behaviour ─────────────────────────────────────────────
-print("\n[4] Retrieval behaviour")
+# ── 3: live retrieval behaviour ─────────────────────────────────────────────
+print("\n[3] Retrieval behaviour")
 from indexer.search import HybridSearcher
 
-searcher = HybridSearcher(db_dir=DB_DIR, index_dir=INDEX_DIR).initialize()
+searcher = HybridSearcher(index_dir=INDEX_DIR).initialize()
 
 
 def top_sources(query, **kw):

@@ -16,7 +16,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir \
         fastapi uvicorn[standard] aiohttp aiofiles \
         python-dotenv sse-starlette \
-        chromadb rank-bm25 sentence-transformers \
+        rank-bm25 sentence-transformers \
         pymupdf rich tenacity \
         supabase "python-jose[cryptography]" cryptography pinecone stripe razorpay
 
@@ -24,7 +24,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY . .
 
 # Runtime data directories (persisted via Railway volume)
-RUN mkdir -p data/raw_pdfs data/raw_texts data/chunks data/chroma_db data/indexes data/sharma_books
+RUN mkdir -p data/raw_pdfs data/raw_texts data/chunks data/indexes data/sharma_books
 RUN touch data_pipeline/__init__.py indexer/__init__.py engine/__init__.py backend/__init__.py 2>/dev/null || true
 
 EXPOSE 8000

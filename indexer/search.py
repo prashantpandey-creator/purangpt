@@ -1,6 +1,6 @@
 """
 PuranGPT — Hybrid Search Engine
-Combines semantic (dense vector) search via ChromaDB with
+Combines semantic (dense vector) search via Pinecone with
 BM25 keyword search, fused using Reciprocal Rank Fusion (RRF).
 
 This gives us the best of both worlds:
@@ -17,9 +17,7 @@ import pickle
 from pathlib import Path
 from typing import Any, Optional
 
-import chromadb
 from backend.pinecone_client import semantic_search as pinecone_search
-from chromadb.config import Settings
 from rank_bm25 import BM25Okapi
 from sentence_transformers import SentenceTransformer
 import os
@@ -97,32 +95,20 @@ class HybridSearcher:
 
     def __init__(
         self,
-        db_dir:          str | Path = "data/chroma_db",
         index_dir:       str | Path = "data/indexes",
-        collection_name: str        = "purana_verses",
         rrf_k:           int        = 60,
     ) -> None:
-        self.db_dir          = Path(db_dir)
         self.index_dir       = Path(index_dir)
-        self.collection_name = collection_name
         self.rrf_k           = rrf_k
 
-        self._chroma_client: Optional[chromadb.ClientAPI]  = None
-        self._collection:    Optional[chromadb.Collection] = None
         self._bm25:          Optional[BM25Okapi]           = None
         self._chunk_map:     list[dict[str, Any]]          = []  # index → chunk dict
         self._embed_model:   Optional[SentenceTransformer] = None
         self._initialized    = False
 
     def initialize(self) -> "HybridSearcher":
-        """Load ChromaDB, BM25 index, and chunk map. Call once at startup."""
+        """Load BM25 index and chunk map. Call once at startup."""
         logger.info("Initializing HybridSearcher…")
-
-        # ── ChromaDB ───────────────────────────────────────────────────
-        # Bypass ChromaDB on local Mac to avoid sqlite3 SIGSEGV. We have Pinecone configured.
-        self._chroma_client = None
-        self._collection = None
-        logger.info("ChromaDB bypassed locally to avoid sqlite3 segfaults. Using Pinecone.")
 
         # ── BM25 + Chunk Map ──────────────────────────────────────────
         bm25_path     = self.index_dir / "bm25_index.pkl"
@@ -153,14 +139,10 @@ class HybridSearcher:
 
     @property
     def is_ready(self) -> bool:
-        return self._initialized and (
-            self._collection is not None or self._bm25 is not None
-        )
+        return self._initialized and self._bm25 is not None
 
     @property
     def total_documents(self) -> int:
-        if self._collection:
-            return self._collection.count()
         return len(self._chunk_map)
 
     # ── Semantic Search ────────────────────────────────────────────────
@@ -217,37 +199,8 @@ class HybridSearcher:
                 
                 return search_results
 
-            # 2. Fallback to ChromaDB
-            if not self._collection:
-                logger.warning("ChromaDB collection not loaded; skipping semantic search")
-                return []
-
-            logger.info("Performing semantic search via ChromaDB...")
-            kwargs: dict[str, Any] = {
-                "query_embeddings": query_emb_list,
-                "n_results":        min(top_k, self._collection.count() or 1),
-                "include":          ["documents", "metadatas", "distances"],
-            }
-            if filters:
-                if len(filters) == 1:
-                    key, val = next(iter(filters.items()))
-                    kwargs["where"] = {key: {"$eq": val}}
-                else:
-                    kwargs["where"] = {"$and": [{k: {"$eq": v}} for k, v in filters.items()]}
-
-            results = self._collection.query(**kwargs)
-
-            search_results: list[SearchResult] = []
-            docs      = results["documents"][0]
-            metas     = results["metadatas"][0]
-            distances = results["distances"][0]
-
-            for rank, (doc, meta, dist) in enumerate(zip(docs, metas, distances)):
-                score = 1.0 / (1.0 + dist)
-                chunk = {**meta, "text": doc}
-                search_results.append(SearchResult(chunk=chunk, score=score, rank=rank))
-
-            return search_results
+            logger.warning("Pinecone API key not configured properly; skipping semantic search")
+            return []
 
         except Exception as e:
             logger.error("Semantic search error: %s", e, exc_info=True)
@@ -487,20 +440,12 @@ class HybridSearcher:
 
     def get_purana_stats(self) -> list[dict[str, Any]]:
         """Return stats for all indexed Puranas (name + chunk count)."""
-        if not self._collection:
-            return []
-        try:
-            # Get all unique purana values from metadata
-            results = self._collection.get(include=["metadatas"])
-            counts: dict[str, int] = {}
-            for meta in results.get("metadatas", []):
-                purana = meta.get("purana", "Unknown")
-                counts[purana] = counts.get(purana, 0) + 1
+        counts: dict[str, int] = {}
+        for chunk in self._chunk_map:
+            purana = chunk.get("purana", "Unknown")
+            counts[purana] = counts.get(purana, 0) + 1
 
-            return [
-                {"name": purana, "chunk_count": count}
-                for purana, count in sorted(counts.items(), key=lambda x: x[1], reverse=True)
-            ]
-        except Exception as e:
-            logger.error("Error fetching purana stats: %s", e)
-            return []
+        return [
+            {"name": purana, "chunk_count": count}
+            for purana, count in sorted(counts.items(), key=lambda x: x[1], reverse=True)
+        ]
