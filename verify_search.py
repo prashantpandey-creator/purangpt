@@ -62,6 +62,7 @@ def top_sources(query, **kw):
     res = searcher.hybrid_search(query, top_k=8, **kw)
     return res
 
+sharma_cats = {"yogic-commentary", "yogic-discourse"}
 
 def has_sharma_commentary(results) -> bool:
     return any((r.chunk.get("category") or "").lower() in sharma_cats
