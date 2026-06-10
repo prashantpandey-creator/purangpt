@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-INDEX_NAME = "purangpt-verses"
+INDEX_NAME = "purangpt-verses-oai"
 
 pc = None
 index = None
@@ -24,7 +24,7 @@ def init_pinecone():
         print(f"Creating Pinecone index: {INDEX_NAME} (this may take a minute...)")
         pc.create_index(
             name=INDEX_NAME,
-            dimension=384, # for intfloat/multilingual-e5-small or mini
+            dimension=1536, # for text-embedding-3-small
             metric="cosine",
             spec=ServerlessSpec(
                 cloud="aws",

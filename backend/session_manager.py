@@ -1,8 +1,8 @@
 import os
 import json
 import time
-from typing import Dict, List
 import logging
+from typing import Dict, List
 from datetime import datetime, timezone
 from backend.supabase_client import get_supabase
 
@@ -11,18 +11,40 @@ logger = logging.getLogger(__name__)
 class SessionManager:
     def __init__(self, max_history=100):
         self.max_history = max_history
-        self._guest_sessions = {} # In-memory storage for guests
+        self._guest_sessions = {}
+        self.guest_db_path = "data/guest_sessions.json"
+        self._load_guest_sessions()
 
-    def get_session(self, session_id: str, user_id: str = None) -> dict:
-        """Returns the full session object."""
+    def _load_guest_sessions(self):
+        if os.path.exists(self.guest_db_path):
+            try:
+                with open(self.guest_db_path, "r", encoding="utf-8") as f:
+                    self._guest_sessions = json.load(f)
+            except Exception as e:
+                logger.error(f"Failed to load guest sessions: {e}")
+
+    def _save_guest_sessions(self):
+        os.makedirs(os.path.dirname(self.guest_db_path) or ".", exist_ok=True)
+        try:
+            with open(self.guest_db_path, "w", encoding="utf-8") as f:
+                json.dump(self._guest_sessions, f, indent=2)
+        except Exception as e:
+            logger.error(f"Failed to save guest sessions: {e}")
+
+    def get_session(self, session_id: str, user_id: str = None, guest_id: str = None) -> dict:
         if not user_id:
-            # Guest mode: use in-memory
-            return self._guest_sessions.get(session_id, {
+            # Guest mode: use local persistent JSON
+            session = self._guest_sessions.get(session_id)
+            if session and session.get("guest_id") == guest_id:
+                return session
+            # If not found or guest_id mismatch, return a new one
+            return {
                 "id": session_id,
+                "guest_id": guest_id,
                 "title": "New Chat",
                 "updated_at": time.time(),
                 "history": []
-            })
+            }
             
         supabase = get_supabase()
         if supabase:
@@ -30,15 +52,12 @@ class SessionManager:
                 resp = supabase.table("chat_sessions").select("*").eq("id", session_id).eq("user_id", user_id).execute()
                 if resp.data:
                     data = resp.data[0]
-                    # Parse timestamp
                     updated_at = 0
                     if data.get("updated_at"):
                         try:
                             dt = datetime.fromisoformat(data["updated_at"].replace('Z', '+00:00'))
                             updated_at = dt.timestamp()
-                        except:
-                            pass
-                            
+                        except: pass
                     return {
                         "id": data["id"],
                         "title": data.get("title", "New Chat"),
@@ -50,12 +69,13 @@ class SessionManager:
                 
         return {"id": session_id, "title": "New Chat", "updated_at": time.time(), "history": []}
         
-    def save_session(self, session_id: str, data: dict, user_id: str = None):
-        """Saves the session object."""
+    def save_session(self, session_id: str, data: dict, user_id: str = None, guest_id: str = None):
         data["updated_at"] = time.time()
         
         if not user_id:
+            data["guest_id"] = guest_id
             self._guest_sessions[session_id] = data
+            self._save_guest_sessions()
             return
             
         supabase = get_supabase()
@@ -71,14 +91,11 @@ class SessionManager:
                 }).execute()
             except Exception as e:
                 logger.error(f"Error saving session {session_id}: {e}")
-                # Fallback to local memory if DB fails
-                self._guest_sessions[session_id] = data
 
-    def append_messages(self, session_id: str, messages: List[dict], user_id: str = None):
-        """Appends messages to the session and automatically generates a title if it's new."""
-        session = self.get_session(session_id, user_id)
+    def append_messages(self, session_id: str, messages: List[dict], user_id: str = None, guest_id: str = None):
+        session = self.get_session(session_id, user_id, guest_id)
         
-        if not session["history"] and messages:
+        if not session.get("history") and messages:
             for msg in messages:
                 if msg.get("role") == "user":
                     content = msg.get("content", "").strip()
@@ -86,26 +103,26 @@ class SessionManager:
                     session["title"] = title
                     break
                     
-        session["history"].extend(messages)
-        
+        session["history"] = session.get("history", []) + messages
         if len(session["history"]) > self.max_history:
             session["history"] = session["history"][-self.max_history:]
             
-        self.save_session(session_id, session, user_id)
+        self.save_session(session_id, session, user_id, guest_id)
         return session
         
-    def truncate_session(self, session_id: str, index: int, user_id: str = None):
-        """Truncates the session history to keep only messages up to the given index (exclusive)."""
-        session = self.get_session(session_id, user_id)
-        if 0 <= index <= len(session["history"]):
+    def truncate_session(self, session_id: str, index: int, user_id: str = None, guest_id: str = None):
+        session = self.get_session(session_id, user_id, guest_id)
+        if "history" in session and 0 <= index <= len(session["history"]):
             session["history"] = session["history"][:index]
-            self.save_session(session_id, session, user_id)
+            self.save_session(session_id, session, user_id, guest_id)
         return session
         
-    def clear_session(self, session_id: str, user_id: str = None):
+    def clear_session(self, session_id: str, user_id: str = None, guest_id: str = None):
         if not user_id:
             if session_id in self._guest_sessions:
-                del self._guest_sessions[session_id]
+                if self._guest_sessions[session_id].get("guest_id") == guest_id:
+                    del self._guest_sessions[session_id]
+                    self._save_guest_sessions()
             return
             
         supabase = get_supabase()
@@ -115,11 +132,20 @@ class SessionManager:
             except Exception as e:
                 logger.error(f"Error deleting session {session_id}: {e}")
             
-    def get_all_sessions(self, user_id: str = None) -> List[dict]:
-        """Returns a list of all sessions sorted by updated_at (newest first)."""
+    def get_all_sessions(self, user_id: str = None, guest_id: str = None) -> List[dict]:
         if not user_id:
-            # Guests don't get session history list persisted
-            return []
+            if not guest_id:
+                return []
+            sessions = []
+            for sid, sdata in self._guest_sessions.items():
+                if sdata.get("guest_id") == guest_id:
+                    sessions.append({
+                        "id": sid,
+                        "title": sdata.get("title", "Chat"),
+                        "updated_at": sdata.get("updated_at", 0)
+                    })
+            sessions.sort(key=lambda x: x["updated_at"], reverse=True)
+            return sessions
             
         supabase = get_supabase()
         if supabase:
@@ -132,8 +158,7 @@ class SessionManager:
                         try:
                             dt = datetime.fromisoformat(row["updated_at"].replace('Z', '+00:00'))
                             updated_at = dt.timestamp()
-                        except:
-                            pass
+                        except: pass
                     sessions.append({
                         "id": row["id"],
                         "title": row.get("title", "Chat"),

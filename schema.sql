@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   avatar_url TEXT,
   role TEXT DEFAULT 'free' CHECK (role IN ('guest', 'free', 'pro', 'scholar', 'admin')),
   daily_message_count INT DEFAULT 0,
+  deep_research_count INT DEFAULT 0,
   daily_reset_at TIMESTAMPTZ DEFAULT NOW(),
   byok_keys JSONB DEFAULT '{}',
   stripe_customer_id TEXT,

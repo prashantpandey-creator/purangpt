@@ -17,9 +17,7 @@ import pickle
 from pathlib import Path
 from typing import Any, Optional
 
-from backend.pinecone_client import semantic_search as pinecone_search
 from rank_bm25 import BM25Okapi
-from sentence_transformers import SentenceTransformer
 import os
 
 logger = logging.getLogger(__name__)
@@ -103,7 +101,8 @@ class HybridSearcher:
 
         self._bm25:          Optional[BM25Okapi]           = None
         self._chunk_map:     list[dict[str, Any]]          = []  # index → chunk dict
-        self._embed_model:   Optional[SentenceTransformer] = None
+        self._embed_model    = None
+        self._chroma_col     = None
         self._initialized    = False
 
     def initialize(self) -> "HybridSearcher":
@@ -128,10 +127,19 @@ class HybridSearcher:
         else:
             logger.warning("Chunk map not found at %s.", chunk_map_path)
             
-        # ── Embed Model ───────────────────────────────────────────────
-        embed_model_name = os.getenv("EMBED_MODEL", "intfloat/multilingual-e5-small")
-        logger.info("Loading embedding model: %s", embed_model_name)
-        self._embed_model = SentenceTransformer(embed_model_name)
+        # ── Embed Model + ChromaDB ───────────────────────────────────────────────
+        logger.info("Initializing local embedding model (multilingual-e5-small)...")
+        os.environ["TOKENIZERS_PARALLELISM"] = "false"
+        from sentence_transformers import SentenceTransformer
+        import chromadb
+        from chromadb.config import Settings
+        
+        self._embed_model = SentenceTransformer("intfloat/multilingual-e5-small")
+        
+        # Load local ChromaDB
+        chroma_path = str(self.index_dir.parent / "chroma_db")
+        client = chromadb.PersistentClient(path=chroma_path, settings=Settings(anonymized_telemetry=False))
+        self._chroma_col = client.get_collection("purana_verses")
 
         self._initialized = True
         logger.info("HybridSearcher initialized ✓")
@@ -154,53 +162,49 @@ class HybridSearcher:
         filters: dict[str, Any] | None = None,
     ) -> list[SearchResult]:
         """
-        Dense vector similarity search via Pinecone (if configured) or ChromaDB (fallback).
-
-        Parameters
-        ----------
-        query   : Natural language query (will be embedded)
-        top_k   : Maximum number of results to return
-        filters : Dict of metadata matches, e.g. {"purana": "Bhagavata Purana"}
+        Dense vector similarity search via local ChromaDB.
         """
-        if not self._embed_model:
-            logger.warning("Embedding model not loaded; skipping semantic search")
+        if not self._chroma_col:
+            logger.warning("ChromaDB collection not loaded; skipping semantic search")
             return []
 
         try:
-            # Generate query embedding with required format/prefix
-            query_emb_list = self._embed_model.encode([f"query: {query}"], normalize_embeddings=True).tolist()
-            query_emb = query_emb_list[0]
+            # 1. Generate query embedding locally (E5 requires 'query: ' prefix)
+            query_emb = self._embed_model.encode(f"query: {query}", normalize_embeddings=True).tolist()
 
-            # 1. Try Pinecone search if API key is present
-            from backend.pinecone_client import PINECONE_API_KEY
-            if PINECONE_API_KEY and not PINECONE_API_KEY.startswith("your_"):
-                logger.info("Performing semantic search via Pinecone...")
-                pinecone_filters = None
-                if filters:
-                    pinecone_filters = {}
-                    for k, v in filters.items():
-                        if isinstance(v, dict) and "$eq" in v:
-                            pinecone_filters[k] = v["$eq"]
-                        else:
-                            pinecone_filters[k] = v
+            # 2. Map filters to ChromaDB where clause
+            chroma_where = None
+            if filters:
+                chroma_where = {}
+                for k, v in filters.items():
+                    if isinstance(v, dict) and "$eq" in v:
+                        chroma_where[k] = v["$eq"]
+                    else:
+                        chroma_where[k] = v
 
-                matches = pinecone_search(
-                    query_embedding=query_emb,
-                    top_k=top_k,
-                    filters=pinecone_filters
-                )
+            # 3. Query ChromaDB
+            results = self._chroma_col.query(
+                query_embeddings=[query_emb],
+                n_results=top_k,
+                where=chroma_where if chroma_where else None,
+                include=["documents", "metadatas", "distances"]
+            )
 
-                search_results: list[SearchResult] = []
-                for rank, match in enumerate(matches):
-                    metadata = match["metadata"]
-                    doc = metadata.get("text", "")
-                    chunk = {**metadata, "text": doc, "id": match["id"]}
-                    search_results.append(SearchResult(chunk=chunk, score=match["score"], rank=rank))
-                
-                return search_results
+            if not results["documents"] or not results["documents"][0]:
+                return []
 
-            logger.warning("Pinecone API key not configured properly; skipping semantic search")
-            return []
+            search_results: list[SearchResult] = []
+            for rank, (doc, meta, dist) in enumerate(zip(
+                results["documents"][0],
+                results["metadatas"][0],
+                results["distances"][0]
+            )):
+                # Convert cosine distance to similarity score
+                score = 1.0 - dist
+                chunk = {**meta, "text": doc, "id": meta.get("id", f"c_{rank}")}
+                search_results.append(SearchResult(chunk=chunk, score=score, rank=rank))
+            
+            return search_results
 
         except Exception as e:
             logger.error("Semantic search error: %s", e, exc_info=True)
@@ -271,8 +275,8 @@ class HybridSearcher:
     # in both the BM25 chunk_map and the Chroma metadata, so it's the reliable
     # signal at retrieval time (`bias`/`author` are not stored there).
     COMMENTARY_CATEGORIES = {"yogic-commentary", "yogic-discourse"}
-    COMMENTARY_BOOST = 1.4   # curated book commentary / discourse
-    DARSHAN_DAMPEN   = 0.85  # bulk conversational transcripts
+    COMMENTARY_BOOST = 0.9   # Reduced to show less Shailendra Sharma
+    DARSHAN_DAMPEN   = 0.7   # bulk conversational transcripts
 
     def _source_weight(self, chunk: dict[str, Any]) -> float:
         """Relevance multiplier based on the source tier of a chunk."""

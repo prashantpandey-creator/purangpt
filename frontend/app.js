@@ -1185,18 +1185,20 @@ function langBadge(lang) {
   if (!lang) return '';
   const colors = {Sanskrit:'#7c5cbf',Hindi:'#c45e2a',English:'#2a6db5'};
   const col = colors[lang]||'#555';
-  return `<span class="source-badge" style="background:${col}20;color:${col};border:1px solid ${col}50">🇮🇳 ${lang}</span>`;
+  return `<span class="source-badge" style="background:${col}20;color:${col};border:1px solid ${col}50" title="Language: ${lang}">Lang: ${lang}</span>`;
 }
 function biasBadge(bias) {
   if (!bias) return '';
   const ok = bias.startsWith('✅');
-  return `<span class="source-badge ${ok?'bias-ok':'bias-warn'}">${bias.slice(0,20)}</span>`;
+  // Strip the emoji to make it cleaner, add our own text
+  const cleanText = bias.replace('✅ ', '').replace('⚠️ ', '').slice(0, 20);
+  return `<span class="source-badge ${ok?'bias-ok':'bias-warn'}" title="Text Bias: ${cleanText}">Bias: ${cleanText}</span>`;
 }
 function tradBadge(trad) {
   if (!trad) return '';
   const colors = {shaiva:'#6B9FD4',vaishnava:'#E8C96B',shakta:'#D47B7B',nath:'#8E8E8E',advaita:'#7BC47B',vedic:'#C4B87B',darshana:'#A07BC4',mixed:'#C4965A'};
   const col = colors[trad] || '#8A7E65';
-  return `<span class="source-badge trad-badge"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${col};margin-right:4px;vertical-align:middle;flex-shrink:0"></span>${trad}</span>`;
+  return `<span class="source-badge trad-badge" title="Tradition/Sect: ${trad}"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${col};margin-right:4px;vertical-align:middle;flex-shrink:0"></span>Tradition: ${trad}</span>`;
 }
 
 function askAboutSource(name, ref) {

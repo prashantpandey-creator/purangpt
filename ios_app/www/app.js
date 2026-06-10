@@ -154,6 +154,7 @@ async function init() {
   await checkStatus();
   await fetchSessions();
   updateMemoryBadge();
+  updateLimits();
 }
 
 // ── Mode Switching ─────────────────────────────────────────────────────────
@@ -170,6 +171,7 @@ function switchMode(m) {
   });
   if (m === 'explore') renderExploreGrid();
   if (m === 'infer')   initInferPanel();
+  updateLimits();
 }
 
 // ── Infer Panel ─────────────────────────────────────────────────────────────
@@ -276,7 +278,48 @@ function renderMarkdown(md) {
     .replace(/<p>(<[hul])/g, '$1');
 }
 
-// ── Status ─────────────────────────────────────────────────────────────────
+// ── Status & Limits ─────────────────────────────────────────────────────────
+async function updateLimits() {
+  const badge = $('limit-badge');
+  if (!badge) return;
+  try {
+    const res = await fetch(`${getApiUrl()}/api/user/usage`, { headers: await getAuthHeaders() });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.is_byok) {
+         badge.style.display = 'inline-block';
+         badge.innerHTML = '✨ BYOK Unlimited';
+         return;
+      }
+      
+      let msgText = '';
+      if (STATE.activeMode === 'deep') {
+         const used = data.research.used;
+         const limit = data.research.limit;
+         msgText = limit === 'Unlimited' ? 'Research: Unlimited' : `Research: ${limit - used} left`;
+         if (limit !== 'Unlimited' && used >= limit) {
+             msgText = 'Research limit reached';
+             badge.style.color = '#ff4444';
+         } else {
+             badge.style.color = 'var(--accent)';
+         }
+      } else {
+         const used = data.messages.used;
+         const limit = data.messages.limit;
+         msgText = limit === 'Unlimited' ? 'Messages: Unlimited' : `Messages: ${limit - used} left`;
+         if (limit !== 'Unlimited' && used >= limit) {
+             msgText = 'Message limit reached';
+             badge.style.color = '#ff4444';
+         } else {
+             badge.style.color = 'var(--accent)';
+         }
+      }
+      badge.style.display = 'inline-block';
+      badge.textContent = msgText;
+    }
+  } catch(e) {}
+}
+
 async function checkStatus() {
   setStatus('loading', 'Connecting…');
   try {
@@ -390,6 +433,7 @@ function createNewSession() {
 
 // ── Purana Filter ──────────────────────────────────────────────────────────
 function renderPuranaFilter() {
+  if (!DOM.puranFilter || !DOM.filterAll) return;
   DOM.puranFilter.innerHTML = SACRED_TEXTS.filter(t => t.cat === 'mahapurana').map(t => `
     <label class="filter-label">
       <input type="checkbox" class="filter-check purana-check" value="${t.id}" id="filter-${t.id}" />
@@ -749,7 +793,14 @@ async function runDeepResearch(query, typingId, truncateIndex = null) {
     }
   } catch (err) {
     removeTypingIndicator(typingId);
-    if (err.name !== 'AbortError') appendErrorMessage(err.message);
+    if (err.name !== 'AbortError') {
+        appendErrorMessage(err.message);
+        if (err.message.includes('upgrade')) {
+            setTimeout(() => { window.location.href = '/pricing.html'; }, 2000);
+        } else if (err.message.includes('Guest limit') || err.message.includes('Guest rate limit')) {
+            setTimeout(() => { window.location.href = '/login.html'; }, 2000);
+        }
+    }
   } finally {
     STATE.isGenerating   = false;
     DOM.sendBtn.disabled = false;
@@ -1134,18 +1185,20 @@ function langBadge(lang) {
   if (!lang) return '';
   const colors = {Sanskrit:'#7c5cbf',Hindi:'#c45e2a',English:'#2a6db5'};
   const col = colors[lang]||'#555';
-  return `<span class="source-badge" style="background:${col}20;color:${col};border:1px solid ${col}50">🇮🇳 ${lang}</span>`;
+  return `<span class="source-badge" style="background:${col}20;color:${col};border:1px solid ${col}50" title="Language: ${lang}">Lang: ${lang}</span>`;
 }
 function biasBadge(bias) {
   if (!bias) return '';
   const ok = bias.startsWith('✅');
-  return `<span class="source-badge ${ok?'bias-ok':'bias-warn'}">${bias.slice(0,20)}</span>`;
+  // Strip the emoji to make it cleaner, add our own text
+  const cleanText = bias.replace('✅ ', '').replace('⚠️ ', '').slice(0, 20);
+  return `<span class="source-badge ${ok?'bias-ok':'bias-warn'}" title="Text Bias: ${cleanText}">Bias: ${cleanText}</span>`;
 }
 function tradBadge(trad) {
   if (!trad) return '';
   const colors = {shaiva:'#6B9FD4',vaishnava:'#E8C96B',shakta:'#D47B7B',nath:'#8E8E8E',advaita:'#7BC47B',vedic:'#C4B87B',darshana:'#A07BC4',mixed:'#C4965A'};
   const col = colors[trad] || '#8A7E65';
-  return `<span class="source-badge trad-badge"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${col};margin-right:4px;vertical-align:middle;flex-shrink:0"></span>${trad}</span>`;
+  return `<span class="source-badge trad-badge" title="Tradition/Sect: ${trad}"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${col};margin-right:4px;vertical-align:middle;flex-shrink:0"></span>Tradition: ${trad}</span>`;
 }
 
 function askAboutSource(name, ref) {
@@ -1691,6 +1744,19 @@ if (typeof onAuthStateChange === 'function') {
             if(signInBtn) signInBtn.style.display = 'block';
             if(sidebarSignIn) sidebarSignIn.style.display = 'block';
             if(profileBtn) profileBtn.style.display = 'none';
+            
+            // Check if they are a guest
+            if (localStorage.getItem('purangpt_guest') === 'true') {
+                if (document.getElementById('messages-container').children.length === 0) {
+                    const msgEl = appendAssistantMessage('', false);
+                    msgEl.querySelector('.message-bubble').innerHTML = `
+                        <div style="background: rgba(255,165,0,0.1); border: 1px solid rgba(255,165,0,0.3); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+                            <strong>Guest Session Active</strong><br>
+                            You are signed in as a guest. You are limited to 10 free messages in this session, and your history will not be saved.
+                        </div>
+                    `;
+                }
+            }
         } else {
             if(signInBtn) signInBtn.style.display = 'none';
             if(sidebarSignIn) sidebarSignIn.style.display = 'none';

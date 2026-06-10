@@ -1,7 +1,7 @@
 {
   "appId": "com.fcpuru95.purangpt",
   "appName": "PuranGPT",
-  "webDir": "www",
+  "webDir": "../purangpt-next/out",
   "bundledWebRuntime": false,
   "server": {
     "androidScheme": "https"

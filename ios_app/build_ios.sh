@@ -1,23 +1,18 @@
 #!/bin/bash
 set -e
 
-echo "Building iOS Web Assets..."
+echo "Building iOS Web Assets with Next.js..."
 
-# Create fresh www directory
-rm -rf www
-mkdir www
+# Navigate to Next.js project
+cd ../purangpt-next
 
-# Copy all frontend files
-cp -r ../frontend/* www/
+# Install dependencies if needed
+npm install
 
-# Copy the iOS config injection script
-cp ios_config.js www/ios_config.js
+# Build Next.js with static export
+# Inject the Railway production URL so the iOS app knows where to talk to
+export NEXT_PUBLIC_API_URL="https://purangpt-production.up.railway.app"
+npm run build
 
-# Rewrite absolute paths to relative paths for Capacitor
-# (e.g. /static/style.css -> style.css, /static/app.js -> app.js)
-sed -i '' 's|/static/||g' www/index.html
-
-# Inject ios_config.js right before app.js
-sed -i '' 's|<script src="app.js"></script>|<script src="ios_config.js"></script>\n  <script src="app.js"></script>|g' www/index.html
-
-echo "Assets copied to www. Ready for Capacitor sync."
+echo "Next.js built successfully to purangpt-next/out!"
+echo "Assets ready for Capacitor sync."

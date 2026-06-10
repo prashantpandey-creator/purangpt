@@ -66,6 +66,7 @@ from backend.auth import get_current_user, require_auth, require_role, get_guest
 from backend.supabase_client import get_supabase, update_profile, get_admin_stats, get_all_users, encrypt_keys, decrypt_keys, increment_usage, check_rate_limit, check_research_limit, increment_research_usage
 
 from backend.session_manager import SessionManager
+from backend.monitor import run_health_checks
 
 # ── Session Memory ─────────────────────────────────────────────────────────
 session_manager = SessionManager(MAX_HISTORY)
@@ -154,6 +155,8 @@ Integrate all evidence. State what is established vs disputed.
 
 {interpolations}
 
+{language_instruction}
+
 ## Retrieved Source Passages
 {context}
 
@@ -209,6 +212,8 @@ Only here: knowledge from your training not present in the retrieved passages. C
 1. question
 2. question
 3. question
+
+{language_instruction}
 
 ## Retrieved Source Passages
 {context}
@@ -859,6 +864,41 @@ async def call_llm_once(messages: List[dict], temperature: float = 0.2, req_mode
     return "".join(full)
 
 
+async def detect_and_translate_query(query: str) -> tuple[str, str]:
+    """
+    Detect language of query. If it's not pure English/IAST, translate to English+Sanskrit keywords.
+    Returns (detected_language_name, english_search_query).
+    """
+    prompt = f"""Analyze this user search query: "{query}"
+
+Respond with ONLY valid JSON in this exact format:
+{{
+  "language": "Full Name of Language in English (e.g., Hindi, Russian, French, English)",
+  "search_query": "The query translated into English, but keep core Sanskrit concepts (like dharma, karma, purusha) as IAST transliterated Sanskrit words."
+}}
+
+Do not include any other text or formatting. Just the JSON."""
+
+    try:
+        response_text = await call_llm_once([{"role": "user", "content": prompt}])
+        # Extract JSON if wrapped in markdown
+        import re
+        match = re.search(r'\{.*\}', response_text.strip(), re.DOTALL)
+        if match:
+            data = json.loads(match.group(0))
+            lang = data.get("language", "English")
+            translated = data.get("search_query", query)
+            # If the user typed english, just use their exact query
+            if lang.lower() == "english":
+                return lang, query
+            return lang, translated
+    except Exception as e:
+        logger.error("Query translation failed: %s", e)
+    
+    return "English", query
+
+
+
 def format_history(history: List[dict]) -> str:
     """Format conversation history with a rolling character window."""
     if not history:
@@ -1156,25 +1196,66 @@ async def list_modes():
 
 
 @app.get("/api/sessions")
-async def get_all_sessions(user: dict = Depends(require_auth)):
+async def get_all_sessions(req: Request, user: Optional[dict] = Depends(get_current_user)):
     """List all saved sessions."""
-    return {"sessions": session_manager.get_all_sessions(user.get("id"))}
+    user_id = user.get("id") if user else None
+    guest_id = get_guest_id(req)
+    return {"sessions": session_manager.get_all_sessions(user_id, guest_id)}
 
 @app.get("/api/session/{session_id}")
-async def get_session(session_id: str, user: Optional[dict] = Depends(get_current_user)):
+async def get_session(session_id: str, req: Request, user: Optional[dict] = Depends(get_current_user)):
     """Get conversation history for a session."""
     user_id = user.get("id") if user else None
-    session_data = session_manager.get_session(session_id, user_id)
+    guest_id = get_guest_id(req)
+    session_data = session_manager.get_session(session_id, user_id, guest_id)
     history = session_data.get("history", [])
     return {"session_id": session_id, "message_count": len(history), "history": history[-20:]}
 
 @app.delete("/api/session/{session_id}")
-async def clear_session(session_id: str, user: Optional[dict] = Depends(get_current_user)):
+async def clear_session(session_id: str, req: Request, user: Optional[dict] = Depends(get_current_user)):
     """Clear conversation history."""
     user_id = user.get("id") if user else None
-    session_manager.clear_session(session_id, user_id)
+    guest_id = get_guest_id(req)
+    session_manager.clear_session(session_id, user_id, guest_id)
     return {"cleared": True}
 
+
+@app.get("/api/limits")
+async def get_user_limits(req: Request, user: Optional[dict] = Depends(get_current_user)):
+    """Return the remaining messages and research limits for the current user or guest."""
+    is_byok = bool(custom_keys_var.get())
+    if not user:
+        guest_id = get_guest_id(req)
+        allowed, rem = check_guest_rate_limit(guest_id)
+        return {
+            "role": "guest", 
+            "messages_remaining": rem, 
+            "research_remaining": 0,
+            "max_messages": 10,
+            "max_research": 0
+        }
+    else:
+        role = user.get("role", "free")
+        allowed, rem = check_rate_limit(user.get("id"), role, is_byok=is_byok)
+        r_allowed, r_rem = check_research_limit(user.get("id"), role, is_byok=is_byok)
+        
+        max_msgs = 999999 if role in ["pro", "scholar", "admin"] or is_byok else 10
+        max_res = 50 if role in ["pro", "scholar", "admin"] or is_byok else 3
+        
+        return {
+            "role": role, 
+            "messages_remaining": rem, 
+            "research_remaining": r_rem,
+            "max_messages": max_msgs,
+            "max_research": max_res
+        }
+
+@app.get("/api/monitor/health")
+async def monitor_health():
+    """Run all health checks for the monitoring dashboard."""
+    active_sessions = len(session_manager.sessions) if hasattr(session_manager, 'sessions') else 0
+    results = await run_health_checks(active_sessions)
+    return results
 
 @app.post("/api/chat")
 async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depends(get_current_user)):
@@ -1200,9 +1281,10 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
 
     user_id = user.get("id") if user else None
     session_id = request.session_id or "default"
+    guest_id = get_guest_id(req) if not user else None
     
     if request.truncate_history_from_index is not None:
-        session_manager.truncate_session(session_id, request.truncate_history_from_index, user.get("id") if user else None)
+        session_manager.truncate_session(session_id, request.truncate_history_from_index, user_id, guest_id)
 
     # ── Deep Research Mode ──────────────────────────────────────────────────
     if request.mode == "deep":
@@ -1221,13 +1303,18 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
 
     # ── Standard Chat ────────────────────────────────────────────────────────
     async def event_gen() -> AsyncGenerator[dict, None]:
+        # 0. Detect and Translate Query
+        detected_lang, search_query = await detect_and_translate_query(request.query)
+        logger.info("Original Query: %r | Detected Lang: %s | Search Query: %r", request.query, detected_lang, search_query)
+
         # 1. RAG search (vector index if available)
         sources = []
         rag_context = ""
         if state.searcher and state.index_ready:
             try:
+                # Use translated query for semantic search
                 results = state.searcher.hybrid_search(
-                    query=request.query, top_k=request.top_k, filters=request.filters)
+                    query=search_query, top_k=request.top_k, filters=request.filters)
                 sources    = build_source_list(results)
                 rag_context = build_rag_context(results)
             except Exception as e:
@@ -1237,11 +1324,11 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         skt_results = []
         if state.gretil_corpus:
             # Use query expansion: try synonyms if primary search returns nothing
-            words = [w for w in request.query.split() if len(w) > 3]
-            primary_key = request.query if not words else " ".join(words[:2])
+            words = [w for w in search_query.split() if len(w) > 3]
+            primary_key = search_query if not words else " ".join(words[:2])
             skt_results = search_sanskrit(primary_key, max_results=8)
             if not skt_results:
-                for term in expand_query_terms(request.query)[1:]:   # skip first = original
+                for term in expand_query_terms(search_query)[1:]:   # skip first = original
                     skt_results = search_sanskrit(term, max_results=8)
                     if skt_results:
                         break
@@ -1278,8 +1365,10 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         history_str = format_history(history)
 
         prompt_tpl  = PROMPTS.get(request.mode, SCHOLAR_SYSTEM)
+        lang_instr = f"## IMPORTANT: Respond strictly in {detected_lang}. Translate all explanations to {detected_lang}, but keep Sanskrit terms in IAST transliteration." if detected_lang.lower() != "english" else ""
         system_text = prompt_tpl.format(
             interpolations=KNOWN_INTERPOLATIONS,
+            language_instruction=lang_instr,
             context=rag_context or "(No indexed passages — answering from deep Puranic knowledge)",
             history=f"## Previous Conversation\n{history_str}" if history else ""
         )
@@ -1311,7 +1400,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         session_data = session_manager.append_messages(session_id, [
             {"role": "user",      "content": request.query},
             {"role": "assistant", "content": full_text}
-        ], user_id)
+        ], user_id, guest_id)
         
         if not user:
             increment_guest_usage(get_guest_id(req))
