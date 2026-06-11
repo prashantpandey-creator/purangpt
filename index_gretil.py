@@ -26,7 +26,7 @@ INDEX_DIR.mkdir(parents=True, exist_ok=True)
 DB_DIR.mkdir(parents=True, exist_ok=True)
 
 # Shloka boundary patterns
-DANDA_RE   = re.compile(r'[।॥]')
+DANDA_RE   = re.compile(r'[।॥]|/{1,2}')
 VERSE_RE   = re.compile(r'\b(\d+)\s*[.|,]\s*(\d+)\b') # E.g., 1.15
 
 # Chapter detection regexes — checked in priority order
@@ -41,8 +41,8 @@ _CH_ADHYAYA    = re.compile(
 )
 # 4. Devanagari chapter/section markers
 _CH_DEVA       = re.compile(r'(?:अध्याय|स्कन्ध|काण्ड|पर्व|सर्ग|खण्ड)\s*([\u0966-\u096F\d]+)')
-# 5. GRETIL inline citation codes: prefix_CHAPTER.verse  (e.g. ap_1.001ab, mbh_01.001)
-_CH_CITATION   = re.compile(r'\b[a-z]{1,5}_0*(\d+)\.\d+')
+# 5. GRETIL inline citation codes: prefix_CHAPTER.verse  (e.g. ap_1.001ab, mbh_01.001, garp_1,1.5)
+_CH_CITATION   = re.compile(r'\b[a-z]{2,5}_([\d\.,]+)')
 
 # Devanagari digit → ASCII digit translation
 _DEVA_TO_ASCII = str.maketrans('०१२३४५६७८९', '0123456789')
@@ -88,10 +88,18 @@ def _chapter_from_citation(line: str) -> int | None:
     """Extract chapter number from a GRETIL inline citation code."""
     m = _CH_CITATION.search(line)
     if m:
-        try:
-            return int(m.group(1))
-        except ValueError:
-            pass
+        parts = re.split(r'[,\.]', m.group(1))
+        parts = [p for p in parts if p]
+        
+        # If there are multiple numeric components (e.g., skandha, chapter, verse)
+        # the chapter is generally the second-to-last part.
+        if len(parts) >= 2:
+            try:
+                # Strip non-digits from the end (e.g. '001ab' or '*')
+                chap_str = re.sub(r'\D+$', '', parts[-2])
+                return int(chap_str)
+            except ValueError:
+                pass
     return None
 
 
@@ -143,7 +151,7 @@ def chunk_text(txt_path: Path, text_id: str, meta: dict) -> list[dict]:
     chunks: list[dict] = []
 
     # Danda-based (Sanskrit/Hindi verse) vs line-based (prose/HTML) chunking
-    has_dandas = '।' in full_text or '॥' in full_text
+    has_dandas = '।' in full_text or '॥' in full_text or '/' in full_text
 
     current_chapter = 0
     verse_num       = 0
@@ -215,6 +223,10 @@ def chunk_text(txt_path: Path, text_id: str, meta: dict) -> list[dict]:
             if ch is not None and ch > 0:
                 current_chapter = ch
                 continue  # chapter-header lines are not content
+            else:
+                ch_cite = _chapter_from_citation(line)
+                if ch_cite is not None and ch_cite > 0:
+                    current_chapter = ch_cite
 
             text_buffer.append(line)
             line_buffer.append(i + 1)
@@ -369,8 +381,9 @@ def main():
     print(f"\n✓ Total chunks: {len(all_chunks):,}")
 
     # Build indexes
-    build_bm25_index(all_chunks)
-    build_vector_index(all_chunks)
+    # Build indexes (delegated to build_index.py for incremental safety)
+    # build_bm25_index(all_chunks)
+    # build_vector_index(all_chunks)
 
     print(f"\n{'='*55}")
     print(f"✅ Indexing complete!")

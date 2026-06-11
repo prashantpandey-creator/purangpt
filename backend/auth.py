@@ -75,7 +75,7 @@ _guest_usage = {}
 from datetime import datetime, timezone
 
 def check_guest_rate_limit(guest_id: str) -> tuple[bool, int]:
-    """Check if guest has exceeded 10 messages/day."""
+    """Check if guest has exceeded 50 messages/day."""
     now = datetime.now(timezone.utc)
     today = now.date().isoformat()
     
@@ -87,9 +87,9 @@ def check_guest_rate_limit(guest_id: str) -> tuple[bool, int]:
         _guest_usage[guest_id] = {"date": today, "count": 0}
         
     count = _guest_usage[guest_id]["count"]
-    if count >= 10:
+    if count >= 50:
         return False, 0
-    return True, 10 - count
+    return True, 50 - count
 
 def increment_guest_usage(guest_id: str):
     if guest_id in _guest_usage:
