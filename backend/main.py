@@ -62,7 +62,7 @@ FRONTEND_DIR  = Path(__file__).parent.parent / "frontend"
 MAX_HISTORY   = 100  # messages kept in session memory
 
 
-from backend.auth import get_current_user, require_auth, require_role, get_guest_id, check_guest_rate_limit, increment_guest_usage
+from backend.auth import get_current_user, require_auth, require_role, get_guest_id, check_guest_rate_limit, increment_guest_usage, validate_query
 from backend.supabase_client import get_supabase, update_profile, get_admin_stats, get_all_users, encrypt_keys, decrypt_keys, increment_usage, check_rate_limit, check_research_limit, increment_research_usage
 
 from backend.session_manager import SessionManager
@@ -126,14 +126,6 @@ When a verse is available in the retrieved passages:
 2. IAST transliteration
 3. Word-by-word translation
 4. Full meaning in English
-
-### 💬 Researched Quotes
-Pull the most illuminating direct quotes from the retrieved passages.
-Format each as a blockquote with attribution:
-> "Exact passage text..."
-> — *Text name, Chapter X*
-
-Keep responses highly concise and avoid repeating the same citation or Sanskrit verses multiple times.
 
 ### 🚫 Corrupted Text Warning
 If a retrieved text chunk appears corrupted, incoherent, or like a random string of characters (OCR errors), explicitly IGNORE it and do not quote it. Do not attempt to force an answer from corrupted text.
@@ -273,7 +265,46 @@ For every concept, situate it within the Darshana framework, note how different 
 {history}
 """
 
+SPIRITUAL_GUIDE_SYSTEM = """You are PuranGPT in SPIRITUAL MENTOR MODE.
+You are a wise, compassionate spiritual guide drawing upon Vedic knowledge, the Puranas, the Bhagavad Gita, and the specific yogic commentaries of Guruji Sri Shailendra Sharma.
+
+Your goal is to provide profound life lessons, spiritual advice, and comforting wisdom to individuals seeking guidance. 
+
+## Response Guidelines
+1. **Tone**: Warm, empathetic, profound, and non-judgmental. Speak directly to the seeker's soul.
+2. **Structure**: Start with a comforting spiritual truth, draw a lesson from a text, and provide grounded life advice.
+3. **References**: Do NOT write like an academic paper. Weave the wisdom naturally (e.g., "As Lord Krishna reminds us in the Gita...", or "Guruji Shailendra Sharma beautifully explains that...").
+4. **Focus**: Focus on inner peace, dharma (righteous action), karma (cause and effect), and spiritual awakening (samadhi).
+5. **Conciseness**: You must answer in EXACTLY ONE single, cohesive paragraph. Do not use bullet points or multiple paragraphs. Be profound but brief.
+
+{language_instruction}
+
+## Relevant Wisdom Passages
+{context}
+
+{history}
+"""
+
+PURANGPT_SYSTEM = """You are PuranGPT — an advanced AI trained on the vast corpus of Vedic literature, the Puranas, and the specific yogic commentaries of Guruji Sri Shailendra Sharma.
+
+Your goal is to provide a clear, synthesized, and highly readable answer to the user's question, directly drawing conclusions from the retrieved texts.
+
+## Response Guidelines
+1. **Direct & Conclusive**: Read the provided research passages and draw a clear conclusion. Do not write a heavy academic paper with inline citations unless absolutely necessary. Tell the user what the texts say in a synthesized, digestible way.
+2. **Authority**: Speak with the authority of the sacred texts. If the retrieved texts highlight Guruji Sri Shailendra Sharma's teachings or specific Puranic myths, integrate them smoothly into your answer.
+3. **Format**: Use clean, modern formatting (bullet points, bold text) to make your answer easy to read.
+4. **No Academic Clutter**: Avoid dumping raw Sanskrit or word-by-word IAST translations unless the user explicitly asks for them. Focus on the *meaning* and *conclusion*.
+
+{language_instruction}
+
+## Retrieved Source Passages
+{context}
+
+{history}
+"""
+
 PROMPTS = {
+    "purangpt":   PURANGPT_SYSTEM,
     "scholar":    SCHOLAR_SYSTEM,
     "deep":       DEEP_RESEARCH_SYSTEM,
     "nath":       NATH_SYSTEM,
@@ -281,6 +312,7 @@ PROMPTS = {
     "yogic":      NATH_SYSTEM,   # alias
     "comparison": SCHOLAR_SYSTEM,
     "translation":SCHOLAR_SYSTEM,
+    "spiritual_guide": SPIRITUAL_GUIDE_SYSTEM,
 }
 
 
@@ -457,14 +489,20 @@ def expand_query_terms(query: str) -> list:
 async def _validate_llm_providers() -> None:
     """
     Probe each configured LLM provider with a minimal request at startup.
+    Respects LLM_PROVIDER env var for priority ordering.
     Sets state.active_provider / state.active_model so every request knows
     which provider is live without retrying a known-bad key every time.
     """
-    # Try DeepSeek first since it's reliable and fast
-    DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
-    if DEEPSEEK_API_KEY:
+    preferred = LLM_PROVIDER  # from env: "deepseek" | "groq" | "gemini" | "auto"
+
+    # Build ordered probe list: preferred provider goes first
+    DEEPSEEK_API_KEY_VAL = os.getenv("DEEPSEEK_API_KEY", "")
+
+    async def _probe_deepseek() -> bool:
+        if not DEEPSEEK_API_KEY_VAL or DEEPSEEK_API_KEY_VAL.startswith("your_"):
+            return False
         url = "https://api.deepseek.com/chat/completions"
-        headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
+        headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY_VAL}", "Content-Type": "application/json"}
         payload = {"model": "deepseek-chat", "messages": [{"role":"user","content":"hi"}],
                    "max_tokens": 1, "stream": False}
         try:
@@ -475,14 +513,16 @@ async def _validate_llm_providers() -> None:
                         state.active_provider = "deepseek"
                         state.active_model    = "deepseek-chat"
                         logger.info("✓ DeepSeek API key valid — model: deepseek-chat")
-                        return
+                        return True
                     body = await r.text()
                     logger.warning("✗ DeepSeek API key invalid (HTTP %d): %s", r.status, body[:120])
         except Exception as e:
             logger.warning("✗ DeepSeek probe failed: %s", e)
+        return False
 
-    # Try Groq next
-    if GROQ_API_KEY:
+    async def _probe_groq() -> bool:
+        if not GROQ_API_KEY or GROQ_API_KEY.startswith("your_"):
+            return False
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
         payload = {"model": GROQ_MODEL, "messages": [{"role":"user","content":"hi"}],
@@ -495,15 +535,17 @@ async def _validate_llm_providers() -> None:
                         state.active_provider = "groq"
                         state.active_model    = GROQ_MODEL
                         logger.info("✓ Groq API key valid — model: %s", GROQ_MODEL)
-                        return
+                        return True
                     body = await r.text()
                     logger.warning("✗ Groq API key invalid (HTTP %d): %s", r.status, body[:120])
         except Exception as e:
             logger.warning("✗ Groq probe failed: %s", e)
+        return False
 
-    # Fall back to Gemini
-    if GEMINI_API_KEY:
-        url = (f"https://generativelanguage.googleapis.com/v1beta/openai/chat/completions")
+    async def _probe_gemini() -> bool:
+        if not GEMINI_API_KEY or GEMINI_API_KEY.startswith("your_"):
+            return False
+        url = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
         headers = {"Authorization": f"Bearer {GEMINI_API_KEY}", "Content-Type": "application/json"}
         payload = {"model": GEMINI_MODEL, "messages": [{"role":"user","content":"hi"}],
                    "max_tokens": 1, "stream": False}
@@ -515,11 +557,23 @@ async def _validate_llm_providers() -> None:
                         state.active_provider = "gemini"
                         state.active_model    = GEMINI_MODEL
                         logger.info("✓ Gemini API key valid — model: %s", GEMINI_MODEL)
-                        return
+                        return True
                     body = await r.text()
                     logger.warning("✗ Gemini API key invalid (HTTP %d): %s", r.status, body[:120])
         except Exception as e:
             logger.warning("✗ Gemini probe failed: %s", e)
+        return False
+
+    # Try in LLM_PROVIDER-first order
+    probe_order = {
+        "deepseek": [_probe_deepseek, _probe_groq, _probe_gemini],
+        "groq":     [_probe_groq, _probe_deepseek, _probe_gemini],
+        "gemini":   [_probe_gemini, _probe_deepseek, _probe_groq],
+    }.get(preferred, [_probe_deepseek, _probe_groq, _probe_gemini])
+
+    for probe in probe_order:
+        if await probe():
+            return
 
     logger.error("✗ No working LLM provider found — check your .env API keys!")
     state.active_provider = "none"
@@ -554,7 +608,17 @@ async def lifespan(app: FastAPI):
 
 # ── FastAPI ────────────────────────────────────────────────────────────────
 app = FastAPI(title="PuranGPT", version="2.0.0", lifespan=lifespan)
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+_CORS_ORIGINS = [o.strip() for o in os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://204.168.176.229:3000,http://localhost:3000,http://127.0.0.1:3000"
+).split(",") if o.strip()]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+)
 
 @app.middleware("http")
 async def extract_custom_keys(request: Request, call_next):
@@ -1251,16 +1315,15 @@ async def get_user_limits(req: Request, user: Optional[dict] = Depends(get_curre
         }
 
 @app.get("/api/monitor/health")
-async def monitor_health():
-    """Run all health checks for the monitoring dashboard."""
+async def monitor_health(user: dict = Depends(require_role(["admin"]))):
+    """Run all health checks for the monitoring dashboard. Admin only."""
     active_sessions = len(session_manager.sessions) if hasattr(session_manager, 'sessions') else 0
     results = await run_health_checks(active_sessions)
     return results
 
 @app.post("/api/chat")
 async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depends(get_current_user)):
-    if not request.query.strip():
-        raise HTTPException(400, "Query cannot be empty")
+    validate_query(request.query)
         
     # Check BYOK
     is_byok = bool(custom_keys_var.get())
@@ -1313,8 +1376,10 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         if state.searcher and state.index_ready:
             try:
                 # Use translated query for semantic search
-                results = state.searcher.hybrid_search(
-                    query=search_query, top_k=request.top_k, filters=request.filters)
+                results = await asyncio.to_thread(
+                    state.searcher.hybrid_search,
+                    query=search_query, top_k=request.top_k, filters=request.filters
+                )
                 sources    = build_source_list(results)
                 rag_context = build_rag_context(results)
             except Exception as e:
@@ -1326,10 +1391,10 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             # Use query expansion: try synonyms if primary search returns nothing
             words = [w for w in search_query.split() if len(w) > 3]
             primary_key = search_query if not words else " ".join(words[:2])
-            skt_results = search_sanskrit(primary_key, max_results=8)
+            skt_results = await asyncio.to_thread(search_sanskrit, primary_key, max_results=8)
             if not skt_results:
                 for term in expand_query_terms(search_query)[1:]:   # skip first = original
-                    skt_results = search_sanskrit(term, max_results=8)
+                    skt_results = await asyncio.to_thread(search_sanskrit, term, max_results=8)
                     if skt_results:
                         break
             if skt_results and not rag_context:
@@ -1453,7 +1518,7 @@ async def sanskrit_search(request: SanskritSearchRequest):
         all_terms = translated_terms + expand_query_terms(query)
         seen_ids: set = set()
         for term in all_terms:
-            res = search_sanskrit(term, max_results=request.max_results, text_ids=request.text_ids)
+            res = await asyncio.to_thread(search_sanskrit, term, max_results=request.max_results, text_ids=request.text_ids)
             for r in res:
                 key = (r["text_id"], r["line_num"])
                 if key not in seen_ids:
@@ -1493,8 +1558,10 @@ async def sanskrit_search(request: SanskritSearchRequest):
 async def search(request: SearchRequest):
     if not state.searcher:
         raise HTTPException(503, "Vector index not built. Run: python extract_and_index.py")
-    results = state.searcher.hybrid_search(
-        query=request.query, top_k=request.top_k, filters=request.filters)
+    results = await asyncio.to_thread(
+        state.searcher.hybrid_search,
+        query=request.query, top_k=request.top_k, filters=request.filters
+    )
     return {
         "query":   request.query,
         "count":   len(results),
@@ -1508,13 +1575,13 @@ async def instances(request: InstancesRequest):
         raise HTTPException(503, "No LLM credentials configured")
 
     # 1. Sanskrit corpus search
-    skt_results = search_sanskrit(request.query, max_results=request.max_results)
+    skt_results = await asyncio.to_thread(search_sanskrit, request.query, max_results=request.max_results)
 
     # 2. Vector search if available
     indexed = []
     if state.searcher and state.index_ready:
         try:
-            indexed = [r.to_dict() for r in state.searcher.find_all_instances(request.query)]
+            indexed = [r.to_dict() for r in await asyncio.to_thread(state.searcher.find_all_instances, request.query)]
         except Exception:
             pass
 
@@ -1548,7 +1615,7 @@ async def instances(request: InstancesRequest):
 @app.get("/api/citation-lookup")
 async def citation_lookup(ref: str):
     """Looks up a citation, gets Sanskrit text, and translates it instantly."""
-    results = search_sanskrit(ref, max_results=1)
+    results = await asyncio.to_thread(search_sanskrit, ref, max_results=1)
     
     if not results:
         # Fallback: maybe just find the first text that matches the book name
@@ -1675,14 +1742,14 @@ async def infer(request: InferRequest, user: Optional[dict] = Depends(get_curren
         all_passages = []
         if state.searcher and state.index_ready:
             try:
-                results = state.searcher.hybrid_search(query=request.topic, top_k=request.top_k)
+                results = await asyncio.to_thread(state.searcher.hybrid_search, query=request.topic, top_k=request.top_k)
                 all_passages.extend(results)
             except Exception as e:
                 logger.warning("Vector search failed for infer: %s", e)
 
         skt_hits = []
         for term in expand_query_terms(request.topic):
-            hits = search_sanskrit(term, max_results=10)
+            hits = await asyncio.to_thread(search_sanskrit, term, max_results=10)
             skt_hits.extend(hits)
             if len(skt_hits) >= 10:
                 break
@@ -1960,3 +2027,45 @@ async def dev_simulate_upgrade(data: dict, user: dict = Depends(require_auth)):
         raise HTTPException(500, "Failed to update subscription profile")
         
     return {"success": True, "new_role": plan}
+
+# ── Library Endpoints ──────────────────────────────────────────────────────
+
+@app.get("/api/library/texts")
+async def get_library_texts():
+    texts = []
+    if GRETIL_DIR.exists():
+        for text_dir in GRETIL_DIR.iterdir():
+            if text_dir.is_dir():
+                prov_file = text_dir / "provenance.json"
+                if prov_file.exists():
+                    try:
+                        with open(prov_file, "r", encoding="utf-8") as f:
+                            metadata = json.load(f)
+                            texts.append(metadata)
+                    except Exception as e:
+                        logger.error(f"Error loading provenance {prov_file}: {e}")
+    return {"texts": texts}
+
+@app.get("/api/library/texts/{text_id}")
+async def get_library_text_content(text_id: str):
+    text_file_path = None
+    if GRETIL_DIR.exists():
+        for text_dir in GRETIL_DIR.iterdir():
+            if text_dir.is_dir():
+                prov_file = text_dir / "provenance.json"
+                if prov_file.exists():
+                    try:
+                        with open(prov_file, "r", encoding="utf-8") as f:
+                            metadata = json.load(f)
+                            if metadata.get("id") == text_id:
+                                file_name = metadata.get("file")
+                                if file_name:
+                                    text_file_path = text_dir / file_name
+                                break
+                    except Exception as e:
+                        logger.error(f"Error loading provenance {prov_file}: {e}")
+    
+    if not text_file_path or not text_file_path.exists():
+        raise HTTPException(404, "Text not found")
+        
+    return FileResponse(path=str(text_file_path), media_type="text/plain", filename=text_file_path.name)
