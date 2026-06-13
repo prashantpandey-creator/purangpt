@@ -876,47 +876,74 @@ async def stream_zhipu(messages: List[dict], temperature: float = 0.3, req_model
                         if token: yield token
                     except: continue
 
+async def stream_ollama(messages: List[dict], temperature: float = 0.3, req_model: str = "qwen2.5:7b") -> AsyncGenerator[Union[str, dict], None]:
+    url = f"{os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')}/api/chat"
+    payload = {"model": req_model, "messages": messages, "stream": True, "options": {"temperature": temperature}}
+    async with aiohttp.ClientSession() as sess:
+        async with sess.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=120)) as resp:
+            if resp.status != 200:
+                body = await resp.text()
+                raise HTTPException(status_code=resp.status, detail=f"Ollama error: {body}")
+            async for raw_line in resp.content:
+                line = raw_line.decode("utf-8").strip()
+                if not line: continue
+                try:
+                    data = json.loads(line)
+                    token = data.get("message", {}).get("content", "")
+                    if token: yield token
+                    if data.get("done"): break
+                except Exception:
+                    continue
+
 async def stream_llm(messages: List[dict], temperature: float = 0.3, max_retries: int = 5, req_model: str = "auto", custom_keys: dict = None) -> AsyncGenerator[Union[str, dict], None]:
-    """Route the request to the requested LLM provider."""
+    """Route the request to the requested LLM provider with robust fallback: Groq -> DeepSeek -> Ollama"""
     custom_keys = custom_keys or custom_keys_var.get()
     
     if req_model == "auto":
-        # Route to whichever provider is confirmed working
-        req_model = "deepseek-chat" if state.active_provider == "deepseek" else \
-                    f"groq-{GROQ_MODEL}" if state.active_provider == "groq" else \
-                    f"gemini-{GEMINI_MODEL}" if state.active_provider == "gemini" else \
-                    "deepseek-chat"
+        req_model = "groq-llama-3.3-70b-versatile"  # Force groq as primary for auto
 
-    # If user picked groq but groq key is invalid, silently redirect to active provider
-    if req_model.startswith("groq") and state.active_provider not in ("groq", "unknown") and not custom_keys.get("groq"):
-        logger.info("Groq key invalid — redirecting '%s' → active provider: %s", req_model, state.active_provider)
-        yield {"type": "info", "message": f"Groq key invalid — using {state.active_provider} ({state.active_model}) instead"}
-        req_model = "deepseek-chat" if state.active_provider == "deepseek" else \
-                    f"gemini-{GEMINI_MODEL}" if state.active_provider == "gemini" else req_model
-
-    if req_model.startswith("groq"):
-        if not custom_keys.get("groq") and not GROQ_API_KEY: raise HTTPException(status_code=503, detail="GROQ_API_KEY not configured.")
-        async for token in stream_groq(messages, temperature, max_retries, req_model.replace("groq-", ""), custom_keys.get("groq")): yield token
-    elif req_model.startswith("deepseek"):
-        model_id = req_model
-        if req_model == "deepseek": model_id = "deepseek-chat"
-        async for token in stream_deepseek(messages, temperature, model_id, custom_keys.get("deepseek")): yield token
-    elif req_model.startswith("together"):
-        model_id = req_model.replace("together-", "")
-        if req_model == "together": model_id = "Qwen/Qwen2.5-72B-Instruct-Turbo"
-        async for token in stream_together(messages, temperature, model_id, custom_keys.get("together")): yield token
-    elif req_model.startswith("zhipu"):
-        model_id = req_model.replace("zhipu-", "")
-        if req_model == "zhipu": model_id = "glm-5.1"
-        async for token in stream_zhipu(messages, temperature, model_id, custom_keys.get("zhipu")): yield token
-    elif req_model.startswith("gemini"):
-        async for token in stream_gemini(messages, temperature, custom_keys.get("gemini")): yield token
-    else:
-        # Fallback to configured default
-        if LLM_PROVIDER == "gemini":
-            async for token in stream_gemini(messages, temperature, custom_keys.get("gemini")): yield token
+    try:
+        if req_model.startswith("groq"):
+            if not custom_keys.get("groq") and not GROQ_API_KEY: raise HTTPException(status_code=503, detail="GROQ_API_KEY missing")
+            async for token in stream_groq(messages, temperature, max_retries, req_model.replace("groq-", ""), custom_keys.get("groq")): yield token
+            return
+        elif req_model.startswith("deepseek"):
+            async for token in stream_deepseek(messages, temperature, req_model.replace("deepseek-", "") or "deepseek-chat", custom_keys.get("deepseek")): yield token
+            return
+        elif req_model.startswith("ollama"):
+            async for token in stream_ollama(messages, temperature, os.getenv("OLLAMA_MODEL", "qwen2.5:7b")): yield token
+            return
         else:
-            async for token in stream_groq(messages, temperature, max_retries, req_model, custom_keys.get("groq")): yield token
+            # For other explicit models, just stream directly
+            if req_model.startswith("together"):
+                async for token in stream_together(messages, temperature, req_model.replace("together-", ""), custom_keys.get("together")): yield token
+                return
+            elif req_model.startswith("gemini"):
+                async for token in stream_gemini(messages, temperature, custom_keys.get("gemini")): yield token
+                return
+            elif req_model.startswith("zhipu"):
+                async for token in stream_zhipu(messages, temperature, req_model.replace("zhipu-", ""), custom_keys.get("zhipu")): yield token
+                return
+    except Exception as e:
+        logger.warning(f"Primary LLM ({req_model}) failed: {str(e)}")
+        yield {"type": "info", "message": f"Primary API ({req_model}) unavailable or rate limited. Falling back to DeepSeek..."}
+    
+    # Fallback 1: DeepSeek
+    try:
+        async for token in stream_deepseek(messages, temperature, "deepseek-chat", custom_keys.get("deepseek")): yield token
+        return
+    except Exception as e:
+        logger.warning(f"Fallback 1 (DeepSeek) failed: {str(e)}")
+        yield {"type": "info", "message": f"DeepSeek unavailable. Falling back to local Qwen..."}
+
+    # Fallback 2: Ollama (Qwen)
+    try:
+        async for token in stream_ollama(messages, temperature, os.getenv("OLLAMA_MODEL", "qwen2.5:7b")): yield token
+        return
+    except Exception as e:
+        logger.error(f"Fallback 2 (Ollama) failed: {str(e)}")
+        yield {"type": "error", "message": f"All LLM providers failed, including local fallback."}
+        raise HTTPException(status_code=503, detail="All LLM providers are currently unavailable.")
 
 
 async def call_llm_once(messages: List[dict], temperature: float = 0.2, req_model: str = "auto") -> str:
@@ -1328,15 +1355,16 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
     # Check BYOK
     is_byok = bool(custom_keys_var.get())
     
-    # Rate Limiting
+    # Rate Limiting — run sync Supabase calls in threadpool to avoid blocking the event loop
     if not user:
-        # Guest rate limit
         guest_id = get_guest_id(req)
         allowed, rem = check_guest_rate_limit(guest_id)
         if not allowed:
             raise HTTPException(429, "Guest rate limit exceeded. Please sign in.")
     else:
-        allowed, rem = check_rate_limit(user.get("id"), user.get("role", "free"), is_byok=is_byok)
+        allowed, rem = await asyncio.to_thread(
+            check_rate_limit, user.get("id"), user.get("role", "free"), is_byok
+        )
         if not allowed:
             raise HTTPException(429, "Daily message limit exceeded. Please upgrade your plan.")
     if not GROQ_API_KEY and not GEMINI_API_KEY:
@@ -1469,6 +1497,11 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         
         if not user:
             increment_guest_usage(get_guest_id(req))
+        else:
+            # Non-blocking: fire-and-forget usage increment in threadpool
+            asyncio.create_task(asyncio.to_thread(
+                increment_usage, user.get("id"), session_id
+            ))
         
         # 7. Done signal with source metadata
         yield {"data": json.dumps({
