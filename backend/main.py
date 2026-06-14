@@ -102,6 +102,12 @@ KNOWN_INTERPOLATIONS = """
 • Skanda Purana tirtha-mahatmyas → locally inserted by temple traditions, vary across manuscripts
 """
 
+GUARDRAIL_INSTRUCTION = """
+## BEHAVIORAL GUARDRAILS
+1. **Troll/Disrespectful Prompts**: If the user's input is a troll question, disrespectful, profane, or completely irrelevant to Vedic/Puranic/spiritual topics, you must REPRIMAND them firmly but calmly for disrespecting the sacred texts and this space. Do not attempt to answer the troll question.
+2. **Vague/Stupid Prompts**: If the user's input is too vague, poorly formulated, or nonsensical (e.g., "tell me stuff", "what is god"), do not guess or provide a generic output. Politely guide the user on how to ask a more specific, scholarly, or answerable question regarding the texts.
+"""
+
 SCHOLAR_SYSTEM = """You are PuranGPT — a critical Puranic scholar with mastery in traditional Sanskrit Gurukula learning AND modern Indological methodology (Rocher, Hazra, Doniger, Witzel).
 
 ## Tradition Markers
@@ -153,7 +159,7 @@ Integrate all evidence. State what is established vs disputed.
 {context}
 
 {history}
-"""
+""" + "\n" + GUARDRAIL_INSTRUCTION
 
 DEEP_RESEARCH_CLARIFIER = """You are PuranGPT in DEEP RESEARCH MODE. The user wants to dive deep into a topic.
 Before committing to a massive database search, analyze their request and ask ONE focused clarifying question to narrow down their exact intent, scope, or angle.
@@ -211,7 +217,7 @@ Only here: knowledge from your training not present in the retrieved passages. C
 {context}
 
 {history}
-"""
+""" + "\n" + GUARDRAIL_INSTRUCTION
 
 NATH_SYSTEM = """You are PuranGPT specializing in the Nath tradition — the Siddha-Yoga lineage of Matsyendranath and Gorakhnath.
 
@@ -271,10 +277,10 @@ You are a wise, compassionate spiritual guide drawing upon Vedic knowledge, the 
 Your goal is to provide profound life lessons, spiritual advice, and comforting wisdom to individuals seeking guidance. 
 
 ## Response Guidelines
-1. **Tone**: Warm, empathetic, profound, and non-judgmental. Speak directly to the seeker's soul.
-2. **Structure**: Start with a comforting spiritual truth, draw a lesson from a text, and provide grounded life advice.
-3. **References**: Do NOT write like an academic paper. Weave the wisdom naturally (e.g., "As Lord Krishna reminds us in the Gita...", or "Guruji Shailendra Sharma beautifully explains that...").
-4. **Focus**: Focus on inner peace, dharma (righteous action), karma (cause and effect), and spiritual awakening (samadhi).
+1. **Shailendra Sharma's Influence**: He has already reached profound conclusions on life, karma, and liberation. DO NOT just quote him academically—use his teachings directly to INFER the answer and provide life advice. If you find his commentary in the context, heavily base your response on his worldview.
+2. **Tone**: Warm, empathetic, profound, and non-judgmental. Speak directly to the seeker's soul.
+3. **Structure**: Start by addressing their human struggle, apply a conclusion from Shailendra Sharma or Vedic wisdom, and provide a definitive, grounded piece of life advice.
+4. **References**: Do NOT write like an academic paper. Weave the wisdom naturally as lived truth.
 5. **Conciseness**: You must answer in EXACTLY ONE single, cohesive paragraph. Do not use bullet points or multiple paragraphs. Be profound but brief.
 
 {language_instruction}
@@ -301,17 +307,12 @@ Your goal is to provide a clear, synthesized, and highly readable answer to the 
 {context}
 
 {history}
-"""
+""" + "\n" + GUARDRAIL_INSTRUCTION
 
 PROMPTS = {
-    "purangpt":   PURANGPT_SYSTEM,
-    "scholar":    SCHOLAR_SYSTEM,
-    "deep":       DEEP_RESEARCH_SYSTEM,
-    "nath":       NATH_SYSTEM,
-    "darshana":   DARSHANA_SYSTEM,
-    "yogic":      NATH_SYSTEM,   # alias
-    "comparison": SCHOLAR_SYSTEM,
-    "translation":SCHOLAR_SYSTEM,
+    "purangpt":        PURANGPT_SYSTEM,
+    "scholar":         SCHOLAR_SYSTEM,
+    "deep":            DEEP_RESEARCH_SYSTEM,
     "spiritual_guide": SPIRITUAL_GUIDE_SYSTEM,
 }
 
@@ -325,6 +326,7 @@ class AppState:
     total_gretil_chars: int = 0
     active_provider: str = "unknown"     # set at startup after key validation
     active_model: str = ""
+    http_client: aiohttp.ClientSession = None
 
 state = AppState()
 
@@ -506,7 +508,7 @@ async def _validate_llm_providers() -> None:
         payload = {"model": "deepseek-chat", "messages": [{"role":"user","content":"hi"}],
                    "max_tokens": 1, "stream": False}
         try:
-            async with aiohttp.ClientSession() as s:
+            async with get_http_session() as s:
                 async with s.post(url, headers=headers, json=payload,
                                   timeout=aiohttp.ClientTimeout(total=10)) as r:
                     if r.status == 200:
@@ -528,7 +530,7 @@ async def _validate_llm_providers() -> None:
         payload = {"model": GROQ_MODEL, "messages": [{"role":"user","content":"hi"}],
                    "max_tokens": 1, "stream": False}
         try:
-            async with aiohttp.ClientSession() as s:
+            async with get_http_session() as s:
                 async with s.post(url, headers=headers, json=payload,
                                   timeout=aiohttp.ClientTimeout(total=10)) as r:
                     if r.status == 200:
@@ -550,7 +552,7 @@ async def _validate_llm_providers() -> None:
         payload = {"model": GEMINI_MODEL, "messages": [{"role":"user","content":"hi"}],
                    "max_tokens": 1, "stream": False}
         try:
-            async with aiohttp.ClientSession() as s:
+            async with get_http_session() as s:
                 async with s.post(url, headers=headers, json=payload,
                                   timeout=aiohttp.ClientTimeout(total=10)) as r:
                     if r.status == 200:
@@ -590,11 +592,11 @@ async def lifespan(app: FastAPI):
     # Try to load vector search index
     try:
         from indexer.search import HybridSearcher
-        searcher = HybridSearcher(index_dir=INDEX_DIR)
-        searcher.initialize()
+        searcher = HybridSearcher()
+        await searcher.initialize()
         state.searcher = searcher
         state.index_ready = True
-        logger.info("✓ Vector index: %d documents", searcher.total_documents)
+        logger.info("✓ Vector index ready")
     except Exception as e:
         logger.info("Vector index not built yet: %s", e)
 
@@ -603,7 +605,21 @@ async def lifespan(app: FastAPI):
 
     logger.info("🚀 Active provider: %s (%s) — Ready at http://localhost:%s",
                 state.active_provider, state.active_model, os.getenv("PORT", "8000"))
+    
+    state.http_client = aiohttp.ClientSession(
+        timeout=aiohttp.ClientTimeout(total=60),
+        connector=aiohttp.TCPConnector(limit=100)
+    )
+
     yield
+
+    if state.http_client:
+        await state.http_client.close()
+
+@asynccontextmanager
+async def get_http_session():
+    # Helper to avoid changing indentation in 10 different places
+    yield state.http_client
 
 
 # ── FastAPI ────────────────────────────────────────────────────────────────
@@ -739,7 +755,7 @@ async def stream_groq(messages: List[dict], temperature: float = 0.3, max_retrie
     }
     
     for attempt in range(max_retries):
-        async with aiohttp.ClientSession() as sess:
+        async with get_http_session() as sess:
             async with sess.post(url, headers=headers, json=payload,
                                  timeout=aiohttp.ClientTimeout(total=120)) as resp:
                 if resp.status in (429, 413):
@@ -791,7 +807,7 @@ async def stream_gemini(messages: List[dict], temperature: float = 0.3, custom_k
         "max_tokens":  4096,
     }
     
-    async with aiohttp.ClientSession() as sess:
+    async with get_http_session() as sess:
         async with sess.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=120)) as resp:
             if resp.status != 200:
                 body = await resp.text()
@@ -817,7 +833,7 @@ async def stream_deepseek(messages: List[dict], temperature: float = 0.3, req_mo
     url = "https://api.deepseek.com/chat/completions"
     headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
     payload = {"model": req_model, "messages": messages, "stream": True, "temperature": temperature}
-    async with aiohttp.ClientSession() as sess:
+    async with get_http_session() as sess:
         async with sess.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=120)) as resp:
             if resp.status != 200:
                 body = await resp.text()
@@ -839,7 +855,7 @@ async def stream_together(messages: List[dict], temperature: float = 0.3, req_mo
     url = "https://api.together.xyz/v1/chat/completions"
     headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
     payload = {"model": req_model, "messages": messages, "stream": True, "temperature": temperature}
-    async with aiohttp.ClientSession() as sess:
+    async with get_http_session() as sess:
         async with sess.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=120)) as resp:
             if resp.status != 200:
                 body = await resp.text()
@@ -861,7 +877,7 @@ async def stream_zhipu(messages: List[dict], temperature: float = 0.3, req_model
     url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
     headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
     payload = {"model": req_model, "messages": messages, "stream": True, "temperature": temperature}
-    async with aiohttp.ClientSession() as sess:
+    async with get_http_session() as sess:
         async with sess.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=120)) as resp:
             if resp.status != 200:
                 body = await resp.text()
@@ -879,7 +895,7 @@ async def stream_zhipu(messages: List[dict], temperature: float = 0.3, req_model
 async def stream_ollama(messages: List[dict], temperature: float = 0.3, req_model: str = "qwen2.5:7b") -> AsyncGenerator[Union[str, dict], None]:
     url = f"{os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')}/api/chat"
     payload = {"model": req_model, "messages": messages, "stream": True, "options": {"temperature": temperature}}
-    async with aiohttp.ClientSession() as sess:
+    async with get_http_session() as sess:
         async with sess.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=120)) as resp:
             if resp.status != 200:
                 body = await resp.text()
@@ -1390,7 +1406,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         async def deep_gen():
             async for chunk in deep_research(request.query, session_id, user.get("id") if user else None):
                 yield {"data": chunk.replace("data: ", "").strip()}
-        return EventSourceResponse(deep_gen())
+        return EventSourceResponse(deep_gen(), headers={"X-Accel-Buffering": "no"})
 
     # ── Standard Chat ────────────────────────────────────────────────────────
     async def event_gen() -> AsyncGenerator[dict, None]:
@@ -1404,8 +1420,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         if state.searcher and state.index_ready:
             try:
                 # Use translated query for semantic search
-                results = await asyncio.to_thread(
-                    state.searcher.hybrid_search,
+                results = await state.searcher.hybrid_search(
                     query=search_query, top_k=request.top_k, filters=request.filters
                 )
                 sources    = build_source_list(results)
@@ -1513,7 +1528,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             "total_sources_found": len(all_sources)
         })}
 
-    return EventSourceResponse(event_gen())
+    return EventSourceResponse(event_gen(), headers={"X-Accel-Buffering": "no"})
 
 
 @app.post("/api/sanskrit-search")
@@ -1584,15 +1599,14 @@ async def sanskrit_search(request: SanskritSearchRequest):
                     pass
             await asyncio.sleep(0.1)
 
-    return EventSourceResponse(search_gen())
+    return EventSourceResponse(search_gen(), headers={"X-Accel-Buffering": "no"})
 
 
 @app.post("/api/search")
 async def search(request: SearchRequest):
     if not state.searcher:
         raise HTTPException(503, "Vector index not built. Run: python extract_and_index.py")
-    results = await asyncio.to_thread(
-        state.searcher.hybrid_search,
+    results = await state.searcher.hybrid_search(
         query=request.query, top_k=request.top_k, filters=request.filters
     )
     return {
@@ -1614,7 +1628,7 @@ async def instances(request: InstancesRequest):
     indexed = []
     if state.searcher and state.index_ready:
         try:
-            indexed = [r.to_dict() for r in await asyncio.to_thread(state.searcher.find_all_instances, request.query)]
+            indexed = [r.to_dict() for r in await state.searcher.find_all_instances(request.query)]
         except Exception:
             pass
 
@@ -1775,7 +1789,7 @@ async def infer(request: InferRequest, user: Optional[dict] = Depends(get_curren
         all_passages = []
         if state.searcher and state.index_ready:
             try:
-                results = await asyncio.to_thread(state.searcher.hybrid_search, query=request.topic, top_k=request.top_k)
+                results = await state.searcher.hybrid_search(query=request.topic, top_k=request.top_k)
                 all_passages.extend(results)
             except Exception as e:
                 logger.warning("Vector search failed for infer: %s", e)
@@ -1820,7 +1834,7 @@ async def infer(request: InferRequest, user: Optional[dict] = Depends(get_curren
         ], user_id)
         yield {"data": json.dumps({"type": "done"})}
 
-    return EventSourceResponse(infer_gen())
+    return EventSourceResponse(infer_gen(), headers={"X-Accel-Buffering": "no"})
 
 
 @app.get("/api/index-status")

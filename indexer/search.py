@@ -1,24 +1,19 @@
 """
 PuranGPT — Hybrid Search Engine
-Combines semantic (dense vector) search via Pinecone with
-BM25 keyword search, fused using Reciprocal Rank Fusion (RRF).
+Combines semantic (dense vector) search via Postgres with
+FTS keyword search, fused natively in Postgres via RRF.
 
 This gives us the best of both worlds:
 - Semantic: "stories of devotion" finds passages about bhakti even without the exact word
 - BM25: "Narada" finds exact name matches that embeddings might rank lower
 """
 
-from __future__ import annotations
-
 import json
 import logging
 import math
-import pickle
-from pathlib import Path
-from typing import Any, Optional
-
-from rank_bm25 import BM25Okapi
 import os
+import asyncpg
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -72,373 +67,153 @@ class SearchResult:
 
 class HybridSearcher:
     """
-    Hybrid retrieval engine: dense semantic search (ChromaDB) + sparse
-    keyword search (BM25), fused via Reciprocal Rank Fusion.
-
-    Initialize once at startup (expensive: loads ~2 GB embedding model + indexes),
-    then reuse across all queries.
-
-    Parameters
-    ----------
-    db_dir : str | Path
-        Directory containing the ChromaDB persistent store.
-    index_dir : str | Path
-        Directory containing bm25_index.pkl and chunk_map.json.
-    collection_name : str
-        Name of the ChromaDB collection.
-    rrf_k : int
-        RRF constant. Higher k gives smoother rank fusion.
-        Typical values: 60 (standard), 10 (emphasize top ranks).
+    Hybrid retrieval engine utilizing Postgres pgvector and Full Text Search (FTS).
     """
+    def __init__(self) -> None:
+        self._embed_model = None
+        self._initialized = False
+        self._db_url = os.environ.get("VECTOR_DB_URL", "postgresql://postgres:postgres@localhost:5432/purangpt")
+        self._pool = None
 
-    def __init__(
-        self,
-        index_dir:       str | Path = "data/indexes",
-        rrf_k:           int        = 60,
-    ) -> None:
-        self.index_dir       = Path(index_dir)
-        self.rrf_k           = rrf_k
-
-        self._bm25:          Optional[BM25Okapi]           = None
-        self._chunk_map:     list[dict[str, Any]]          = []  # index → chunk dict
-        self._embed_model    = None
-        self._chroma_col     = None
-        self._initialized    = False
-
-    def initialize(self) -> "HybridSearcher":
-        """Load BM25 index and chunk map. Call once at startup."""
-        logger.info("Initializing HybridSearcher…")
-
-        # ── BM25 + Chunk Map ──────────────────────────────────────────
-        bm25_path     = self.index_dir / "bm25_index.pkl"
-        chunk_map_path = self.index_dir / "chunk_map.json"
-
-        if bm25_path.exists():
-            with open(bm25_path, "rb") as f:
-                self._bm25 = pickle.load(f)
-            logger.info("Loaded BM25 index (%d documents)", getattr(self._bm25, 'corpus_size', 0))
-        else:
-            logger.warning("BM25 index not found at %s. Keyword search unavailable.", bm25_path)
-
-        if chunk_map_path.exists():
-            with open(chunk_map_path, "r", encoding="utf-8") as f:
-                self._chunk_map = json.load(f)
-            logger.info("Loaded chunk map: %d entries", len(self._chunk_map))
-        else:
-            logger.warning("Chunk map not found at %s.", chunk_map_path)
-            
-        # ── Embed Model + ChromaDB ───────────────────────────────────────────────
+    async def initialize(self) -> "HybridSearcher":
+        """Initialize Postgres connection pool and embedding model."""
+        logger.info("Initializing HybridSearcher via Postgres…")
+        
+        # Initialize connection pool
+        self._pool = await asyncpg.create_pool(self._db_url, min_size=2, max_size=10)
+        
         logger.info("Initializing local embedding model (multilingual-e5-small)...")
         os.environ["TOKENIZERS_PARALLELISM"] = "false"
         from sentence_transformers import SentenceTransformer
-        import chromadb
-        from chromadb.config import Settings
-        
         self._embed_model = SentenceTransformer("intfloat/multilingual-e5-small")
         
-        # Load local ChromaDB
-        chroma_path = str(self.index_dir.parent / "chroma_db")
-        client = chromadb.PersistentClient(path=chroma_path, settings=Settings(anonymized_telemetry=False))
-        self._chroma_col = client.get_collection("purana_verses")
-
         self._initialized = True
         logger.info("HybridSearcher initialized ✓")
         return self
 
     @property
     def is_ready(self) -> bool:
-        return self._initialized and self._bm25 is not None
-
-    @property
-    def total_documents(self) -> int:
-        return len(self._chunk_map)
-
-    # ── Semantic Search ────────────────────────────────────────────────
-
-    def semantic_search(
-        self,
-        query:   str,
-        top_k:   int                   = 20,
-        filters: dict[str, Any] | None = None,
-    ) -> list[SearchResult]:
-        """
-        Dense vector similarity search via local ChromaDB.
-        """
-        if not self._chroma_col:
-            logger.warning("ChromaDB collection not loaded; skipping semantic search")
-            return []
-
-        try:
-            # 1. Generate query embedding locally (E5 requires 'query: ' prefix)
-            query_emb = self._embed_model.encode(f"query: {query}", normalize_embeddings=True).tolist()
-
-            # 2. Map filters to ChromaDB where clause
-            chroma_where = None
-            if filters:
-                chroma_where = {}
-                for k, v in filters.items():
-                    if isinstance(v, dict) and "$eq" in v:
-                        chroma_where[k] = v["$eq"]
-                    else:
-                        chroma_where[k] = v
-
-            # 3. Query ChromaDB
-            results = self._chroma_col.query(
-                query_embeddings=[query_emb],
-                n_results=top_k,
-                where=chroma_where if chroma_where else None,
-                include=["documents", "metadatas", "distances"]
-            )
-
-            if not results["documents"] or not results["documents"][0]:
-                return []
-
-            search_results: list[SearchResult] = []
-            for rank, (doc, meta, dist) in enumerate(zip(
-                results["documents"][0],
-                results["metadatas"][0],
-                results["distances"][0]
-            )):
-                # Convert cosine distance to similarity score
-                score = 1.0 - dist
-                chunk = {**meta, "text": doc, "id": meta.get("id", f"c_{rank}")}
-                search_results.append(SearchResult(chunk=chunk, score=score, rank=rank))
-            
-            return search_results
-
-        except Exception as e:
-            logger.error("Semantic search error: %s", e, exc_info=True)
-            return []
-
-    # ── Keyword Search (BM25) ─────────────────────────────────────────
-
-    def keyword_search(
-        self,
-        query: str,
-        top_k: int = 20,
-    ) -> list[SearchResult]:
-        """
-        BM25 Okapi sparse keyword retrieval.
-        Excellent for finding exact Sanskrit deity names, specific terms.
-        """
-        if not self._bm25 or not self._chunk_map:
-            return []
-
-        # Tokenize query (simple whitespace + devanagari-aware split)
-        tokens = self._tokenize(query)
-        if not tokens:
-            return []
-
-        try:
-            scores = self._bm25.get_scores(tokens)
-            # Get top-k indices by score
-            top_indices = sorted(
-                range(len(scores)), key=lambda i: scores[i], reverse=True
-            )[:top_k]
-
-            results: list[SearchResult] = []
-            for rank, idx in enumerate(top_indices):
-                if scores[idx] <= 0:
-                    break  # No more matching documents
-                if idx < len(self._chunk_map):
-                    chunk = self._chunk_map[idx]
-                    # Normalize BM25 score to 0-1 range (approximate)
-                    max_score = scores[top_indices[0]] if scores[top_indices[0]] > 0 else 1.0
-                    norm_score = scores[idx] / max_score
-                    results.append(SearchResult(chunk=chunk, score=norm_score, rank=rank))
-
-            return results
-
-        except Exception as e:
-            logger.error("BM25 search error: %s", e, exc_info=True)
-            return []
-
-    def _tokenize(self, text: str) -> list[str]:
-        """Tokenize text for BM25 (handles both Devanagari and Latin)."""
-        import re
-        # Split on whitespace and punctuation, keeping Devanagari characters
-        tokens = re.findall(r'[\u0900-\u097F]+|[a-zA-Z]+', text.lower())
-        return [t for t in tokens if len(t) > 1]
-
-    # \u2500\u2500 Source weighting \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-    # Shailendra Sharma's corpus has two very different tiers:
-    #   \u2022 Curated book commentary (Shiv Sutra, Ojas & Amrita, Yoga & Alchemy,
-    #     Khechari, Gorakh Bodh \u2026): a few dozen dense, high-signal chunks tagged
-    #     category == "yogic-commentary".
-    #   \u2022 ~3,100 conversational darshan Q&A transcripts (id prefix "darshan-").
-    # Without weighting the transcripts swamp the commentary by sheer volume.
-    # These multipliers are applied to fused RRF scores, so they only re-rank
-    # results that already matched the query \u2014 they never inject Sharma content
-    # into an unrelated query.
-    # Curated Sharma book tier is tagged with one of these categories (and only
-    # Sharma's book files use them). `category` is one of the few fields preserved
-    # in both the BM25 chunk_map and the Chroma metadata, so it's the reliable
-    # signal at retrieval time (`bias`/`author` are not stored there).
-    COMMENTARY_CATEGORIES = {"yogic-commentary", "yogic-discourse"}
-    COMMENTARY_BOOST = 0.9   # Reduced to show less Shailendra Sharma
-    DARSHAN_DAMPEN   = 0.7   # bulk conversational transcripts
-
-    def _source_weight(self, chunk: dict[str, Any]) -> float:
-        """Relevance multiplier based on the source tier of a chunk."""
-        if (chunk.get("category") or "").lower() in self.COMMENTARY_CATEGORIES:
-            return self.COMMENTARY_BOOST
-        cid = chunk.get("id", "")
-        if cid.startswith("darshan-") or chunk.get("purana") == "Shailendra Sharma Darshans":
-            return self.DARSHAN_DAMPEN
-        return 1.0
+        return self._initialized and self._pool is not None
 
     # ── Hybrid Search (RRF Fusion) ─────────────────────────────────────
 
-    def hybrid_search(
+    async def hybrid_search(
         self,
-        query:            str,
-        top_k:            int                   = 10,
-        filters:          dict[str, Any] | None = None,
-        semantic_weight:  float                 = 0.6,
-        mmr_lambda:       float                 = 0.7,
-        sharma_weighting: bool                  = True,
+        query: str,
+        top_k: int = 10,
+        filters: dict[str, Any] | None = None,
+        semantic_weight: float = 0.5,
+        mmr_lambda: float = 0.7,
+        sharma_weighting: bool = True,
     ) -> list[SearchResult]:
         """
-        Hybrid search combining semantic + BM25 via Reciprocal Rank Fusion,
-        followed by Maximal Marginal Relevance (MMR) to ensure cross-textual diversity.
-
-        RRF score for document d = Σ 1/(k + rank_i(d))
-        MMR selects results balancing relevance vs source diversity so answers
-        draw from multiple Puranas rather than the same text repeatedly.
-
-        Parameters
-        ----------
-        query           : Natural language or Sanskrit/Hindi query
-        top_k           : Number of final results to return
-        filters         : Optional Purana/chapter filter (applied to semantic search)
-        semantic_weight : Weight for semantic vs keyword (0.6 = 60% semantic)
-        mmr_lambda      : MMR trade-off: 1.0 = pure relevance, 0.0 = pure diversity
-                          0.7 keeps relevance dominant while ensuring cross-text coverage
+        Executes the hybrid_search RPC on Postgres, which performs pgvector distance 
+        and FTS websearch natively, fusing them with RRF.
         """
-        fetch_k = top_k * 4  # Fetch more from each source before fusion + MMR
+        if not self.is_ready:
+            return []
 
-        # Run both searches
-        semantic_results = self.semantic_search(query, top_k=fetch_k, filters=filters)
-        keyword_results  = self.keyword_search(query,  top_k=fetch_k)
+        try:
+            # 1. Generate query embedding locally
+            query_emb = self._embed_model.encode(f"query: {query}", normalize_embeddings=True).tolist()
+            emb_str = "[" + ",".join(map(str, query_emb)) + "]"
 
-        # Build RRF score map: doc_id → cumulative RRF score
-        rrf_scores: dict[str, float] = {}
-        chunk_registry: dict[str, dict[str, Any]] = {}  # doc_id → chunk data
+            # 2. Build filter JSON
+            pg_filter = {}
+            if filters:
+                for k, v in filters.items():
+                    if isinstance(v, dict) and "$eq" in v:
+                        pg_filter[k] = v["$eq"]
+                    else:
+                        pg_filter[k] = v
+            
+            filter_json = json.dumps(pg_filter)
 
-        # Apply RRF from semantic results
-        for rank, result in enumerate(semantic_results):
-            doc_id = result.id or f"sem_{rank}"
-            rrf_scores[doc_id]    = rrf_scores.get(doc_id, 0.0) + semantic_weight / (self.rrf_k + rank + 1)
-            chunk_registry[doc_id] = result.chunk
+            # 3. Execute Postgres hybrid_search function
+            fetch_k = top_k * 4
+            async with self._pool.acquire() as conn:
+                rows = await conn.fetch('''
+                    SELECT id, content, metadata, similarity 
+                    FROM hybrid_search($1, $2::vector, $3, $4::jsonb)
+                ''', query, emb_str, fetch_k, filter_json)
 
-        # Apply RRF from keyword results
-        kw_weight = 1.0 - semantic_weight
-        for rank, result in enumerate(keyword_results):
-            doc_id = result.id or f"kw_{rank}"
-            rrf_scores[doc_id]     = rrf_scores.get(doc_id, 0.0) + kw_weight / (self.rrf_k + rank + 1)
-            if doc_id not in chunk_registry:
-                chunk_registry[doc_id] = result.chunk
+            if not rows:
+                return []
 
-        # Source-tier weighting: lift curated Sharma commentary and damp bulk
-        # transcripts so high-signal commentary isn't buried by transcript volume.
-        # Applied to fused scores only, so it re-ranks matches without pulling in
-        # off-topic content.
-        if sharma_weighting:
-            for doc_id, chunk in chunk_registry.items():
-                w = self._source_weight(chunk)
-                if w != 1.0:
-                    rrf_scores[doc_id] *= w
+            # Create SearchResult objects
+            results = []
+            for rank, row in enumerate(rows):
+                meta = json.loads(row['metadata']) if isinstance(row['metadata'], str) else row['metadata']
+                score = float(row['similarity'])
+                chunk = {**meta, "id": row['id'], "text": row['content']}
+                results.append(SearchResult(chunk=chunk, score=score, rank=rank))
+                
+            # Apply source weighting
+            COMMENTARY_CATEGORIES = {"yogic-commentary", "yogic-discourse"}
+            if sharma_weighting:
+                for res in results:
+                    cat = (res.chunk.get("category") or "").lower()
+                    if cat in COMMENTARY_CATEGORIES:
+                        res.score *= 1.6
+                    elif res.id.startswith("darshan-") or res.purana == "Shailendra Sharma Darshans":
+                        res.score *= 0.6
+                        
+            # Sort by updated scores
+            results.sort(key=lambda x: x.score, reverse=True)
 
-        # Sort by RRF score (descending) — full candidate pool for MMR
-        sorted_ids = sorted(rrf_scores.keys(), key=lambda d: rrf_scores[d], reverse=True)
-        candidates = [
-            SearchResult(chunk=chunk_registry[doc_id], score=rrf_scores[doc_id], rank=i)
-            for i, doc_id in enumerate(sorted_ids)
-        ]
+            # Apply MMR
+            final_results = []
+            selected_sources = []
+            candidates = results.copy()
 
-        # ── MMR diversity reranking ──────────────────────────────────────
-        # Penalty strategy: source-text diversity (purana + book_section).
-        # A document from the same purana as an already-selected result incurs
-        # a similarity penalty. This prevents the top-10 being all Bhagavata Purana.
-        final_results: list[SearchResult] = []
-        selected_sources: list[str] = []   # e.g. ["Bhagavata Purana", "Shiva Purana"]
+            while len(final_results) < top_k and candidates:
+                if not final_results:
+                    best = candidates.pop(0)
+                    final_results.append(SearchResult(chunk=best.chunk, score=best.score, rank=0))
+                    selected_sources.append(best.purana)
+                    continue
 
-        while len(final_results) < top_k and candidates:
-            if not final_results:
-                # Always pick highest-relevance result first
-                best = candidates.pop(0)
-                final_results.append(SearchResult(chunk=best.chunk, score=best.score, rank=0))
-                selected_sources.append(best.purana)
-                continue
+                best_mmr = -math.inf
+                best_idx = 0
+                source_counts = {}
+                for src in selected_sources:
+                    source_counts[src] = source_counts.get(src, 0) + 1
 
-            # MMR score = λ * relevance - (1-λ) * source_overlap_penalty
-            best_mmr   = -math.inf
-            best_idx   = 0
-            source_counts: dict[str, int] = {}
-            for src in selected_sources:
-                source_counts[src] = source_counts.get(src, 0) + 1
-
-            for i, cand in enumerate(candidates):
-                relevance = cand.score
-                # Penalty proportional to how many times this source is already selected
-                overlap = source_counts.get(cand.purana, 0)
-                # Soft penalty: first duplicate costs 0.15 of max rrf score, each extra 0.1 more
                 max_rrf = candidates[0].score if candidates else 1.0
-                diversity_penalty = overlap * 0.15 * max_rrf
-                mmr_score = mmr_lambda * relevance - (1.0 - mmr_lambda) * diversity_penalty
-                if mmr_score > best_mmr:
-                    best_mmr = mmr_score
-                    best_idx = i
+                
+                for i, cand in enumerate(candidates):
+                    overlap = source_counts.get(cand.purana, 0)
+                    diversity_penalty = overlap * 0.15 * max_rrf
+                    mmr_score = mmr_lambda * cand.score - (1.0 - mmr_lambda) * diversity_penalty
+                    if mmr_score > best_mmr:
+                        best_mmr = mmr_score
+                        best_idx = i
 
-            chosen = candidates.pop(best_idx)
-            final_results.append(
-                SearchResult(chunk=chosen.chunk, score=chosen.score, rank=len(final_results))
-            )
-            selected_sources.append(chosen.purana)
+                chosen = candidates.pop(best_idx)
+                final_results.append(SearchResult(chunk=chosen.chunk, score=chosen.score, rank=len(final_results)))
+                selected_sources.append(chosen.purana)
 
-        logger.debug(
-            "Hybrid+MMR search for %r: %d semantic + %d keyword → %d fused → %d diverse results",
-            query, len(semantic_results), len(keyword_results), len(candidates) + len(final_results), len(final_results),
-        )
-        return final_results
+            return final_results
+
+        except Exception as e:
+            logger.error("Hybrid Postgres search error: %s", e, exc_info=True)
+            return []
 
     # ── Find All Instances ─────────────────────────────────────────────
 
-    def find_all_instances(
+    async def find_all_instances(
         self,
-        query:      str,
-        min_score:  float                  = 0.3,
-        category:   str | None            = None,
-        max_results: int                   = 200,
+        query: str,
+        min_score: float = 0.3,
+        category: str | None = None,
+        max_results: int = 200,
     ) -> list[SearchResult]:
-        """
-        Find ALL passages matching a query across all indexed texts.
-        Returns a comprehensive list, not just top-k.
-
-        This is the "find every mention of Narada" function.
-        Uses a large fetch size from both indexes, then deduplicates.
-        """
-        # Fetch many more results than usual
-        fetch_k = min(max_results * 2, self.total_documents)
         filters = {"category": category} if category else None
-
-        semantic_results = self.semantic_search(query, top_k=fetch_k, filters=filters)
-        keyword_results  = self.keyword_search(query,  top_k=fetch_k)
-
-        # Merge and deduplicate by chunk ID
-        seen_ids: set[str] = set()
-        all_results: list[SearchResult] = []
-
-        for result in semantic_results + keyword_results:
-            if result.id in seen_ids:
-                continue
-            if result.score >= min_score:
-                seen_ids.add(result.id)
-                all_results.append(result)
-
-        # Sort by score descending
-        all_results.sort(key=lambda r: r.score, reverse=True)
-        return all_results[:max_results]
+        results = await self.hybrid_search(
+            query, top_k=max_results, filters=filters, 
+            semantic_weight=0.5, mmr_lambda=1.0, sharma_weighting=False
+        )
+        return [r for r in results if r.score >= min_score]
 
     # ── Purana Statistics ──────────────────────────────────────────────
 
