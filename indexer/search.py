@@ -77,10 +77,8 @@ class HybridSearcher:
 
     async def initialize(self) -> "HybridSearcher":
         """Initialize Postgres connection pool and model."""
-        logger.info("Initializing HybridSearcher via Postgres…")
-        
-        # Initialize connection pool
-        self._pool = await asyncpg.create_pool(self._db_url, min_size=2, max_size=10)
+        self._initialized = True
+        logger.info("HybridSearcher initialized ✓")
         
         logger.info("Loading SentenceTransformer model (all-MiniLM-L6-v2)...")
         from sentence_transformers import SentenceTransformer
@@ -92,7 +90,7 @@ class HybridSearcher:
 
     @property
     def is_ready(self) -> bool:
-        return self._initialized and self._pool is not None
+        return self._initialized
 
     # ── Hybrid Search (RRF Fusion) ─────────────────────────────────────
 
@@ -132,23 +130,31 @@ class HybridSearcher:
             
             filter_json = json.dumps(pg_filter)
 
-            # 3. Execute Postgres hybrid_search function
+            # 3. Execute Supabase hybrid_search function via REST RPC
             fetch_k = top_k * 4
-            async with self._pool.acquire() as conn:
-                rows = await conn.fetch('''
-                    SELECT id, content, metadata, similarity 
-                    FROM hybrid_search($1, $2::vector, $3, $4::jsonb)
-                ''', query, emb_str, fetch_k, filter_json)
+            from backend.supabase_client import get_supabase
+            supabase = get_supabase()
+            if not supabase:
+                logger.error("Supabase client not initialized")
+                return []
+            
+            response = supabase.rpc("hybrid_search", {
+                "query_text": query,
+                "query_embedding": emb_str,
+                "match_count": fetch_k,
+                "filter_metadata": pg_filter
+            }).execute()
 
+            rows = response.data
             if not rows:
                 return []
 
             # Create SearchResult objects
             results = []
             for rank, row in enumerate(rows):
-                meta = json.loads(row['metadata']) if isinstance(row['metadata'], str) else row['metadata']
-                score = float(row['similarity'])
-                chunk = {**meta, "id": row['id'], "text": row['content']}
+                meta = row.get('metadata', {})
+                score = float(row.get('similarity', 0.0))
+                chunk = {**meta, "id": row.get('id'), "text": row.get('content')}
                 results.append(SearchResult(chunk=chunk, score=score, rank=rank))
                 
             # Apply source weighting
