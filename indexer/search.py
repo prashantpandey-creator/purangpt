@@ -76,16 +76,18 @@ class HybridSearcher:
         self._pool = None
 
     async def initialize(self) -> "HybridSearcher":
-        """Initialize Postgres connection pool and embedding model."""
+        """Initialize Postgres connection pool and OpenAI client."""
         logger.info("Initializing HybridSearcher via Postgres…")
         
         # Initialize connection pool
         self._pool = await asyncpg.create_pool(self._db_url, min_size=2, max_size=10)
         
-        logger.info("Initializing local embedding model (multilingual-e5-small)...")
-        os.environ["TOKENIZERS_PARALLELISM"] = "false"
-        from sentence_transformers import SentenceTransformer
-        self._embed_model = SentenceTransformer("intfloat/multilingual-e5-small")
+        logger.info("Initializing OpenAI Embedding API...")
+        from openai import AsyncOpenAI
+        api_key = os.environ.get("OPENAI_API_KEY", "")
+        if not api_key:
+            logger.warning("OPENAI_API_KEY is missing. Embeddings will fail.")
+        self._openai_client = AsyncOpenAI(api_key=api_key)
         
         self._initialized = True
         logger.info("HybridSearcher initialized ✓")
@@ -114,8 +116,12 @@ class HybridSearcher:
             return []
 
         try:
-            # 1. Generate query embedding locally
-            query_emb = self._embed_model.encode(f"query: {query}", normalize_embeddings=True).tolist()
+            # 1. Generate query embedding via OpenAI
+            resp = await self._openai_client.embeddings.create(
+                input=query,
+                model="text-embedding-3-small"
+            )
+            query_emb = resp.data[0].embedding
             emb_str = "[" + ",".join(map(str, query_emb)) + "]"
 
             # 2. Build filter JSON

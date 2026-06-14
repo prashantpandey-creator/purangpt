@@ -1487,10 +1487,19 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             messages.append({"role": msg["role"], "content": msg["content"][:1200]})
         messages.append({"role": "user", "content": request.query})
 
-        # 5. Stream Groq
+        # 5. Determine Model by Subscription Tier and Stream
+        if not user:
+            target_model = "ollama-qwen2.5:7b" # Guest: Local fallback
+        else:
+            role = user.get("role", "free")
+            if role in ["pro", "scholar", "admin"]:
+                target_model = "groq-llama-3.3-70b-versatile" # Premium fast model
+            else:
+                target_model = "deepseek-chat" # Free users
+
         full_response = []
         try:
-            async for item in stream_llm(messages):
+            async for item in stream_llm(messages, req_model=target_model):
                 if await req.is_disconnected():
                     break
                 if isinstance(item, dict):

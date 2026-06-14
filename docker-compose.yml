@@ -16,6 +16,7 @@ services:
       - HOST=0.0.0.0
       - PORT=8000
       - VECTOR_DB_URL=postgresql://postgres:postgres@pgvector:5432/purangpt
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     depends_on:
       ollama:
         condition: service_healthy
