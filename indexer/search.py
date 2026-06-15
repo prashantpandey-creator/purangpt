@@ -82,9 +82,9 @@ class HybridSearcher:
         # Initialize connection pool
         self._pool = await asyncpg.create_pool(self._db_url, min_size=2, max_size=10)
         
-        logger.info("Loading SentenceTransformer model (all-MiniLM-L6-v2)...")
+        logger.info("Loading SentenceTransformer model (intfloat/multilingual-e5-small)...")
         from sentence_transformers import SentenceTransformer
-        self._embed_model = SentenceTransformer("all-MiniLM-L6-v2")
+        self._embed_model = SentenceTransformer("intfloat/multilingual-e5-small")
         
         self._initialized = True
         logger.info("HybridSearcher initialized ✓")
@@ -116,7 +116,8 @@ class HybridSearcher:
             # 1. Generate query embedding locally (offload to thread)
             import asyncio
             loop = asyncio.get_running_loop()
-            query_emb = await loop.run_in_executor(None, self._embed_model.encode, query)
+            e5_query = f"query: {query}"
+            query_emb = await loop.run_in_executor(None, self._embed_model.encode, e5_query)
             if hasattr(query_emb, "tolist"):
                 query_emb = query_emb.tolist()
             emb_str = "[" + ",".join(map(str, query_emb)) + "]"

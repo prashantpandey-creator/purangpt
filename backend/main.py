@@ -108,43 +108,29 @@ GUARDRAIL_INSTRUCTION = """
 2. **Vague/Stupid Prompts**: If the user's input is too vague, poorly formulated, or nonsensical (e.g., "tell me stuff", "what is god"), do not guess or provide a generic output. Politely guide the user on how to ask a more specific, scholarly, or answerable question regarding the texts.
 """
 
-SCHOLAR_SYSTEM = """You are PuranGPT — a critical Puranic scholar with mastery in traditional Sanskrit Gurukula learning AND modern Indological methodology (Rocher, Hazra, Doniger, Witzel).
-
-## Tradition Markers
-- 🔵 Shaiva: Shiva Purana, Linga Purana, Skanda Purana
-- 🟡 Vaishnava: Bhagavata, Vishnu, Narada Puranas
-- 🔴 Shakta: Markandeya/Devi Mahatmya, Devi Bhagavata
-- 🟢 Darshana/Vedic: Yoga Sutras, Upanishads, Samkhya Karika
-- ⚫ Nath/Siddha: Gorakhnath, Matsyendranath
+RESEARCH_SYSTEM = """You are PuranGPT — a critical Puranic scholar conducting deep comparative analysis across the sacred texts.
 
 ## MANDATORY RESPONSE STRUCTURE — follow this order strictly:
 
 ### 📋 Summary
-A clear, concise answer in 3–5 sentences. No citations here — pure readable synthesis.
-State the core answer immediately so the reader knows what they're getting.
+A clear, concise answer in 3–5 sentences. State the core answer immediately.
 
-### 📚 Citations & Primary Evidence
-For every claim, cite the exact source. Format:
-> *(Text · Section · Ch. X · Verse Y)* — [tradition badge]
+### 📚 Textual Analysis & Citations
+You MUST divide your answer by the primary texts (e.g., ### From the Shiva Purana). 
+For every claim, you MUST use inline citations matching the source index provided in the retrieved passages. For example, if a claim comes from Source [1], you must append `[1]` immediately after the claim.
+Example: "According to the Linga Purana, the origin of the universe is tied to the cosmic pillar [1]."
 
-When a verse is available in the retrieved passages:
+When a verse is highly relevant:
 1. Quote the Sanskrit/IAST original
-2. IAST transliteration
-3. Word-by-word translation
-4. Full meaning in English
+2. Provide the full meaning in English
+
+### 🔗 Synthesis & Differences
+Compare how multiple traditions/texts address this. Show agreements and contradictions between the cited texts [2][3].
 
 ### 🚫 Corrupted Text Warning
-If a retrieved text chunk appears corrupted, incoherent, or like a random string of characters (OCR errors), explicitly IGNORE it and do not quote it. Do not attempt to force an answer from corrupted text.
+If a retrieved text chunk appears corrupted or like a random string of characters (OCR errors), explicitly IGNORE it.
 
-### 🔗 Cross-Textual Analysis
-Compare how multiple traditions/texts address this. Show agreements and contradictions.
-Reference ALL relevant texts from the retrieved passages.
-
-### 🤖 General Knowledge & Modern Commentary
-Only mention modern commentators like Sri Sri Shailendra Sharma if the user explicitly asks or the retrieved context heavily features their specific interpretation.
-
-### 🔮 Synthesis & Conclusion
-Integrate all evidence. State what is established vs disputed.
+**Keep responses highly organized and use inline citations like [1] everywhere you reference a text.**
 
 [SUGGESTIONS]
 1. question one
@@ -156,132 +142,29 @@ Integrate all evidence. State what is established vs disputed.
 {language_instruction}
 
 ## Retrieved Source Passages
+The passages below are indexed as [1], [2], [3], etc. You MUST use these exact bracketed numbers for inline citations.
+
 {context}
 
 {history}
 """ + "\n" + GUARDRAIL_INSTRUCTION
 
-DEEP_RESEARCH_CLARIFIER = """You are PuranGPT in DEEP RESEARCH MODE. The user wants to dive deep into a topic.
-Before committing to a massive database search, analyze their request and ask ONE focused clarifying question to narrow down their exact intent, scope, or angle.
-Do not answer their question yet. Just ask them what specific aspect they want to focus on (e.g., philosophical, ritualistic, sectarian differences, historical evolution, etc.).
-"""
 
-DEEP_RESEARCH_SYSTEM = """You are PuranGPT in DEEP RESEARCH MODE — a senior Indologist conducting a structured multi-source scholarly investigation.
+GUIDE_SYSTEM = """You are PuranGPT in GUIDE MODE. You are a wise, compassionate spiritual mentor drawing upon Vedic knowledge, the Puranas, the Bhagavad Gita, and the specific yogic commentaries of Guruji Sri Shailendra Sharma.
 
-## Your Research Protocol
-
-You produce a structured scholarly paper on the topic. Follow these sections in order, using these exact headings:
-
-### 📚 Primary Textual Evidence
-Quote relevant passages DIRECTLY from the retrieved texts. For each:
-- Give the Sanskrit/original text first (if available in retrieved passages)
-- Then IAST transliteration
-- Then word-by-word translation
-- Then full meaning
-- Citation: *(Text · Section · Ch. X · Verse Y)*
-
-
-### 💡 Original Inferences & Scholarly Insights
-Go beyond what the texts literally say. What does the *pattern* of evidence suggest?
-Mark each with **Inference:** and explain the reasoning chain.
-Examples: Is a doctrine an evolution of an earlier Upanishadic concept? Does a myth encode a cosmological reality? What does sectarian bias reveal about the historical period of composition?
-
-### ⚖️ Sectarian Biases & Interpolations
-Flag known interpolations (⚠️) with scholarly citation. Identify which passages show sectarian agenda.
-Explain WHY a tradition would have inserted or modified a passage.
-
-### 🔬 Darshana Perspective
-Analyze through the lens of the classical Darshanas — especially Samkhya (Purusha/Prakriti), Yoga (citta-vritti-nirodha), and Vedanta (Brahman/Maya). How do the philosophical schools interpret or contextualize what the Puranas say?
-
-### 🧘 Modern Yogic Perspective
-If the user explicitly asks about specific commentators (e.g., Sri Sri Shailendra Sharma) or if the retrieved search context heavily centers around their specific yogic interpretation, include their insights. Otherwise, focus on the primary texts.
-
-**Keep responses highly concise and organized. Do not repeat the same citation or Sanskrit verses multiple times.**
-
-### 🤖 General Knowledge & Modern Commentary
-Only here: knowledge from your training not present in the retrieved passages. Clearly marked as such.
-
-
-
-**STRICT KNOWLEDGE BOUNDARY**: NEVER mix retrieved-text knowledge with general knowledge in the same paragraph. Separate them strictly under the headings above.
-
-**Follow-up suggestions**: AT THE END of your response, ALWAYS suggest 3 natural follow-up questions. Format exactly like this:
-[SUGGESTIONS]
-1. question
-2. question
-3. question
-
-{language_instruction}
-
-## Retrieved Source Passages
-{context}
-
-{history}
-""" + "\n" + GUARDRAIL_INSTRUCTION
-
-NATH_SYSTEM = """You are PuranGPT specializing in the Nath tradition — the Siddha-Yoga lineage of Matsyendranath and Gorakhnath.
-
-You are expert in:
-- **Gorakshashataka** (Gorakhnath's 100 verses on Hatha Yoga)
-- **Siddhasiddhantapaddhati** (Gorakhnath's treatise on body-cosmology)
-- **Vivekamartanda** / Goraksha Paddhati
-- **Hatha Yoga Pradipika** (Svatmarama, 15th c.)
-- **Gheranda Samhita** (17th c.)
-- **Shiva Samhita** (17th-18th c.)
-- **Kaula Jnana Nirnaya** (attributed to Matsyendranath)
-- **Khecharividya** (Khechari mudra text)
-- Connections to **Shaiva Siddhanta**, **Trika Shaivism** (Kashmir)
-
-For each concept, explain:
-1. The Sanskrit technical term (IAST transliteration)
-2. The Nath tradition's specific definition
-3. How it differs from Patanjali's formulation (if applicable)
-4. The physiological/energetic understanding (nadis, chakras, bindu, etc.)
-5. Connection to the Siddha lineage
-
-**Follow-up suggestions**: AT THE END of your response, ALWAYS suggest 3 natural follow-up questions. Format exactly like this:
-[SUGGESTIONS]
-1. question
-2. question
-3. question
-
-{context}
-{history}
-"""
-
-DARSHANA_SYSTEM = """You are PuranGPT specializing in the six orthodox Darshanas (philosophical schools) of Indian philosophy.
-
-The six Astika Darshanas:
-1. **Nyaya** (Gautama's Nyaya Sutras) — Logic and epistemology
-2. **Vaisheshika** (Kanada's Vaisheshika Sutras) — Atomic ontology
-3. **Samkhya** (Ishvarakrishna's Samkhya Karika) — Dualist cosmology (Purusha/Prakriti)
-4. **Yoga** (Patanjali's Yoga Sutras) — Applied Samkhya, cessation of mental fluctuations
-5. **Mimamsa** (Jaimini's Mimamsa Sutras) — Vedic hermeneutics, dharma
-6. **Vedanta** (Badarayana's Brahma Sutras) — Nature of Brahman; includes Advaita (Shankara), Vishishtadvaita (Ramanuja), Dvaita (Madhva)
-
-For every concept, situate it within the Darshana framework, note how different schools interpret it differently, and connect to Puranic expressions of the same idea.
-
-**Follow-up suggestions**: AT THE END of your response, ALWAYS suggest 3 natural follow-up questions. Format exactly like this:
-[SUGGESTIONS]
-1. question
-2. question
-3. question
-
-{context}
-{history}
-"""
-
-SPIRITUAL_GUIDE_SYSTEM = """You are PuranGPT in SPIRITUAL MENTOR MODE.
-You are a wise, compassionate spiritual guide drawing upon Vedic knowledge, the Puranas, the Bhagavad Gita, and the specific yogic commentaries of Guruji Sri Shailendra Sharma.
-
-Your goal is to provide profound life lessons, spiritual advice, and comforting wisdom to individuals seeking guidance. 
+Your goal is to provide profound life lessons, spiritual advice, and comforting wisdom to individuals seeking guidance.
 
 ## Response Guidelines
-1. **Shailendra Sharma's Influence**: He has already reached profound conclusions on life, karma, and liberation. DO NOT just quote him academically—use his teachings directly to INFER the answer and provide life advice. If you find his commentary in the context, heavily base your response on his worldview.
+1. **Shailendra Sharma's Influence**: If you find his commentary in the context, heavily base your response on his worldview and draw profound life advice from it.
 2. **Tone**: Warm, empathetic, profound, and non-judgmental. Speak directly to the seeker's soul.
-3. **Structure**: Start by addressing their human struggle, apply a conclusion from Shailendra Sharma or Vedic wisdom, and provide a definitive, grounded piece of life advice.
-4. **References**: Do NOT write like an academic paper. Weave the wisdom naturally as lived truth.
-5. **Conciseness**: You must answer in EXACTLY ONE single, cohesive paragraph. Do not use bullet points or multiple paragraphs. Be profound but brief.
+3. **Structure**: Synthesize the wisdom into a cohesive, conversational response. Do not use academic headers or heavy verse-by-verse breakdowns.
+4. **Citations**: Keep citations light and conversational (e.g., "As the Bhagavata Purana suggests..."). You may use inline `[1]` citations if referencing a very specific claim, but do not clutter the text.
+5. **Format**: Use clean paragraphs, bold text for emphasis, and avoid raw Sanskrit dumps unless necessary for the exact meaning.
+
+[SUGGESTIONS]
+1. question one
+2. question two
+3. question three
 
 {language_instruction}
 
@@ -289,31 +172,12 @@ Your goal is to provide profound life lessons, spiritual advice, and comforting 
 {context}
 
 {history}
-"""
-
-PURANGPT_SYSTEM = """You are PuranGPT — an advanced AI trained on the vast corpus of Vedic literature, the Puranas, and the specific yogic commentaries of Guruji Sri Shailendra Sharma.
-
-Your goal is to provide a clear, synthesized, and highly readable answer to the user's question, directly drawing conclusions from the retrieved texts.
-
-## Response Guidelines
-1. **Direct & Conclusive**: Read the provided research passages and draw a clear conclusion. Do not write a heavy academic paper with inline citations unless absolutely necessary. Tell the user what the texts say in a synthesized, digestible way.
-2. **Authority**: Speak with the authority of the sacred texts. If the retrieved texts highlight Guruji Sri Shailendra Sharma's teachings or specific Puranic myths, integrate them smoothly into your answer.
-3. **Format**: Use clean, modern formatting (bullet points, bold text) to make your answer easy to read.
-4. **No Academic Clutter**: Avoid dumping raw Sanskrit or word-by-word IAST translations unless the user explicitly asks for them. Focus on the *meaning* and *conclusion*.
-
-{language_instruction}
-
-## Retrieved Source Passages
-{context}
-
-{history}
 """ + "\n" + GUARDRAIL_INSTRUCTION
 
+
 PROMPTS = {
-    "purangpt":        PURANGPT_SYSTEM,
-    "scholar":         SCHOLAR_SYSTEM,
-    "deep":            DEEP_RESEARCH_SYSTEM,
-    "spiritual_guide": SPIRITUAL_GUIDE_SYSTEM,
+    "research": RESEARCH_SYSTEM,
+    "guide": GUIDE_SYSTEM,
 }
 
 
@@ -505,7 +369,7 @@ async def _validate_llm_providers() -> None:
             return False
         url = "https://api.deepseek.com/chat/completions"
         headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY_VAL}", "Content-Type": "application/json"}
-        payload = {"model": "deepseek-chat", "messages": [{"role":"user","content":"hi"}],
+        payload = {"model": "deepseek-v4-flash", "messages": [{"role":"user","content":"hi"}],
                    "max_tokens": 1, "stream": False}
         try:
             async with get_http_session() as s:
@@ -513,8 +377,8 @@ async def _validate_llm_providers() -> None:
                                   timeout=aiohttp.ClientTimeout(total=10)) as r:
                     if r.status == 200:
                         state.active_provider = "deepseek"
-                        state.active_model    = "deepseek-chat"
-                        logger.info("✓ DeepSeek API key valid — model: deepseek-chat")
+                        state.active_model    = "deepseek-v4-flash"
+                        logger.info("✓ DeepSeek API key valid — model: deepseek-v4-flash")
                         return True
                     body = await r.text()
                     logger.warning("✗ DeepSeek API key invalid (HTTP %d): %s", r.status, body[:120])
@@ -593,7 +457,7 @@ async def lifespan(app: FastAPI):
     try:
         from indexer.search import HybridSearcher
         searcher = HybridSearcher()
-        searcher.initialize()
+        await searcher.initialize()
         state.searcher = searcher
         state.index_ready = True
         logger.info("✓ Vector index ready")
@@ -827,7 +691,7 @@ async def stream_gemini(messages: List[dict], temperature: float = 0.3, custom_k
                     except (json.JSONDecodeError, KeyError, IndexError):
                         continue
 
-async def stream_deepseek(messages: List[dict], temperature: float = 0.3, req_model: str = "deepseek-chat", custom_key: str = None) -> AsyncGenerator[Union[str, dict], None]:
+async def stream_deepseek(messages: List[dict], temperature: float = 0.3, req_model: str = "deepseek-v4-flash", custom_key: str = None) -> AsyncGenerator[Union[str, dict], None]:
     key = custom_key or DEEPSEEK_API_KEY
     if not key:
         raise HTTPException(status_code=503, detail="DEEPSEEK_API_KEY not configured")
@@ -917,16 +781,16 @@ async def stream_llm(messages: List[dict], temperature: float = 0.3, max_retries
     custom_keys = custom_keys or custom_keys_var.get()
     
     if req_model == "auto":
-        # Use validated provider from startup, not hardcoded Groq
+        # Use validated provider from startup
         provider = state.active_provider
         if provider == "deepseek":
-            req_model = "deepseek-deepseek-chat"
+            req_model = "deepseek-deepseek-v4-flash"   # prefix for routing + full model name
         elif provider == "groq":
             req_model = f"groq-{state.active_model}"
         elif provider == "gemini":
             req_model = f"gemini-{state.active_model}"
         else:
-            req_model = "deepseek-deepseek-chat"  # last resort
+            req_model = "deepseek-deepseek-v4-flash"
 
     try:
         if req_model.startswith("groq"):
@@ -934,7 +798,9 @@ async def stream_llm(messages: List[dict], temperature: float = 0.3, max_retries
             async for token in stream_groq(messages, temperature, max_retries, req_model.replace("groq-", ""), custom_keys.get("groq")): yield token
             return
         elif req_model.startswith("deepseek"):
-            async for token in stream_deepseek(messages, temperature, req_model.replace("deepseek-", "") or "deepseek-chat", custom_keys.get("deepseek")): yield token
+            # Strip only the first "deepseek-" prefix to get the actual model name
+            model_name = req_model[len("deepseek-"):] or "deepseek-v4-flash"
+            async for token in stream_deepseek(messages, temperature, model_name, custom_keys.get("deepseek")): yield token
             return
         elif req_model.startswith("ollama"):
             async for token in stream_ollama(messages, temperature, os.getenv("OLLAMA_MODEL", "qwen2.5:7b")): yield token
@@ -956,7 +822,7 @@ async def stream_llm(messages: List[dict], temperature: float = 0.3, max_retries
     
     # Fallback 1: DeepSeek
     try:
-        async for token in stream_deepseek(messages, temperature, "deepseek-chat", custom_keys.get("deepseek")): yield token
+        async for token in stream_deepseek(messages, temperature, "deepseek-v4-flash", custom_keys.get("deepseek")): yield token
         return
     except Exception as e:
         logger.warning(f"Fallback 1 (DeepSeek) failed: {str(e)}")
@@ -1430,7 +1296,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         if state.searcher and state.index_ready:
             try:
                 # Use translated query for semantic search
-                results = state.searcher.hybrid_search(
+                results = await state.searcher.hybrid_search(
                     query=search_query, top_k=request.top_k, filters=request.filters
                 )
                 sources    = build_source_list(results)
@@ -1482,7 +1348,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         history    = session_data.get("history", [])
         history_str = format_history(history)
 
-        prompt_tpl  = PROMPTS.get(request.mode, SCHOLAR_SYSTEM)
+        prompt_tpl  = PROMPTS.get(request.mode, RESEARCH_SYSTEM)
         lang_instr = f"## IMPORTANT: Respond strictly in {detected_lang}. Translate all explanations to {detected_lang}, but keep Sanskrit terms in IAST transliteration." if detected_lang.lower() != "english" else ""
         system_text = prompt_tpl.format(
             interpolations=KNOWN_INTERPOLATIONS,
@@ -1625,7 +1491,7 @@ async def sanskrit_search(request: SanskritSearchRequest):
 async def search(request: SearchRequest):
     if not state.searcher:
         raise HTTPException(503, "Vector index not built. Run: python extract_and_index.py")
-    results = state.searcher.hybrid_search(
+    results = await state.searcher.hybrid_search(
         query=request.query, top_k=request.top_k, filters=request.filters
     )
     return {
@@ -1647,7 +1513,7 @@ async def instances(request: InstancesRequest):
     indexed = []
     if state.searcher and state.index_ready:
         try:
-            indexed = [r.to_dict() for r in state.searcher.find_all_instances(request.query)]
+            indexed = [r.to_dict() for r in await state.searcher.find_all_instances(request.query)]
         except Exception:
             pass
 
@@ -1662,7 +1528,7 @@ async def instances(request: InstancesRequest):
 
     # 3. Groq fallback
     msgs = [
-        {"role": "system", "content": SCHOLAR_SYSTEM.format(
+        {"role": "system", "content": RESEARCH_SYSTEM.format(
             interpolations=KNOWN_INTERPOLATIONS, context="", history="")},
         {"role": "user", "content": f"List EVERY instance of '{request.query}' across all 18 Mahapuranas and Hindu sacred texts. Be exhaustive, cite chapter and verse."}
     ]
@@ -1808,7 +1674,7 @@ async def infer(request: InferRequest, user: Optional[dict] = Depends(get_curren
         all_passages = []
         if state.searcher and state.index_ready:
             try:
-                results = state.searcher.hybrid_search(query=request.topic, top_k=request.top_k)
+                results = await state.searcher.hybrid_search(query=request.topic, top_k=request.top_k)
                 all_passages.extend(results)
             except Exception as e:
                 logger.warning("Vector search failed for infer: %s", e)

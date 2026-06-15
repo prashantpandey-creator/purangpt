@@ -1,0 +1,38 @@
+# ── Data directories (served from volume mount, never baked into image) ──────
+data/
+# ── Python runtime artifacts ─────────────────────────────────────────────────
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ── Dev / test files ──────────────────────────────────────────────────────────
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.log
+*.sqlite3-journal
+
+# ── Secrets & local config ────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── IDE & OS noise ────────────────────────────────────────────────────────────
+.git/
+.gitignore
+.DS_Store
+*.swp
+*.swo
+Thumbs.db
+
+# ── Old deployment configs (no longer used) ───────────────────────────────────
+Dockerfile.railway
+railway.toml

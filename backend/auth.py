@@ -5,14 +5,31 @@ import os
 import logging
 from typing import Optional
 from datetime import datetime, timezone
-
-from backend.supabase_client import get_profile, get_supabase
+import requests
+from urllib.parse import urljoin
 
 logger = logging.getLogger(__name__)
 
 security = HTTPBearer(auto_error=False)
 
-SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "")
+LOGTO_ENDPOINT = os.getenv("LOGTO_ENDPOINT", "https://auth.purangpt.com/")
+LOGTO_API_RESOURCE_INDICATOR = os.getenv("LOGTO_API_RESOURCE_INDICATOR", "https://api.purangpt.com")
+JWKS_URL = urljoin(LOGTO_ENDPOINT, "/oidc/jwks")
+
+# Cache for the JWKS
+_jwks_cache = None
+
+def get_jwks():
+    global _jwks_cache
+    if not _jwks_cache:
+        try:
+            resp = requests.get(JWKS_URL)
+            resp.raise_for_status()
+            _jwks_cache = resp.json()
+        except Exception as e:
+            logger.error(f"Failed to fetch JWKS from Logto: {e}")
+            return None
+    return _jwks_cache
 
 # Guest limits
 GUEST_DAILY_LIMIT = int(os.getenv("GUEST_DAILY_LIMIT", "10"))  # conservative default
@@ -20,26 +37,55 @@ MAX_QUERY_LENGTH  = int(os.getenv("MAX_QUERY_LENGTH", "2000"))  # chars; ~500 to
 
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Security(security)) -> Optional[dict]:
-    """Extracts the Bearer token and fetches the user profile."""
+    """Extracts the Bearer token and verifies it against Logto JWKS."""
     if not credentials:
         return None
 
     token = credentials.credentials
-    supabase = get_supabase()
-    if not supabase:
+    jwks = get_jwks()
+    if not jwks:
         return None
 
     try:
-        user_resp = supabase.auth.get_user(token)
-        if not user_resp or not user_resp.user:
+        # Decode the unverified header to get the key ID (kid)
+        unverified_header = jwt.get_unverified_header(token)
+        rsa_key = {}
+        for key in jwks.get("keys", []):
+            if key["kid"] == unverified_header.get("kid"):
+                rsa_key = key
+                break
+        
+        if not rsa_key:
+            logger.error("Unable to find appropriate key in JWKS")
             return None
 
-        user_id = user_resp.user.id
-        profile = get_profile(user_id)
-        if profile:
-            return profile
-        # Fallback if profile row doesn't exist yet (before DB trigger runs)
-        return {"id": user_id, "role": "free"}
+        # Verify the token
+        # Using audience = LOGTO_API_RESOURCE_INDICATOR if we have configured Logto APIs,
+        # but standard Logto access tokens might just have 'aud': ['...']
+        payload = jwt.decode(
+            token,
+            rsa_key,
+            algorithms=["RS256"],
+            # If you are strictly validating API resource indicators in Logto:
+            # audience=LOGTO_API_RESOURCE_INDICATOR,
+            options={"verify_aud": False} # Disable audience verification for simpler setup right now
+        )
+        
+        # Logto token `sub` is the user ID
+        user_id = payload.get("sub")
+        if not user_id:
+            return None
+
+        # In a real app we might fetch user roles from our DB using `user_id`.
+        # For now, return a basic user dict.
+        return {"id": user_id, "role": "free", "email": payload.get("email")}
+        
+    except jwt.ExpiredSignatureError:
+        logger.error("Token signature has expired")
+        return None
+    except jwt.JWTClaimsError:
+        logger.error("Incorrect claims, please check the audience and issuer")
+        return None
     except Exception as e:
         logger.error(f"Error validating token: {e}")
         return None

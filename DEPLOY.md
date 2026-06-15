@@ -1,61 +1,32 @@
 # PuranGPT — Deployment & iOS App Guide
 
-## Part 1 — Deploy Backend to Railway (free tier)
+## Part 1 — Deploy Backend to Hetzner VPS
 
-Railway is the simplest host for a FastAPI + Python backend. Free tier gives 500 hours/month.
+The backend and frontend are now deployed on a Hetzner VPS using Docker Compose.
 
-### Step 1 — Create Railway account
-1. Go to https://railway.app and sign up (free, GitHub login recommended)
-
-### Step 2 — Push code to GitHub (if not already)
+### Step 1 — Connect to Hetzner
 ```bash
-cd purangpt/
-git init
-git add .
-git commit -m "initial"
-git remote add origin https://github.com/YOUR_USERNAME/purangpt.git
-git push -u origin main
+ssh -i ~/.ssh/purangpt_hetzner root@204.168.176.229
 ```
 
-### Step 3 — Create Railway project
-1. In Railway dashboard → **New Project** → **Deploy from GitHub repo**
-2. Select your repository
-3. Railway auto-detects `Dockerfile.railway` → uses it
+### Step 2 — Deploy Backend and Frontend
+The codebase is located in `/root/purangpt` (backend) and `/root/purangpt-next` (frontend).
 
-### Step 4 — Set environment variables in Railway
-In Railway → your service → **Variables** tab, add:
-
-| Variable | Value |
-|----------|-------|
-| `GEMINI_API_KEY` | your Gemini key (from aistudio.google.com) |
-| `GROQ_API_KEY` | your Groq key (optional, Gemini works) |
-| `LLM_PROVIDER` | `gemini` |
-| `GEMINI_MODEL` | `gemini-2.5-flash` |
-| `PORT` | `8000` |
-| `HOST` | `0.0.0.0` |
-
-### Step 5 — Add persistent volume (for data)
-In Railway → your service → **Volumes** tab:
-- Mount path: `/app/data`
-- This persists your GRETIL texts, chunks, and ChromaDB index across deploys
-
-### Step 6 — Upload your data to Railway volume
-After first deploy, copy your local data up:
 ```bash
-# Install Railway CLI
-npm install -g @railway/cli
-railway login
-railway link   # select your project
+cd /root/purangpt
+docker compose build backend
+docker compose up -d backend
 
-# Copy local data to Railway volume
-railway run -- bash -c "mkdir -p /app/data"
-# Then scp or use Railway's file upload in the dashboard
+cd /root/purangpt-next
+docker compose build frontend
+docker compose up -d frontend
 ```
 
-### Step 7 — Get your URL
-Railway assigns a URL like: `https://purangpt-production.up.railway.app`
+### Step 3 — Get your URL
+The Next.js frontend is available at `http://204.168.176.229:3000`.
+The FastAPI backend is available at `http://204.168.176.229:8000`.
 
-Update `ios_app/ios_config.js` → set `DEPLOYED_API` to this URL.
+Update `ios_app/build_ios.sh` → set `NEXT_PUBLIC_API_URL` to the Hetzner backend URL (`http://204.168.176.229:8000`).
 
 ---
 

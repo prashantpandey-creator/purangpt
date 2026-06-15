@@ -184,6 +184,7 @@ def cmd_serve(args) -> None:
     console.rule("[bold gold1]🕉️  PuranGPT[/bold gold1]")
     console.print(f"  Web UI: [cyan link]http://localhost:{port}[/cyan link]")
     console.print(f"  API:    [cyan]http://localhost:{port}/api/status[/cyan]")
+    console.print("  [bold red]Note:[/bold red] For production, use Gunicorn: gunicorn backend.main:app -k uvicorn.workers.UvicornWorker --workers 4")
     console.print()
 
     uvicorn.run(
