@@ -47,3 +47,5 @@ ios_app/android/
 .idea/
 .vscode/
 *.swp
+
+data/
