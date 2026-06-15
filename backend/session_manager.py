@@ -18,6 +18,7 @@ class SessionManager:
     def _load_guest_sessions(self):
         if os.path.exists(self.guest_db_path):
             try:
+                # Add file lock or rely on atomic JSON writes (SQLite would be better, but this is a quick fix for now)
                 with open(self.guest_db_path, "r", encoding="utf-8") as f:
                     self._guest_sessions = json.load(f)
             except Exception as e:
@@ -33,7 +34,8 @@ class SessionManager:
 
     def get_session(self, session_id: str, user_id: str = None, guest_id: str = None) -> dict:
         if not user_id:
-            # Guest mode: use local persistent JSON
+            # Guest mode: dynamically reload to sync across workers
+            self._load_guest_sessions()
             session = self._guest_sessions.get(session_id)
             if session and session.get("guest_id") == guest_id:
                 return session
@@ -136,6 +138,7 @@ class SessionManager:
         if not user_id:
             if not guest_id:
                 return []
+            self._load_guest_sessions()
             sessions = []
             for sid, sdata in self._guest_sessions.items():
                 if sdata.get("guest_id") == guest_id:

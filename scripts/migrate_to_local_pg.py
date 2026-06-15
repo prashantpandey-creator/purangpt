@@ -10,7 +10,7 @@ load_dotenv()
 SUPABASE_URL = os.environ.get("SUPABASE_URL") or os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_ANON_KEY")
 
-LOCAL_DB_URL = "postgresql://postgres:postgres@pgvector:5432/purangpt"
+LOCAL_DB_URL = "postgresql://postgres:postgres@204.168.176.229:5432/purangpt"
 TABLE_NAME = "purana_verses"
 
 if not SUPABASE_URL or not SUPABASE_KEY:

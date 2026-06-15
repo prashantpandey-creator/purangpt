@@ -593,23 +593,24 @@ async def lifespan(app: FastAPI):
     try:
         from indexer.search import HybridSearcher
         searcher = HybridSearcher()
-        await searcher.initialize()
+        searcher.initialize()
         state.searcher = searcher
         state.index_ready = True
         logger.info("✓ Vector index ready")
     except Exception as e:
         logger.info("Vector index not built yet: %s", e)
 
+    # Create HTTP client BEFORE provider validation (probes need it)
+    state.http_client = aiohttp.ClientSession(
+        timeout=aiohttp.ClientTimeout(total=60),
+        connector=aiohttp.TCPConnector(limit=100)
+    )
+
     # Validate API keys and determine active provider
     await _validate_llm_providers()
 
     logger.info("🚀 Active provider: %s (%s) — Ready at http://localhost:%s",
                 state.active_provider, state.active_model, os.getenv("PORT", "8000"))
-    
-    state.http_client = aiohttp.ClientSession(
-        timeout=aiohttp.ClientTimeout(total=60),
-        connector=aiohttp.TCPConnector(limit=100)
-    )
 
     yield
 
@@ -916,7 +917,16 @@ async def stream_llm(messages: List[dict], temperature: float = 0.3, max_retries
     custom_keys = custom_keys or custom_keys_var.get()
     
     if req_model == "auto":
-        req_model = "groq-llama-3.3-70b-versatile"  # Force groq as primary for auto
+        # Use validated provider from startup, not hardcoded Groq
+        provider = state.active_provider
+        if provider == "deepseek":
+            req_model = "deepseek-deepseek-chat"
+        elif provider == "groq":
+            req_model = f"groq-{state.active_model}"
+        elif provider == "gemini":
+            req_model = f"gemini-{state.active_model}"
+        else:
+            req_model = "deepseek-deepseek-chat"  # last resort
 
     try:
         if req_model.startswith("groq"):
@@ -1420,7 +1430,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         if state.searcher and state.index_ready:
             try:
                 # Use translated query for semantic search
-                results = await state.searcher.hybrid_search(
+                results = state.searcher.hybrid_search(
                     query=search_query, top_k=request.top_k, filters=request.filters
                 )
                 sources    = build_source_list(results)
@@ -1489,13 +1499,13 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
 
         # 5. Determine Model by Subscription Tier and Stream
         if not user:
-            target_model = "ollama-qwen2.5:7b" # Guest: Local fallback
+            target_model = "auto"  # Guest: use validated active provider
         else:
             role = user.get("role", "free")
             if role in ["pro", "scholar", "admin"]:
                 target_model = "groq-llama-3.3-70b-versatile" # Premium fast model
             else:
-                target_model = "deepseek-chat" # Free users
+                target_model = "auto"  # Free users: use validated active provider
 
         full_response = []
         try:
@@ -1615,7 +1625,7 @@ async def sanskrit_search(request: SanskritSearchRequest):
 async def search(request: SearchRequest):
     if not state.searcher:
         raise HTTPException(503, "Vector index not built. Run: python extract_and_index.py")
-    results = await state.searcher.hybrid_search(
+    results = state.searcher.hybrid_search(
         query=request.query, top_k=request.top_k, filters=request.filters
     )
     return {
@@ -1637,7 +1647,7 @@ async def instances(request: InstancesRequest):
     indexed = []
     if state.searcher and state.index_ready:
         try:
-            indexed = [r.to_dict() for r in await state.searcher.find_all_instances(request.query)]
+            indexed = [r.to_dict() for r in state.searcher.find_all_instances(request.query)]
         except Exception:
             pass
 
@@ -1798,7 +1808,7 @@ async def infer(request: InferRequest, user: Optional[dict] = Depends(get_curren
         all_passages = []
         if state.searcher and state.index_ready:
             try:
-                results = await state.searcher.hybrid_search(query=request.topic, top_k=request.top_k)
+                results = state.searcher.hybrid_search(query=request.topic, top_k=request.top_k)
                 all_passages.extend(results)
             except Exception as e:
                 logger.warning("Vector search failed for infer: %s", e)
