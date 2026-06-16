@@ -571,6 +571,7 @@ class ChatRequest(BaseModel):
     stream:     bool = True
     top_k:      int = 10
     model:      str = "auto"
+    language:   str = "en"
     truncate_history_from_index: Optional[int] = None
 
 class SanskritSearchRequest(BaseModel):
@@ -1349,7 +1350,14 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         history_str = format_history(history)
 
         prompt_tpl  = PROMPTS.get(request.mode, RESEARCH_SYSTEM)
-        lang_instr = f"## IMPORTANT: Respond strictly in {detected_lang}. Translate all explanations to {detected_lang}, but keep Sanskrit terms in IAST transliteration." if detected_lang.lower() != "english" else ""
+        
+        # Override detected language with user's explicit UI preference if provided
+        target_lang = detected_lang
+        if hasattr(request, "language") and request.language:
+            lang_map = {"en": "English", "hi": "Hindi", "ru": "Russian"}
+            target_lang = lang_map.get(request.language.lower(), detected_lang)
+
+        lang_instr = f"## IMPORTANT: Respond strictly in {target_lang}. Translate all explanations to {target_lang}, but keep Sanskrit terms in IAST transliteration." if target_lang.lower() != "english" else ""
         system_text = prompt_tpl.format(
             interpolations=KNOWN_INTERPOLATIONS,
             language_instruction=lang_instr,
