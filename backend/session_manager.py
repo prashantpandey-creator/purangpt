@@ -2,97 +2,110 @@ import os
 import json
 import time
 import logging
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from typing import Dict, List
 from datetime import datetime, timezone
-from backend.supabase_client import get_supabase
 
 logger = logging.getLogger(__name__)
 
 class SessionManager:
     def __init__(self, max_history=100):
         self.max_history = max_history
-        self._guest_sessions = {}
-        self.guest_db_path = "data/guest_sessions.json"
-        self._load_guest_sessions()
+        self.db_url = os.getenv("VECTOR_DB_URL")
+        self._init_db()
 
-    def _load_guest_sessions(self):
-        if os.path.exists(self.guest_db_path):
-            try:
-                # Add file lock or rely on atomic JSON writes (SQLite would be better, but this is a quick fix for now)
-                with open(self.guest_db_path, "r", encoding="utf-8") as f:
-                    self._guest_sessions = json.load(f)
-            except Exception as e:
-                logger.error(f"Failed to load guest sessions: {e}")
-
-    def _save_guest_sessions(self):
-        os.makedirs(os.path.dirname(self.guest_db_path) or ".", exist_ok=True)
+    def _get_conn(self):
+        if not self.db_url:
+            logger.warning("VECTOR_DB_URL not set, session_manager won't persist to DB.")
+            return None
         try:
-            with open(self.guest_db_path, "w", encoding="utf-8") as f:
-                json.dump(self._guest_sessions, f, indent=2)
+            return psycopg2.connect(self.db_url, cursor_factory=RealDictCursor)
         except Exception as e:
-            logger.error(f"Failed to save guest sessions: {e}")
+            logger.error(f"Failed to connect to local Postgres: {e}")
+            return None
+
+    def _init_db(self):
+        conn = self._get_conn()
+        if not conn:
+            return
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                CREATE TABLE IF NOT EXISTS chat_sessions (
+                    id TEXT PRIMARY KEY,
+                    logto_user_id TEXT,
+                    guest_id TEXT,
+                    title TEXT DEFAULT 'New Inquiry',
+                    messages JSONB DEFAULT '[]',
+                    journey_summary TEXT DEFAULT '',
+                    created_at TIMESTAMPTZ DEFAULT NOW(),
+                    updated_at TIMESTAMPTZ DEFAULT NOW()
+                );
+                CREATE INDEX IF NOT EXISTS idx_chat_sessions_logto_user ON chat_sessions(logto_user_id);
+                CREATE INDEX IF NOT EXISTS idx_chat_sessions_guest ON chat_sessions(guest_id);
+                """)
+            conn.commit()
+        except Exception as e:
+            logger.error(f"Failed to initialize chat_sessions table: {e}")
+        finally:
+            conn.close()
 
     def get_session(self, session_id: str, user_id: str = None, guest_id: str = None) -> dict:
-        if not user_id:
-            # Guest mode: dynamically reload to sync across workers
-            self._load_guest_sessions()
-            session = self._guest_sessions.get(session_id)
-            if session and session.get("guest_id") == guest_id:
-                return session
-            # If not found or guest_id mismatch, return a new one
-            return {
-                "id": session_id,
-                "guest_id": guest_id,
-                "title": "New Chat",
-                "updated_at": time.time(),
-                "history": []
-            }
-            
-        supabase = get_supabase()
-        if supabase:
-            try:
-                resp = supabase.table("chat_sessions").select("*").eq("id", session_id).eq("user_id", user_id).execute()
-                if resp.data:
-                    data = resp.data[0]
-                    updated_at = 0
-                    if data.get("updated_at"):
-                        try:
-                            dt = datetime.fromisoformat(data["updated_at"].replace('Z', '+00:00'))
-                            updated_at = dt.timestamp()
-                        except: pass
-                    return {
-                        "id": data["id"],
-                        "title": data.get("title", "New Chat"),
-                        "updated_at": updated_at,
-                        "history": data.get("messages", [])
-                    }
-            except Exception as e:
-                logger.error(f"Error fetching session {session_id}: {e}")
+        conn = self._get_conn()
+        if not conn:
+            return {"id": session_id, "title": "New Chat", "updated_at": time.time(), "history": [], "journey_summary": ""}
+        
+        try:
+            with conn.cursor() as cur:
+                if user_id:
+                    cur.execute("SELECT * FROM chat_sessions WHERE id = %s AND logto_user_id = %s", (session_id, user_id))
+                else:
+                    cur.execute("SELECT * FROM chat_sessions WHERE id = %s AND guest_id = %s", (session_id, guest_id))
                 
-        return {"id": session_id, "title": "New Chat", "updated_at": time.time(), "history": []}
-        
+                row = cur.fetchone()
+                if row:
+                    updated_at = row["updated_at"].timestamp() if row["updated_at"] else time.time()
+                    return {
+                        "id": row["id"],
+                        "title": row["title"] or "New Chat",
+                        "updated_at": updated_at,
+                        "history": row["messages"] or [],
+                        "journey_summary": row.get("journey_summary", "")
+                    }
+        except Exception as e:
+            logger.error(f"Error fetching session {session_id}: {e}")
+        finally:
+            conn.close()
+
+        return {"id": session_id, "title": "New Chat", "updated_at": time.time(), "history": [], "journey_summary": ""}
+
     def save_session(self, session_id: str, data: dict, user_id: str = None, guest_id: str = None):
-        data["updated_at"] = time.time()
-        
-        if not user_id:
-            data["guest_id"] = guest_id
-            self._guest_sessions[session_id] = data
-            self._save_guest_sessions()
+        conn = self._get_conn()
+        if not conn:
             return
+
+        try:
+            messages_json = json.dumps(data.get("history", []))
+            title = data.get("title", "New Chat")
+            journey_summary = data.get("journey_summary", "")
             
-        supabase = get_supabase()
-        if supabase:
-            try:
-                now_iso = datetime.now(timezone.utc).isoformat()
-                supabase.table("chat_sessions").upsert({
-                    "id": session_id,
-                    "user_id": user_id,
-                    "title": data.get("title", "New Chat"),
-                    "messages": data.get("history", []),
-                    "updated_at": now_iso
-                }).execute()
-            except Exception as e:
-                logger.error(f"Error saving session {session_id}: {e}")
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO chat_sessions (id, logto_user_id, guest_id, title, messages, journey_summary, updated_at)
+                    VALUES (%s, %s, %s, %s, %s::jsonb, %s, NOW())
+                    ON CONFLICT (id) DO UPDATE SET
+                        title = EXCLUDED.title,
+                        messages = EXCLUDED.messages,
+                        journey_summary = EXCLUDED.journey_summary,
+                        updated_at = NOW();
+                """, (session_id, user_id, guest_id, title, messages_json, journey_summary))
+            conn.commit()
+        except Exception as e:
+            logger.error(f"Error saving session {session_id}: {e}")
+            conn.rollback()
+        finally:
+            conn.close()
 
     def append_messages(self, session_id: str, messages: List[dict], user_id: str = None, guest_id: str = None):
         session = self.get_session(session_id, user_id, guest_id)
@@ -120,54 +133,49 @@ class SessionManager:
         return session
         
     def clear_session(self, session_id: str, user_id: str = None, guest_id: str = None):
-        if not user_id:
-            if session_id in self._guest_sessions:
-                if self._guest_sessions[session_id].get("guest_id") == guest_id:
-                    del self._guest_sessions[session_id]
-                    self._save_guest_sessions()
+        conn = self._get_conn()
+        if not conn:
             return
             
-        supabase = get_supabase()
-        if supabase:
-            try:
-                supabase.table("chat_sessions").delete().eq("id", session_id).eq("user_id", user_id).execute()
-            except Exception as e:
-                logger.error(f"Error deleting session {session_id}: {e}")
+        try:
+            with conn.cursor() as cur:
+                if user_id:
+                    cur.execute("DELETE FROM chat_sessions WHERE id = %s AND logto_user_id = %s", (session_id, user_id))
+                else:
+                    cur.execute("DELETE FROM chat_sessions WHERE id = %s AND guest_id = %s", (session_id, guest_id))
+            conn.commit()
+        except Exception as e:
+            logger.error(f"Error deleting session {session_id}: {e}")
+            conn.rollback()
+        finally:
+            conn.close()
             
     def get_all_sessions(self, user_id: str = None, guest_id: str = None) -> List[dict]:
-        if not user_id:
-            if not guest_id:
-                return []
-            self._load_guest_sessions()
-            sessions = []
-            for sid, sdata in self._guest_sessions.items():
-                if sdata.get("guest_id") == guest_id:
-                    sessions.append({
-                        "id": sid,
-                        "title": sdata.get("title", "Chat"),
-                        "updated_at": sdata.get("updated_at", 0)
-                    })
-            sessions.sort(key=lambda x: x["updated_at"], reverse=True)
-            return sessions
+        conn = self._get_conn()
+        if not conn:
+            return []
             
-        supabase = get_supabase()
-        if supabase:
-            try:
-                resp = supabase.table("chat_sessions").select("id, title, updated_at").eq("user_id", user_id).order("updated_at", desc=True).execute()
+        try:
+            with conn.cursor() as cur:
+                if user_id:
+                    cur.execute("SELECT id, title, updated_at FROM chat_sessions WHERE logto_user_id = %s ORDER BY updated_at DESC", (user_id,))
+                else:
+                    if not guest_id:
+                        return []
+                    cur.execute("SELECT id, title, updated_at FROM chat_sessions WHERE guest_id = %s ORDER BY updated_at DESC", (guest_id,))
+                
+                rows = cur.fetchall()
                 sessions = []
-                for row in resp.data:
-                    updated_at = 0
-                    if row.get("updated_at"):
-                        try:
-                            dt = datetime.fromisoformat(row["updated_at"].replace('Z', '+00:00'))
-                            updated_at = dt.timestamp()
-                        except: pass
+                for row in rows:
+                    updated_at = row["updated_at"].timestamp() if row["updated_at"] else time.time()
                     sessions.append({
                         "id": row["id"],
-                        "title": row.get("title", "Chat"),
+                        "title": row["title"] or "Chat",
                         "updated_at": updated_at
                     })
                 return sessions
-            except Exception as e:
-                logger.error(f"Error fetching all sessions for {user_id}: {e}")
-        return []
+        except Exception as e:
+            logger.error(f"Error fetching all sessions: {e}")
+            return []
+        finally:
+            conn.close()
