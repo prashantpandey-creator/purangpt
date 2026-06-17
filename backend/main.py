@@ -625,19 +625,18 @@ async def stream_groq(messages: List[dict], temperature: float = 0.3, max_retrie
                                  timeout=aiohttp.ClientTimeout(total=120)) as resp:
                 if resp.status in (429, 413):
                     if payload["model"] != fallback_model:
-                        logger.warning(f"Groq error {resp.status} on {payload['model']}. Falling back to {fallback_model}...")
-                        yield {"type": "info", "message": f"Rate or size limit hit for {payload['model']}. Gracefully falling back to {fallback_model}..."}
+                        logger.warning(f"Groq error {resp.status} on {payload['model']}. Switching to Groq fallback model {fallback_model}...")
                         payload["model"] = fallback_model
                         continue
                     else:
-                        logger.warning(f"Groq rate limit hit on fallback (Attempt {attempt+1}/{max_retries}). Retrying in 5 seconds...")
-                        await asyncio.sleep(5)
-                        continue
-                        
+                        # Both Groq models exhausted — escape to cross-provider fallback
+                        logger.warning(f"Groq rate limit exhausted on all models after {attempt+1} attempts. Escalating to next provider...")
+                        raise _ProviderRateLimited("groq")
+
                 if resp.status != 200:
                     body = await resp.text()
                     raise HTTPException(status_code=resp.status, detail=f"Groq error: {body}")
-                    
+
                 async for raw_line in resp.content:
                     line = raw_line.decode("utf-8").strip()
                     if not line or line == "data: [DONE]":
@@ -776,15 +775,24 @@ async def stream_ollama(messages: List[dict], temperature: float = 0.3, req_mode
                 except Exception:
                     continue
 
+class _ProviderRateLimited(Exception):
+    """Raised internally when a provider exhausts its rate limit — triggers cross-provider fallback."""
+    def __init__(self, provider: str):
+        self.provider = provider
+        super().__init__(f"{provider} rate limit exhausted")
+
+# Semaphore: max 3 concurrent LLM calls across all gunicorn workers sharing this event loop.
+# Prevents thundering-herd burst against the same API key.
+_llm_semaphore = asyncio.Semaphore(3)
+
 async def stream_llm(messages: List[dict], temperature: float = 0.3, max_retries: int = 5, req_model: str = "auto", custom_keys: dict = None) -> AsyncGenerator[Union[str, dict], None]:
-    """Route the request to the requested LLM provider with robust fallback: Groq -> DeepSeek -> Ollama"""
+    """Route to LLM provider with full cross-provider fallback: Groq → Gemini → DeepSeek → Ollama"""
     custom_keys = custom_keys or custom_keys_var.get()
-    
+
     if req_model == "auto":
-        # Use validated provider from startup
         provider = state.active_provider
         if provider == "deepseek":
-            req_model = "deepseek-deepseek-v4-flash"   # prefix for routing + full model name
+            req_model = "deepseek-deepseek-v4-flash"
         elif provider == "groq":
             req_model = f"groq-{state.active_model}"
         elif provider == "gemini":
@@ -792,50 +800,71 @@ async def stream_llm(messages: List[dict], temperature: float = 0.3, max_retries
         else:
             req_model = "deepseek-deepseek-v4-flash"
 
-    try:
-        if req_model.startswith("groq"):
-            if not custom_keys.get("groq") and not GROQ_API_KEY: raise HTTPException(status_code=503, detail="GROQ_API_KEY missing")
-            async for token in stream_groq(messages, temperature, max_retries, req_model.replace("groq-", ""), custom_keys.get("groq")): yield token
-            return
-        elif req_model.startswith("deepseek"):
-            # Strip only the first "deepseek-" prefix to get the actual model name
-            model_name = req_model[len("deepseek-"):] or "deepseek-v4-flash"
-            async for token in stream_deepseek(messages, temperature, model_name, custom_keys.get("deepseek")): yield token
-            return
-        elif req_model.startswith("ollama"):
-            async for token in stream_ollama(messages, temperature, os.getenv("OLLAMA_MODEL", "qwen2.5:7b")): yield token
-            return
-        else:
-            # For other explicit models, just stream directly
-            if req_model.startswith("together"):
-                async for token in stream_together(messages, temperature, req_model.replace("together-", ""), custom_keys.get("together")): yield token
+    async with _llm_semaphore:
+        try:
+            if req_model.startswith("groq"):
+                if not custom_keys.get("groq") and not GROQ_API_KEY:
+                    raise HTTPException(status_code=503, detail="GROQ_API_KEY missing")
+                async for token in stream_groq(messages, temperature, max_retries, req_model.replace("groq-", ""), custom_keys.get("groq")):
+                    yield token
+                return
+            elif req_model.startswith("deepseek"):
+                model_name = req_model[len("deepseek-"):] or "deepseek-v4-flash"
+                async for token in stream_deepseek(messages, temperature, model_name, custom_keys.get("deepseek")):
+                    yield token
+                return
+            elif req_model.startswith("ollama"):
+                async for token in stream_ollama(messages, temperature, os.getenv("OLLAMA_MODEL", "qwen2.5:7b")):
+                    yield token
                 return
             elif req_model.startswith("gemini"):
-                async for token in stream_gemini(messages, temperature, custom_keys.get("gemini")): yield token
+                async for token in stream_gemini(messages, temperature, custom_keys.get("gemini")):
+                    yield token
                 return
             elif req_model.startswith("zhipu"):
-                async for token in stream_zhipu(messages, temperature, req_model.replace("zhipu-", ""), custom_keys.get("zhipu")): yield token
+                async for token in stream_zhipu(messages, temperature, req_model.replace("zhipu-", ""), custom_keys.get("zhipu")):
+                    yield token
                 return
-    except Exception as e:
-        logger.warning(f"Primary LLM ({req_model}) failed: {str(e)}")
-        yield {"type": "info", "message": f"Primary API ({req_model}) unavailable or rate limited. Falling back to DeepSeek..."}
-    
-    # Fallback 1: DeepSeek
-    try:
-        async for token in stream_deepseek(messages, temperature, "deepseek-v4-flash", custom_keys.get("deepseek")): yield token
-        return
-    except Exception as e:
-        logger.warning(f"Fallback 1 (DeepSeek) failed: {str(e)}")
-        yield {"type": "info", "message": f"DeepSeek unavailable. Falling back to local Qwen..."}
+        except (_ProviderRateLimited, HTTPException) as e:
+            status = getattr(e, 'status_code', 429)
+            if status not in (429, 503, 413):
+                raise
+            logger.warning(f"Primary LLM ({req_model}) rate-limited or unavailable: {e}")
 
-    # Fallback 2: Ollama (Qwen)
-    try:
-        async for token in stream_ollama(messages, temperature, os.getenv("OLLAMA_MODEL", "qwen2.5:7b")): yield token
-        return
-    except Exception as e:
-        logger.error(f"Fallback 2 (Ollama) failed: {str(e)}")
-        yield {"type": "error", "message": f"All LLM providers failed, including local fallback."}
-        raise HTTPException(status_code=503, detail="All LLM providers are currently unavailable.")
+        # ── Cross-provider fallback cascade ─────────────────────────────
+        # Fallback 1: Gemini Flash (generous free quota)
+        if GEMINI_API_KEY and not req_model.startswith("gemini"):
+            try:
+                logger.info("Falling back to Gemini Flash...")
+                yield {"type": "info", "message": "Switching to Gemini Flash..."}
+                async for token in stream_gemini(messages, temperature, custom_keys.get("gemini")):
+                    yield token
+                return
+            except Exception as e:
+                logger.warning(f"Gemini fallback failed: {e}")
+
+        # Fallback 2: DeepSeek
+        if DEEPSEEK_API_KEY and not req_model.startswith("deepseek"):
+            try:
+                logger.info("Falling back to DeepSeek...")
+                yield {"type": "info", "message": "Switching to DeepSeek..."}
+                async for token in stream_deepseek(messages, temperature, "deepseek-v4-flash", custom_keys.get("deepseek")):
+                    yield token
+                return
+            except Exception as e:
+                logger.warning(f"DeepSeek fallback failed: {e}")
+
+        # Fallback 3: Ollama local (if available)
+        try:
+            logger.info("Last resort: falling back to local Ollama...")
+            yield {"type": "info", "message": "Using local model (may be slower)..."}
+            async for token in stream_ollama(messages, temperature, os.getenv("OLLAMA_MODEL", "qwen2.5:7b")):
+                yield token
+            return
+        except Exception as e:
+            logger.error(f"All LLM providers failed: {e}")
+            yield {"type": "error", "message": "All AI providers are temporarily unavailable. Please try again in a moment."}
+            raise HTTPException(status_code=503, detail="All LLM providers are currently unavailable.")
 
 
 async def call_llm_once(messages: List[dict], temperature: float = 0.2, req_model: str = "auto") -> str:
