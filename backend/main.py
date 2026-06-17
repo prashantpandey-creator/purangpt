@@ -1297,7 +1297,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             try:
                 # Use translated query for semantic search
                 results = await state.searcher.hybrid_search(
-                    query=search_query, top_k=request.top_k, filters=request.filters
+                    query=search_query, top_k=request.top_k, filters=request.filters, sharma_weighting=(request.mode == "guide")
                 )
                 sources    = build_source_list(results)
                 rag_context = build_rag_context(results)
