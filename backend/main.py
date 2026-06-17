@@ -690,7 +690,7 @@ async def stream_gemini(messages: List[dict], temperature: float = 0.3, custom_k
                     except (json.JSONDecodeError, KeyError, IndexError):
                         continue
 
-async def stream_deepseek(messages: List[dict], temperature: float = 0.3, req_model: str = "deepseek-v4-flash", custom_key: str = None) -> AsyncGenerator[Union[str, dict], None]:
+async def stream_deepseek(messages: List[dict], temperature: float = 0.3, req_model: str = "deepseek-chat", custom_key: str = None) -> AsyncGenerator[Union[str, dict], None]:
     key = custom_key or DEEPSEEK_API_KEY
     if not key:
         raise HTTPException(status_code=503, detail="DEEPSEEK_API_KEY not configured")
@@ -792,13 +792,13 @@ async def stream_llm(messages: List[dict], temperature: float = 0.3, max_retries
     if req_model == "auto":
         provider = state.active_provider
         if provider == "deepseek":
-            req_model = "deepseek-deepseek-v4-flash"
+            req_model = "deepseek-deepseek-chat"
         elif provider == "groq":
             req_model = f"groq-{state.active_model}"
         elif provider == "gemini":
             req_model = f"gemini-{state.active_model}"
         else:
-            req_model = "deepseek-deepseek-v4-flash"
+            req_model = "deepseek-deepseek-chat"
 
     async with _llm_semaphore:
         try:
@@ -809,7 +809,7 @@ async def stream_llm(messages: List[dict], temperature: float = 0.3, max_retries
                     yield token
                 return
             elif req_model.startswith("deepseek"):
-                model_name = req_model[len("deepseek-"):] or "deepseek-v4-flash"
+                model_name = req_model[len("deepseek-"):] or "deepseek-chat"
                 async for token in stream_deepseek(messages, temperature, model_name, custom_keys.get("deepseek")):
                     yield token
                 return
@@ -846,9 +846,9 @@ async def stream_llm(messages: List[dict], temperature: float = 0.3, max_retries
         # Fallback 2: DeepSeek
         if DEEPSEEK_API_KEY and not req_model.startswith("deepseek"):
             try:
-                logger.info("Falling back to DeepSeek...")
-                yield {"type": "info", "message": "Switching to DeepSeek..."}
-                async for token in stream_deepseek(messages, temperature, "deepseek-v4-flash", custom_keys.get("deepseek")):
+                logger.info("Falling back to DeepSeek Chat...")
+                yield {"type": "info", "message": "Switching to DeepSeek Chat..."}
+                async for token in stream_deepseek(messages, temperature, "deepseek-chat", custom_keys.get("deepseek")):
                     yield token
                 return
             except Exception as e:
@@ -1405,7 +1405,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         else:
             role = user.get("role", "free")
             if role in ["pro", "scholar", "admin"]:
-                target_model = "groq-llama-3.3-70b-versatile" # Premium fast model
+                target_model = "deepseek-deepseek-reasoner" # Pro users get DeepSeek Reasoner
             else:
                 target_model = "auto"  # Free users: use validated active provider
 
