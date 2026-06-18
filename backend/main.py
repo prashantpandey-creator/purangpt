@@ -126,10 +126,8 @@ Format them beautifully in isolated paragraphs.
 After quoting the texts, provide a detailed and thoughtful explanation of their meaning. 
 Break down the complex philosophical or theological concepts into understandable terms, showing how the cited verses answer the user's query.
 
-### 🚫 Corrupted Text Warning
-If a retrieved text chunk appears corrupted or like a random string of characters (OCR errors), explicitly IGNORE it.
-
 **Keep responses highly organized, elegant, and always use inline citations like [1] when referencing the extracted texts.**
+- If a retrieved text chunk appears corrupted or like a random string of characters (OCR errors), silently IGNORE it entirely; do not mention it or create a section/warning for it.
 
 [SUGGESTIONS]
 1. question one
@@ -154,11 +152,11 @@ GUIDE_SYSTEM = """You are PuranGPT in GUIDE MODE. You are a wise, compassionate 
 Your goal is to provide profound life lessons, spiritual advice, and comforting wisdom to individuals seeking guidance.
 
 ## Response Guidelines
-1. **Shailendra Sharma's Influence**: If you find his commentary in the context, heavily base your response on his worldview and draw profound life advice from it.
-2. **Tone**: Warm, empathetic, profound, and non-judgmental. Speak directly to the seeker's soul.
-3. **Structure**: Synthesize the wisdom into a cohesive, conversational response. Do not use academic headers or heavy verse-by-verse breakdowns.
-4. **Citations**: Keep citations light and conversational (e.g., "As the Bhagavata Purana suggests..."). You may use inline `[1]` citations if referencing a very specific claim, but do not clutter the text.
-5. **Format**: Use clean paragraphs, bold text for emphasis, and avoid raw Sanskrit dumps unless necessary for the exact meaning.
+1. **Natural Flow**: Do not strictly follow a rigid structure. Let your response flow naturally and loosely.
+2. **Concise & Impactful**: Your answers should be extremely concise, profound, and impactful, much like Guruji's direct way of speaking. Aim for a single, powerful paragraph whenever possible.
+3. **Tone**: Warm, empathetic, profound, and non-judgmental. Speak directly to the seeker's soul without academic lecturing.
+4. **Citations**: Do not clutter the text with numbers or citations. Weave references into your natural speech loosely (e.g., "The Gita teaches us...").
+5. **Format**: Avoid bullet points, headers, and heavy formatting. Speak naturally.
 
 [SUGGESTIONS]
 1. question one
@@ -696,7 +694,10 @@ async def stream_deepseek(messages: List[dict], temperature: float = 0.3, req_mo
         raise HTTPException(status_code=503, detail="DEEPSEEK_API_KEY not configured")
     url = "https://api.deepseek.com/chat/completions"
     headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
-    payload = {"model": req_model, "messages": messages, "stream": True, "temperature": temperature}
+    payload = {"model": req_model, "messages": messages, "stream": True}
+    if req_model != "deepseek-reasoner":
+        payload["temperature"] = temperature
+
     async with get_http_session() as sess:
         async with sess.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=120)) as resp:
             if resp.status != 200:
@@ -708,7 +709,15 @@ async def stream_deepseek(messages: List[dict], temperature: float = 0.3, req_mo
                 if line.startswith("data: "):
                     try:
                         data = json.loads(line[6:])
-                        token = data["choices"][0]["delta"].get("content", "")
+                        delta = data["choices"][0]["delta"]
+                        
+                        # Yield reasoning token if present
+                        reasoning = delta.get("reasoning_content", "")
+                        if reasoning:
+                            yield {"type": "reasoning", "content": reasoning}
+                            
+                        # Yield standard content token if present
+                        token = delta.get("content", "")
                         if token: yield token
                     except: continue
 
@@ -1021,7 +1030,7 @@ def build_source_list(results: list) -> List[dict]:
 
 
 # ── Deep Research Pipeline ─────────────────────────────────────────────────
-async def deep_research(query: str, session_id: str) -> AsyncGenerator[str, None]:
+async def deep_research(query: str, session_id: str, user_id: str = None) -> AsyncGenerator[str, None]:
     """
     Two-stage Interactive Deep Research:
     Stage 1: Ask clarifying question based on initial query.
@@ -1063,7 +1072,16 @@ async def deep_research(query: str, session_id: str) -> AsyncGenerator[str, None
 
     # Stage 2: Execution
     from backend.agents.deep_research import DeepResearchAgent
-    agent = DeepResearchAgent()
+    from backend.supabase_client import get_profile
+    
+    role = "free"
+    if user_id:
+        profile = get_profile(user_id)
+        if profile:
+            role = profile.get("role", "free")
+            
+    use_reasoner = (role in ["pro", "scholar", "admin"])
+    agent = DeepResearchAgent(model="deepseek-reasoner" if use_reasoner else "deepseek-chat")
 
     original_query = history[-2]["content"] if len(history) >= 2 else query
     combined_query = f"Original Query: {original_query}\nClarification: {query}"
@@ -1073,6 +1091,8 @@ async def deep_research(query: str, session_id: str) -> AsyncGenerator[str, None
     async for event_type, content in agent.execute(combined_query, history):
         if event_type == "status":
             yield f"data: {json.dumps({'type':'status','message':content})}\n\n"
+        elif event_type == "reasoning":
+            yield f"data: {json.dumps({'type':'reasoning','content':content})}\n\n"
         elif event_type == "token":
             final_text.append(content)
             yield f"data: {json.dumps({'type':'token','content':content})}\n\n"
