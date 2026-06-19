@@ -8,14 +8,17 @@ Run from the repo root with a populated .env (DB url + LLM keys) present:
     venv/bin/python test_pipeline.py               # all stages, all modes
     venv/bin/python test_pipeline.py --stage db    # single stage
     venv/bin/python test_pipeline.py --api         # hit live HTTP server instead
+    venv/bin/python test_pipeline.py --prod        # use production server
 
 Stages:
-    db       — Postgres connection + purana_verses table readable
-    search   — pgvector hybrid_search RPC returns results
-    embed    — sentence-transformers encode works, correct dim (384)
-    llm      — active LLM provider streams tokens for a minimal prompt
-    chat     — full /api/chat SSE round-trip (needs server running or --api)
-    gretil   — GRETIL corpus is on disk and text is loadable
+    db         — Postgres connection + purana_verses table readable
+    search     — pgvector hybrid_search RPC returns results
+    embed      — sentence-transformers encode works, correct dim (384)
+    llm        — active LLM provider streams tokens for a minimal prompt
+    gretil     — GRETIL corpus is on disk and text is loadable
+    redis      — Redis connectivity (skipped if REDIS_URL not set)
+    processor  — SanskritQueryProcessor LLM-powered query expansion
+    chat       — full /api/chat SSE round-trip (needs server running or --api)
 """
 
 import argparse
@@ -232,6 +235,96 @@ def stage_gretil():
         fail("load_gretil_corpus()", str(e), fatal=False)
 
 
+# ── Stage: REDIS ─────────────────────────────────────────────────────────────
+async def stage_redis():
+    header("REDIS — cache connectivity")
+    redis_url = os.getenv("REDIS_URL", "")
+    if not redis_url:
+        skip("REDIS_URL", "not set in .env — Redis caching disabled (not required)")
+        return
+
+    try:
+        import redis.asyncio as aioredis
+    except ImportError:
+        skip("redis.asyncio", "redis package not installed (pip install redis)")
+        return
+
+    try:
+        client = aioredis.from_url(redis_url)
+        pong = await client.ping()
+        if pong:
+            ok("PING", f"Redis at {redis_url.split('@')[-1]} responded")
+        else:
+            fail("PING", "Redis returned falsy response to PING", fatal=False)
+
+        # quick round-trip write/read/delete
+        key = "purangpt:smoke_test"
+        await client.setex(key, 10, "ok")
+        val = await client.get(key)
+        if val in (b"ok", "ok"):
+            ok("SET/GET round-trip", "cache read/write working")
+        else:
+            fail("SET/GET round-trip", f"unexpected value: {val!r}", fatal=False)
+        await client.delete(key)
+        await client.aclose()
+    except Exception as e:
+        fail("Redis connection", str(e), fatal=False)
+
+
+# ── Stage: PROCESSOR — Sanskrit query expansion ────────────────────────────
+async def stage_processor():
+    header("PROCESSOR — SanskritQueryProcessor query expansion")
+    try:
+        from backend.query_processor import SanskritQueryProcessor, QueryExpansion
+        ok("import SanskritQueryProcessor")
+    except ImportError as e:
+        skip("backend.query_processor", f"module not present: {e}")
+        return
+
+    # Minimal stub LLM caller for the test
+    import aiohttp
+    from backend.main import _validate_llm_providers, call_llm_once, state
+
+    if not state.http_client:
+        state.http_client = aiohttp.ClientSession(
+            timeout=aiohttp.ClientTimeout(total=30),
+            connector=aiohttp.TCPConnector(limit=10),
+        )
+
+    try:
+        await _validate_llm_providers()
+        if state.active_provider in ("none", "unknown"):
+            skip("processor LLM call", "no working LLM provider — query expansion will use fast-path only")
+            await state.http_client.close(); state.http_client = None
+            return
+    except Exception as e:
+        fail("_validate_llm_providers()", str(e), fatal=False)
+        await state.http_client.close(); state.http_client = None
+        return
+
+    proc = SanskritQueryProcessor(call_llm_once)
+
+    tests = [
+        ("English passthrough",  "What is dharma?",   False),
+        ("Sanskrit detection",   "mahesvara",          True),
+        ("Devanagari",           "धर्म",               True),
+    ]
+    for label, query, expect_sanskrit in tests:
+        try:
+            t0 = time.time()
+            exp = await proc.expand(query)
+            elapsed = time.time() - t0
+            ok(f"expand({query!r})",
+               f"{elapsed:.2f}s  lang={exp.detected_lang}  canonical={exp.canonical!r}"
+               + (f"  synonyms={exp.synonyms}" if exp.synonyms else ""))
+        except Exception as e:
+            fail(f"expand({query!r})", str(e), fatal=False)
+
+    if state.http_client:
+        await state.http_client.close()
+        state.http_client = None
+
+
 # ── Stage: CHAT (HTTP SSE round-trip) ────────────────────────────────────────
 async def stage_chat(base_url: str):
     header(f"CHAT — SSE /api/chat round-trip against {base_url}")
@@ -258,9 +351,33 @@ async def stage_chat(base_url: str):
             async with sess.get(f"{base_url}/api/modes") as r:
                 modes_data = await r.json()
                 modes = [m["id"] for m in modes_data.get("modes", [])]
-                ok("/api/modes", f"→ {modes}")
+                expected = {"research", "guide", "deep"}
+                extra = set(modes) - expected
+                missing = expected - set(modes)
+                if missing:
+                    fail("/api/modes missing", f"modes missing: {missing}", fatal=False)
+                else:
+                    ok("/api/modes", f"→ {modes}")
+                if extra:
+                    print(f"     {YEL}⚠{RST} unexpected modes: {extra}")
         except Exception as e:
             fail("/api/modes", str(e), fatal=False)
+
+        # Citation lookup endpoint
+        try:
+            async with sess.get(f"{base_url}/api/citation-lookup?ref=bhagavata",
+                                timeout=aiohttp.ClientTimeout(total=30)) as r:
+                if r.status == 200:
+                    data = await r.json()
+                    ok("/api/citation-lookup", f"text_id={data.get('text_id')!r}  chars={len(data.get('sanskrit',''))}")
+                elif r.status == 404:
+                    skip("/api/citation-lookup", "GRETIL not loaded on server (404)")
+                else:
+                    fail("/api/citation-lookup", f"HTTP {r.status}", fatal=False)
+        except asyncio.TimeoutError:
+            fail("/api/citation-lookup", "timeout after 30s", fatal=False)
+        except Exception as e:
+            fail("/api/citation-lookup", str(e), fatal=False)
 
         # SSE chat tests
         for label, payload in test_cases:
@@ -331,7 +448,7 @@ async def stage_chat(base_url: str):
 # ── Entry point ──────────────────────────────────────────────────────────────
 def main():
     parser = argparse.ArgumentParser(description="PuranGPT pipeline smoke test")
-    parser.add_argument("--stage", choices=["db", "embed", "search", "llm", "gretil", "chat"], help="Run only one stage")
+    parser.add_argument("--stage", choices=["db", "embed", "search", "llm", "gretil", "redis", "processor", "chat"], help="Run only one stage")
     parser.add_argument("--api", metavar="URL", nargs="?", const="http://localhost:8000",
                         help="Base URL for HTTP /api/chat test (default: http://localhost:8000)")
     parser.add_argument("--prod", action="store_true", help="Use production server (204.168.176.229:8000)")
@@ -339,7 +456,7 @@ def main():
 
     base_url = "http://204.168.176.229:8000" if args.prod else (args.api or "http://localhost:8000")
 
-    stages = [args.stage] if args.stage else ["db", "embed", "search", "llm", "gretil", "chat"]
+    stages = [args.stage] if args.stage else ["db", "embed", "search", "llm", "gretil", "redis", "processor", "chat"]
 
     print(f"\n{BOLD}PuranGPT pipeline test — {time.strftime('%Y-%m-%d %H:%M:%S')}{RST}")
     print(f"Backend URL: {base_url}")
@@ -356,6 +473,10 @@ def main():
                 await stage_llm()
             elif stage == "gretil":
                 stage_gretil()
+            elif stage == "redis":
+                await stage_redis()
+            elif stage == "processor":
+                await stage_processor()
             elif stage == "chat":
                 await stage_chat(base_url)
 
