@@ -105,7 +105,7 @@ KNOWN_INTERPOLATIONS = """
 GUARDRAIL_INSTRUCTION = """
 ## BEHAVIORAL GUARDRAILS
 1. **Troll/Disrespectful Prompts**: If the user's input is a troll question, disrespectful, profane, or completely irrelevant to Vedic/Puranic/spiritual topics, you must REPRIMAND them firmly but calmly for disrespecting the sacred texts and this space. Do not attempt to answer the troll question.
-2. **Vague/Stupid Prompts**: If the user's input is too vague, poorly formulated, or nonsensical (e.g., "tell me stuff", "what is god"), do not guess or provide a generic output. Politely guide the user on how to ask a more specific, scholarly, or answerable question regarding the texts.
+2. **Unclear Questions**: If the user's question is very broad or unclear, answer it to the best of your ability using the retrieved passages, then gently invite them to refine their question for a deeper dive.
 """
 
 RESEARCH_SYSTEM = """You are PuranGPT — a critical Puranic scholar conducting deep comparative analysis across the sacred texts.
@@ -116,23 +116,18 @@ RESEARCH_SYSTEM = """You are PuranGPT — a critical Puranic scholar conducting 
 Provide a clear, concise summary derived directly from the extracted text in 3–5 sentences. State the core answer immediately.
 
 ### 📖 Extracted Sacred Texts
-Extract the most highly relevant verses and texts from the provided context. 
-Format them beautifully in isolated paragraphs. 
+Extract the most highly relevant verses and texts from the provided context.
+Format them beautifully in isolated paragraphs.
 - You MUST quote the original Sanskrit or Hindi where available.
 - You MUST provide the direct English translation.
 - You MUST include inline citations matching the source index (e.g., [1], [2]) directly after each quoted text block.
 
 ### 💡 Explanation & Synthesis
-After quoting the texts, provide a detailed and thoughtful explanation of their meaning. 
+After quoting the texts, provide a detailed and thoughtful explanation of their meaning.
 Break down the complex philosophical or theological concepts into understandable terms, showing how the cited verses answer the user's query.
 
 **Keep responses highly organized, elegant, and always use inline citations like [1] when referencing the extracted texts.**
 - If a retrieved text chunk appears corrupted or like a random string of characters (OCR errors), silently IGNORE it entirely; do not mention it or create a section/warning for it.
-
-[SUGGESTIONS]
-1. question one
-2. question two
-3. question three
 
 {interpolations}
 
@@ -158,10 +153,7 @@ Your goal is to provide profound life lessons, spiritual advice, and comforting 
 4. **Citations**: Do not clutter the text with numbers or citations. Weave references into your natural speech loosely (e.g., "The Gita teaches us...").
 5. **Format**: Avoid bullet points, headers, and heavy formatting. Speak naturally.
 
-[SUGGESTIONS]
-1. question one
-2. question two
-3. question three
+{interpolations}
 
 {language_instruction}
 
@@ -174,7 +166,7 @@ Your goal is to provide profound life lessons, spiritual advice, and comforting 
 
 PROMPTS = {
     "research": RESEARCH_SYSTEM,
-    "guide": GUIDE_SYSTEM,
+    "guide":    GUIDE_SYSTEM,
 }
 
 
@@ -574,7 +566,7 @@ class SourceModel(BaseModel):
 
 class ChatRequest(BaseModel):
     query:      str
-    mode:       str = "scholar"
+    mode:       str = "research"
     session_id: str = "default"
     filters:    Optional[dict] = None
     stream:     bool = True
@@ -1057,9 +1049,14 @@ async def deep_research(query: str, session_id: str, user_id: str = None) -> Asy
         is_clarifier_response = True
 
     if not is_clarifier_response:
-        # Stage 1: Clarification
+        # Stage 1: Clarification — ask one focused question to sharpen the research direction
+        _clarifier = (
+            "You are PuranGPT's research planner. The user wants a deep, web-grounded research answer "
+            "on a Vedic or Puranic topic. Ask ONE short clarifying question to focus the research "
+            "(e.g. which tradition, timeframe, comparison angle). Be concise — one sentence."
+        )
         clarify_msgs = [
-            {"role": "system", "content": DEEP_RESEARCH_CLARIFIER},
+            {"role": "system", "content": _clarifier},
             {"role": "user", "content": f"User query: {query}"}
         ]
         
@@ -1228,13 +1225,9 @@ async def list_puranas():
 @app.get("/api/modes")
 async def list_modes():
     return {"modes": [
-        {"id":"scholar",    "label":"📖 Scholar",        "description":"Scholarly answers with citations"},
-        {"id":"deep",       "label":"🔬 Deep Research",  "description":"Multi-step analysis across all traditions"},
-        {"id":"nath",       "label":"⚫ Nath/Tantra",     "description":"Gorakhnath, Matsyendranath, Hatha Yoga"},
-        {"id":"darshana",   "label":"🧠 Six Darshanas",  "description":"Nyaya, Samkhya, Yoga, Vedanta philosophy"},
-        {"id":"comparison", "label":"⚖️ Compare",        "description":"Cross-text comparison"},
-        {"id":"translation","label":"🔤 Translate",      "description":"Sanskrit translation + commentary"},
-        {"id":"yogic",      "label":"🧘 Yogic",          "description":"Yoga, meditation, tantra"},
+        {"id":"research", "label":"📖 Research", "description":"Scholarly analysis with verse citations"},
+        {"id":"guide",    "label":"🪔 Guide",    "description":"Spiritual guidance in Guruji's voice"},
+        {"id":"deep",     "label":"🔬 Deep",     "description":"Web-grounded multi-step research"},
     ]}
 
 
@@ -1596,7 +1589,7 @@ async def instances(request: InstancesRequest):
     # 3. Groq fallback
     msgs = [
         {"role": "system", "content": RESEARCH_SYSTEM.format(
-            interpolations=KNOWN_INTERPOLATIONS, context="", history="")},
+            interpolations=KNOWN_INTERPOLATIONS, language_instruction="", context="", history="")},
         {"role": "user", "content": f"List EVERY instance of '{request.query}' across all 18 Mahapuranas and Hindu sacred texts. Be exhaustive, cite chapter and verse."}
     ]
     answer_parts = []
