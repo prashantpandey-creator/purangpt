@@ -131,7 +131,12 @@ class QueryExpansion:
         """
         if not self.is_sanskrit or not self.english_gloss:
             return self.original
-        return f"{self.original} (Context: {self.canonical}, {self.english_gloss})"
+            
+        # Join canonical and synonyms for a dense keyword cluster
+        all_names = [self.canonical] + self.synonyms[:3]
+        names_str = ", ".join(dict.fromkeys(all_names))
+        
+        return f"{self.original} (Context: {names_str} — {self.english_gloss})"
 
     @property
     def fts_phrase(self) -> str:
