@@ -287,11 +287,14 @@ class HybridSearcher:
         min_score: float = 0.3,
         category: str | None = None,
         max_results: int = 200,
+        embed_phrase: str | None = None,
+        fts_phrase: str | None = None,
     ) -> list[SearchResult]:
         filters = {"category": category} if category else None
         results = await self.hybrid_search(
             query, top_k=max_results, filters=filters, 
-            semantic_weight=0.5, mmr_lambda=1.0, sharma_weighting=False
+            semantic_weight=0.5, mmr_lambda=1.0, sharma_weighting=False,
+            embed_phrase=embed_phrase, fts_phrase=fts_phrase
         )
         return [r for r in results if r.score >= min_score]
 

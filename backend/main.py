@@ -1358,29 +1358,15 @@ async def sanskrit_search(request: SanskritSearchRequest):
 
     async def search_gen():
         query = request.query.strip()
-        # 1. Translate query if it is English
-        translated_terms = []
-        if not is_devanagari(query) and len(query.split()) > 0:
-            try:
-                msgs = [
-                    {"role": "system", "content": "You are a Sanskrit linguistic expert. Translate the user's English concept into 1 to 3 pertinent Sanskrit noun stems in IAST (romanized) format. Return ONLY a comma-separated list of the IAST words. Do not add quotes or explanation."},
-                    {"role": "user", "content": query}
-                ]
-                ans = await call_llm_once(msgs, temperature=0.1)
-                translated_terms = [t.strip().lower() for t in ans.split(",") if t.strip()]
-            except Exception:
-                translated_terms = [query.lower()]
-        else:
-            translated_terms = [query]
-
-        if not translated_terms:
-            translated_terms = [query]
+        # 1. Translate and expand query via standard QueryProcessor
+        expansion = await state.query_processor.expand(query)
+        translated_terms = expansion.gretil_search_terms
 
         yield {"data": json.dumps({"type": "query_translated", "original": query, "terms": translated_terms})}
 
-        # 2. Search GRETIL — try translated terms first, then synonym expansion
+        # 2. Search GRETIL — using standard expansion terms
         results = []
-        all_terms = translated_terms + expand_query_terms(query)
+        all_terms = translated_terms
         seen_ids: set = set()
         for term in all_terms:
             res = await asyncio.to_thread(search_sanskrit, term, max_results=request.max_results, text_ids=request.text_ids)
@@ -1423,8 +1409,10 @@ async def sanskrit_search(request: SanskritSearchRequest):
 async def search(request: SearchRequest):
     if not state.searcher:
         raise HTTPException(503, "Vector index not built. Run: python extract_and_index.py")
+    expansion = await state.query_processor.expand(request.query)
     results = await state.searcher.hybrid_search(
-        query=request.query, top_k=request.top_k, filters=request.filters
+        query=request.query, top_k=request.top_k, filters=request.filters,
+        embed_phrase=expansion.embed_phrase, fts_phrase=expansion.fts_phrase
     )
     return {
         "query":   request.query,
@@ -1438,14 +1426,29 @@ async def instances(request: InstancesRequest):
     if not any_llm_configured():
         raise HTTPException(503, "No LLM credentials configured")
 
-    # 1. Sanskrit corpus search
-    skt_results = await asyncio.to_thread(search_sanskrit, request.query, max_results=request.max_results)
+    expansion = await state.query_processor.expand(request.query)
+
+    # 1. Sanskrit corpus search using expanded terms
+    skt_results = []
+    seen_skt = set()
+    for term in expansion.gretil_search_terms:
+        res = await asyncio.to_thread(search_sanskrit, term, max_results=request.max_results)
+        for r in res:
+            key = (r.get("text_id"), r.get("line_num"))
+            if key not in seen_skt:
+                seen_skt.add(key)
+                skt_results.append(r)
+        if len(skt_results) >= request.max_results:
+            break
+    skt_results = skt_results[:request.max_results]
 
     # 2. Vector search if available
     indexed = []
     if state.searcher and state.index_ready:
         try:
-            indexed = [r.to_dict() for r in await state.searcher.find_all_instances(request.query)]
+            indexed = [r.to_dict() for r in await state.searcher.find_all_instances(
+                request.query, embed_phrase=expansion.embed_phrase, fts_phrase=expansion.fts_phrase
+            )]
         except Exception:
             pass
 
