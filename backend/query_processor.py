@@ -126,21 +126,22 @@ class QueryExpansion:
     def embed_phrase(self) -> str:
         """
         Enriched phrase for the embedding model.
-        Instead of "query: maheshwara" → "query: maheśvara, epithet of Shiva the great lord"
-        This lands in a much better region of the semantic vector space.
+        Preserves the full semantic context of the original query while injecting
+        canonical Sanskrit terms to land in a much better region of the vector space.
         """
         if not self.is_sanskrit or not self.english_gloss:
-            return f"query: {self.canonical}"
-        return f"query: {self.canonical}, {self.english_gloss}"
+            return self.original
+        return f"{self.original} (Context: {self.canonical}, {self.english_gloss})"
 
     @property
     def fts_phrase(self) -> str:
         """
         Multi-term OR phrase for Postgres FTS websearch_to_tsquery.
-        "maheśvara | shiva | rudra" → matches any of these in the verse text.
+        Must use literal ' OR ' instead of '|' because websearch_to_tsquery
+        does not parse '|' as a logical operator.
         """
         terms = [self.canonical] + self.synonyms[:3]
-        return " | ".join(dict.fromkeys(terms))  # deduplicate, preserve order
+        return " OR ".join(dict.fromkeys(terms))  # deduplicate, preserve order
 
     @property
     def gretil_search_terms(self) -> list[str]:
