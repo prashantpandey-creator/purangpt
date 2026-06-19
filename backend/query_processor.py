@@ -18,11 +18,21 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 from dataclasses import dataclass, field
 from typing import Optional
 
+try:
+    import redis.asyncio as redis
+    REDIS_URL = os.getenv("REDIS_URL", "")
+    redis_client = redis.from_url(REDIS_URL) if REDIS_URL else None
+except ImportError:
+    redis_client = None
+
 logger = logging.getLogger(__name__)
+
+CACHE_TTL = 86400 * 7  # Cache expansions for 7 days
 
 # ── Sanskrit phoneme heuristic ─────────────────────────────────────────────
 # Common endings of Sanskrit words in Roman transliteration.
@@ -222,6 +232,28 @@ class SanskritQueryProcessor:
 
     async def _expand_sanskrit(self, query: str) -> QueryExpansion:
         """LLM-powered expansion for Sanskrit terms in Roman script."""
+        cache_key = f"expansion:{query.lower().strip()}"
+        
+        # 1. Check Redis cache
+        if redis_client:
+            try:
+                cached = await redis_client.get(cache_key)
+                if cached:
+                    data = json.loads(cached)
+                    logger.debug("Cache hit for Sanskrit expansion: %r", query)
+                    return QueryExpansion(
+                        original=query,
+                        detected_lang=data.get("detected_lang", "Sanskrit (Roman)"),
+                        is_sanskrit=data.get("is_sanskrit", False),
+                        canonical=data.get("canonical", query),
+                        synonyms=data.get("synonyms", []),
+                        english_gloss=data.get("english_gloss", ""),
+                        devanagari=data.get("devanagari", ""),
+                    )
+            except Exception as e:
+                logger.warning("Redis cache read failed for %r: %s", query, e)
+
+        # 2. Call LLM
         prompt = _SANSKRIT_EXPANSION_PROMPT.format(query=query)
         try:
             raw = await self._call_llm(
@@ -254,7 +286,7 @@ class SanskritQueryProcessor:
                 query, canonical, synonyms
             )
 
-            return QueryExpansion(
+            expansion = QueryExpansion(
                 original=query,
                 detected_lang="Sanskrit (Roman)",
                 is_sanskrit=True,
@@ -263,6 +295,23 @@ class SanskritQueryProcessor:
                 english_gloss=gloss,
                 devanagari=deva,
             )
+            
+            # Save to Redis
+            if redis_client:
+                try:
+                    cache_data = json.dumps({
+                        "detected_lang": expansion.detected_lang,
+                        "is_sanskrit": expansion.is_sanskrit,
+                        "canonical": expansion.canonical,
+                        "synonyms": expansion.synonyms,
+                        "english_gloss": expansion.english_gloss,
+                        "devanagari": expansion.devanagari,
+                    })
+                    await redis_client.setex(cache_key, CACHE_TTL, cache_data)
+                except Exception as e:
+                    logger.warning("Redis cache write failed for %r: %s", query, e)
+                    
+            return expansion
 
         except (json.JSONDecodeError, KeyError) as e:
             logger.warning("Sanskrit expansion JSON parse failed for %r: %s", query, e)

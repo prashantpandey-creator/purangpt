@@ -22,26 +22,44 @@ def _search_web(query: str) -> str:
         return f"Web Search failed: {str(e)}"
 
 class DeepResearchAgent:
-    def __init__(self, model: str = "deepseek-chat"):
+    def __init__(self, model: str = "deepseek-chat", searcher=None):
         self.api_key = os.environ.get("DEEPSEEK_API_KEY")
         if not self.api_key:
             raise ValueError("DEEPSEEK_API_KEY is not set.")
         # DeepSeek is OpenAI API compatible
         self.client = AsyncOpenAI(api_key=self.api_key, base_url="https://api.deepseek.com")
         self.model = model
+        self.searcher = searcher
         
         self.tools = [
             {
                 "type": "function",
                 "function": {
                     "name": "search_web",
-                    "description": "Searches the live internet for a given query and returns a summary of the top matching pages. Use this to find information not in the local Puranic corpus.",
+                    "description": "Searches the live internet for a given query and returns a summary of the top matching pages. Use this to find general historical context, academic papers, or modern discourse not in the local corpus.",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "query": {
                                 "type": "string",
                                 "description": "The web search query."
+                            }
+                        },
+                        "required": ["query"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "search_sacred_texts",
+                    "description": "Queries the local pgvector database of Puranas, Vedas, Upanishads, and commentaries. Use this to find exact verses, stories, and philosophical truths.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "The search query (e.g. 'stories of karma', 'Shiva and Sati')."
                             }
                         },
                         "required": ["query"]
@@ -107,9 +125,9 @@ class DeepResearchAgent:
             yield "status", "🧠 Synthesizing scholarly response with DeepSeek-R1..."
             system_instruction = (
                 "You are PuranGPT's Deep Research Web Agent. Your goal is to research scholarly, "
-                "theological, or historical topics deeply using the provided live web search results.\n"
-                "1. Read the search snippets and synthesize a detailed, scholarly answer.\n"
-                "2. Cite your sources using the URLs provided in the search results.\n"
+                "theological, or historical topics deeply.\n"
+                "1. Read the provided search snippets and synthesize a detailed, scholarly answer.\n"
+                "2. Cite your sources using the URLs provided.\n"
                 "3. NEVER say you are an AI, you are PuranGPT."
             )
             
@@ -142,12 +160,13 @@ class DeepResearchAgent:
 
         # ── Standard DeepSeek Chat (V3) tool-calling agent flow ─────────────────
         system_instruction = (
-            "You are PuranGPT's Deep Research Web Agent. Your goal is to research scholarly, "
-            "theological, or historical topics deeply using live web searches.\n"
-            "1. ALWAYS call `search_web` to find information if it's beyond your local knowledge.\n"
-            "2. Read the search snippets and synthesize a detailed, scholarly answer.\n"
-            "3. Cite your sources using the URLs provided in the search results.\n"
-            "4. NEVER say you are an AI, you are PuranGPT."
+            "You are PuranGPT's Deep Research Agent. Your goal is to research scholarly, "
+            "theological, or historical topics deeply.\n"
+            "1. ALWAYS call `search_sacred_texts` to query the local Puranic database for scripture.\n"
+            "2. Call `search_web` to find external historical context or academic papers.\n"
+            "3. Synthesize a detailed, scholarly answer.\n"
+            "4. Cite your sources.\n"
+            "5. NEVER say you are an AI, you are PuranGPT."
         )
 
         messages = [
@@ -184,6 +203,29 @@ class DeepResearchAgent:
                         
                         tool_result = await asyncio.to_thread(_search_web, search_q)
                         
+                        messages.append({
+                            "role": "tool",
+                            "tool_call_id": tool_call.id,
+                            "name": tool_call.function.name,
+                            "content": tool_result
+                        })
+                    elif tool_call.function.name == "search_sacred_texts":
+                        args = json.loads(tool_call.function.arguments)
+                        search_q = args.get("query", "")
+                        yield "status", f"🕉️ Querying Sacred Texts for: {search_q}"
+                        
+                        if self.searcher:
+                            res = await self.searcher.hybrid_search(search_q, top_k=3)
+                            if not res:
+                                tool_result = "No matches found in sacred texts."
+                            else:
+                                out = []
+                                for r in res:
+                                    out.append(f"Source: {r.reference}\nPassage: {r.text}")
+                                tool_result = "\n\n---\n\n".join(out)
+                        else:
+                            tool_result = "Local searcher is unavailable."
+                            
                         messages.append({
                             "role": "tool",
                             "tool_call_id": tool_call.id,

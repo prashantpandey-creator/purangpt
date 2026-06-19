@@ -13,10 +13,20 @@ import json
 import logging
 import math
 import os
+import hashlib
 import asyncpg
 from typing import Any, Optional
 
+try:
+    import redis.asyncio as redis
+    REDIS_URL = os.getenv("REDIS_URL", "")
+    redis_client = redis.from_url(REDIS_URL) if REDIS_URL else None
+except ImportError:
+    redis_client = None
+
 logger = logging.getLogger(__name__)
+
+CACHE_TTL = 86400 * 7  # Cache search results for 7 days
 
 
 # ── Data Structures ────────────────────────────────────────────────────────
@@ -143,8 +153,32 @@ class HybridSearcher:
         if not self.is_ready:
             return []
 
+        # 1. Build cache key
+        cache_params = json.dumps({
+            "query": query,
+            "top_k": top_k,
+            "filters": filters or {},
+            "sharma_weighting": sharma_weighting,
+            "embed_phrase": embed_phrase,
+            "fts_phrase": fts_phrase,
+        }, sort_keys=True)
+        cache_hash = hashlib.sha256(cache_params.encode()).hexdigest()
+        cache_key = f"hybrid_search:{cache_hash}"
+
+        # 2. Check Redis cache
+        if redis_client:
+            try:
+                cached = await redis_client.get(cache_key)
+                if cached:
+                    data = json.loads(cached)
+                    logger.debug("Cache hit for hybrid_search: %r", query)
+                    # Reconstruct SearchResult objects (which take the chunk and score)
+                    return [SearchResult(chunk=r, score=r["score"], rank=r.get("rank", i)) for i, r in enumerate(data)]
+            except Exception as e:
+                logger.warning("Redis cache read failed for hybrid_search %r: %s", query, e)
+
         try:
-            # 1. Generate query embedding — use enriched phrase if provided
+            # 3. Generate query embedding — use enriched phrase if provided
             import asyncio
             loop = asyncio.get_running_loop()
             phrase_to_embed = embed_phrase if embed_phrase else f"query: {query}"
@@ -229,6 +263,15 @@ class HybridSearcher:
                 chosen = candidates.pop(best_idx)
                 final_results.append(SearchResult(chunk=chosen.chunk, score=chosen.score, rank=len(final_results)))
                 selected_sources.append(chosen.purana)
+
+            # Save to Redis
+            if redis_client:
+                try:
+                    # We store the raw dictionaries
+                    cache_data = json.dumps([res.to_dict() for res in final_results])
+                    await redis_client.setex(cache_key, CACHE_TTL, cache_data)
+                except Exception as e:
+                    logger.warning("Redis cache write failed for hybrid_search %r: %s", query, e)
 
             return final_results
 

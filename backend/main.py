@@ -47,21 +47,13 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s — %(mes
 logger = logging.getLogger("purangpt.backend")
 
 # ── Config ─────────────────────────────────────────────────────────────────
-LLM_PROVIDER  = os.getenv("LLM_PROVIDER", "groq")
-GEMINI_API_KEY= os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL  = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-GROQ_API_KEY  = os.getenv("GROQ_API_KEY", "")
-GROQ_MODEL    = os.getenv("GROQ_MODEL",   "llama-3.3-70b-versatile")
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY", "")
 ZHIPU_API_KEY    = os.getenv("ZHIPU_API_KEY", "")
 
-
 def any_llm_configured() -> bool:
-    """True if ANY usable LLM provider key is set. DeepSeek is the prod primary,
-    so checking only Groq+Gemini (the old behaviour) wrongly 503'd a valid
-    DeepSeek-only config on every chat."""
-    return any([DEEPSEEK_API_KEY, GROQ_API_KEY, GEMINI_API_KEY, TOGETHER_API_KEY, ZHIPU_API_KEY])
+    """True if ANY usable LLM provider key is set. DeepSeek is the prod primary."""
+    return any([DEEPSEEK_API_KEY, TOGETHER_API_KEY, ZHIPU_API_KEY])
 
 
 INDEX_DIR     = os.getenv("INDEX_DIR",   "./data/indexes")
@@ -362,95 +354,36 @@ def expand_query_terms(query: str) -> list:
 
 async def _validate_llm_providers() -> None:
     """
-    Probe each configured LLM provider with a minimal request at startup.
-    Respects LLM_PROVIDER env var for priority ordering.
+    Probe DeepSeek API synchronously on startup to guarantee validity.
     Sets state.active_provider / state.active_model so every request knows
     which provider is live without retrying a known-bad key every time.
     """
-    preferred = LLM_PROVIDER  # from env: "deepseek" | "groq" | "gemini" | "auto"
-
-    # Build ordered probe list: preferred provider goes first
     DEEPSEEK_API_KEY_VAL = os.getenv("DEEPSEEK_API_KEY", "")
 
-    async def _probe_deepseek() -> bool:
-        if not DEEPSEEK_API_KEY_VAL or DEEPSEEK_API_KEY_VAL.startswith("your_"):
-            return False
-        url = "https://api.deepseek.com/chat/completions"
-        headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY_VAL}", "Content-Type": "application/json"}
-        # Use deepseek-chat (the real production model) not the non-existent v4-flash
-        payload = {"model": "deepseek-chat", "messages": [{"role":"user","content":"hi"}],
-                   "max_tokens": 1, "stream": False}
-        try:
-            async with get_http_session() as s:
-                async with s.post(url, headers=headers, json=payload,
-                                  timeout=aiohttp.ClientTimeout(total=10)) as r:
-                    if r.status == 200:
-                        state.active_provider = "deepseek"
-                        state.active_model    = "deepseek-chat"
-                        logger.info("✓ DeepSeek API key valid — model: deepseek-chat")
-                        return True
-                    body = await r.text()
-                    logger.warning("✗ DeepSeek API key invalid (HTTP %d): %s", r.status, body[:120])
-        except Exception as e:
-            logger.warning("✗ DeepSeek probe failed: %s", e)
-        return False
+    if not DEEPSEEK_API_KEY_VAL or DEEPSEEK_API_KEY_VAL.startswith("your_"):
+        logger.error("✗ DeepSeek API key missing or invalid in .env")
+        state.active_provider = "none"
+        return
 
-    async def _probe_groq() -> bool:
-        if not GROQ_API_KEY or GROQ_API_KEY.startswith("your_"):
-            return False
-        url = "https://api.groq.com/openai/v1/chat/completions"
-        headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
-        payload = {"model": GROQ_MODEL, "messages": [{"role":"user","content":"hi"}],
-                   "max_tokens": 1, "stream": False}
-        try:
-            async with get_http_session() as s:
-                async with s.post(url, headers=headers, json=payload,
-                                  timeout=aiohttp.ClientTimeout(total=10)) as r:
-                    if r.status == 200:
-                        state.active_provider = "groq"
-                        state.active_model    = GROQ_MODEL
-                        logger.info("✓ Groq API key valid — model: %s", GROQ_MODEL)
-                        return True
-                    body = await r.text()
-                    logger.warning("✗ Groq API key invalid (HTTP %d): %s", r.status, body[:120])
-        except Exception as e:
-            logger.warning("✗ Groq probe failed: %s", e)
-        return False
-
-    async def _probe_gemini() -> bool:
-        if not GEMINI_API_KEY or GEMINI_API_KEY.startswith("your_"):
-            return False
-        url = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
-        headers = {"Authorization": f"Bearer {GEMINI_API_KEY}", "Content-Type": "application/json"}
-        payload = {"model": GEMINI_MODEL, "messages": [{"role":"user","content":"hi"}],
-                   "max_tokens": 1, "stream": False}
-        try:
-            async with get_http_session() as s:
-                async with s.post(url, headers=headers, json=payload,
-                                  timeout=aiohttp.ClientTimeout(total=10)) as r:
-                    if r.status == 200:
-                        state.active_provider = "gemini"
-                        state.active_model    = GEMINI_MODEL
-                        logger.info("✓ Gemini API key valid — model: %s", GEMINI_MODEL)
-                        return True
-                    body = await r.text()
-                    logger.warning("✗ Gemini API key invalid (HTTP %d): %s", r.status, body[:120])
-        except Exception as e:
-            logger.warning("✗ Gemini probe failed: %s", e)
-        return False
-
-    # Try in LLM_PROVIDER-first order
-    probe_order = {
-        "deepseek": [_probe_deepseek, _probe_groq, _probe_gemini],
-        "groq":     [_probe_groq, _probe_deepseek, _probe_gemini],
-        "gemini":   [_probe_gemini, _probe_deepseek, _probe_groq],
-    }.get(preferred, [_probe_deepseek, _probe_groq, _probe_gemini])
-
-    for probe in probe_order:
-        if await probe():
-            return
-
-    logger.error("✗ No working LLM provider found — check your .env API keys!")
+    url = "https://api.deepseek.com/chat/completions"
+    headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY_VAL}", "Content-Type": "application/json"}
+    payload = {"model": "deepseek-v4-flash", "messages": [{"role":"user","content":"hi"}],
+               "max_tokens": 1, "stream": False}
+    try:
+        async with get_http_session() as s:
+            async with s.post(url, headers=headers, json=payload,
+                              timeout=aiohttp.ClientTimeout(total=10)) as r:
+                if r.status == 200:
+                    state.active_provider = "deepseek"
+                    state.active_model    = "deepseek-v4-flash"
+                    logger.info("✓ DeepSeek API key valid — model: deepseek-v4-flash")
+                    return
+                body = await r.text()
+                logger.warning("✗ DeepSeek API key invalid (HTTP %d): %s", r.status, body[:120])
+    except Exception as e:
+        logger.warning("✗ DeepSeek probe failed: %s", e)
+        
+    logger.error("✗ No working LLM provider found — check your DEEPSEEK_API_KEY!")
     state.active_provider = "none"
 
 
@@ -615,102 +548,7 @@ class InstancesRequest(BaseModel):
 # ── LLM Streaming ──────────────────────────────────────────────────────────
 import asyncio
 
-async def stream_groq(messages: List[dict], temperature: float = 0.3, max_retries: int = 5, req_model: str = "auto", custom_key: str = None) -> AsyncGenerator[Union[str, dict], None]:
-    """Stream tokens from Groq API with full conversation messages and rate limit handling."""
-    key = custom_key or GROQ_API_KEY
-    if not key: raise HTTPException(status_code=503, detail="GROQ_API_KEY not configured.")
-    url = "https://api.groq.com/openai/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {key}",
-        "Content-Type":  "application/json",
-    }
-    
-    target_model = GROQ_MODEL
-    if req_model == "llama-3.1-8b-instant":
-        target_model = "llama-3.1-8b-instant"
-    elif req_model == "llama-3.3-70b-versatile":
-        target_model = "llama-3.3-70b-versatile"
-        
-    fallback_model = "llama-3.1-8b-instant"
-    
-    payload = {
-        "model":       target_model,
-        "messages":    messages,
-        "stream":      True,
-        "temperature": temperature,
-        "max_tokens":  8192,
-    }
-    
-    for attempt in range(max_retries):
-        async with get_http_session() as sess:
-            async with sess.post(url, headers=headers, json=payload,
-                                 timeout=aiohttp.ClientTimeout(total=120)) as resp:
-                if resp.status in (429, 413):
-                    if payload["model"] != fallback_model:
-                        logger.warning(f"Groq error {resp.status} on {payload['model']}. Switching to Groq fallback model {fallback_model}...")
-                        payload["model"] = fallback_model
-                        continue
-                    else:
-                        # Both Groq models exhausted — escape to cross-provider fallback
-                        logger.warning(f"Groq rate limit exhausted on all models after {attempt+1} attempts. Escalating to next provider...")
-                        raise _ProviderRateLimited("groq")
 
-                if resp.status != 200:
-                    body = await resp.text()
-                    raise HTTPException(status_code=resp.status, detail=f"Groq error: {body}")
-
-                async for raw_line in resp.content:
-                    line = raw_line.decode("utf-8").strip()
-                    if not line or line == "data: [DONE]":
-                        continue
-                    if line.startswith("data: "):
-                        try:
-                            data  = json.loads(line[6:])
-                            token = data["choices"][0]["delta"].get("content", "")
-                            if token:
-                                yield token
-                        except (json.JSONDecodeError, KeyError, IndexError):
-                            continue
-                return  # Successful completion
-
-async def stream_gemini(messages: List[dict], temperature: float = 0.3, custom_key: str = None) -> AsyncGenerator[Union[str, dict], None]:
-    """Stream tokens from Gemini API via its OpenAI-compatible endpoint."""
-    key = custom_key or GEMINI_API_KEY
-    if not key:
-        raise HTTPException(status_code=503, detail="GEMINI_API_KEY not configured")
-        
-    url = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {key}",
-        "Content-Type":  "application/json",
-    }
-    
-    payload = {
-        "model":       GEMINI_MODEL,
-        "messages":    messages,
-        "stream":      True,
-        "temperature": temperature,
-        "max_tokens":  4096,
-    }
-    
-    async with get_http_session() as sess:
-        async with sess.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=120)) as resp:
-            if resp.status != 200:
-                body = await resp.text()
-                raise HTTPException(status_code=resp.status, detail=f"Gemini error: {body}")
-                
-            async for raw_line in resp.content:
-                line = raw_line.decode("utf-8").strip()
-                if not line or line == "data: [DONE]":
-                    continue
-                if line.startswith("data: "):
-                    try:
-                        data  = json.loads(line[6:])
-                        token = data["choices"][0]["delta"].get("content", "")
-                        if token:
-                            yield token
-                    except (json.JSONDecodeError, KeyError, IndexError):
-                        continue
 
 async def stream_deepseek(messages: List[dict], temperature: float = 0.3, req_model: str = "deepseek-chat", custom_key: str = None) -> AsyncGenerator[Union[str, dict], None]:
     key = custom_key or DEEPSEEK_API_KEY
@@ -826,15 +664,7 @@ async def stream_llm(messages: List[dict], temperature: float = 0.3, max_retries
     custom_keys = custom_keys or custom_keys_var.get()
 
     if req_model == "auto":
-        provider = state.active_provider
-        if provider == "deepseek":
-            req_model = "deepseek-deepseek-chat"
-        elif provider == "groq":
-            req_model = f"groq-{state.active_model}"
-        elif provider == "gemini":
-            req_model = f"gemini-{state.active_model}"
-        else:
-            req_model = "deepseek-deepseek-chat"
+        req_model = "deepseek-deepseek-v4-flash"
 
     async with _llm_semaphore:
         try:
@@ -867,30 +697,8 @@ async def stream_llm(messages: List[dict], temperature: float = 0.3, max_retries
                 raise
             logger.warning(f"Primary LLM ({req_model}) rate-limited or unavailable: {e}")
 
-        # ── Cross-provider fallback cascade ─────────────────────────────
-        # Fallback 1: Gemini Flash (generous free quota)
-        if GEMINI_API_KEY and not req_model.startswith("gemini"):
-            try:
-                logger.info("Falling back to Gemini Flash...")
-                yield {"type": "info", "message": "Switching to Gemini Flash..."}
-                async for token in stream_gemini(messages, temperature, custom_keys.get("gemini")):
-                    yield token
-                return
-            except Exception as e:
-                logger.warning(f"Gemini fallback failed: {e}")
-
-        # Fallback 2: DeepSeek
-        if DEEPSEEK_API_KEY and not req_model.startswith("deepseek"):
-            try:
-                logger.info("Falling back to DeepSeek Chat...")
-                yield {"type": "info", "message": "Switching to DeepSeek Chat..."}
-                async for token in stream_deepseek(messages, temperature, "deepseek-chat", custom_keys.get("deepseek")):
-                    yield token
-                return
-            except Exception as e:
-                logger.warning(f"DeepSeek fallback failed: {e}")
-
-        # Fallback 3: Ollama local — only if explicitly configured. In production
+        # ── Fallback cascade ─────────────────────────────
+        # Fallback 1: Ollama local — only if explicitly configured. In production
         # there is no Ollama, so attempting localhost:11434 just adds latency before
         # the real failure. Gate it behind OLLAMA_BASE_URL being set.
         if os.getenv("OLLAMA_BASE_URL"):
@@ -1091,7 +899,10 @@ async def deep_research(query: str, session_id: str, user_id: str = None) -> Asy
             role = profile.get("role", "free")
             
     use_reasoner = (role in ["pro", "scholar", "admin"])
-    agent = DeepResearchAgent(model="deepseek-reasoner" if use_reasoner else "deepseek-chat")
+    agent = DeepResearchAgent(
+        model="deepseek-reasoner" if use_reasoner else "deepseek-v4-pro",
+        searcher=state.searcher
+    )
 
     original_query = history[-2]["content"] if len(history) >= 2 else query
     combined_query = f"Original Query: {original_query}\nClarification: {query}"
@@ -1368,6 +1179,16 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         logger.info("Query: %r | Detected: %s | Skrt: %s | Canonical: %s | Synonyms: %s", 
                     request.query, expansion.detected_lang, expansion.is_sanskrit, 
                     expansion.canonical, expansion.synonyms)
+
+        yield {"data": json.dumps({
+            "type": "query_expanded",
+            "detected_lang": expansion.detected_lang,
+            "is_sanskrit": expansion.is_sanskrit,
+            "canonical": expansion.canonical,
+            "synonyms": expansion.synonyms,
+            "devanagari": expansion.devanagari,
+            "english_gloss": expansion.english_gloss
+        })}
 
         # 1. RAG search (vector index if available)
         sources = []

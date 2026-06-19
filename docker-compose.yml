@@ -20,10 +20,17 @@ services:
     environment:
       - HOST=0.0.0.0
       - PORT=8000
-      # Local dev: bring your own Postgres+pgvector. In production this is the
-      # Logto Postgres and is set in the ROOT compose, not here.
       - VECTOR_DB_URL=${VECTOR_DB_URL:-postgresql://postgres:postgres@host.docker.internal:5432/purangpt}
+      - REDIS_URL=redis://redis:6379/0
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
       - GROQ_API_KEY=${GROQ_API_KEY}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+    restart: unless-stopped
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
     restart: unless-stopped
