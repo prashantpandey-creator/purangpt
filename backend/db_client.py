@@ -7,19 +7,81 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Local Postgres Initialization
+import threading
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from psycopg2 import pool as pg_pool
 
 db_url = os.getenv("VECTOR_DB_URL")
+
+# ── Connection pool ──────────────────────────────────────────────────────────
+# Previously every call did psycopg2.connect()+close(), so a single /api/chat
+# opened ~9-12 fresh connections. With multiple workers that exhausted the shared
+# logto-db (max 100 conns) and starved Logto auth itself. We now keep a small
+# per-process ThreadedConnectionPool and lend connections out, returning them on
+# close() instead of tearing down the TCP+auth handshake each time.
+_pool = None
+_pool_lock = threading.Lock()
+
+# Per-process pool sizing: psycopg2 is sync, so concurrency is bounded by the
+# uvicorn threadpool (default ~40). Keep maxconn modest so 2 workers stay well
+# under Postgres limits: 2 × 10 = 20 connections worst case.
+_POOL_MIN = int(os.getenv("DB_POOL_MIN", "1"))
+_POOL_MAX = int(os.getenv("DB_POOL_MAX", "10"))
+
+
+def _get_pool():
+    global _pool
+    if _pool is None:
+        with _pool_lock:
+            if _pool is None:  # double-checked under lock
+                _pool = pg_pool.ThreadedConnectionPool(
+                    _POOL_MIN, _POOL_MAX, dsn=db_url, cursor_factory=RealDictCursor
+                )
+    return _pool
+
+
+class _PooledConn:
+    """Thin proxy so existing `conn = get_db_conn(); ...; conn.close()` call sites
+    work unchanged — close() returns the connection to the pool instead of
+    severing it. Rolls back any open transaction before returning so a failed
+    request never leaves a dirty connection in the pool."""
+
+    def __init__(self, conn, pool):
+        self._conn = conn
+        self._pool = pool
+
+    def __getattr__(self, name):
+        return getattr(self._conn, name)
+
+    def close(self):
+        if self._conn is None:
+            return
+        try:
+            if not self._conn.closed:
+                self._conn.rollback()
+        except Exception:
+            pass
+        try:
+            self._pool.putconn(self._conn)
+        except Exception:
+            try:
+                self._conn.close()
+            except Exception:
+                pass
+        finally:
+            self._conn = None
+
 
 def get_db_conn():
     if not db_url:
         logger.warning("VECTOR_DB_URL not set in env, DB operations won't work.")
         return None
     try:
-        return psycopg2.connect(db_url, cursor_factory=RealDictCursor)
+        conn = _get_pool().getconn()
+        return _PooledConn(conn, _get_pool())
     except Exception as e:
-        logger.error(f"Failed to connect to local Postgres: {e}")
+        logger.error(f"Failed to get pooled Postgres connection: {e}")
         return None
 
 # Encryption for BYOK Keys

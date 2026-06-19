@@ -16,9 +16,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy application code
 COPY . .
 
-# Pre-download embedding model at build time to eliminate cold-start lag
-# This bakes the model into the Docker image so first request is instant
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+# Pre-download the embedding model used at runtime (intfloat/multilingual-e5-small,
+# 384-dim) so it's baked into the image and never downloaded at container boot.
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('intfloat/multilingual-e5-small')"
 
 # Create data directories
 RUN mkdir -p data/raw_pdfs data/extracted data/chunks data/chroma_db data/indexes
@@ -34,6 +34,10 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
     CMD curl -f http://localhost:8000/api/status || exit 1
 
-# CX43: 8 cores, 16GB RAM — use 6 workers (2*(cores/2)+1 formula, leaving 2 cores for pgvector+OS)
-# Each worker holds the embedding model in shared memory via gunicorn preload
-CMD ["gunicorn", "backend.main:app", "-k", "uvicorn.workers.UvicornWorker", "--workers", "6", "--timeout", "180", "--bind", "0.0.0.0:8000", "--preload", "--worker-tmp-dir", "/dev/shm"]
+# This is an I/O-bound async app (every request waits on the LLM API), so a single
+# event loop handles high concurrency — we do NOT need one worker per core. 2 workers
+# gives redundancy (one serves while the other restarts) at a fraction of the RAM.
+# The embedding model is loaded ONCE in the gunicorn master via the on_starting hook
+# in gunicorn.conf.py, then shared across workers copy-on-write (preload fork) — so the
+# ~1.2GB model lives once, not per-worker (was the cause of 9GB RAM use at 6 workers).
+CMD ["gunicorn", "backend.main:app", "-c", "gunicorn.conf.py"]

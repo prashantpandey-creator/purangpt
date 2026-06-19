@@ -16,14 +16,11 @@ class SessionManager:
         self._init_db()
 
     def _get_conn(self):
-        if not self.db_url:
-            logger.warning("VECTOR_DB_URL not set, session_manager won't persist to DB.")
-            return None
-        try:
-            return psycopg2.connect(self.db_url, cursor_factory=RealDictCursor)
-        except Exception as e:
-            logger.error(f"Failed to connect to local Postgres: {e}")
-            return None
+        # Route through the shared db_client pool instead of opening a fresh
+        # psycopg2 connection per call (sessions are read/written several times
+        # per chat turn, so this was a big chunk of the connection churn).
+        from backend.db_client import get_db_conn
+        return get_db_conn()
 
     def _init_db(self):
         conn = self._get_conn()

@@ -889,11 +889,27 @@ async def call_llm_once(messages: List[dict], temperature: float = 0.2, req_mode
     return "".join(full)
 
 
+def _looks_english(text: str) -> bool:
+    """Cheap heuristic: is this query already plain English/IAST (ASCII letters)?
+    If so we can skip the LLM translation round-trip entirely, which removes 1-3s
+    of latency before the first answer token for the ~majority of queries that are
+    typed in English. Any non-Latin script (Devanagari, Cyrillic, CJK…) returns
+    False so we fall back to the real LLM translation path."""
+    if not text:
+        return True
+    non_ascii = sum(1 for ch in text if ord(ch) > 0x2FF)  # beyond Latin-1+extended
+    return non_ascii == 0
+
+
 async def detect_and_translate_query(query: str) -> tuple[str, str]:
     """
     Detect language of query. If it's not pure English/IAST, translate to English+Sanskrit keywords.
     Returns (detected_language_name, english_search_query).
     """
+    # Fast path: query is already ASCII/English → no LLM call needed.
+    if _looks_english(query):
+        return "English", query
+
     prompt = f"""Analyze this user search query: "{query}"
 
 Respond with ONLY valid JSON in this exact format:
@@ -1339,7 +1355,11 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
 
     # ── Standard Chat ────────────────────────────────────────────────────────
     async def event_gen() -> AsyncGenerator[dict, None]:
-        # 0. Detect and Translate Query
+        # Immediate feedback so the UI shows motion while we translate+search,
+        # rather than dead air until the first LLM token.
+        yield {"type": "status", "message": "🔍 Searching the sacred texts…"}
+
+        # 0. Detect and Translate Query (skips the LLM call for English queries)
         detected_lang, search_query = await detect_and_translate_query(request.query)
         logger.info("Original Query: %r | Detected Lang: %s | Search Query: %r", request.query, detected_lang, search_query)
 

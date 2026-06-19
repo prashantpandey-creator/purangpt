@@ -69,23 +69,44 @@ class HybridSearcher:
     """
     Hybrid retrieval engine utilizing Postgres pgvector and Full Text Search (FTS).
     """
+    # Process-wide shared embedding model. Loaded ONCE in the gunicorn master
+    # (pre-fork) so every worker inherits the same ~1.2GB weights copy-on-write
+    # instead of each loading its own copy. See gunicorn.conf.py on_starting hook.
+    _shared_model = None
+
     def __init__(self) -> None:
         self._embed_model = None
         self._initialized = False
         self._db_url = os.environ.get("VECTOR_DB_URL", "postgresql://postgres:postgres@localhost:5432/purangpt")
         self._pool = None
 
+    @classmethod
+    def preload_model(cls):
+        """Load the embedding model into the class once. Safe to call in the
+        gunicorn master before forking — the loaded weights are then shared with
+        every worker via copy-on-write. Idempotent."""
+        if cls._shared_model is None:
+            from sentence_transformers import SentenceTransformer
+            logger.info("Preloading SentenceTransformer (intfloat/multilingual-e5-small) in master…")
+            cls._shared_model = SentenceTransformer("intfloat/multilingual-e5-small")
+            logger.info("Embedding model preloaded ✓ (shared across workers)")
+        return cls._shared_model
+
     async def initialize(self) -> "HybridSearcher":
-        """Initialize Postgres connection pool and model."""
+        """Per-worker init: create this event loop's asyncpg pool and bind the
+        shared embedding model. The pool CANNOT be shared across forked workers
+        (it's bound to a specific event loop), so each worker makes its own —
+        but the model is the shared class-level instance, not a fresh load."""
         logger.info("Initializing HybridSearcher via Postgres…")
-        
-        # Initialize connection pool
-        self._pool = await asyncpg.create_pool(self._db_url, min_size=2, max_size=10)
-        
-        logger.info("Loading SentenceTransformer model (intfloat/multilingual-e5-small)...")
-        from sentence_transformers import SentenceTransformer
-        self._embed_model = SentenceTransformer("intfloat/multilingual-e5-small")
-        
+
+        # asyncpg pool is per-worker (event-loop-bound) — keep it small since we
+        # now run only 2 workers: 2 workers × 5 = 10 connections max to pgvector.
+        self._pool = await asyncpg.create_pool(self._db_url, min_size=1, max_size=5)
+
+        # Reuse the master-preloaded model if present; otherwise load on demand
+        # (e.g. dev / `run.py` path that doesn't go through the gunicorn hook).
+        self._embed_model = self._shared_model or self.preload_model()
+
         self._initialized = True
         logger.info("HybridSearcher initialized ✓")
         return self
