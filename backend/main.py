@@ -459,18 +459,13 @@ async def lifespan(app: FastAPI):
         await searcher.initialize()
         state.searcher = searcher
         state.index_ready = True
-        # Cache verse count for /api/status. NOTE: get_db_conn() uses a
-        # RealDictCursor, so fetchone() returns a dict — read by column name
-        # ("count"), not [0] (which raised KeyError and silently left it at 0).
+        # Cache verse count for /api/status using the searcher's asyncpg pool
+        # (already connected + proven). Using a separate psycopg2 pooled conn here
+        # raced during multi-worker fork startup ("no results to fetch"), leaving
+        # one worker reporting 0.
         try:
-            from backend.db_client import get_db_conn
-            conn = get_db_conn()
-            if conn:
-                with conn.cursor() as cur:
-                    cur.execute("SELECT COUNT(*) AS n FROM purana_verses")
-                    row = cur.fetchone()
-                    state.total_verses = (row["n"] if row else 0) or 0
-                conn.close()
+            async with searcher._pool.acquire() as conn:
+                state.total_verses = await conn.fetchval("SELECT COUNT(*) FROM purana_verses") or 0
         except Exception as e:
             logger.warning("verse-count query failed: %s", e)
         logger.info("✓ Vector index ready (%d verses)", state.total_verses)
