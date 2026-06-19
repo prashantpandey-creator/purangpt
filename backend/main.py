@@ -876,17 +876,26 @@ async def stream_llm(messages: List[dict], temperature: float = 0.3, max_retries
             except Exception as e:
                 logger.warning(f"DeepSeek fallback failed: {e}")
 
-        # Fallback 3: Ollama local (if available)
-        try:
-            logger.info("Last resort: falling back to local Ollama...")
-            yield {"type": "info", "message": "Using local model (may be slower)..."}
-            async for token in stream_ollama(messages, temperature, os.getenv("OLLAMA_MODEL", "qwen2.5:7b")):
-                yield token
-            return
-        except Exception as e:
-            logger.error(f"All LLM providers failed: {e}")
-            yield {"type": "error", "message": "All AI providers are temporarily unavailable. Please try again in a moment."}
-            raise HTTPException(status_code=503, detail="All LLM providers are currently unavailable.")
+        # Fallback 3: Ollama local — only if explicitly configured. In production
+        # there is no Ollama, so attempting localhost:11434 just adds latency before
+        # the real failure. Gate it behind OLLAMA_BASE_URL being set.
+        if os.getenv("OLLAMA_BASE_URL"):
+            try:
+                logger.info("Last resort: falling back to local Ollama...")
+                yield {"type": "info", "message": "Using local model (may be slower)..."}
+                async for token in stream_ollama(messages, temperature, os.getenv("OLLAMA_MODEL", "qwen2.5:7b")):
+                    yield token
+                return
+            except Exception as e:
+                logger.error(f"Ollama fallback failed: {e}")
+
+        # All providers exhausted. We are already mid-stream (headers sent), so we
+        # CANNOT raise an HTTPException to set a status code — that produces a broken
+        # response. Emit a single typed terminal error event and stop; the SSE client
+        # handles {"type":"error"} and the consumer (event_gen) finalizes the stream.
+        logger.error("All LLM providers failed for this request")
+        yield {"type": "error", "message": "All AI providers are temporarily unavailable. Please try again in a moment."}
+        return
 
 
 async def call_llm_once(messages: List[dict], temperature: float = 0.2, req_model: str = "auto") -> str:
