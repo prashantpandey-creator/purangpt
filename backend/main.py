@@ -63,7 +63,7 @@ MAX_HISTORY   = 100  # messages kept in session memory
 
 
 from backend.auth import get_current_user, require_auth, require_role, get_guest_id, check_guest_rate_limit, increment_guest_usage, validate_query
-from backend.supabase_client import update_profile, get_admin_stats, get_all_users, encrypt_keys, decrypt_keys, increment_usage, check_rate_limit, check_research_limit, increment_research_usage
+from backend.db_client import update_profile, get_admin_stats, get_all_users, encrypt_keys, decrypt_keys, increment_usage, check_rate_limit, check_research_limit, increment_research_usage
 
 from backend.session_manager import SessionManager
 from backend.monitor import run_health_checks
@@ -1072,7 +1072,7 @@ async def deep_research(query: str, session_id: str, user_id: str = None) -> Asy
 
     # Stage 2: Execution
     from backend.agents.deep_research import DeepResearchAgent
-    from backend.supabase_client import get_profile
+    from backend.db_client import get_profile
     
     role = "free"
     if user_id:
@@ -1810,7 +1810,7 @@ async def update_user_profile(data: dict, user: dict = Depends(require_auth)):
 
 @app.get("/api/user/usage")
 async def get_user_usage(user: dict = Depends(require_auth)):
-    from backend.supabase_client import get_profile
+    from backend.db_client import get_profile
     is_byok = bool(custom_keys_var.get())
     profile = get_profile(user["id"]) or {}
     

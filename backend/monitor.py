@@ -11,7 +11,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # To avoid circular imports or messy setups, we import clients directly
-from backend.supabase_client import get_db_conn
+from backend.db_client import get_db_conn
 from backend.pinecone_client import get_pinecone_index
 
 async def ping_llm(provider: str, api_key: str) -> dict:

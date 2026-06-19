@@ -77,7 +77,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Security(securi
             return None
 
         # Fetch or dynamically create user profile in local Postgres
-        from backend.supabase_client import create_profile_if_not_exists
+        from backend.db_client import create_profile_if_not_exists
         email = payload.get("email")
         profile = create_profile_if_not_exists(user_id, email)
         role = profile.get("role", "free") if profile else "free"

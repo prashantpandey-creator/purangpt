@@ -4,7 +4,7 @@ import razorpay
 import logging
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, Any
-from backend.supabase_client import get_profile, update_profile, get_db_conn
+from backend.db_client import get_profile, update_profile, get_db_conn
 
 logger = logging.getLogger(__name__)
 
