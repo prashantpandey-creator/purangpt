@@ -44,6 +44,7 @@ aiohttp==3.11.9
 aiofiles==24.1.0
 
 # ── Utilities ──────────────────────────────────────────────────────────────
+indic-transliteration>=2.3.57
 python-dotenv==1.0.1
 gunicorn>=21.2.0
 tqdm==4.67.1

@@ -491,6 +491,9 @@ async def lifespan(app: FastAPI):
     # Validate API keys and determine active provider
     await _validate_llm_providers()
 
+    from backend.query_processor import SanskritQueryProcessor
+    state.query_processor = SanskritQueryProcessor(call_llm_once)
+
     logger.info("🚀 Active provider: %s (%s) — Ready at http://localhost:%s",
                 state.active_provider, state.active_model, os.getenv("PORT", "8000"))
 
@@ -918,54 +921,7 @@ async def call_llm_once(messages: List[dict], temperature: float = 0.2, req_mode
     return "".join(full)
 
 
-def _looks_english(text: str) -> bool:
-    """Cheap heuristic: is this query already plain English/IAST (ASCII letters)?
-    If so we can skip the LLM translation round-trip entirely, which removes 1-3s
-    of latency before the first answer token for the ~majority of queries that are
-    typed in English. Any non-Latin script (Devanagari, Cyrillic, CJK…) returns
-    False so we fall back to the real LLM translation path."""
-    if not text:
-        return True
-    non_ascii = sum(1 for ch in text if ord(ch) > 0x2FF)  # beyond Latin-1+extended
-    return non_ascii == 0
 
-
-async def detect_and_translate_query(query: str) -> tuple[str, str]:
-    """
-    Detect language of query. If it's not pure English/IAST, translate to English+Sanskrit keywords.
-    Returns (detected_language_name, english_search_query).
-    """
-    # Fast path: query is already ASCII/English → no LLM call needed.
-    if _looks_english(query):
-        return "English", query
-
-    prompt = f"""Analyze this user search query: "{query}"
-
-Respond with ONLY valid JSON in this exact format:
-{{
-  "language": "Full Name of Language in English (e.g., Hindi, Russian, French, English)",
-  "search_query": "The query translated into English, but keep core Sanskrit concepts (like dharma, karma, purusha) as IAST transliterated Sanskrit words."
-}}
-
-Do not include any other text or formatting. Just the JSON."""
-
-    try:
-        response_text = await call_llm_once([{"role": "user", "content": prompt}])
-        # Extract JSON if wrapped in markdown
-        import re
-        match = re.search(r'\{.*\}', response_text.strip(), re.DOTALL)
-        if match:
-            data = json.loads(match.group(0))
-            lang = data.get("language", "English")
-            translated = data.get("search_query", query)
-            # If the user typed english, just use their exact query
-            if lang.lower() == "english":
-                return lang, query
-            return lang, translated
-    except Exception as e:
-        logger.error("Query translation failed: %s", e)
-    
-    return "English", query
 
 
 
@@ -1407,18 +1363,25 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         # rather than dead air until the first LLM token.
         yield {"data": json.dumps({"type": "status", "message": "🔍 Searching the sacred texts…"}) }
 
-        # 0. Detect and Translate Query (skips the LLM call for English queries)
-        detected_lang, search_query = await detect_and_translate_query(request.query)
-        logger.info("Original Query: %r | Detected Lang: %s | Search Query: %r", request.query, detected_lang, search_query)
+        # 0. Query Expansion (Sanskrit awareness + Language Detection)
+        expansion = await state.query_processor.expand(request.query)
+        logger.info("Query: %r | Detected: %s | Skrt: %s | Canonical: %s | Synonyms: %s", 
+                    request.query, expansion.detected_lang, expansion.is_sanskrit, 
+                    expansion.canonical, expansion.synonyms)
 
         # 1. RAG search (vector index if available)
         sources = []
         rag_context = ""
         if state.searcher and state.index_ready:
             try:
-                # Use translated query for semantic search
+                # Use the expanded query parts for semantic search
                 results = await state.searcher.hybrid_search(
-                    query=search_query, top_k=request.top_k, filters=request.filters, sharma_weighting=(request.mode == "guide")
+                    query=expansion.original, 
+                    top_k=request.top_k, 
+                    filters=request.filters, 
+                    sharma_weighting=(request.mode == "guide"),
+                    embed_phrase=expansion.embed_phrase,
+                    fts_phrase=expansion.fts_phrase,
                 )
                 sources    = build_source_list(results)
                 rag_context = build_rag_context(results)
@@ -1428,15 +1391,23 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         # 2. Sanskrit corpus search (always runs against GRETIL)
         skt_results = []
         if state.gretil_corpus:
-            # Use query expansion: try synonyms if primary search returns nothing
-            words = [w for w in search_query.split() if len(w) > 3]
-            primary_key = search_query if not words else " ".join(words[:2])
-            skt_results = await asyncio.to_thread(search_sanskrit, primary_key, max_results=8)
-            if not skt_results:
-                for term in expand_query_terms(search_query)[1:]:   # skip first = original
-                    skt_results = await asyncio.to_thread(search_sanskrit, term, max_results=8)
-                    if skt_results:
-                        break
+            # Parallel multi-variant GRETIL search based on the expansion
+            search_tasks = [
+                asyncio.to_thread(search_sanskrit, term, max_results=8)
+                for term in expansion.gretil_search_terms
+            ]
+            if search_tasks:
+                batch_results = await asyncio.gather(*search_tasks, return_exceptions=True)
+                
+                # Merge and deduplicate by reference (e.g. "samkhya_karika, Verse 12")
+                seen_refs = set()
+                for res_list in batch_results:
+                    if isinstance(res_list, list):
+                        for r in res_list:
+                            ref = r.get("reference")
+                            if ref not in seen_refs:
+                                skt_results.append(r)
+                                seen_refs.add(ref)
             if skt_results and not rag_context:
                 skt_ctx = "\n".join(
                     f"[{r['text_name']} / {r['edition']} / {r['language']} / {r['bias']}]\n"
@@ -1472,10 +1443,10 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         prompt_tpl  = PROMPTS.get(request.mode, RESEARCH_SYSTEM)
         
         # Override detected language with user's explicit UI preference if provided
-        target_lang = detected_lang
+        target_lang = expansion.detected_lang
         if hasattr(request, "language") and request.language:
             lang_map = {"en": "English", "hi": "Hindi", "ru": "Russian"}
-            target_lang = lang_map.get(request.language.lower(), detected_lang)
+            target_lang = lang_map.get(request.language.lower(), expansion.detected_lang)
 
         lang_instr = f"## IMPORTANT: Respond strictly in {target_lang}. Translate all explanations to {target_lang}, but keep Sanskrit terms in IAST transliteration." if target_lang.lower() != "english" else ""
         system_text = prompt_tpl.format(
