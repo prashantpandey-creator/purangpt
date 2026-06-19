@@ -1,13 +1,22 @@
-# secrets/ — SOPS-encrypted secrets
+# secrets/ — encrypted backup of record
 
-Production secrets for the PuranGPT backend, encrypted with
-[SOPS](https://github.com/getsops/sops) + [age](https://github.com/FiloSottile/age).
-Only the **values** are encrypted; keys stay in cleartext so diffs are reviewable.
-Encryption recipients are declared in [`../.sops.yaml`](../.sops.yaml).
+> **How deploys actually get secrets:** the backend deploy uses **GitHub
+> Repository Secrets** (`.github/workflows/deploy.yml` renders `/root/purangpt/.env`
+> from `${{ secrets.* }}`). That is the source of truth for deployment — NOT this
+> directory. To change a deployed secret, update it in GitHub
+> (`gh secret set NAME --repo prashantpandey-creator/purangpt`) and redeploy.
+>
+> This `prod.env` is a **SOPS-encrypted backup of record** so the values remain
+> recoverable/readable (GitHub Secrets can't be read back). Keep it in sync when
+> you rotate a GitHub secret.
+
+Encrypted with [SOPS](https://github.com/getsops/sops) +
+[age](https://github.com/FiloSottile/age); only **values** are encrypted, keys stay
+readable. Recipients in [`../.sops.yaml`](../.sops.yaml).
 
 | File | Purpose |
 |------|---------|
-| `prod.env` | Production secret values (dotenv). Decrypts to `.env` at the repo root. |
+| `prod.env` | SOPS-encrypted backup of all secret values (dotenv). NOT used by deploy. |
 
 ## Prerequisites
 

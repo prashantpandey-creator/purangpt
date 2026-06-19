@@ -13,20 +13,15 @@ Any session on this machine already has what it needs — these are the entry po
 - **GitHub (create/merge PRs, push):** authed via the `gh` CLI keyring (account
   `prashantpandey-creator`, HTTPS remotes). Just use `git push`, `gh pr create`,
   `gh pr merge`. No SSH key needed for git. Verify with `gh auth status`.
-- **Secrets (decrypt/edit):** managed by **SOPS + age**. All secrets are encrypted
-  in `secrets/prod.enc.yaml` (committed). Decrypt with `sops -d secrets/prod.enc.yaml`
-  — this works automatically when the **age private key is present at
-  `~/.config/sops/age/keys.txt`** (distributed out-of-band; NEVER committed, never
-  pasted into any tracked file — that would defeat the whole scheme). See
-  `secrets/README.md` for edit/rotate/grant-access workflow.
-- **Server (SSH):** `ssh -i ~/.ssh/purangpt_hetzner root@204.168.176.229`.
+- **Secrets:** managed via **GitHub Repository Secrets** (source of truth for deploys).
+  The deploy workflow renders `/root/purangpt/.env` from these secrets on every push to `main`.
+  A SOPS-encrypted backup lives at `secrets/prod.env` (decrypt with `sops -d secrets/prod.env`
+  if needed — requires age key at `~/.config/sops/age/keys.txt`). See `secrets/README.md`.
+- **Server (SSH):** `ssh -i ~/.ssh/purangpt_hetzner root@204.168.176.229`. The user has
+  authorized fully autonomous SSH/DB/deploy operations — no permission prompts needed.
 - **Deploy:** push to `main` → GitHub Actions deploys (see `DEPLOY.md`).
 - **Full operational state, keys, and the security-incident history** are in the
   gitignored `CLAUDE-secrets.md` (read it before any deploy/server/DB work).
-
-> Why the age key is NOT in this file: `secrets/prod.enc.yaml` is only safe to commit
-> because the key lives outside the repo. Putting the key in a tracked file would let
-> anyone with repo access decrypt every production secret.
 
 ## Current Production Stack
 
@@ -75,13 +70,14 @@ data_pipeline/      # Offline text ingestion (download → extract → chunk →
 
 | Variable | Required | Notes |
 |----------|----------|-------|
-| `VECTOR_DB_URL` | **Yes** | `postgresql://logto:logto@logto-db:5432/logto` in Docker; without it `index_ready: false` |
-| `DEEPSEEK_API_KEY` | Yes | Primary LLM + R1 research mode |
-| `GROQ_API_KEY` | No | Fallback LLM |
-| `GEMINI_API_KEY` | No | Second fallback |
+| `VECTOR_DB_URL` | **Yes** | `postgresql://postgres:<pw>@purangpt-pgvector-1:5432/purangpt` in Docker (pgvector container, NOT logto-db). Without it `index_ready: false`. Password is rotated and stored in GitHub secret `VECTOR_DB_URL`. |
+| `GEMINI_API_KEY` | Yes | Primary LLM (`LLM_PROVIDER=gemini`); if quota is exhausted, auto-falls back to DeepSeek |
+| `DEEPSEEK_API_KEY` | Yes | Fallback LLM + R1 deep-research mode |
+| `GROQ_API_KEY` | No | Second fallback LLM |
+| `FERNET_KEY` | Yes | Encrypts sensitive user data at rest; fail-fast in prod if missing |
 | `LOGTO_ENDPOINT` | No | Auth JWT issuer verification |
 
-In Docker the service hostname for the DB is `logto-db` (same container as Logto auth). Outside Docker use `localhost:5432`.
+In Docker the pgvector DB service name is `purangpt-pgvector-1` (a separate container from `logto-db`). Outside Docker use `localhost:5433` (mapped port).
 
 ## Commands
 
