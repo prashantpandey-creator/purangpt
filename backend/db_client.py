@@ -84,11 +84,22 @@ def get_db_conn():
         logger.error(f"Failed to get pooled Postgres connection: {e}")
         return None
 
-# Encryption for BYOK Keys
+# Encryption for BYOK (bring-your-own-key) API keys.
+# A per-process ephemeral key is useless: each of N workers would get a DIFFERENT
+# key, so a BYOK key encrypted by one worker can't be decrypted by another, and
+# ALL stored keys become garbage after a restart. In production FERNET_KEY MUST be
+# set and stable. We only fall back to an ephemeral key in non-production (single
+# dev process) and log loudly.
 FERNET_KEY = os.getenv("FERNET_KEY", "")
 if not FERNET_KEY:
+    if os.getenv("ENV", "").lower() in ("production", "prod"):
+        raise RuntimeError(
+            "FERNET_KEY is required in production (BYOK keys are unrecoverable "
+            "without a stable key). Generate one with: "
+            "python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'"
+        )
     FERNET_KEY = Fernet.generate_key().decode()
-    logger.warning(f"FERNET_KEY not set. Generated ephemeral key: {FERNET_KEY}")
+    logger.warning("FERNET_KEY not set — generated an EPHEMERAL key (dev only; BYOK keys won't survive restart).")
 fernet = Fernet(FERNET_KEY.encode())
 
 def encrypt_keys(keys_dict: dict) -> str:

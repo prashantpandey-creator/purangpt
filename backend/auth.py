@@ -16,20 +16,41 @@ LOGTO_ENDPOINT = os.getenv("LOGTO_ENDPOINT", "https://auth.purangpt.com/")
 LOGTO_API_RESOURCE_INDICATOR = os.getenv("LOGTO_API_RESOURCE_INDICATOR", "https://api.purangpt.com")
 JWKS_URL = urljoin(LOGTO_ENDPOINT, "/oidc/jwks")
 
-# Cache for the JWKS
-_jwks_cache = None
+# JWKS cache with a TTL. Previously cached forever: if Logto rotated its signing
+# keys, every token with the new `kid` failed (all users appeared logged out)
+# until the process restarted; and a single failed first fetch poisoned auth
+# permanently. Now it expires and can be force-refreshed on an unknown `kid`.
+import time as _time
 
-def get_jwks():
-    global _jwks_cache
-    if not _jwks_cache:
-        try:
-            resp = requests.get(JWKS_URL)
-            resp.raise_for_status()
-            _jwks_cache = resp.json()
-        except Exception as e:
-            logger.error(f"Failed to fetch JWKS from Logto: {e}")
-            return None
+_jwks_cache = None
+_jwks_fetched_at = 0.0
+_JWKS_TTL = int(os.getenv("JWKS_TTL_SECONDS", "3600"))   # 1h
+LOGTO_ISSUER = os.getenv("LOGTO_ISSUER", urljoin(LOGTO_ENDPOINT, "/oidc"))
+
+
+def get_jwks(force: bool = False):
+    """Return the Logto JWKS, refetching when forced or the cache TTL expired.
+    Returns None only if we have no cache AND the fetch fails."""
+    global _jwks_cache, _jwks_fetched_at
+    fresh = _jwks_cache is not None and (_time.time() - _jwks_fetched_at) < _JWKS_TTL
+    if fresh and not force:
+        return _jwks_cache
+    try:
+        resp = requests.get(JWKS_URL, timeout=5)
+        resp.raise_for_status()
+        _jwks_cache = resp.json()
+        _jwks_fetched_at = _time.time()
+    except Exception as e:
+        logger.error(f"Failed to fetch JWKS from Logto: {e}")
+        # Fall back to a stale cache if we have one rather than failing all auth.
     return _jwks_cache
+
+
+def _find_rsa_key(jwks: dict, kid: str) -> dict:
+    for key in (jwks or {}).get("keys", []):
+        if key.get("kid") == kid:
+            return key
+    return {}
 
 # Guest limits
 GUEST_DAILY_LIMIT = int(os.getenv("GUEST_DAILY_LIMIT", "10"))  # conservative default
@@ -49,26 +70,35 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Security(securi
     try:
         # Decode the unverified header to get the key ID (kid)
         unverified_header = jwt.get_unverified_header(token)
-        rsa_key = {}
-        for key in jwks.get("keys", []):
-            if key["kid"] == unverified_header.get("kid"):
-                rsa_key = key
-                break
-        
+        kid = unverified_header.get("kid")
+        rsa_key = _find_rsa_key(jwks, kid)
+
+        # Unknown kid usually means Logto rotated its signing keys since we cached
+        # the JWKS — force a refresh once before rejecting.
         if not rsa_key:
-            logger.error("Unable to find appropriate key in JWKS")
+            jwks = get_jwks(force=True)
+            rsa_key = _find_rsa_key(jwks, kid)
+
+        if not rsa_key:
+            logger.error("Unable to find appropriate key in JWKS (kid=%s)", kid)
             return None
 
-        # Verify the token
-        # Using audience = LOGTO_API_RESOURCE_INDICATOR if we have configured Logto APIs,
-        # but standard Logto access tokens might just have 'aud': ['...']
+        # Verify signature + issuer. Audience verification stays optional: standard
+        # Logto access tokens carry the API resource indicator in `aud`, but the
+        # opaque/userinfo tokens used here may not — so we gate on iss + signature
+        # and only enforce aud when explicitly turned on. Issuer check defaults ON
+        # (the live Logto issuer is https://auth.purangpt.com/oidc) but can be
+        # disabled via DISABLE_JWT_ISSUER_CHECK without a redeploy if it ever
+        # mismatches (e.g. endpoint change).
+        verify_aud = bool(os.getenv("ENFORCE_JWT_AUDIENCE"))
+        verify_iss = not os.getenv("DISABLE_JWT_ISSUER_CHECK")
         payload = jwt.decode(
             token,
             rsa_key,
             algorithms=["RS256"],
-            # If you are strictly validating API resource indicators in Logto:
-            # audience=LOGTO_API_RESOURCE_INDICATOR,
-            options={"verify_aud": False} # Disable audience verification for simpler setup right now
+            issuer=LOGTO_ISSUER if verify_iss else None,
+            audience=LOGTO_API_RESOURCE_INDICATOR if verify_aud else None,
+            options={"verify_aud": verify_aud, "verify_iss": verify_iss},
         )
         
         # Logto token `sub` is the user ID

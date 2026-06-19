@@ -55,6 +55,15 @@ GROQ_MODEL    = os.getenv("GROQ_MODEL",   "llama-3.3-70b-versatile")
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY", "")
 ZHIPU_API_KEY    = os.getenv("ZHIPU_API_KEY", "")
+
+
+def any_llm_configured() -> bool:
+    """True if ANY usable LLM provider key is set. DeepSeek is the prod primary,
+    so checking only Groq+Gemini (the old behaviour) wrongly 503'd a valid
+    DeepSeek-only config on every chat."""
+    return any([DEEPSEEK_API_KEY, GROQ_API_KEY, GEMINI_API_KEY, TOGETHER_API_KEY, ZHIPU_API_KEY])
+
+
 INDEX_DIR     = os.getenv("INDEX_DIR",   "./data/indexes")
 INDEX_URL     = os.getenv("INDEX_URL",   "https://purangpt.s3.us-east-1.amazonaws.com/purangpt-indexes-v2.tar.gz")
 GRETIL_DIR    = Path("./data/raw_texts/gretil")
@@ -1330,7 +1339,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         )
         if not allowed:
             raise HTTPException(429, "Daily message limit exceeded. Please upgrade your plan.")
-    if not GROQ_API_KEY and not GEMINI_API_KEY:
+    if not any_llm_configured():
         raise HTTPException(503, "No LLM credentials configured")
 
     user_id = user.get("id") if user else None
@@ -1584,7 +1593,7 @@ async def search(request: SearchRequest):
 
 @app.post("/api/instances")
 async def instances(request: InstancesRequest):
-    if not GROQ_API_KEY and not GEMINI_API_KEY:
+    if not any_llm_configured():
         raise HTTPException(503, "No LLM credentials configured")
 
     # 1. Sanskrit corpus search
@@ -1743,14 +1752,20 @@ async def infer(request: InferRequest, user: Optional[dict] = Depends(get_curren
         raise HTTPException(401, "Sign in required for Scholarly Inference.")
         
     role = user.get("role", "free")
-    if not check_inference_limit(user.get("id"), role):
+    is_byok = bool(custom_keys_var.get())
+    # Scholarly Inference shares the deep-research daily quota (both are Pro-gated
+    # synthesis features). Previously this called check_inference_limit /
+    # increment_inference_usage, which were never defined → NameError 500 on every
+    # call. Reuse the existing research-limit functions instead.
+    allowed, _rem = check_research_limit(user.get("id"), role, is_byok=is_byok)
+    if not allowed:
         raise HTTPException(403, "Free trial for Scholarly Inference exhausted. Please upgrade to Pro.")
-        
+
     if not request.topic.strip():
         raise HTTPException(400, "Topic cannot be empty")
 
     async def infer_gen() -> AsyncGenerator[dict, None]:
-        increment_inference_usage(user.get("id"))
+        increment_research_usage(user.get("id"))
         # 1. Wide retrieval from both vector index and GRETIL
         all_passages = []
         if state.searcher and state.index_ready:
@@ -1865,7 +1880,11 @@ async def save_user_keys(data: dict, user: dict = Depends(require_auth)):
 
 @app.get("/api/user/keys")
 async def get_user_keys(user: dict = Depends(require_auth)):
-    keys = decrypt_keys(user.get("byok_keys", ""))
+    # byok_keys is a DB column, not part of the JWT-derived user dict — fetch the
+    # profile (previously read user.get("byok_keys") which was always empty).
+    from backend.db_client import get_profile
+    profile = get_profile(user["id"]) or {}
+    keys = decrypt_keys(profile.get("byok_keys", ""))
     # Mask keys for security
     masked = {k: f"{v[:4]}...{v[-4:]}" if len(v) > 10 else "***" for k, v in keys.items() if v}
     return {"keys": masked}
