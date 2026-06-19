@@ -61,3 +61,7 @@ CLAUDE-secrets.md
 .env
 .env.*
 !.env.example
+# Allow the committed prod-env TEMPLATE, but never the real filled-in stack env.
+!deploy/.env.prod.example
+stack.env
+/root/stack.env

@@ -9,9 +9,15 @@
   - Backend  → `prashantpandey-creator/purangpt`      → `.github/workflows/deploy.yml`
   - Frontend → `prashantpandey-creator/purangpt-next` → `.github/workflows/deploy.yml`
 - **`main` is the only deploy branch.** `develop` is dead — never deploy from it.
-- The **production stack is one root compose** on the server: `/root/docker-compose.yml`
-  (compose project `root`). It owns: backend, frontend, logto, logto-db, and the
-  pgvector DB container (`purangpt-pgvector-1`).
+- The **production stack compose is version-controlled** at
+  `deploy/docker-compose.prod.yml` (the sanitized mirror of the server's
+  `/root/docker-compose.yml`). It owns: backend, frontend, logto, logto-db. The
+  pgvector DB (`purangpt-pgvector-1`) is a SEPARATE compose project (`purangpt`)
+  reached via the external `purangpt_default` network. Secrets are NOT inline —
+  they come from gitignored env files (`/root/stack.env`, `/root/purangpt/.env`,
+  `/root/frontend-secrets.env`); template in `deploy/.env.prod.example`.
+  > Server cutover (pending): replace `/root/docker-compose.yml` with this file +
+  > create `/root/stack.env` from the template, so the live file matches git.
 - **Coolify** runs on this box but only provides the **Traefik proxy + SSL**. It does
   NOT build or deploy PuranGPT — no Coolify "application" is defined for it. Don't
   expect Coolify Git integration to do anything here.

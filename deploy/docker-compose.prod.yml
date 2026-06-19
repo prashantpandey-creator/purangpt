@@ -1,0 +1,151 @@
+# PuranGPT — PRODUCTION compose (version-controlled mirror of /root/docker-compose.yml)
+#
+# This is the source of truth for how the production stack is wired. It used to
+# exist ONLY on the Hetzner box, so a server rebuild would have had nothing to
+# recreate the stack from. Now it lives in git.
+#
+# ── Secrets ──────────────────────────────────────────────────────────────────
+# NO secrets are inlined here. Every secret is a ${VAR} sourced from a gitignored
+# env file on the server. On the box, run from a directory containing a `.env`
+# with the values (see deploy/.env.prod.example), or:
+#   docker compose --env-file /root/stack.env -f deploy/docker-compose.prod.yml up -d
+#
+# ── Restore a rebuilt server from scratch ────────────────────────────────────
+#   1. git clone both repos to /root/purangpt and /root/purangpt-next
+#   2. cp this file to /root/docker-compose.yml  (or run with -f from the repo)
+#   3. create /root/stack.env from deploy/.env.prod.example with real values
+#   4. create /root/purangpt/.env (backend env) and /root/frontend-secrets.env
+#   5. recreate the external networks if missing:
+#        docker network create coolify || true
+#        docker network create purangpt_default || true
+#   6. ensure the pgvector container exists (it's a SEPARATE compose project,
+#      `purangpt`, providing the purana_verses DB on the purangpt_default network)
+#   7. docker compose --env-file /root/stack.env -f docker-compose.yml up -d --build
+#   8. re-apply the 5432 firewall (DOCKER-USER iptables) — see DEPLOY.md
+#
+# ── Security invariants (see DEPLOY.md) ──────────────────────────────────────
+#   - NO database port published to 0.0.0.0 (Docker bypasses ufw).
+#   - NO secrets inline — env_file / ${VAR} only.
+
+networks:
+  coolify:
+    external: true
+  purangpt_default:
+    external: true
+
+services:
+  backend:
+    build:
+      context: ./purangpt
+    container_name: purangpt_backend
+    env_file:
+      - ./purangpt/.env            # backend secrets (VECTOR_DB_URL, DEEPSEEK_API_KEY, …)
+    environment:
+      - TOKENIZERS_PARALLELISM=false
+      - HUGGINGFACE_HUB_CACHE=/app/data/.cache
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - default
+      - coolify
+      - purangpt_default
+    restart: unless-stopped
+    volumes:
+      - /data/purangpt/data:/app/data
+
+  frontend:
+    build:
+      context: ./purangpt-next
+      args:
+        NEXT_PUBLIC_API_URL: ""
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        NEXT_PUBLIC_REVENUECAT_APPLE_KEY: ${NEXT_PUBLIC_REVENUECAT_APPLE_KEY}
+    container_name: purangpt_frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    env_file:
+      - /root/frontend-secrets.env  # LOGTO_*, GOOGLE_*, cookie secret (gitignored)
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - DATABASE_URL=${DATABASE_URL}
+      - NEXTAUTH_URL=https://purangpt.com
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - GITHUB_PAT=${GITHUB_PAT}
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=coolify
+      - traefik.http.routers.purangpt-http.rule=Host(`purangpt.com`) || Host(`www.purangpt.com`)
+      - traefik.http.routers.purangpt-http.entrypoints=http
+      - traefik.http.routers.purangpt-http.middlewares=purangpt-redirect
+      - traefik.http.middlewares.purangpt-redirect.redirectscheme.scheme=https
+      - traefik.http.routers.purangpt.rule=Host(`purangpt.com`) || Host(`www.purangpt.com`)
+      - traefik.http.routers.purangpt.entrypoints=https
+      - traefik.http.routers.purangpt.tls=true
+      - traefik.http.routers.purangpt.tls.certresolver=letsencrypt
+      - traefik.http.services.purangpt.loadbalancer.server.port=3000
+    networks:
+      - default
+      - coolify
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+
+  logto:
+    image: svhd/logto:latest
+    container_name: purangpt_logto
+    depends_on:
+      - logto-db
+    environment:
+      - TRUST_PROXY_HEADER=1
+      - DB_URL=${LOGTO_DB_URL}
+      - ENDPOINT=https://auth.purangpt.com
+      - ADMIN_ENDPOINT=https://admin-auth.purangpt.com
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=coolify
+      - traefik.http.routers.logto-auth-http.rule=Host(`auth.purangpt.com`)
+      - traefik.http.routers.logto-auth-http.entrypoints=http
+      - traefik.http.routers.logto-auth-http.middlewares=logto-auth-redirect
+      - traefik.http.routers.logto-auth-http.service=logto-auth
+      - traefik.http.middlewares.logto-auth-redirect.redirectscheme.scheme=https
+      - traefik.http.routers.logto-auth.rule=Host(`auth.purangpt.com`)
+      - traefik.http.routers.logto-auth.entrypoints=https
+      - traefik.http.routers.logto-auth.tls=true
+      - traefik.http.routers.logto-auth.tls.certresolver=letsencrypt
+      - traefik.http.routers.logto-auth.service=logto-auth
+      - traefik.http.services.logto-auth.loadbalancer.server.port=3001
+      - traefik.http.routers.logto-admin-http.rule=Host(`admin-auth.purangpt.com`)
+      - traefik.http.routers.logto-admin-http.entrypoints=http
+      - traefik.http.routers.logto-admin-http.middlewares=logto-admin-redirect
+      - traefik.http.routers.logto-admin-http.service=logto-admin
+      - traefik.http.middlewares.logto-admin-redirect.redirectscheme.scheme=https
+      - traefik.http.routers.logto-admin.rule=Host(`admin-auth.purangpt.com`)
+      - traefik.http.routers.logto-admin.entrypoints=https
+      - traefik.http.routers.logto-admin.tls=true
+      - traefik.http.routers.logto-admin.tls.certresolver=letsencrypt
+      - traefik.http.routers.logto-admin.service=logto-admin
+      - traefik.http.services.logto-admin.loadbalancer.server.port=3002
+    networks:
+      - default
+      - coolify
+    ports:
+      - 3001:3001
+      - 3002:3002
+
+  logto-db:
+    image: postgres:14-alpine
+    container_name: purangpt_logto_db
+    environment:
+      - POSTGRES_USER=${LOGTO_DB_USER}
+      - POSTGRES_PASSWORD=${LOGTO_DB_PASSWORD}
+      - POSTGRES_DB=${LOGTO_DB_NAME}
+    networks:
+      - default
+    volumes:
+      - /data/logto/db:/var/lib/postgresql/data
