@@ -55,3 +55,9 @@ test_query.py
 backend/test_prompt.py
 scratch/
 *.scratch.py
+
+## Secrets (never commit)
+CLAUDE-secrets.md
+.env
+.env.*
+!.env.example
