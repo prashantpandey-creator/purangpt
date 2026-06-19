@@ -97,10 +97,14 @@ advertised via `GET /api/modes`, and must stay in sync with the frontend's
 
 (The earlier `yogic`/`compare`/`translate`/`find_instances` modes no longer exist.)
 
-**Deep Research** (`backend/agents/deep_research.py`, the `/dashboard/deep-research`
-page) is a separate web-grounded feature, **not** a chat `mode`. The `mode == "deep"`
-branch in `/api/chat` is currently unreachable from the UI — `QueryMode` only has
-`research | guide`, and the Deep Research page opens chat in `research` mode.
+A third mode, `deep` — **Deep Research** (`backend/agents/deep_research.py`) — is a
+**standalone** web-grounded mode, intentionally kept out of the in-chat Scholar/Guru
+toggle. It is reached only via the side-panel "Deep Research" link → the
+`/dashboard/deep-research` page, which sends `mode: "deep"`. The `/api/chat` handler
+dispatches `mode == "deep"` to the interactive two-stage agent (clarifying question →
+DuckDuckGo search → DeepSeek-R1 synthesis with streamed `reasoning`). Frontend
+`QueryMode` is `guide | research | deep`; the `/chat` route only maps `guide | research`
+so deep can never appear as a chat toggle.
 
 ## Deploy
 
