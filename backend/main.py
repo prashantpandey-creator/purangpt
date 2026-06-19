@@ -459,17 +459,20 @@ async def lifespan(app: FastAPI):
         await searcher.initialize()
         state.searcher = searcher
         state.index_ready = True
-        # Cache verse count for /api/status
+        # Cache verse count for /api/status. NOTE: get_db_conn() uses a
+        # RealDictCursor, so fetchone() returns a dict — read by column name
+        # ("count"), not [0] (which raised KeyError and silently left it at 0).
         try:
             from backend.db_client import get_db_conn
             conn = get_db_conn()
             if conn:
                 with conn.cursor() as cur:
-                    cur.execute("SELECT COUNT(*) FROM purana_verses")
-                    state.total_verses = cur.fetchone()[0]
+                    cur.execute("SELECT COUNT(*) AS n FROM purana_verses")
+                    row = cur.fetchone()
+                    state.total_verses = (row["n"] if row else 0) or 0
                 conn.close()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("verse-count query failed: %s", e)
         logger.info("✓ Vector index ready (%d verses)", state.total_verses)
     except Exception as e:
         logger.info("Vector index not built yet: %s", e)
