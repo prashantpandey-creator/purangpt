@@ -368,7 +368,8 @@ async def _validate_llm_providers() -> None:
             return False
         url = "https://api.deepseek.com/chat/completions"
         headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY_VAL}", "Content-Type": "application/json"}
-        payload = {"model": "deepseek-v4-flash", "messages": [{"role":"user","content":"hi"}],
+        # Use deepseek-chat (the real production model) not the non-existent v4-flash
+        payload = {"model": "deepseek-chat", "messages": [{"role":"user","content":"hi"}],
                    "max_tokens": 1, "stream": False}
         try:
             async with get_http_session() as s:
@@ -376,8 +377,8 @@ async def _validate_llm_providers() -> None:
                                   timeout=aiohttp.ClientTimeout(total=10)) as r:
                     if r.status == 200:
                         state.active_provider = "deepseek"
-                        state.active_model    = "deepseek-v4-flash"
-                        logger.info("✓ DeepSeek API key valid — model: deepseek-v4-flash")
+                        state.active_model    = "deepseek-chat"
+                        logger.info("✓ DeepSeek API key valid — model: deepseek-chat")
                         return True
                     body = await r.text()
                     logger.warning("✗ DeepSeek API key invalid (HTTP %d): %s", r.status, body[:120])
@@ -804,9 +805,9 @@ class _ProviderRateLimited(Exception):
         self.provider = provider
         super().__init__(f"{provider} rate limit exhausted")
 
-# Semaphore: max 3 concurrent LLM calls across all gunicorn workers sharing this event loop.
-# Prevents thundering-herd burst against the same API key.
-_llm_semaphore = asyncio.Semaphore(3)
+# Semaphore: max 20 concurrent LLM calls. All providers are async I/O; the
+# old value of 3 caused every request to queue behind slow Reasoner calls.
+_llm_semaphore = asyncio.Semaphore(20)
 
 async def stream_llm(messages: List[dict], temperature: float = 0.3, max_retries: int = 5, req_model: str = "auto", custom_keys: dict = None) -> AsyncGenerator[Union[str, dict], None]:
     """Route to LLM provider with full cross-provider fallback: Groq → Gemini → DeepSeek → Ollama"""
@@ -1458,21 +1459,20 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             history=f"## Previous Conversation\n{history_str}" if history else ""
         )
 
-        # 4. Build messages list (system + history + new query)
-        messages = [{"role": "system", "content": system_text}]
-        for msg in history[-10:]:   # include last 5 exchanges
-            messages.append({"role": msg["role"], "content": msg["content"][:1200]})
-        messages.append({"role": "user", "content": request.query})
+        # 4. Build messages list (system + new query).
+        # History is already embedded in system_text via format_history() above.
+        # Appending raw history messages here was sending it TWICE, bloating the
+        # prompt by ~12KB and confusing the model with repeated context.
+        messages = [
+            {"role": "system", "content": system_text},
+            {"role": "user",   "content": request.query},
+        ]
 
-        # 5. Determine Model by Subscription Tier and Stream
-        if not user:
-            target_model = "auto"  # Guest: use validated active provider
-        else:
-            role = user.get("role", "free")
-            if role in ["pro", "scholar", "admin"]:
-                target_model = "deepseek-deepseek-reasoner" # Pro users get DeepSeek Reasoner
-            else:
-                target_model = "auto"  # Free users: use validated active provider
+        # 5. Determine Model — always use the active validated provider (gemini in prod).
+        # Previously Pro users were hardcoded to deepseek-reasoner which caused 30-60s
+        # waits and total failures when DeepSeek was slow/down. Now everyone goes through
+        # the same validated active provider so fallback logic works correctly.
+        target_model = "auto"
 
         full_response = []
         try:
