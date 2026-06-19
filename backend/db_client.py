@@ -224,16 +224,18 @@ def check_research_limit(user_id: str, role: str, is_byok: bool = False) -> tupl
     return count < limit, limit - count
 
 def increment_usage(user_id: str, session_id: str = None, model: str = None):
-    """Increment the user's daily message count and log the usage."""
+    """Increment the user's daily message count and log the usage — atomically.
+    The count bump is a single `SET count = count + 1` in SQL (not a Python
+    read-modify-write), so concurrent requests from the same user can't each read
+    the same old value and lose increments / overrun the limit."""
     conn = get_db_conn()
     if not conn: return
     try:
-        profile = get_profile(user_id)
-        if profile:
-            new_count = (profile.get("daily_message_count", 0) or 0) + 1
-            update_profile(user_id, {"daily_message_count": new_count})
-            
         with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE profiles SET daily_message_count = daily_message_count + 1, updated_at = NOW() WHERE id = %s",
+                (user_id,),
+            )
             cur.execute(
                 "INSERT INTO usage_logs (user_id, session_id, model_used, created_at) VALUES (%s, %s, %s, NOW())",
                 (user_id, session_id, model)
@@ -244,16 +246,23 @@ def increment_usage(user_id: str, session_id: str = None, model: str = None):
         conn.rollback()
     finally:
         conn.close()
-        
+
 def increment_research_usage(user_id: str):
-    """Increment the user's daily deep research count."""
+    """Atomically increment the user's daily deep research count."""
+    conn = get_db_conn()
+    if not conn: return
     try:
-        profile = get_profile(user_id)
-        if profile:
-            new_count = (profile.get("deep_research_count", 0) or 0) + 1
-            update_profile(user_id, {"deep_research_count": new_count})
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE profiles SET deep_research_count = deep_research_count + 1, updated_at = NOW() WHERE id = %s",
+                (user_id,),
+            )
+        conn.commit()
     except Exception as e:
         logger.error(f"Error incrementing research usage for {user_id}: {e}")
+        conn.rollback()
+    finally:
+        conn.close()
 
 def get_admin_stats() -> dict:
     """Fetch analytics for the admin dashboard from local Postgres."""

@@ -77,6 +77,18 @@ class SessionManager:
                     model_used TEXT,
                     created_at TIMESTAMPTZ DEFAULT NOW()
                 );
+
+                -- Guest rate limiting, keyed by IP|device-id, one row per guest per UTC day.
+                -- Replaces the old in-memory per-worker dict (which gave guests N× the
+                -- limit across N workers and reset on every deploy). Atomic UPSERT +
+                -- count increment makes the check race-free and shared across workers.
+                CREATE TABLE IF NOT EXISTS guest_usage (
+                    guest_id TEXT NOT NULL,
+                    usage_date DATE NOT NULL,
+                    count INT DEFAULT 0,
+                    PRIMARY KEY (guest_id, usage_date)
+                );
+                CREATE INDEX IF NOT EXISTS idx_guest_usage_date ON guest_usage(usage_date);
                 """)
             conn.commit()
         except Exception as e:

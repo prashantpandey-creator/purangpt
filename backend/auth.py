@@ -139,43 +139,85 @@ def get_guest_id(request: Request) -> str:
     return f"{ip}|{device_id}" if device_id else ip
 
 
-# ── In-memory guest rate store ─────────────────────────────────────────────
-# Capped at 50,000 entries to prevent unbounded memory growth.
-# On restart the counts reset — acceptable for a soft per-day limit.
-_guest_usage: dict = {}
-_MAX_STORE_SIZE = 50_000
-
-
-def _evict_old_entries(today: str) -> None:
-    """Remove yesterday's entries when the store gets large."""
-    if len(_guest_usage) < _MAX_STORE_SIZE:
-        return
-    stale = [k for k, v in _guest_usage.items() if v["date"] != today]
-    for k in stale:
-        del _guest_usage[k]
+# ── Guest rate store (Postgres-backed, race-free, shared across workers) ──────
+# Previously this was an in-memory per-worker dict: with N gunicorn workers a
+# guest got up to N× the limit, counts reset on every deploy, and check→increment
+# had a race window. Now a single guest_usage row per (guest_id, UTC day) is the
+# source of truth, and the increment is an atomic UPSERT that returns the new
+# count — so check-and-consume is one indivisible operation.
 
 
 def check_guest_rate_limit(guest_id: str) -> tuple[bool, int]:
-    """Return (allowed, remaining) for a guest identifier."""
-    now   = datetime.now(timezone.utc)
-    today = now.date().isoformat()
+    """Read-only check: return (allowed, remaining) WITHOUT consuming a unit.
+    Used for pre-flight 'can this guest send?' gating. The actual consume happens
+    atomically in consume_guest_unit() when a message is really sent."""
+    from backend.db_client import get_db_conn
+    today = datetime.now(timezone.utc).date()
+    conn = get_db_conn()
+    if not conn:
+        # Fail-open to the limit if DB is unreachable — don't lock everyone out.
+        return True, GUEST_DAILY_LIMIT
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT count FROM guest_usage WHERE guest_id = %s AND usage_date = %s",
+                (guest_id, today),
+            )
+            row = cur.fetchone()
+            count = (row["count"] if row else 0) or 0
+        if count >= GUEST_DAILY_LIMIT:
+            return False, 0
+        return True, GUEST_DAILY_LIMIT - count
+    except Exception as e:
+        logger.error("guest rate check failed: %s", e)
+        return True, GUEST_DAILY_LIMIT
+    finally:
+        conn.close()
 
-    _evict_old_entries(today)
 
-    entry = _guest_usage.get(guest_id)
-    if entry is None or entry["date"] != today:
-        _guest_usage[guest_id] = {"date": today, "count": 0}
-        entry = _guest_usage[guest_id]
-
-    count = entry["count"]
-    if count >= GUEST_DAILY_LIMIT:
-        return False, 0
-    return True, GUEST_DAILY_LIMIT - count
+def consume_guest_unit(guest_id: str) -> tuple[bool, int]:
+    """Atomically increment and gate in one statement. Returns (allowed, remaining).
+    If the increment would exceed the limit, it is rolled back to a no-op via the
+    WHERE guard, so concurrent requests can't blow past the cap. This is the
+    function to call right before doing the actual work."""
+    from backend.db_client import get_db_conn
+    today = datetime.now(timezone.utc).date()
+    conn = get_db_conn()
+    if not conn:
+        return True, GUEST_DAILY_LIMIT  # fail-open
+    try:
+        with conn.cursor() as cur:
+            # Upsert the row, but only increment while still under the limit.
+            # RETURNING gives us the post-increment count atomically.
+            cur.execute(
+                """
+                INSERT INTO guest_usage (guest_id, usage_date, count)
+                VALUES (%s, %s, 1)
+                ON CONFLICT (guest_id, usage_date)
+                DO UPDATE SET count = guest_usage.count + 1
+                  WHERE guest_usage.count < %s
+                RETURNING count
+                """,
+                (guest_id, today, GUEST_DAILY_LIMIT),
+            )
+            row = cur.fetchone()
+        conn.commit()
+        if row is None:
+            # WHERE guard blocked the update → already at the limit.
+            return False, 0
+        return True, max(0, GUEST_DAILY_LIMIT - row["count"])
+    except Exception as e:
+        logger.error("guest unit consume failed: %s", e)
+        conn.rollback()
+        return True, GUEST_DAILY_LIMIT  # fail-open on error
+    finally:
+        conn.close()
 
 
 def increment_guest_usage(guest_id: str) -> None:
-    if guest_id in _guest_usage:
-        _guest_usage[guest_id]["count"] += 1
+    """Back-compat shim. The atomic path is consume_guest_unit(); this remains so
+    existing call sites that increment after the fact still record usage."""
+    consume_guest_unit(guest_id)
 
 
 def validate_query(query: str) -> None:

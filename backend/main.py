@@ -62,7 +62,7 @@ FRONTEND_DIR  = Path(__file__).parent.parent / "frontend"
 MAX_HISTORY   = 100  # messages kept in session memory
 
 
-from backend.auth import get_current_user, require_auth, require_role, get_guest_id, check_guest_rate_limit, increment_guest_usage, validate_query
+from backend.auth import get_current_user, require_auth, require_role, get_guest_id, check_guest_rate_limit, consume_guest_unit, increment_guest_usage, validate_query
 from backend.db_client import update_profile, get_admin_stats, get_all_users, encrypt_keys, decrypt_keys, increment_usage, check_rate_limit, check_research_limit, increment_research_usage
 
 from backend.session_manager import SessionManager
@@ -1316,10 +1316,12 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
     # Check BYOK
     is_byok = bool(custom_keys_var.get())
     
-    # Rate Limiting — run sync Supabase calls in threadpool to avoid blocking the event loop
+    # Rate Limiting — atomically consume one unit at the gate so concurrent
+    # requests can't each pass a pre-flight read and overrun the limit. The DB
+    # ops are sync, so run them in a threadpool to avoid blocking the event loop.
     if not user:
         guest_id = get_guest_id(req)
-        allowed, rem = check_guest_rate_limit(guest_id)
+        allowed, rem = await asyncio.to_thread(consume_guest_unit, guest_id)
         if not allowed:
             raise HTTPException(429, "Guest rate limit exceeded. Please sign in.")
     else:
@@ -1475,10 +1477,9 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             {"role": "assistant", "content": full_text}
         ], user_id, guest_id)
         
-        if not user:
-            increment_guest_usage(get_guest_id(req))
-        else:
-            # Non-blocking: fire-and-forget usage increment in threadpool
+        # Guest units are already consumed atomically at the gate above. For
+        # signed-in users, record the message + usage log now (atomic SQL inside).
+        if user:
             asyncio.create_task(asyncio.to_thread(
                 increment_usage, user.get("id"), session_id
             ))
