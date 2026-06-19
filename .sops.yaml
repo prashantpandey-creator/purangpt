@@ -1,0 +1,24 @@
+# SOPS configuration — https://github.com/getsops/sops
+#
+# Secrets in secrets/ are encrypted to the team age recipient(s) below. Only the
+# VALUES are encrypted; keys/structure stay readable so diffs are reviewable.
+#
+# Add a teammate:   append their age public key to every rule, then re-key with
+#                   `sops updatekeys secrets/prod.env`
+# Edit a secret:    `sops secrets/prod.env`        (decrypts in your editor, re-encrypts on save)
+# Render for use:   `sops -d secrets/prod.env > .env`
+#
+# Decryption needs the matching age PRIVATE key, supplied via either
+# SOPS_AGE_KEY (the key material) or SOPS_AGE_KEY_FILE (path to keys.txt).
+
+creation_rules:
+  # Encrypted dotenv files consumed directly by the app (sops -d -> .env)
+  - path_regex: secrets/.*\.env$
+    age: >-
+      age180875puaf7lkxye3pfdwq2u0ww9hq0hjc3xmwc53q8eudzxnxfdsnzjh8e
+
+  # Optional structured YAML/JSON secrets — encrypt only sensitive-looking values
+  - path_regex: secrets/.*\.(ya?ml|json)$
+    encrypted_regex: "(?i)(key|secret|token|password|passwd|url|dsn|webhook|auth)"
+    age: >-
+      age180875puaf7lkxye3pfdwq2u0ww9hq0hjc3xmwc53q8eudzxnxfdsnzjh8e
