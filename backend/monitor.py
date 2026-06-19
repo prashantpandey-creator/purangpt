@@ -11,7 +11,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # To avoid circular imports or messy setups, we import clients directly
-from backend.supabase_client import get_supabase
+from backend.supabase_client import get_db_conn
 from backend.pinecone_client import get_pinecone_index
 
 async def ping_llm(provider: str, api_key: str) -> dict:
@@ -76,17 +76,22 @@ async def run_health_checks(active_sessions: int = 0) -> dict:
     except Exception as e:
         results["system"] = {"status": "degraded", "error": str(e)}
 
-    # 2. Supabase
+    # 2. Postgres
     start_time = time.time()
     try:
-        supabase = get_supabase()
-        if supabase:
-            # simple ping query
-            supabase.table("profiles").select("id").limit(1).execute()
-            results["database"] = {
-                "status": "healthy",
-                "latency_ms": int((time.time() - start_time) * 1000)
-            }
+        conn = get_db_conn()
+        if conn:
+            try:
+                # simple ping query
+                with conn.cursor() as cur:
+                    cur.execute("SELECT id FROM profiles LIMIT 1")
+                    cur.fetchone()
+                results["database"] = {
+                    "status": "healthy",
+                    "latency_ms": int((time.time() - start_time) * 1000)
+                }
+            finally:
+                conn.close()
         else:
             results["database"] = {"status": "unconfigured", "latency_ms": 0}
     except Exception as e:

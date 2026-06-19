@@ -76,9 +76,13 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Security(securi
         if not user_id:
             return None
 
-        # In a real app we might fetch user roles from our DB using `user_id`.
-        # For now, return a basic user dict.
-        return {"id": user_id, "role": "free", "email": payload.get("email")}
+        # Fetch or dynamically create user profile in local Postgres
+        from backend.supabase_client import create_profile_if_not_exists
+        email = payload.get("email")
+        profile = create_profile_if_not_exists(user_id, email)
+        role = profile.get("role", "free") if profile else "free"
+        
+        return {"id": user_id, "role": role, "email": email}
         
     except jwt.ExpiredSignatureError:
         logger.error("Token signature has expired")

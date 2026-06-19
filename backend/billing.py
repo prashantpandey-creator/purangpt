@@ -4,7 +4,7 @@ import razorpay
 import logging
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, Any
-from backend.supabase_client import get_supabase
+from backend.supabase_client import get_profile, update_profile, get_db_conn
 
 logger = logging.getLogger(__name__)
 
@@ -57,12 +57,8 @@ def create_stripe_checkout(user_id: str, plan: str, success_url: str, cancel_url
 
     try:
         # Create or retrieve customer ID
-        supabase = get_supabase()
-        customer_id = None
-        if supabase:
-            profile = supabase.table("profiles").select("stripe_customer_id").eq("id", user_id).execute()
-            if profile.data and profile.data[0].get("stripe_customer_id"):
-                customer_id = profile.data[0]["stripe_customer_id"]
+        profile = get_profile(user_id)
+        customer_id = profile.get("stripe_customer_id") if profile else None
 
         session_args = {
             "payment_method_types": ["card"],
@@ -81,17 +77,12 @@ def create_stripe_checkout(user_id: str, plan: str, success_url: str, cancel_url
         }
         if customer_id:
             session_args["customer"] = customer_id
-        else:
-            # Let Stripe create a new customer and retrieve email
-            if supabase:
-                auth_user = supabase.table("profiles").select("display_name").eq("id", user_id).execute()
-                # If we had the email, we'd pass it. Stripe handles customer creation automatically.
 
         session = stripe.checkout.Session.create(**session_args)
         
         # Save stripe customer ID back to user profile if available
-        if supabase and session.customer:
-            supabase.table("profiles").update({"stripe_customer_id": session.customer}).eq("id", user_id).execute()
+        if session.customer:
+            update_profile(user_id, {"stripe_customer_id": session.customer})
 
         return {
             "url": session.url,
@@ -158,40 +149,42 @@ def activate_user_subscription(user_id: str, plan: str, provider: str, external_
     Upgrades user profile to the specified subscription tier.
     Logs subscription details in the subscriptions database table.
     """
-    supabase = get_supabase()
-    if not supabase:
-        logger.error("Supabase client is not available. Cannot activate subscription.")
+    conn = get_db_conn()
+    if not conn:
+        logger.error("Local Postgres connection not available. Cannot activate subscription.")
         return False
 
     now = datetime.now(timezone.utc)
     expires_at = now + timedelta(days=period_end_days)
 
     try:
-        # 1. Update user profile
-        supabase.table("profiles").update({
-            "role": plan,
-            "subscription_status": "active",
-            "subscription_plan": plan,
-            "subscription_expires_at": expires_at.isoformat(),
-            "updated_at": now.isoformat()
-        }).eq("id", user_id).execute()
+        with conn.cursor() as cur:
+            # 1. Update user profile
+            cur.execute("""
+                UPDATE profiles SET
+                    role = %s,
+                    subscription_status = 'active',
+                    subscription_plan = %s,
+                    subscription_expires_at = %s,
+                    updated_at = %s
+                WHERE id = %s
+            """, (plan, plan, expires_at, now, user_id))
 
-        # 2. Insert record in subscriptions table
-        supabase.table("subscriptions").insert({
-            "user_id": user_id,
-            "provider": provider,
-            "external_subscription_id": external_sub_id,
-            "plan": plan,
-            "status": "active",
-            "current_period_start": now.isoformat(),
-            "current_period_end": expires_at.isoformat()
-        }).execute()
+            # 2. Insert record in subscriptions table
+            cur.execute("""
+                INSERT INTO subscriptions (user_id, provider, external_subscription_id, plan, status, current_period_start, current_period_end)
+                VALUES (%s, %s, %s, %s, 'active', %s, %s)
+            """, (user_id, provider, external_sub_id, plan, now, expires_at))
+        conn.commit()
 
         logger.info(f"Successfully activated '{plan}' plan for user {user_id} via {provider}.")
         return True
     except Exception as e:
         logger.error(f"Error activating subscription for {user_id}: {e}")
+        conn.rollback()
         return False
+    finally:
+        conn.close()
 
 def verify_razorpay_payment(razorpay_order_id: str, razorpay_payment_id: str, razorpay_signature: str) -> bool:
     """

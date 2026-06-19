@@ -63,7 +63,7 @@ MAX_HISTORY   = 100  # messages kept in session memory
 
 
 from backend.auth import get_current_user, require_auth, require_role, get_guest_id, check_guest_rate_limit, increment_guest_usage, validate_query
-from backend.supabase_client import get_supabase, update_profile, get_admin_stats, get_all_users, encrypt_keys, decrypt_keys, increment_usage, check_rate_limit, check_research_limit, increment_research_usage
+from backend.supabase_client import update_profile, get_admin_stats, get_all_users, encrypt_keys, decrypt_keys, increment_usage, check_rate_limit, check_research_limit, increment_research_usage
 
 from backend.session_manager import SessionManager
 from backend.monitor import run_health_checks
@@ -1985,13 +1985,11 @@ async def revenuecat_webhook(req: Request):
                 )
         elif event_type in ["EXPIRATION", "CANCELLATION"]:
             # Handle downgrade logic
-            supabase = get_supabase()
-            if supabase and user_id:
-                supabase.table("profiles").update({
+            if user_id:
+                update_profile(user_id, {
                     "role": "free",
                     "subscription_status": "canceled",
-                    "updated_at": datetime.now(timezone.utc).isoformat()
-                }).eq("id", user_id).execute()
+                })
                 
         return {"status": "success"}
     except Exception as e:

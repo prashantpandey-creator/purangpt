@@ -32,6 +32,23 @@ class SessionManager:
         try:
             with conn.cursor() as cur:
                 cur.execute("""
+                CREATE TABLE IF NOT EXISTS profiles (
+                    id TEXT PRIMARY KEY,
+                    email TEXT,
+                    display_name TEXT,
+                    role TEXT DEFAULT 'free',
+                    subscription_status TEXT DEFAULT 'inactive',
+                    subscription_plan TEXT,
+                    subscription_expires_at TIMESTAMPTZ,
+                    daily_message_count INT DEFAULT 0,
+                    deep_research_count INT DEFAULT 0,
+                    daily_reset_at TIMESTAMPTZ DEFAULT NOW(),
+                    stripe_customer_id TEXT,
+                    created_at TIMESTAMPTZ DEFAULT NOW(),
+                    updated_at TIMESTAMPTZ DEFAULT NOW()
+                );
+                CREATE INDEX IF NOT EXISTS idx_profiles_role ON profiles(role);
+
                 CREATE TABLE IF NOT EXISTS chat_sessions (
                     id TEXT PRIMARY KEY,
                     logto_user_id TEXT,
@@ -44,6 +61,25 @@ class SessionManager:
                 );
                 CREATE INDEX IF NOT EXISTS idx_chat_sessions_logto_user ON chat_sessions(logto_user_id);
                 CREATE INDEX IF NOT EXISTS idx_chat_sessions_guest ON chat_sessions(guest_id);
+
+                CREATE TABLE IF NOT EXISTS subscriptions (
+                    id SERIAL PRIMARY KEY,
+                    user_id TEXT REFERENCES profiles(id) ON DELETE CASCADE,
+                    provider TEXT,
+                    external_subscription_id TEXT,
+                    plan TEXT,
+                    status TEXT,
+                    current_period_start TIMESTAMPTZ DEFAULT NOW(),
+                    current_period_end TIMESTAMPTZ
+                );
+
+                CREATE TABLE IF NOT EXISTS usage_logs (
+                    id SERIAL PRIMARY KEY,
+                    user_id TEXT,
+                    session_id TEXT,
+                    model_used TEXT,
+                    created_at TIMESTAMPTZ DEFAULT NOW()
+                );
                 """)
             conn.commit()
         except Exception as e:

@@ -1,26 +1,26 @@
 import os
 import json
 from datetime import datetime, timezone
-from supabase import create_client, Client
 from cryptography.fernet import Fernet
 import logging
 
 logger = logging.getLogger(__name__)
 
-# Supabase Initialization
-SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
+# Local Postgres Initialization
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
-_supabase: Client = None
+db_url = os.getenv("VECTOR_DB_URL")
 
-def get_supabase() -> Client:
-    global _supabase
-    if _supabase is None:
-        if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-            logger.warning("Supabase credentials not found. Auth will not work.")
-            return None
-        _supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-    return _supabase
+def get_db_conn():
+    if not db_url:
+        logger.warning("VECTOR_DB_URL not set in env, DB operations won't work.")
+        return None
+    try:
+        return psycopg2.connect(db_url, cursor_factory=RealDictCursor)
+    except Exception as e:
+        logger.error(f"Failed to connect to local Postgres: {e}")
+        return None
 
 # Encryption for BYOK Keys
 FERNET_KEY = os.getenv("FERNET_KEY", "")
@@ -47,26 +47,74 @@ def decrypt_keys(encrypted_str: str) -> dict:
         return {}
 
 def get_profile(user_id: str) -> dict:
-    """Fetch user profile from Supabase."""
-    supabase = get_supabase()
-    if not supabase: return None
+    """Fetch user profile from local Postgres."""
+    conn = get_db_conn()
+    if not conn: return None
     try:
-        response = supabase.table("profiles").select("*").eq("id", user_id).execute()
-        if response.data:
-            return response.data[0]
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM profiles WHERE id = %s", (user_id,))
+            row = cur.fetchone()
+            if row:
+                # Convert timestamps to ISO format strings for compatibility
+                for k, v in row.items():
+                    if isinstance(v, datetime):
+                        row[k] = v.isoformat()
+                return dict(row)
     except Exception as e:
         logger.error(f"Error fetching profile for {user_id}: {e}")
+    finally:
+        conn.close()
+    return None
+
+def create_profile_if_not_exists(user_id: str, email: str = None) -> dict:
+    """Creates a user profile in local Postgres if it does not already exist."""
+    conn = get_db_conn()
+    if not conn: return None
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM profiles WHERE id = %s", (user_id,))
+            row = cur.fetchone()
+            if row:
+                for k, v in row.items():
+                    if isinstance(v, datetime):
+                        row[k] = v.isoformat()
+                return dict(row)
+            
+            now = datetime.now(timezone.utc)
+            cur.execute(
+                "INSERT INTO profiles (id, email, created_at, updated_at) VALUES (%s, %s, %s, %s) ON CONFLICT (id) DO NOTHING",
+                (user_id, email, now, now)
+            )
+        conn.commit()
+        return get_profile(user_id)
+    except Exception as e:
+        logger.error(f"Error in create_profile_if_not_exists for {user_id}: {e}")
+        conn.rollback()
+    finally:
+        conn.close()
     return None
 
 def update_profile(user_id: str, data: dict):
-    """Update user profile in Supabase."""
-    supabase = get_supabase()
-    if not supabase: return
+    """Update user profile in local Postgres."""
+    conn = get_db_conn()
+    if not conn: return
     try:
-        data["updated_at"] = datetime.now(timezone.utc).isoformat()
-        supabase.table("profiles").update(data).eq("id", user_id).execute()
+        data["updated_at"] = datetime.now(timezone.utc)
+        fields = []
+        values = []
+        for k, v in data.items():
+            fields.append(f"{k} = %s")
+            values.append(v)
+        values.append(user_id)
+        query = f"UPDATE profiles SET {', '.join(fields)} WHERE id = %s"
+        with conn.cursor() as cur:
+            cur.execute(query, tuple(values))
+        conn.commit()
     except Exception as e:
         logger.error(f"Error updating profile for {user_id}: {e}")
+        conn.rollback()
+    finally:
+        conn.close()
 
 def check_rate_limit(user_id: str, role: str, is_byok: bool = False) -> tuple[bool, int]:
     """Check if the user has exceeded their daily message limit."""
@@ -89,15 +137,14 @@ def check_rate_limit(user_id: str, role: str, is_byok: bool = False) -> tuple[bo
     now = datetime.now(timezone.utc)
     if now.date() > last_reset_dt.date():
         # Reset count
-        supabase = get_supabase()
-        supabase.table("profiles").update({
+        update_profile(user_id, {
             "daily_message_count": 0,
             "deep_research_count": 0,
-            "daily_reset_at": now.isoformat()
-        }).eq("id", user_id).execute()
+            "daily_reset_at": now
+        })
         return True, limit
         
-    count = profile.get("daily_message_count", 0)
+    count = profile.get("daily_message_count", 0) or 0
     return count < limit, limit - count
 
 def check_research_limit(user_id: str, role: str, is_byok: bool = False) -> tuple[bool, int]:
@@ -111,77 +158,84 @@ def check_research_limit(user_id: str, role: str, is_byok: bool = False) -> tupl
     if not profile:
         return False, 0
         
-    count = profile.get("deep_research_count", 0)
+    count = profile.get("deep_research_count", 0) or 0
     return count < limit, limit - count
 
 def increment_usage(user_id: str, session_id: str = None, model: str = None):
     """Increment the user's daily message count and log the usage."""
-    supabase = get_supabase()
-    if not supabase: return
-    
-    # 1. Increment daily count in profile
+    conn = get_db_conn()
+    if not conn: return
     try:
-        # We can't do an atomic increment easily via REST without RPC, so we fetch and update.
-        # For a low-traffic app, this is acceptable.
         profile = get_profile(user_id)
         if profile:
-            new_count = profile.get("daily_message_count", 0) + 1
-            supabase.table("profiles").update({"daily_message_count": new_count}).eq("id", user_id).execute()
+            new_count = (profile.get("daily_message_count", 0) or 0) + 1
+            update_profile(user_id, {"daily_message_count": new_count})
+            
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO usage_logs (user_id, session_id, model_used, created_at) VALUES (%s, %s, %s, NOW())",
+                (user_id, session_id, model)
+            )
+        conn.commit()
     except Exception as e:
         logger.error(f"Error incrementing usage for {user_id}: {e}")
+        conn.rollback()
+    finally:
+        conn.close()
         
 def increment_research_usage(user_id: str):
     """Increment the user's daily deep research count."""
-    supabase = get_supabase()
-    if not supabase: return
     try:
         profile = get_profile(user_id)
         if profile:
-            new_count = profile.get("deep_research_count", 0) + 1
-            supabase.table("profiles").update({"deep_research_count": new_count}).eq("id", user_id).execute()
+            new_count = (profile.get("deep_research_count", 0) or 0) + 1
+            update_profile(user_id, {"deep_research_count": new_count})
     except Exception as e:
         logger.error(f"Error incrementing research usage for {user_id}: {e}")
-        
-    # 2. Add to usage_logs
-    try:
-        supabase.table("usage_logs").insert({
-            "user_id": user_id,
-            "session_id": session_id,
-            "model_used": model
-        }).execute()
-    except Exception as e:
-        logger.error(f"Error logging usage for {user_id}: {e}")
 
 def get_admin_stats() -> dict:
-    """Fetch analytics for the admin dashboard."""
-    supabase = get_supabase()
-    if not supabase: return {}
+    """Fetch analytics for the admin dashboard from local Postgres."""
+    conn = get_db_conn()
+    if not conn: return {}
     try:
-        # Very basic stats due to REST limitations (normally use RPC or raw SQL)
-        users_resp = supabase.table("profiles").select("id", count="exact").execute()
-        pro_resp = supabase.table("profiles").select("id", count="exact").in_("role", ["pro", "scholar"]).execute()
-        
-        # Today's messages
-        now = datetime.now(timezone.utc)
-        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
-        usage_resp = supabase.table("usage_logs").select("id", count="exact").gte("created_at", today_start).execute()
-        
-        return {
-            "total_users": users_resp.count if hasattr(users_resp, 'count') else 0,
-            "paid_users": pro_resp.count if hasattr(pro_resp, 'count') else 0,
-            "messages_today": usage_resp.count if hasattr(usage_resp, 'count') else 0
-        }
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM profiles")
+            total_users = cur.fetchone()["count"]
+            
+            cur.execute("SELECT COUNT(*) FROM profiles WHERE role IN ('pro', 'scholar')")
+            paid_users = cur.fetchone()["count"]
+            
+            now = datetime.now(timezone.utc)
+            today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            cur.execute("SELECT COUNT(*) FROM usage_logs WHERE created_at >= %s", (today_start,))
+            messages_today = cur.fetchone()["count"]
+            
+            return {
+                "total_users": total_users,
+                "paid_users": paid_users,
+                "messages_today": messages_today
+            }
     except Exception as e:
         logger.error(f"Error fetching admin stats: {e}")
         return {}
+    finally:
+        conn.close()
 
 def get_all_users() -> list:
-    """Fetch all users for admin dashboard."""
-    supabase = get_supabase()
-    if not supabase: return []
+    """Fetch all users for admin dashboard from local Postgres."""
+    conn = get_db_conn()
+    if not conn: return []
     try:
-        resp = supabase.table("profiles").select("*").order("created_at", desc=True).limit(100).execute()
-        return resp.data
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM profiles ORDER BY created_at DESC LIMIT 100")
+            rows = cur.fetchall()
+            for row in rows:
+                for k, v in row.items():
+                    if isinstance(v, datetime):
+                        row[k] = v.isoformat()
+            return [dict(r) for r in rows]
     except Exception as e:
         logger.error(f"Error fetching all users: {e}")
         return []
+    finally:
+        conn.close()
