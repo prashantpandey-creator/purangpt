@@ -8,6 +8,7 @@ This gives us the best of both worlds:
 - BM25: "Narada" finds exact name matches that embeddings might rank lower
 """
 
+from __future__ import annotations
 import json
 import logging
 import math
@@ -125,20 +126,29 @@ class HybridSearcher:
         semantic_weight: float = 0.5,
         mmr_lambda: float = 0.7,
         sharma_weighting: bool = True,
+        embed_phrase: str | None = None,
+        fts_phrase: str | None = None,
     ) -> list[SearchResult]:
         """
-        Executes the hybrid_search RPC on Postgres, which performs pgvector distance 
+        Executes the hybrid_search RPC on Postgres, which performs pgvector distance
         and FTS websearch natively, fusing them with RRF.
+
+        Args:
+            query:        Original user query (used for FTS if fts_phrase not given).
+            embed_phrase: Enriched phrase for embedding, e.g. from SanskritQueryProcessor.
+                          Falls back to "query: {query}" if None.
+            fts_phrase:   Multi-term OR phrase for Postgres FTS, e.g. "maheśvara | shiva | rudra".
+                          Falls back to raw query if None.
         """
         if not self.is_ready:
             return []
 
         try:
-            # 1. Generate query embedding locally (offload to thread)
+            # 1. Generate query embedding — use enriched phrase if provided
             import asyncio
             loop = asyncio.get_running_loop()
-            e5_query = f"query: {query}"
-            query_emb = await loop.run_in_executor(None, self._embed_model.encode, e5_query)
+            phrase_to_embed = embed_phrase if embed_phrase else f"query: {query}"
+            query_emb = await loop.run_in_executor(None, self._embed_model.encode, phrase_to_embed)
             if hasattr(query_emb, "tolist"):
                 query_emb = query_emb.tolist()
             emb_str = "[" + ",".join(map(str, query_emb)) + "]"
@@ -151,16 +161,18 @@ class HybridSearcher:
                         pg_filter[k] = v["$eq"]
                     else:
                         pg_filter[k] = v
-            
+
             filter_json = json.dumps(pg_filter)
 
             # 3. Execute Postgres hybrid_search function
+            # Use fts_phrase for FTS if given (OR-joined synonyms), else raw query.
+            fts_query = fts_phrase if fts_phrase else query
             fetch_k = top_k * 4
             async with self._pool.acquire() as conn:
                 rows = await conn.fetch('''
-                    SELECT id, content, metadata, similarity 
+                    SELECT id, content, metadata, similarity
                     FROM hybrid_search($1, $2::vector, $3, $4::jsonb)
-                ''', query, emb_str, fetch_k, filter_json)
+                ''', fts_query, emb_str, fetch_k, filter_json)
 
             if not rows:
                 return []

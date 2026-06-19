@@ -190,6 +190,7 @@ class AppState:
     active_provider: str = "unknown"     # set at startup after key validation
     active_model: str = ""
     http_client: aiohttp.ClientSession = None
+    query_processor = None               # SanskritQueryProcessor, set after LLM ready
 
 state = AppState()
 
@@ -335,22 +336,18 @@ def normalize_iast(text: str) -> str:
     return _ud.normalize('NFC', text).translate(_IAST_MAP).lower()
 
 
-# Sanskrit synonym expansions for common research queries
+# Sanskrit synonym expansions — KEPT as lightweight last-resort fallback only.
+# Primary expansion is now handled by SanskritQueryProcessor (LLM-powered).
 _SANSKRIT_SYNONYMS: dict = {
-    "creation":    ["srishti", "sristi", "utpatti", "prabhava"],
-    "destruction": ["pralaya", "samhara", "vinasha"],
-    "vishnu":      ["narayana", "hari", "vasudeva", "kesava"],
-    "shiva":       ["rudra", "mahadeva", "maheshvara", "hara"],
-    "brahma":      ["pitamaha", "prajapati", "hiranyagarbha"],
-    "devi":        ["durga", "parvati", "shakti", "kali", "ambika"],
-    "krishna":     ["govinda", "gopala", "madhava"],
-    "moksha":      ["mukti", "liberation", "kaivalya", "vimukti"],
-    "karma":       ["kriya", "dharma", "phala"],
-    "yoga":        ["samadhi", "dhyana", "pranayama"],
-    "atman":       ["jivatma", "brahman", "paramatman"],
-    "time":        ["kala", "yuga", "manvantara", "kalpa"],
-    "narada":      ["naradiya", "devarshi"],
-    "rama":        ["raghava", "raghunatha", "dasharathi"],
+    "creation":    ["srishti", "utpatti"],
+    "destruction": ["pralaya", "samhara"],
+    "vishnu":      ["narayana", "hari", "vasudeva"],
+    "shiva":       ["rudra", "mahadeva", "maheshvara"],
+    "brahma":      ["pitamaha", "prajapati"],
+    "devi":        ["durga", "parvati", "shakti"],
+    "krishna":     ["govinda", "madhava"],
+    "moksha":      ["mukti", "kaivalya"],
+    "atman":       ["jivatma", "paramatman"],
 }
 
 def expand_query_terms(query: str) -> list:
@@ -1391,7 +1388,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
     async def event_gen() -> AsyncGenerator[dict, None]:
         # Immediate feedback so the UI shows motion while we translate+search,
         # rather than dead air until the first LLM token.
-        yield {"type": "status", "message": "🔍 Searching the sacred texts…"}
+        yield {"data": json.dumps({"type": "status", "message": "🔍 Searching the sacred texts…"}) }
 
         # 0. Detect and Translate Query (skips the LLM call for English queries)
         detected_lang, search_query = await detect_and_translate_query(request.query)
