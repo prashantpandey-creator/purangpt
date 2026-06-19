@@ -61,19 +61,11 @@ CLAUDE-secrets.md
 .env
 .env.*
 !.env.example
-# Allow the committed prod-env TEMPLATE, but never the real filled-in stack env.
-!deploy/.env.prod.example
-stack.env
-/root/stack.env
 
-# ── SOPS secrets management ──────────────────────────────────────────────────
-# Commit ONLY the age-encrypted *.enc.yaml + the docs/helper. Block everything
-# else under secrets/ (any accidental plaintext decrypt); never commit age keys.
-secrets/*
-!secrets/*.enc.yaml
-!secrets/README.md
-!secrets/sync-to-server.sh
-*.dec.yaml
-*.decrypted
+## SOPS / age — encrypted secrets/*.env ARE committed; keys & decrypted output are NOT
+*.agekey
+age-keys.txt
 keys.txt
-age-key*.txt
+secrets/*.dec
+secrets/*.dec.*
+secrets/*.plain.*
