@@ -39,8 +39,11 @@ jobs:
           set -e
           cd /root/purangpt
           # Mirror origin/main exactly — a plain pull aborts if the server tree
-          # has stray local edits, silently leaving old code deployed.
+          # has stray local edits, silently leaving old code deployed. We also
+          # force the checked-out branch to main: the server tree historically sat
+          # on the dead `develop` branch, so reset-only left a confusing ref.
           git fetch origin main
+          git checkout -B main origin/main
           git reset --hard origin/main
           git clean -fd
           cd /root

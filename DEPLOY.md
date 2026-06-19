@@ -1,146 +1,89 @@
-# PuranGPT — Deployment & iOS App Guide
+# PuranGPT — Deployment Architecture (canonical)
 
-## Part 1 — Deploy Backend to Hetzner VPS
+> Single source of truth for how PuranGPT deploys. If you find a second mechanism
+> doing the same job, it's drift — reconcile it to this doc.
 
-The backend and frontend are now deployed on a Hetzner VPS using Docker Compose.
+## TL;DR
 
-### Step 1 — Connect to Hetzner
-```bash
-ssh -i ~/.ssh/purangpt_hetzner root@204.168.176.229
+- **Two repos, one deploy path each, both via GitHub Actions on `main`.**
+  - Backend  → `prashantpandey-creator/purangpt`      → `.github/workflows/deploy.yml`
+  - Frontend → `prashantpandey-creator/purangpt-next` → `.github/workflows/deploy.yml`
+- **`main` is the only deploy branch.** `develop` is dead — never deploy from it.
+- The **production stack is one root compose** on the server: `/root/docker-compose.yml`
+  (compose project `root`). It owns: backend, frontend, logto, logto-db, and the
+  pgvector DB container (`purangpt-pgvector-1`).
+- **Coolify** runs on this box but only provides the **Traefik proxy + SSL**. It does
+  NOT build or deploy PuranGPT — no Coolify "application" is defined for it. Don't
+  expect Coolify Git integration to do anything here.
+
+## The one deploy flow
+
+```
+git push origin main
+  → GitHub Actions (deploy.yml)
+      → SSH to Hetzner (204.168.176.229); key = repo secret VPS_SSH_KEY
+      → cd /root/<repo>; git fetch origin main; git reset --hard origin/main; git clean -fd
+      → cd /root; docker compose build [--no-cache for frontend] <service>
+      → docker compose up -d <service>
 ```
 
-### Step 2 — Deploy Backend and Frontend
-The codebase is located in `/root/purangpt` (backend) and `/root/purangpt-next` (frontend).
+Rules:
+- **Never `git pull` on the server** — it aborts on a dirty tree and silently ships
+  stale code. Always fetch + `reset --hard origin/main` + `clean -fd`.
+- Backend skips `--no-cache` (heavy pip/sentence-transformers layers stay cached).
+  Frontend forces `--no-cache` (the standalone build caches `npm run build` wrongly).
+- A real frontend build is ~1–4 min. A sub-minute "success" is a cache/abort, not a
+  deploy — verify by curling the live route/asset.
 
-```bash
-cd /root/purangpt
-docker compose build backend
-docker compose up -d backend
+## Why it's set up this way (traps that were removed)
 
-cd /root/purangpt-next
-docker compose build frontend
-docker compose up -d frontend
-```
+This stack had accreted **three** overlapping deploy mechanisms fighting each other:
 
-### Step 3 — Get your URL
-The Next.js frontend is available at `http://204.168.176.229:3000`.
-The FastAPI backend is available at `http://204.168.176.229:8000`.
+1. **GitHub Actions** — KEPT, the canonical one. Hard-reset, path-filtered, no-cache
+   frontend. Reproducible, rollback-able.
+2. **`webhook.py` on :9000** — REMOVED from the deploy path. It ran `/root/deploy-*.sh`
+   which did `git pull origin develop` for the backend: `git pull` aborts on a dirty
+   tree, and `develop` was the wrong (stale) branch — so backend changes silently
+   never shipped. This was the original "my changes aren't deploying" bug.
+3. **An in-repo `docker-compose.yml`** that also defined `pgvector`/`ollama` with
+   `POSTGRES_PASSWORD=postgres` + `ports: 5432:5432`. Running it desynced the DB
+   password (broke live auth) and **published Postgres to the internet** (→ breach).
+   The in-repo compose is now LOCAL-DEV-ONLY: no pgvector service, no port publish.
 
-Update `ios_app/build_ios.sh` → set `NEXT_PUBLIC_API_URL` to the Hetzner backend URL (`http://204.168.176.229:8000`).
+## Server facts
+
+- Backend dir: `/root/purangpt`        (must be on `main`)
+- Frontend dir: `/root/purangpt-next`  (on `main`)
+- Root compose: `/root/docker-compose.yml`  ← production source of truth
+- Frontend server-side secrets: `/root/frontend-secrets.env` (gitignored, injected
+  via the frontend service `env_file:` — see `purangpt-next/CLAUDE-secrets.md`).
+- pgvector port 5432 is firewalled to Docker-internal only (DOCKER-USER iptables).
+
+## Security invariants (learned the hard way)
+
+- **No DB port (5432/6379/27017) may be published to `0.0.0.0`.** Docker bypasses
+  ufw — publishing a port exposes it to the internet regardless of the firewall.
+- **No secrets in source or in committed compose `environment:` blocks** — use
+  `env_file:` pointing at a gitignored file.
+- `FERNET_KEY`, `LOGTO_*`, `GOOGLE_*` must be real env vars; the apps fail fast if
+  missing rather than falling back to a leaked hardcoded default.
 
 ---
 
-## Part 2 — iOS App with Capacitor
+## Appendix — iOS App (Capacitor)
 
-Capacitor wraps your existing HTML/CSS/JS frontend into a native iOS app. No React Native, no rewrite.
-
-### Prerequisites
-- **Mac with Xcode 15+** installed (App Store → Xcode, ~15GB)
-- **Node.js 18+** (`node --version`)
-- **CocoaPods** (`sudo gem install cocoapods`)
-- Apple Developer account (free for testing on your own device, $99/year for App Store)
-
-### Step 1 — Install dependencies
-```bash
-cd purangpt/ios_app/
-npm install
-```
-
-### Step 2 — Add `ios_config.js` to frontend HTML
-Edit `frontend/index.html` — add this line **before** the `<script src="/static/app.js">` line:
-
-```html
-<!-- iOS API config — only active in native app -->
-<script src="ios_config.js"></script>
-```
-
-Also copy `ios_config.js` into `frontend/`:
-```bash
-cp ios_app/ios_config.js frontend/ios_config.js
-```
-
-### Step 3 — Add iOS platform
-```bash
-cd ios_app/
-npx cap add ios
-```
-This creates an `ios/` folder with a full Xcode project.
-
-### Step 4 — Sync web assets
-Every time you change the frontend, run:
-```bash
-npx cap sync
-```
-This copies `../frontend/` into the iOS app bundle.
-
-### Step 5 — Open in Xcode and run
-```bash
-npx cap open ios
-```
-In Xcode:
-1. Select your iPhone as target device (plug it in via USB)
-2. Press ▶ (Run) — app installs on your phone
-3. First run: go to iPhone Settings → General → VPN & Device Management → Trust your developer certificate
-
-### Step 6 — App Store submission (when ready)
-1. In Xcode: **Product → Archive**
-2. Window → Organizer → Distribute App → App Store Connect
-3. In App Store Connect (appstoreconnect.apple.com):
-   - Create new app: "PuranGPT"
-   - Bundle ID: `com.purangpt.app`
-   - Category: Books / Education
-   - Submit for review
-
----
-
-## Part 3 — iOS App customisation
-
-### Splash screen & icon
-Replace these files in `ios_app/ios/App/App/Assets.xcassets/`:
-- `AppIcon.appiconset/` — app icon (1024×1024 PNG, no alpha)
-- `Splash.imageset/` — launch screen (2732×2732 PNG, dark background `#0B0907`)
-
-### App name, description (for App Store)
-- **Name:** PuranGPT
-- **Subtitle:** AI Oracle of the Sacred Texts
-- **Description:** Explore the 18 Mahapuranas, Vedas, Upanishads, and Yogic scriptures through AI-powered conversation. Every answer includes exact verse citations in Sanskrit and English.
-- **Keywords:** puranas, vedas, upanishads, sanskrit, hinduism, bhagavad gita, yoga sutras, spiritual
-- **Category:** Books
-
-### Deep links (optional)
-To share citations from the app, add to `capacitor.config.json`:
-```json
-"plugins": {
-  "App": {
-    "urlScheme": "purangpt"
-  }
-}
-```
-This enables URLs like `purangpt://cite/bhagavata/10.29.14` to open the app at a specific verse.
-
----
-
-## Alternative — Render.com (easier than Railway for first deploy)
-
-1. Go to https://render.com → New → Web Service
-2. Connect GitHub repo
-3. **Build command:** `pip install -r requirements.txt`
-4. **Start command:** `python run.py`
-5. **Environment:** Add same variables as Railway table above
-6. Free tier: 750 hours/month, spins down after 15min inactivity (cold start ~30s)
-
-## Alternative — Fly.io (best global performance)
+Capacitor wraps the web frontend into a native iOS app (no rewrite). Lives in
+`purangpt-next` (the Capacitor config + `@logto/capacitor`), not the backend.
 
 ```bash
-# Install flyctl
-curl -L https://fly.io/install.sh | sh
-
-cd purangpt/
-fly launch        # creates fly.toml automatically
-fly secrets set GEMINI_API_KEY=your_key_here
-fly secrets set GROQ_API_KEY=your_key_here
-fly deploy
-fly open          # opens your URL
+cd purangpt-next
+npx cap sync ios     # copy web build into the iOS bundle after each change
+npx cap open ios     # open Xcode → select device → Run
 ```
 
-Fly gives 3 free VMs with 256MB RAM — upgrade to 512MB for comfortable running.
+App Store metadata:
+- **Name:** PuranGPT · **Subtitle:** AI Oracle of the Sacred Texts
+- **Bundle ID:** `com.purangpt.app` · **Category:** Books / Education
+- **Description:** Explore the 18 Mahapuranas, Vedas, Upanishads, and Yogic
+  scriptures through AI conversation. Every answer includes exact verse citations
+  in Sanskrit and English.
