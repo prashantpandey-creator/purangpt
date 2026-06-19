@@ -1,9 +1,10 @@
 name: Deploy Backend to Hetzner VPS
 
-# Required repo secrets (Settings → Secrets and variables → Actions):
-#   VPS_SSH_KEY  — private key matching ~/.ssh/purangpt_hetzner (same as purangpt-next)
-#   SOPS_AGE_KEY — the age PRIVATE key (AGE-SECRET-KEY-1…) that decrypts
-#                  secrets/prod.env. Matches the recipient in .sops.yaml.
+# Backend deploy. Secrets come from GitHub Repository Secrets (Settings → Secrets
+# and variables → Actions); the script renders /root/purangpt/.env from them.
+# Required secrets: VPS_SSH_KEY, VECTOR_DB_URL, DEEPSEEK_API_KEY, GEMINI_API_KEY,
+# GROQ_API_KEY, TOGETHER_API_KEY, ZHIPU_API_KEY, FERNET_KEY.
+# (An encrypted backup-of-record of all values lives in secrets/prod.env.)
 
 on:
   push:
@@ -34,14 +35,17 @@ jobs:
       uses: appleboy/ssh-action@v1.0.3
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         TOGETHER_API_KEY: ${{ secrets.TOGETHER_API_KEY }}
         ZHIPU_API_KEY: ${{ secrets.ZHIPU_API_KEY }}
         VECTOR_DB_URL: ${{ secrets.VECTOR_DB_URL }}
+        FERNET_KEY: ${{ secrets.FERNET_KEY }}
       with:
         host: 204.168.176.229
         username: root
         key: ${{ secrets.VPS_SSH_KEY }}
-        envs: DEEPSEEK_API_KEY,TOGETHER_API_KEY,ZHIPU_API_KEY,VECTOR_DB_URL # forward secrets into remote shell
+        envs: DEEPSEEK_API_KEY,GEMINI_API_KEY,GROQ_API_KEY,TOGETHER_API_KEY,ZHIPU_API_KEY,VECTOR_DB_URL,FERNET_KEY
         command_timeout: 30m # backend build is heavy (torch + ML model warmup)
         script: |
           set -e
@@ -55,16 +59,33 @@ jobs:
           git reset --hard origin/main
           git clean -fd
 
-          # ── Render secrets directly to /root/purangpt/.env ──
+          # ── Render the FULL backend .env from GitHub Secrets + static config ──
+          # Must include every key the app needs — a partial .env silently breaks
+          # prod (e.g. omitting GEMINI/FERNET, or a wrong VECTOR_DB_URL pointing at
+          # logto-db instead of pgvector → total_verses=0, fail-fast on FERNET).
           umask 077
           cat <<EOF > .env
+          LLM_PROVIDER=gemini
           DEEPSEEK_API_KEY=$DEEPSEEK_API_KEY
+          GEMINI_API_KEY=$GEMINI_API_KEY
+          GEMINI_MODEL=gemini-2.5-flash
+          GROQ_API_KEY=$GROQ_API_KEY
+          GROQ_MODEL=llama-3.3-70b-versatile
           TOGETHER_API_KEY=$TOGETHER_API_KEY
           ZHIPU_API_KEY=$ZHIPU_API_KEY
           VECTOR_DB_URL=$VECTOR_DB_URL
+          FERNET_KEY=$FERNET_KEY
+          EMBED_MODEL=intfloat/multilingual-e5-small
+          DATA_DIR=./data
+          HOST=0.0.0.0
+          PORT=8000
           EOF
           chmod 600 .env
-          echo "✓ Rendered secrets to /root/purangpt/.env"
+          # Guard: never deploy an .env missing the critical keys.
+          for k in VECTOR_DB_URL GEMINI_API_KEY FERNET_KEY; do
+            grep -q "^$k=." .env || { echo "FATAL: $k missing from rendered .env"; exit 1; }
+          done
+          echo "✓ Rendered /root/purangpt/.env ($(grep -cE '^[A-Z_]+=' .env) keys)"
 
           cd /root
           # Rebuild the backend. We do NOT use --no-cache here: the costly
@@ -72,5 +93,7 @@ jobs:
           # off requirements.txt, so they stay cached, while the `COPY . .` source
           # layer naturally busts after the hard reset above.
           docker compose build backend
-          docker compose up -d backend
+          # --force-recreate so the container reloads the freshly-rendered .env
+          # (plain `up -d` / `restart` keeps the old in-memory env).
+          docker compose up -d --force-recreate backend
           docker image prune -f
