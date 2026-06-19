@@ -6,12 +6,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 PuranGPT backend — a FastAPI RAG engine for querying Hindu sacred texts (18 Mahapuranas, Ramayana, Mahabharata, Gita, Upanishads) with exact verse citations and streaming LLM responses.
 
+## Access & secrets for sessions (how to be fully operational)
+
+Any session on this machine already has what it needs — these are the entry points:
+
+- **GitHub (create/merge PRs, push):** authed via the `gh` CLI keyring (account
+  `prashantpandey-creator`, HTTPS remotes). Just use `git push`, `gh pr create`,
+  `gh pr merge`. No SSH key needed for git. Verify with `gh auth status`.
+- **Secrets (decrypt/edit):** managed by **SOPS + age**. All secrets are encrypted
+  in `secrets/prod.enc.yaml` (committed). Decrypt with `sops -d secrets/prod.enc.yaml`
+  — this works automatically when the **age private key is present at
+  `~/.config/sops/age/keys.txt`** (distributed out-of-band; NEVER committed, never
+  pasted into any tracked file — that would defeat the whole scheme). See
+  `secrets/README.md` for edit/rotate/grant-access workflow.
+- **Server (SSH):** `ssh -i ~/.ssh/purangpt_hetzner root@204.168.176.229`.
+- **Deploy:** push to `main` → GitHub Actions deploys (see `DEPLOY.md`).
+- **Full operational state, keys, and the security-incident history** are in the
+  gitignored `CLAUDE-secrets.md` (read it before any deploy/server/DB work).
+
+> Why the age key is NOT in this file: `secrets/prod.enc.yaml` is only safe to commit
+> because the key lives outside the repo. Putting the key in a tracked file would let
+> anyone with repo access decrypt every production secret.
+
 ## Current Production Stack
 
 | Layer | Technology |
 |-------|-----------|
 | API | FastAPI + uvicorn (port 8000) |
-| LLM | DeepSeek (`deepseek-v4-flash` primary; Groq/Gemini fallback) |
+| LLM | Gemini (`gemini-2.5-flash`, current prod primary via `LLM_PROVIDER=gemini`); DeepSeek/Groq fallback |
 | Vector search | Postgres **pgvector** + FTS via `hybrid_search` SQL function (`indexer/search.py` → `HybridSearcher`) |
 | Profiles/billing | Same Postgres DB (`backend/db_client.py`, psycopg2) |
 | Sanskrit corpus | GRETIL (42 texts, ~40M chars, loaded at startup into memory) |
