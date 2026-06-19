@@ -96,6 +96,27 @@ class SessionManager:
         finally:
             conn.close()
 
+    def count_active_sessions(self, minutes: int = 15) -> int:
+        """Sessions updated within the last `minutes` — a real 'active now' metric.
+        (Replaces a dead reference to an in-memory .sessions dict that no longer
+        exists since sessions moved to Postgres, which always reported 0.)"""
+        conn = self._get_conn()
+        if not conn:
+            return 0
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT COUNT(*) AS n FROM chat_sessions WHERE updated_at > NOW() - (%s || ' minutes')::interval",
+                    (minutes,),
+                )
+                row = cur.fetchone()
+                return (row["n"] if row else 0) or 0
+        except Exception as e:
+            logger.error(f"count_active_sessions failed: {e}")
+            return 0
+        finally:
+            conn.close()
+
     def get_session(self, session_id: str, user_id: str = None, guest_id: str = None) -> dict:
         conn = self._get_conn()
         if not conn:

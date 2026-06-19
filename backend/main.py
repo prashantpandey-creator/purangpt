@@ -732,7 +732,8 @@ async def stream_deepseek(messages: List[dict], temperature: float = 0.3, req_mo
                         # Yield standard content token if present
                         token = delta.get("content", "")
                         if token: yield token
-                    except: continue
+                    except (json.JSONDecodeError, KeyError, IndexError):
+                        continue
 
 async def stream_together(messages: List[dict], temperature: float = 0.3, req_model: str = "Qwen/Qwen2.5-72B-Instruct-Turbo", custom_key: str = None) -> AsyncGenerator[Union[str, dict], None]:
     key = custom_key or TOGETHER_API_KEY
@@ -754,7 +755,8 @@ async def stream_together(messages: List[dict], temperature: float = 0.3, req_mo
                         data = json.loads(line[6:])
                         token = data["choices"][0]["delta"].get("content", "")
                         if token: yield token
-                    except: continue
+                    except (json.JSONDecodeError, KeyError, IndexError):
+                        continue
 
 async def stream_zhipu(messages: List[dict], temperature: float = 0.3, req_model: str = "glm-5.1", custom_key: str = None) -> AsyncGenerator[Union[str, dict], None]:
     key = custom_key or ZHIPU_API_KEY
@@ -776,7 +778,8 @@ async def stream_zhipu(messages: List[dict], temperature: float = 0.3, req_model
                         data = json.loads(line[6:])
                         token = data["choices"][0]["delta"].get("content", "")
                         if token: yield token
-                    except: continue
+                    except (json.JSONDecodeError, KeyError, IndexError):
+                        continue
 
 async def stream_ollama(messages: List[dict], temperature: float = 0.3, req_model: str = "qwen2.5:7b") -> AsyncGenerator[Union[str, dict], None]:
     url = f"{os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')}/api/chat"
@@ -1323,7 +1326,7 @@ async def get_user_limits(req: Request, user: Optional[dict] = Depends(get_curre
 @app.get("/api/monitor/health")
 async def monitor_health(user: dict = Depends(require_role(["admin"]))):
     """Run all health checks for the monitoring dashboard. Admin only."""
-    active_sessions = len(session_manager.sessions) if hasattr(session_manager, 'sessions') else 0
+    active_sessions = await asyncio.to_thread(session_manager.count_active_sessions)
     results = await run_health_checks(active_sessions)
     return results
 
