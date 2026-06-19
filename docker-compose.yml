@@ -1,3 +1,15 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# LOCAL DEV ONLY — do NOT run this on the production server.
+#
+# Production runs from the ROOT compose at /root/docker-compose.yml (backend +
+# frontend + logto + logto-db/pgvector), NOT from this file. This file used to
+# also define a `pgvector` service with POSTGRES_PASSWORD=postgres; running it on
+# the prod box recreated the shared DB with the wrong password and broke the live
+# backend's scram auth (the a8ab20… password it actually uses). It has been
+# stripped to backend-only to remove that landmine.
+#
+# For local dev, point VECTOR_DB_URL at your own Postgres+pgvector instance.
+# ─────────────────────────────────────────────────────────────────────────────
 services:
   purangpt:
     build: .
@@ -6,68 +18,12 @@ services:
     volumes:
       - ./data:/app/data
     environment:
-      - LLM_PROVIDER=ollama
-      - NEXT_PUBLIC_API_URL=
-      - OLLAMA_BASE_URL=http://ollama:11434
-      - OLLAMA_MODEL=qwen2.5:7b
-      - DB_DIR=/app/data/chroma_db
-      - CHUNKS_DIR=/app/data/chunks
-      - INDEX_DIR=/app/data/indexes
       - HOST=0.0.0.0
       - PORT=8000
-      - VECTOR_DB_URL=postgresql://postgres:postgres@pgvector:5432/purangpt
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
-    depends_on:
-      pgvector:
-        condition: service_healthy
+      # Local dev: bring your own Postgres+pgvector. In production this is the
+      # Logto Postgres and is set in the ROOT compose, not here.
+      - VECTOR_DB_URL=${VECTOR_DB_URL:-postgresql://postgres:postgres@host.docker.internal:5432/purangpt}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     restart: unless-stopped
-
-  pgvector:
-    image: ankane/pgvector:latest
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=purangpt
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  ollama:
-    image: ollama/ollama:latest
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_models:/root/.ollama
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  # Optional: Pull the LLM model on first startup
-  ollama-init:
-    image: ollama/ollama:latest
-    depends_on:
-      ollama:
-        condition: service_healthy
-    volumes:
-      - ollama_models:/root/.ollama
-    environment:
-      - OLLAMA_HOST=http://ollama:11434
-    entrypoint: >
-      sh -c "ollama pull qwen2.5:7b && echo 'Model ready'"
-    restart: "no"
-
-volumes:
-  ollama_models:
-  pgdata:
