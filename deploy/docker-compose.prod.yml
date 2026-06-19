@@ -61,21 +61,18 @@ services:
       context: ./purangpt-next
       args:
         NEXT_PUBLIC_API_URL: ""
+        NEXT_PUBLIC_REVENUECAT_APPLE_KEY: ${NEXT_PUBLIC_REVENUECAT_APPLE_KEY}
+        NEXT_PUBLIC_RAZORPAY_KEY_ID: ${NEXT_PUBLIC_RAZORPAY_KEY_ID}
         NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
-        NEXT_PUBLIC_REVENUECAT_APPLE_KEY: ${NEXT_PUBLIC_REVENUECAT_APPLE_KEY}
     container_name: purangpt_frontend
     depends_on:
       backend:
         condition: service_healthy
     env_file:
-      - /root/frontend-secrets.env  # LOGTO_*, GOOGLE_*, cookie secret (gitignored)
+      - /root/frontend-secrets.env  # all runtime secrets — rendered by secrets/sync-to-server.sh
     environment:
-      - GROQ_API_KEY=${GROQ_API_KEY}
-      - DATABASE_URL=${DATABASE_URL}
       - NEXTAUTH_URL=https://purangpt.com
-      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
-      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
       - GITHUB_PAT=${GITHUB_PAT}
     labels:
       - traefik.enable=true
