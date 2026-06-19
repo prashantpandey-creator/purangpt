@@ -1,210 +1,104 @@
-# CLAUDE.md — PuranGPT Codebase Guide
+# CLAUDE.md
 
-## Project Overview
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-PuranGPT is a Retrieval-Augmented Generation (RAG) system for querying Hindu sacred texts — the 18 Mahapuranas, Ramayana, Mahabharata, Bhagavad Gita, 108 Upanishads, and Yoga texts — with exact verse citations.
+## What This Is
 
-**Core concept:** Download PDFs → Extract text (OCR if needed) → Chunk by shloka boundaries → Build dual index (vector + BM25) → Serve via FastAPI with streaming LLM responses.
+PuranGPT backend — a FastAPI RAG engine for querying Hindu sacred texts (18 Mahapuranas, Ramayana, Mahabharata, Gita, Upanishads) with exact verse citations and streaming LLM responses.
 
----
+## Current Production Stack
 
-## Repository Layout
+| Layer | Technology |
+|-------|-----------|
+| API | FastAPI + uvicorn (port 8000) |
+| LLM | DeepSeek (`deepseek-v4-flash` primary; Groq/Gemini fallback) |
+| Vector search | Postgres **pgvector** + FTS via `hybrid_search` SQL function (`indexer/search.py` → `HybridSearcher`) |
+| Profiles/billing | Same Postgres DB (`backend/db_client.py`, psycopg2) |
+| Sanskrit corpus | GRETIL (42 texts, ~40M chars, loaded at startup into memory) |
+| Embeddings | `intfloat/multilingual-e5-small` (384-dim) — generated locally, stored in pgvector |
+| Research mode | `backend/agents/deep_research.py` — DeepSeek-R1 reasoner with streamed `reasoning_content` |
+
+**There is no Supabase, no ChromaDB, no Pinecone, no Ollama in production.** Those existed in earlier versions and are gone.
+
+## Key Files
 
 ```
-purangpt/
-├── data_pipeline/
-│   ├── downloader.py      # Async PDF downloader (aiohttp, tenacity, resume support)
-│   ├── extractor.py       # PyMuPDF + PaddleOCR text extraction
-│   └── chunker.py         # Shloka-aware chunker → JSONL output
-├── indexer/
-│   ├── build_index.py     # ChromaDB vector index + BM25 keyword index
-│   └── search.py          # Hybrid search (semantic + BM25)
-├── engine/
-│   ├── query_engine.py    # PuranGPTEngine: RAG orchestration + SSE streaming
-│   └── prompts.py         # Mode-specific LLM prompts (scholar, yogic, compare, etc.)
-├── backend/
-│   └── main.py            # FastAPI app: /api/chat, /api/search, /api/instances
-├── frontend/
-│   ├── index.html         # Temple-inspired UI
-│   ├── style.css          # Gold/saffron design system
-│   └── app.js             # Chat + search + explore JS
-├── data/                  # Runtime data (gitignored)
-│   ├── raw_pdfs/          # Downloaded PDFs
-│   ├── extracted/         # Per-PDF JSON (page-level text)
-│   ├── chunks/            # JSONL chunk files + all_chunks.jsonl
-│   ├── chroma_db/         # ChromaDB persistent store
-│   └── indexes/           # bm25_index.pkl + chunk_map.json
-├── run.py                 # Unified CLI entry point
-├── setup.sh               # One-command environment setup
-├── Dockerfile
-└── docker-compose.yml     # PuranGPT + Ollama services
+backend/
+  main.py           # FastAPI app — all routes, AppState, startup/shutdown
+  db_client.py      # Postgres psycopg2 helpers: profiles, billing, usage_logs
+  auth.py           # Logto JWT verification + profile upsert
+  session_manager.py # Schema bootstrap (CREATE TABLE IF NOT EXISTS)
+  billing.py        # Subscription/usage checks
+  monitor.py        # /api/admin/monitor health check (DB + LLMs + pgvector)
+  agents/
+    deep_research.py # DeepSeek-R1 research: query gen → DuckDuckGo → reasoner synthesis
+
+engine/
+  query_engine.py   # PuranGPTEngine: SSE stream orchestration
+  prompts.py        # Mode prompts: scholar, yogic, compare, guide (Guru mode), etc.
+
+indexer/
+  search.py         # HybridSearcher — asyncpg pool + sentence-transformers → pgvector RRF
+  build_index.py    # One-time indexer: chunks JSONL → pgvector (run offline, not at startup)
+
+data_pipeline/      # Offline text ingestion (download → extract → chunk → index)
+  downloader.py     fetch_*.py scripts  # PDF + web scrapers for text acquisition
 ```
 
----
+## Environment Variables
 
-## Data Pipeline
+| Variable | Required | Notes |
+|----------|----------|-------|
+| `VECTOR_DB_URL` | **Yes** | `postgresql://logto:logto@logto-db:5432/logto` in Docker; without it `index_ready: false` |
+| `DEEPSEEK_API_KEY` | Yes | Primary LLM + R1 research mode |
+| `GROQ_API_KEY` | No | Fallback LLM |
+| `GEMINI_API_KEY` | No | Second fallback |
+| `LOGTO_ENDPOINT` | No | Auth JWT issuer verification |
 
-The pipeline runs in four sequential stages, each independently re-runnable:
+In Docker the service hostname for the DB is `logto-db` (same container as Logto auth). Outside Docker use `localhost:5432`.
 
-### Stage 1 — Download (`data_pipeline/downloader.py`)
-- **Class:** `PuranDownloader`
-- **Catalog:** 18 Mahapuranas + Ramayana, Mahabharata, Bhagavad Gita, 108 Upanishads, Yoga texts (30+ texts total, defined in `_build_catalog()`)
-- **Sources:** vedpuran.net (primary) → archive.org / sacred-texts.com / GRETIL (fallbacks)
-- **Features:** async `aiohttp`, per-domain rate limiting (semaphores + min-delay), exponential backoff with jitter (5 attempts), resume support via `.download_state.json`, Rich progress bars
-- **Output:** `data/raw_pdfs/{key}/{key}.pdf` (or `_vol1.pdf`, `_vol2.pdf` for multi-volume)
-
-### Stage 2 — Extract (`data_pipeline/extractor.py`)
-- **Class:** `TextExtractor`
-- **Strategy:**
-  1. PyMuPDF (`fitz`) extracts embedded text layer
-  2. If avg chars/page < `min_text_per_page` (default 100) → PaddleOCR fallback
-  3. OpenCV preprocessing before OCR: deskew (Hough transform) → Otsu binarization → morphological denoise
-- **OCR language:** `hi` (Hindi/Devanagari, covers Sanskrit)
-- **Output:** `data/extracted/{key}.json` with page-by-page text + confidence + method
-
-### Stage 3 — Chunk (`data_pipeline/chunker.py`)
-- **Class:** `PuranicChunker`
-- **Shloka detection:** splits on Devanagari double-danda `॥`; falls back to blank lines for prose/English
-- **Chapter detection:** multilingual regex covers अध्याय, Adhyaya, Chapter, Sarga, Kanda, Parva, Skandha, Samhita, Khanda
-- **Chunk size:** 3 verses, 1-verse overlap, max 2400 chars (~800 tokens)
-- **Chunk ID format:** `{key}-ch{chapter:04d}-v{verse:04d}` (deterministic)
-- **Output:** `data/chunks/{key}.jsonl` + `data/chunks/all_chunks.jsonl`
-
-Each chunk carries: `id`, `purana`, `purana_key`, `book_section`, `chapter`, `verse_range`, `text`, `language`, `source_file`, `source_page`, `word_count`.
-
-### Stage 4 — Index (`indexer/build_index.py`)
-- **Class:** `EmbeddingIndexer`
-- **Vector index:** ChromaDB with `intfloat/multilingual-e5-large` embeddings (cosine similarity). Texts prefixed with `"passage: "` per E5 convention.
-- **Keyword index:** `BM25Okapi` (rank_bm25). Tokenizes Devanagari (`[ऀ-ॿ]+`) and Latin words separately.
-- **Resume support:** skips chunks already in ChromaDB by ID
-- **Output:** `data/chroma_db/` (vector store) + `data/indexes/bm25_index.pkl` + `data/indexes/chunk_map.json`
-
----
-
-## Query Engine (`engine/query_engine.py`)
-
-**Class:** `PuranGPTEngine`
-
-**Workflow for each query:**
-1. `HybridSearcher.hybrid_search()` — semantic + BM25 (configurable `top_k`, default 10)
-2. Emit `{"type": "sources", "sources": [...]}` immediately (frontend shows while LLM thinks)
-3. Build prompt via `get_prompt(mode)` + `format_context(results)`
-4. Stream tokens from LLM → yield `{"type": "token", "content": "..."}`
-5. Yield `{"type": "done"}`
-
-**LLM providers:**
-- **Ollama** (default): `qwen2.5:7b` at `http://localhost:11434` — low-level `aiohttp` streaming via `/api/generate`
-- **Groq API**: `llama-3.3-70b-versatile` — OpenAI-compatible SSE streaming
-- **Auto-detect:** tries Ollama first (`/api/tags` ping), falls back to Groq if `GROQ_API_KEY` is set
-
-**Query modes:** `scholar` (default), `yogic`, `compare`, `translate`, `find_instances`
-
-**Key methods:**
-- `query()` — async generator, yields SSE-compatible dicts
-- `query_sync()` — collects full response, returns `{answer, sources, mode}`
-- `find_instances()` — finds all occurrences of a topic across all texts, grouped by Purana
-
----
-
-## CLI Commands (`run.py`)
+## Commands
 
 ```bash
-python run.py                        # Start FastAPI server (default port 8000)
-python run.py --download             # Stage 1: download PDFs
-python run.py --extract              # Stage 2: OCR + text extraction
-python run.py --chunk                # Stage 3: shloka chunking
-python run.py --index                # Stage 4: build vector + BM25 indexes
-python run.py --pipeline             # All 4 stages sequentially
-python run.py --status               # Show system health (indexes, Ollama, Groq)
-python run.py --dev                  # Server with hot-reload
-python run.py --verbose              # Debug logging
+# All python commands use the local venv
+venv/bin/python run.py              # start server (:8000)
+venv/bin/python run.py --dev        # hot-reload
+venv/bin/python run.py --status     # health check (indexes, LLM providers)
 
-# Download specific texts or categories:
-python run.py --download --texts bhagavata vishnu
-python run.py --download --category mahapuranas  # or: epics | upanishads | yoga
+# Syntax check (no test suite)
+venv/bin/python -m py_compile backend/main.py
+venv/bin/python -m py_compile indexer/search.py
+
+# Ad-hoc smoke tests (run directly)
+venv/bin/python test_db.py
+venv/bin/python test_search.py
+venv/bin/python test_deep_research.py
 ```
-
-Each pipeline module also has its own `main()` CLI:
-```bash
-python data_pipeline/downloader.py --list          # Show all available texts
-python data_pipeline/extractor.py data/raw_pdfs   # Batch extract
-python data_pipeline/chunker.py                   # Batch chunk
-python indexer/build_index.py --model intfloat/multilingual-e5-small  # Faster/smaller model
-```
-
----
 
 ## API Endpoints
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/api/chat` | SSE streaming chat |
+| POST | `/api/chat` | SSE streaming chat (main endpoint) |
 | POST | `/api/search` | Raw hybrid search |
-| POST | `/api/instances` | Find all topic instances |
-| GET | `/api/puranas` | List indexed texts |
-| GET | `/api/status` | Health check |
+| GET | `/api/status` | Health: `index_ready`, `total_verses`, LLM provider |
+| GET | `/api/admin/monitor` | Full health: DB, pgvector, LLM latencies |
 
----
+SSE events from `/api/chat`: `sources` → `reasoning` (R1 only) → `token` × N → `done`
 
-## Environment Variables (`.env`)
+## Chat Modes
 
-> **Production reality (current):** the live stack runs **DeepSeek** as the LLM
-> provider (with Groq/Gemini fallback) and uses **Postgres/pgvector** for both
-> hybrid search and profiles/billing — there is no Supabase (DB access is
-> `backend/db_client.py`). The Ollama/ChromaDB rows below describe the original
-> local-dev pipeline and still work, but are not how prod runs.
+Defined in `engine/prompts.py` (`PROMPTS` dict) and must stay in sync with the frontend's `QueryMode` type in `purangpt-next/src/lib/api.ts`:
 
-| Variable | Default | Notes |
-|----------|---------|-------|
-| `VECTOR_DB_URL` | — | **Required.** pgvector Postgres for `HybridSearcher` + profiles/billing. If unset, `/api/status` shows `index_ready:false`. Prod: the Logto DB (`postgresql://logto:logto@logto-db:5432/logto`). |
-| `DEEPSEEK_API_KEY` | — | Primary LLM in prod; also powers the R1 reasoning research mode. |
-| `LLM_PROVIDER` | `ollama` | `ollama` \| `groq` \| `deepseek` \| `auto` |
-| `OLLAMA_MODEL` | `qwen2.5:7b` | Any Ollama model (local-dev path) |
-| `OLLAMA_BASE_URL` | `http://localhost:11434` | |
-| `GROQ_API_KEY` | — | Fallback LLM |
-| `GROQ_MODEL` | `llama-3.3-70b-versatile` | |
-| `EMBED_MODEL` | `intfloat/multilingual-e5-large` | HuggingFace model (search now uses `e5-small`) |
-| `DB_DIR` | `./data/chroma_db` | ChromaDB path (local-dev pipeline) |
-| `DATA_DIR` | `data` | Root data directory |
-| `PORT` | `8000` | Server port |
+- `scholar` — academic, with citations
+- `yogic` — experiential/meditative lens
+- `compare` — cross-text comparison
+- `translate` — Sanskrit translation + commentary
+- `find_instances` — topic occurrence across all texts
+- `guide` — Guru mode (3-part: Core Truth, Scriptural Anchor, Guru's Voice)
 
----
+## Deploy
 
-## Key Dependencies
+GitHub Actions (`.github/workflows/deploy.yml`) triggers on push to `main` when backend files change. It SSHes to Hetzner (`204.168.176.229`), hard-resets the tree, and rebuilds the Docker container. Requires `VPS_SSH_KEY` secret on `prashantpandey-creator/purangpt`.
 
-| Package | Purpose |
-|---------|---------|
-| `aiohttp` + `aiofiles` | Async HTTP downloads |
-| `tenacity` | Retry with backoff |
-| `PyMuPDF` (`fitz`) | PDF text extraction |
-| `paddleocr` + `paddlepaddle` | Devanagari OCR |
-| `opencv-python` (`cv2`) | Image preprocessing for OCR |
-| `sentence-transformers` | Multilingual embeddings |
-| `chromadb` | Vector store |
-| `rank_bm25` | BM25 keyword search |
-| `llama-index` | RAG framework (LLM clients) |
-| `fastapi` + `uvicorn` | Web server |
-| `rich` | Progress bars + console output |
-| `python-dotenv` | `.env` loading |
-
----
-
-## Docker
-
-```bash
-docker-compose up -d    # Starts purangpt (port 8000) + ollama (port 11434)
-                        # First run pulls qwen2.5:7b (~4-6 GB)
-```
-
-Data is mounted from `./data` so indexes persist across container restarts.
-
----
-
-## Text Catalog Summary
-
-- **18 Mahapuranas:** Agni, Bhagavata, Bhavishya, Brahma, Brahmanda, Brahma Vaivarta, Garuda, Kurma, Linga, Markandeya, Matsya, Narada, Padma, Shiva, Skanda, Vamana, Varaha, Vishnu
-- **Epics:** Ramayana, Mahabharata, Bhagavad Gita
-- **Upanishads:** 108 Upanishads collection + Isha, Kena, Katha, Chandogya, Brihadaranyaka, Mandukya individually
-- **Yoga:** Yoga Sutras of Patanjali, Hatha Yoga Pradipika, Yoga Vasistha
-
-All sourced from vedpuran.net (primary), archive.org, and sacred-texts.com (fallbacks).
+**Never edit files directly on the server** — it dirties the git tree and silently blocks future deploys.

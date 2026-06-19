@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 # To avoid circular imports or messy setups, we import clients directly
 from backend.db_client import get_db_conn
-from backend.pinecone_client import get_pinecone_index
 
 async def ping_llm(provider: str, api_key: str) -> dict:
     """Send a tiny test request to an LLM provider to measure latency and status."""
@@ -101,17 +100,22 @@ async def run_health_checks(active_sessions: int = 0) -> dict:
             "error": str(e)
         }
 
-    # 3. Pinecone
+    # 3. pgvector verse count
     start_time = time.time()
     try:
-        index = get_pinecone_index()
-        if index:
-            stats = index.describe_index_stats()
-            results["vector_db"] = {
-                "status": "healthy",
-                "latency_ms": int((time.time() - start_time) * 1000),
-                "total_vectors": stats.get("total_vector_count", 0)
-            }
+        conn = get_db_conn()
+        if conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT COUNT(*) FROM purana_verses")
+                    total_verses = cur.fetchone()[0]
+                results["vector_db"] = {
+                    "status": "healthy",
+                    "latency_ms": int((time.time() - start_time) * 1000),
+                    "total_verses": total_verses
+                }
+            finally:
+                conn.close()
         else:
             results["vector_db"] = {"status": "unconfigured", "latency_ms": 0}
     except Exception as e:

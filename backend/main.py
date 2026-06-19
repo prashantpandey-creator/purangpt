@@ -182,6 +182,7 @@ PROMPTS = {
 class AppState:
     searcher: Any = None
     index_ready: bool = False
+    total_verses: int = 0
     gretil_loaded: bool = False
     gretil_corpus: Dict[str, str] = {}   # text_id → full text
     total_gretil_chars: int = 0
@@ -457,7 +458,18 @@ async def lifespan(app: FastAPI):
         await searcher.initialize()
         state.searcher = searcher
         state.index_ready = True
-        logger.info("✓ Vector index ready")
+        # Cache verse count for /api/status
+        try:
+            from backend.db_client import get_db_conn
+            conn = get_db_conn()
+            if conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT COUNT(*) FROM purana_verses")
+                    state.total_verses = cur.fetchone()[0]
+                conn.close()
+        except Exception:
+            pass
+        logger.info("✓ Vector index ready (%d verses)", state.total_verses)
     except Exception as e:
         logger.info("Vector index not built yet: %s", e)
 
@@ -1168,8 +1180,7 @@ async def status():
         "groq_key_valid":  state.active_provider == "groq",
         "gemini_key_valid":state.active_provider == "gemini" or (GEMINI_API_KEY and state.active_provider == "groq"),
         "index_ready":     state.index_ready,
-        "texts_indexed":   0,
-        "total_chunks":    state.searcher.total_documents if hasattr(state.searcher, "total_documents") else 0,
+        "total_verses":    getattr(state, "total_verses", 0),
         "gretil_loaded":   state.gretil_loaded,
         "gretil_texts":    len(state.gretil_corpus),
         "gretil_chars":    state.total_gretil_chars,
