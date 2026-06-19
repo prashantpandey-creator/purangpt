@@ -1338,6 +1338,23 @@ async def monitor_health(user: dict = Depends(require_role(["admin"]))):
     results = await run_health_checks(active_sessions)
     return results
 
+async def safe_sse_stream(generator):
+    """Wraps an SSE generator to guarantee it yields valid ServerSentEvent dicts.
+    If a dict is yielded without a 'data' or 'event' key (e.g. {"type": "status"}),
+    it is automatically JSON-serialized into the 'data' field to prevent crashes.
+    """
+    async for item in generator:
+        if isinstance(item, dict):
+            # If it already has valid SSE kwargs, pass it through
+            if any(k in item for k in ("data", "event", "id", "retry")):
+                yield item
+            else:
+                # Malformed dict (e.g. {"type": "error"}). Serialize it to 'data'
+                import json
+                yield {"data": json.dumps(item)}
+        else:
+            yield {"data": str(item)}
+
 @app.post("/api/chat")
 async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depends(get_current_user)):
     validate_query(request.query)
@@ -1382,7 +1399,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         async def deep_gen():
             async for chunk in deep_research(request.query, session_id, user.get("id") if user else None):
                 yield {"data": chunk.replace("data: ", "").strip()}
-        return EventSourceResponse(deep_gen(), headers={"X-Accel-Buffering": "no"})
+        return EventSourceResponse(safe_sse_stream(deep_gen()), headers={"X-Accel-Buffering": "no"})
 
     # ── Standard Chat ────────────────────────────────────────────────────────
     async def event_gen() -> AsyncGenerator[dict, None]:
@@ -1522,7 +1539,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             "total_sources_found": len(all_sources)
         })}
 
-    return EventSourceResponse(event_gen(), headers={"X-Accel-Buffering": "no"})
+    return EventSourceResponse(safe_sse_stream(event_gen()), headers={"X-Accel-Buffering": "no"})
 
 
 @app.post("/api/sanskrit-search")
@@ -1593,7 +1610,7 @@ async def sanskrit_search(request: SanskritSearchRequest):
                     pass
             await asyncio.sleep(0.1)
 
-    return EventSourceResponse(search_gen(), headers={"X-Accel-Buffering": "no"})
+    return EventSourceResponse(safe_sse_stream(search_gen()), headers={"X-Accel-Buffering": "no"})
 
 
 @app.post("/api/search")
@@ -1834,7 +1851,7 @@ async def infer(request: InferRequest, user: Optional[dict] = Depends(get_curren
         ], user_id)
         yield {"data": json.dumps({"type": "done"})}
 
-    return EventSourceResponse(infer_gen(), headers={"X-Accel-Buffering": "no"})
+    return EventSourceResponse(safe_sse_stream(infer_gen()), headers={"X-Accel-Buffering": "no"})
 
 
 @app.get("/api/index-status")
