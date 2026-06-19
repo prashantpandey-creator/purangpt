@@ -194,6 +194,18 @@ class AppState:
 state = AppState()
 
 
+def has_llm_provider() -> bool:
+    """True if any LLM provider is usable: a configured cloud key, a per-request
+    BYOK key, or a provider that passed startup validation. Used to gate chat so
+    a DeepSeek-only deployment (the documented primary) isn't wrongly rejected."""
+    return bool(
+        custom_keys_var.get()
+        or GROQ_API_KEY or GEMINI_API_KEY or DEEPSEEK_API_KEY
+        or TOGETHER_API_KEY or ZHIPU_API_KEY
+        or state.active_provider not in ("none", "unknown")
+    )
+
+
 # ── GRETIL Corpus Loader ───────────────────────────────────────────────────
 def load_gretil_corpus():
     """Load all GRETIL plain-text files into memory for Sanskrit search."""
