@@ -42,50 +42,81 @@ def worker(worker_id: int, ids: list[str], db_url: str) -> tuple[int, int]:
 
     async def _run():
         nonlocal done, errors
-        pool = await asyncpg.create_pool(db_url, min_size=1, max_size=2)
 
-        for i in range(0, len(ids), BATCH_SIZE):
+        async def make_pool():
+            # Recycle idle connections so a server-side drop doesn't hand us a dead
+            # one; small pool keeps total connections low under multi-worker load.
+            return await asyncpg.create_pool(
+                db_url, min_size=1, max_size=2,
+                max_inactive_connection_lifetime=30,
+                command_timeout=60,
+            )
+
+        pool = await make_pool()
+
+        async def reset_pool():
+            nonlocal pool
+            try:
+                await pool.close()
+            except Exception:
+                pass
+            # brief backoff, then a fresh pool — recovers from transient drops
+            await asyncio.sleep(2)
+            pool = await make_pool()
+
+        i = 0
+        while i < len(ids):
             batch_ids = ids[i : i + BATCH_SIZE]
 
-            # Fetch content for this batch
-            async with pool.acquire() as conn:
-                rows = await conn.fetch(
-                    "SELECT id, content FROM purana_verses WHERE id = ANY($1)",
-                    batch_ids,
-                )
-
-            if not rows:
-                continue
-
-            texts = [f"passage: {r['content'][:800]}" for r in rows]
-            rids = [r["id"] for r in rows]
-
+            # Whole batch is wrapped: a dropped connection during fetch OR update
+            # must NOT escape the worker (that would kill the entire mp.starmap).
+            # On a connection error we rebuild the pool and RETRY the same batch
+            # once; any other error skips the batch (rows stay NULL → backfilled).
             try:
+                async with pool.acquire() as conn:
+                    rows = await conn.fetch(
+                        "SELECT id, content FROM purana_verses WHERE id = ANY($1)",
+                        batch_ids,
+                    )
+
+                if not rows:
+                    i += BATCH_SIZE
+                    continue
+
+                texts = [f"passage: {r['content'][:800]}" for r in rows]
+                rids = [r["id"] for r in rows]
+
                 vecs = model.encode(texts, batch_size=BATCH_SIZE, show_progress_bar=False)
-            except Exception as e:
-                log.error("Worker %d encode error: %s", worker_id, e)
-                errors += len(rids)
-                continue
+                updates = [
+                    (f"[{','.join(map(str, v.tolist()))}]", rid)
+                    for v, rid in zip(vecs, rids)
+                ]
 
-            updates = [
-                (f"[{','.join(map(str, v.tolist()))}]", rid)
-                for v, rid in zip(vecs, rids)
-            ]
-            try:
                 async with pool.acquire() as conn:
                     async with conn.transaction():
                         await conn.executemany(
                             "UPDATE purana_verses SET embedding = $1::vector WHERE id = $2",
                             updates,
                         )
-            except Exception as e:
-                log.error("Worker %d db error: %s", worker_id, e)
-                errors += len(rids)
-                continue
 
-            done += len(rids)
-            if done % 512 == 0 or done == len(ids):
-                log.info("Worker %d: %d / %d  (errors: %d)", worker_id, done, len(ids), errors)
+                done += len(rids)
+                i += BATCH_SIZE
+                if done % 512 == 0 or i >= len(ids):
+                    log.info("Worker %d: %d / %d  (errors: %d)", worker_id, done, len(ids), errors)
+
+            except (asyncpg.exceptions.ConnectionDoesNotExistError,
+                    asyncpg.exceptions.InterfaceError,
+                    ConnectionError, OSError) as e:
+                # Transient connection drop — rebuild pool and retry this batch once.
+                log.warning("Worker %d conn drop, rebuilding pool: %s", worker_id, e)
+                await reset_pool()
+                # do NOT advance i — retry the same batch
+                continue
+            except Exception as e:
+                log.error("Worker %d batch error (skipping): %s", worker_id, e)
+                errors += len(batch_ids)
+                i += BATCH_SIZE
+                continue
 
         await pool.close()
         return done, errors
