@@ -1,0 +1,15 @@
+# SOPS config — which age recipients can decrypt which files.
+# Encrypted secrets files (secrets/*.enc.yaml) are SAFE TO COMMIT: only holders of
+# a listed age private key can decrypt them. To grant a new machine/session access,
+# add its age public key here and run `sops updatekeys secrets/<file>`.
+#
+# Decrypt/edit:   sops secrets/prod.enc.yaml          (opens decrypted in $EDITOR)
+# View:           sops -d secrets/prod.enc.yaml
+# The age PRIVATE key lives at ~/.config/sops/age/keys.txt (NEVER committed).
+
+creation_rules:
+  - path_regex: secrets/.*\.enc\.yaml$
+    key_groups:
+      - age:
+          # badenath workstation (primary). Add more recipients below to share.
+          - age180875puaf7lkxye3pfdwq2u0ww9hq0hjc3xmwc53q8eudzxnxfdsnzjh8e
