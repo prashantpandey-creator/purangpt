@@ -185,6 +185,18 @@ class AppState:
 state = AppState()
 
 
+def has_llm_provider() -> bool:
+    """True if any LLM provider is usable: a configured cloud key, a per-request
+    BYOK key, or a provider that passed startup validation. Used to gate chat so
+    a DeepSeek-only deployment (the documented primary) isn't wrongly rejected."""
+    return bool(
+        custom_keys_var.get()
+        or GROQ_API_KEY or GEMINI_API_KEY or DEEPSEEK_API_KEY
+        or TOGETHER_API_KEY or ZHIPU_API_KEY
+        or state.active_provider not in ("none", "unknown")
+    )
+
+
 # ── GRETIL Corpus Loader ───────────────────────────────────────────────────
 def load_gretil_corpus():
     """Load all GRETIL plain-text files into memory for Sanskrit search."""
@@ -359,7 +371,9 @@ async def _validate_llm_providers() -> None:
             return False
         url = "https://api.deepseek.com/chat/completions"
         headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY_VAL}", "Content-Type": "application/json"}
-        payload = {"model": "deepseek-v4-flash", "messages": [{"role":"user","content":"hi"}],
+        # Probe with the model the auto/free path actually streams with, so a
+        # valid key isn't rejected against a non-existent model id.
+        payload = {"model": "deepseek-chat", "messages": [{"role":"user","content":"hi"}],
                    "max_tokens": 1, "stream": False}
         try:
             async with get_http_session() as s:
@@ -367,8 +381,8 @@ async def _validate_llm_providers() -> None:
                                   timeout=aiohttp.ClientTimeout(total=10)) as r:
                     if r.status == 200:
                         state.active_provider = "deepseek"
-                        state.active_model    = "deepseek-v4-flash"
-                        logger.info("✓ DeepSeek API key valid — model: deepseek-v4-flash")
+                        state.active_model    = "deepseek-chat"
+                        logger.info("✓ DeepSeek API key valid — model: deepseek-chat")
                         return True
                     body = await r.text()
                     logger.warning("✗ DeepSeek API key invalid (HTTP %d): %s", r.status, body[:120])
@@ -1312,7 +1326,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         )
         if not allowed:
             raise HTTPException(429, "Daily message limit exceeded. Please upgrade your plan.")
-    if not GROQ_API_KEY and not GEMINI_API_KEY:
+    if not has_llm_provider():
         raise HTTPException(503, "No LLM credentials configured")
 
     user_id = user.get("id") if user else None
@@ -1563,7 +1577,7 @@ async def search(request: SearchRequest):
 
 @app.post("/api/instances")
 async def instances(request: InstancesRequest):
-    if not GROQ_API_KEY and not GEMINI_API_KEY:
+    if not has_llm_provider():
         raise HTTPException(503, "No LLM credentials configured")
 
     # 1. Sanskrit corpus search
