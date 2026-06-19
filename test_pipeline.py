@@ -3,7 +3,7 @@
 PuranGPT — end-to-end chat pipeline smoke test.
 
 Tests every stage in order; stops at first critical failure with a clear error.
-Run from the repo root after `sops -d secrets/prod.env > .env`:
+Run from the repo root with a populated .env (DB url + LLM keys) present:
 
     venv/bin/python test_pipeline.py               # all stages, all modes
     venv/bin/python test_pipeline.py --stage db    # single stage

@@ -61,11 +61,3 @@ CLAUDE-secrets.md
 .env
 .env.*
 !.env.example
-
-## SOPS / age — encrypted secrets/*.env ARE committed; keys & decrypted output are NOT
-*.agekey
-age-keys.txt
-keys.txt
-secrets/*.dec
-secrets/*.dec.*
-secrets/*.plain.*
