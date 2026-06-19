@@ -19,6 +19,7 @@ on:
       - "Dockerfile"
       - "run.py"
       - ".github/workflows/deploy.yml"
+      - "secrets/prod.env"  # rotating secrets triggers a redeploy to land the new .env
   workflow_dispatch: {} # allow manual redeploy from the Actions tab
 
 jobs:
