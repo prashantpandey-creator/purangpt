@@ -148,15 +148,23 @@ python indexer/build_index.py --model intfloat/multilingual-e5-small  # Faster/s
 
 ## Environment Variables (`.env`)
 
+> **Production reality (current):** the live stack runs **DeepSeek** as the LLM
+> provider (with Groq/Gemini fallback) and uses **Postgres/pgvector** for both
+> hybrid search and profiles/billing — there is no Supabase (DB access is
+> `backend/db_client.py`). The Ollama/ChromaDB rows below describe the original
+> local-dev pipeline and still work, but are not how prod runs.
+
 | Variable | Default | Notes |
 |----------|---------|-------|
-| `LLM_PROVIDER` | `ollama` | `ollama` or `groq` |
-| `OLLAMA_MODEL` | `qwen2.5:7b` | Any Ollama model |
+| `VECTOR_DB_URL` | — | **Required.** pgvector Postgres for `HybridSearcher` + profiles/billing. If unset, `/api/status` shows `index_ready:false`. Prod: the Logto DB (`postgresql://logto:logto@logto-db:5432/logto`). |
+| `DEEPSEEK_API_KEY` | — | Primary LLM in prod; also powers the R1 reasoning research mode. |
+| `LLM_PROVIDER` | `ollama` | `ollama` \| `groq` \| `deepseek` \| `auto` |
+| `OLLAMA_MODEL` | `qwen2.5:7b` | Any Ollama model (local-dev path) |
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | |
-| `GROQ_API_KEY` | — | Required for Groq |
+| `GROQ_API_KEY` | — | Fallback LLM |
 | `GROQ_MODEL` | `llama-3.3-70b-versatile` | |
-| `EMBED_MODEL` | `intfloat/multilingual-e5-large` | HuggingFace model |
-| `DB_DIR` | `./data/chroma_db` | ChromaDB path |
+| `EMBED_MODEL` | `intfloat/multilingual-e5-large` | HuggingFace model (search now uses `e5-small`) |
+| `DB_DIR` | `./data/chroma_db` | ChromaDB path (local-dev pipeline) |
 | `DATA_DIR` | `data` | Root data directory |
 | `PORT` | `8000` | Server port |
 
