@@ -1260,9 +1260,9 @@ async def list_puranas():
 @app.get("/api/modes")
 async def list_modes():
     return {"modes": [
-        {"id":"research", "label":"📖 Research", "description":"Scholarly analysis with verse citations"},
-        {"id":"guide",    "label":"🪔 Guide",    "description":"Spiritual guidance in Guruji's voice"},
-        {"id":"deep",     "label":"🔬 Deep",     "description":"Web-grounded multi-step research"},
+        {"id":"research", "label":"📖 Scholar", "description":"Scholarly analysis with exact verse citations", "standalone":False},
+        {"id":"guide",    "label":"🪔 Guru",    "description":"Spiritual guidance in Guruji's voice",        "standalone":False},
+        {"id":"deep",     "label":"🔭 Deep Research", "description":"Web-grounded, multi-step research (standalone mode)", "standalone":True},
     ]}
 
 

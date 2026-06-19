@@ -88,14 +88,23 @@ SSE events from `/api/chat`: `sources` → `reasoning` (R1 only) → `token` × 
 
 ## Chat Modes
 
-Defined in `engine/prompts.py` (`PROMPTS` dict) and must stay in sync with the frontend's `QueryMode` type in `purangpt-next/src/lib/api.ts`:
+Defined in `backend/main.py` (`PROMPTS` dict — `RESEARCH_SYSTEM`, `GUIDE_SYSTEM`),
+advertised via `GET /api/modes`, and must stay in sync with the frontend's
+`QueryMode` type in `purangpt-next/src/lib/api.ts`. There are **two** modes:
 
-- `scholar` — academic, with citations
-- `yogic` — experiential/meditative lens
-- `compare` — cross-text comparison
-- `translate` — Sanskrit translation + commentary
-- `find_instances` — topic occurrence across all texts
-- `guide` — Guru mode (3-part: Core Truth, Scriptural Anchor, Guru's Voice)
+- `research` — **Scholar Mode**: academic, mandatory structure (Summary → Extracted Sacred Texts → Explanation), inline `[1]` citations. UI label "Scholar Mode".
+- `guide` — **Guru Mode**: warm, concise single-paragraph guidance in Guruji Sri Shailendra Sharma's voice, no citation clutter. Retrieval applies `sharma_weighting`. UI label "Guru Mode".
+
+(The earlier `yogic`/`compare`/`translate`/`find_instances` modes no longer exist.)
+
+A third mode, `deep` — **Deep Research** (`backend/agents/deep_research.py`) — is a
+**standalone** web-grounded mode, intentionally kept out of the in-chat Scholar/Guru
+toggle. It is reached only via the side-panel "Deep Research" link → the
+`/dashboard/deep-research` page, which sends `mode: "deep"`. The `/api/chat` handler
+dispatches `mode == "deep"` to the interactive two-stage agent (clarifying question →
+DuckDuckGo search → DeepSeek-R1 synthesis with streamed `reasoning`). Frontend
+`QueryMode` is `guide | research | deep`; the `/chat` route only maps `guide | research`
+so deep can never appear as a chat toggle.
 
 ## Deploy
 
