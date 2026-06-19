@@ -33,12 +33,15 @@ jobs:
     - name: SSH and Deploy
       uses: appleboy/ssh-action@v1.0.3
       env:
-        SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        TOGETHER_API_KEY: ${{ secrets.TOGETHER_API_KEY }}
+        ZHIPU_API_KEY: ${{ secrets.ZHIPU_API_KEY }}
+        VECTOR_DB_URL: ${{ secrets.VECTOR_DB_URL }}
       with:
         host: 204.168.176.229
         username: root
         key: ${{ secrets.VPS_SSH_KEY }}
-        envs: SOPS_AGE_KEY # forward the decryption key into the remote shell
+        envs: DEEPSEEK_API_KEY,TOGETHER_API_KEY,ZHIPU_API_KEY,VECTOR_DB_URL # forward secrets into remote shell
         command_timeout: 30m # backend build is heavy (torch + ML model warmup)
         script: |
           set -e
@@ -52,25 +55,16 @@ jobs:
           git reset --hard origin/main
           git clean -fd
 
-          # ── Render secrets: decrypt secrets/prod.env -> /root/purangpt/.env ──
-          # Runs AFTER `git clean -fd` (which would otherwise delete the untracked
-          # .env). The production compose must consume this file via the backend
-          # service's `env_file: ./purangpt/.env`.
-          if ! command -v sops >/dev/null 2>&1; then
-            echo "Installing sops…"
-            curl -fsSL -o /usr/local/bin/sops \
-              https://github.com/getsops/sops/releases/download/v3.9.4/sops-v3.9.4.linux.amd64
-            chmod +x /usr/local/bin/sops
-          fi
+          # ── Render secrets directly to /root/purangpt/.env ──
           umask 077
-          SOPS_AGE_KEY="$SOPS_AGE_KEY" sops -d secrets/prod.env > .env
-          if grep -q 'REPLACE_ME' .env; then
-            echo "✗ .env still has REPLACE_ME placeholders — run 'sops secrets/prod.env' to fill real values. Aborting." >&2
-            rm -f .env
-            exit 1
-          fi
+          cat <<EOF > .env
+          DEEPSEEK_API_KEY=$DEEPSEEK_API_KEY
+          TOGETHER_API_KEY=$TOGETHER_API_KEY
+          ZHIPU_API_KEY=$ZHIPU_API_KEY
+          VECTOR_DB_URL=$VECTOR_DB_URL
+          EOF
           chmod 600 .env
-          echo "✓ Rendered $(grep -cE '^[A-Z]' .env) secret(s) to /root/purangpt/.env"
+          echo "✓ Rendered secrets to /root/purangpt/.env"
 
           cd /root
           # Rebuild the backend. We do NOT use --no-cache here: the costly
