@@ -47,14 +47,32 @@ sops updatekeys secrets/prod.env
 > First-commit values are `REPLACE_ME` placeholders. Run `sops secrets/prod.env`
 > and fill in the real secrets before deploying.
 
-## Deploy integration
+## Deploy integration (wired in `.github/workflows/deploy.yml`)
 
-The Hetzner deploy (`.github/workflows/deploy.yml`) can materialise `.env` on the
-server right before `docker compose up` by exposing the age key as a CI/host
-secret and running:
+On every deploy the workflow SSHes to Hetzner and — after `git reset --hard` +
+`git clean -fd` — installs `sops` (if missing) and renders the secrets:
 
 ```bash
-SOPS_AGE_KEY="$AGE_PRIVATE_KEY" sops -d secrets/prod.env > .env
+SOPS_AGE_KEY="$SOPS_AGE_KEY" sops -d secrets/prod.env > /root/purangpt/.env   # chmod 600
 ```
 
-`.env` is git-ignored, so the decrypted file never re-enters version control.
+It aborts the deploy if the rendered `.env` still contains `REPLACE_ME`, so
+placeholder secrets can never reach production.
+
+**Two one-time setup steps required:**
+
+1. Add the age **private** key as a repo Actions secret named `SOPS_AGE_KEY`
+   (value: `AGE-SECRET-KEY-1…`).
+2. Make the production compose at `/root/docker-compose.yml` feed this file to the
+   backend service:
+
+   ```yaml
+   services:
+     backend:
+       env_file:
+         - ./purangpt/.env
+   ```
+
+> The workflow deliberately writes to **`/root/purangpt/.env`**, not `/root/.env`,
+> to avoid clobbering the combined host env used by the logto/frontend services.
+> `.env` is git-ignored, so the decrypted file never re-enters version control.
