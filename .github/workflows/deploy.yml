@@ -1,0 +1,53 @@
+name: Deploy Backend to Hetzner VPS
+
+# Requires repo secret VPS_SSH_KEY (same private key as the purangpt-next repo,
+# the one matching ~/.ssh/purangpt_hetzner). Set it under
+# Settings → Secrets and variables → Actions before the first run.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      # Only redeploy when something that affects the running image changed.
+      - "backend/**"
+      - "engine/**"
+      - "indexer/**"
+      - "data_pipeline/**"
+      - "requirements.txt"
+      - "Dockerfile"
+      - "run.py"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch: {} # allow manual redeploy from the Actions tab
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: SSH and Deploy
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: 204.168.176.229
+        username: root
+        key: ${{ secrets.VPS_SSH_KEY }}
+        command_timeout: 30m # backend build is heavy (torch + ML model warmup)
+        script: |
+          set -e
+          cd /root/purangpt
+          # Mirror origin/main exactly — a plain pull aborts if the server tree
+          # has stray local edits, silently leaving old code deployed.
+          git fetch origin main
+          git reset --hard origin/main
+          git clean -fd
+          cd /root
+          # Rebuild the backend. We do NOT use --no-cache here: the costly
+          # pip-install and sentence-transformers model-download layers key only
+          # off requirements.txt, so they stay cached, while the `COPY . .` source
+          # layer naturally busts after the hard reset above.
+          docker compose build backend
+          docker compose up -d backend
+          docker image prune -f

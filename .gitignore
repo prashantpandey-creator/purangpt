@@ -49,3 +49,9 @@ ios_app/android/
 *.swp
 
 data/
+
+## Local scratch / ad-hoc debug scripts (not part of the app)
+test_query.py
+backend/test_prompt.py
+scratch/
+*.scratch.py
