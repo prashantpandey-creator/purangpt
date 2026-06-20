@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 📒 Project Ledger — READ FIRST, UPDATE LAST (mandatory)
+
+**[`PROJECT_LEDGER.md`](./PROJECT_LEDGER.md) is the single source of truth for the live state of
+the app and key engineering events** (spans both `purangpt` and `purangpt-next`).
+
+- **Before** starting any task: read its **Current State of the App** section.
+- **After** finishing any unit of work: prepend a dated entry to its **Ledger** and update the
+  relevant **Current State** bullets. Follow the entry format in that file. This is not optional —
+  it is how the next agent avoids rediscovering state (e.g. a stale clone once hid the entire
+  Sanskrit query layer). Keep entries tight.
+
 ## What This Is
 
 PuranGPT backend — a FastAPI RAG engine for querying Hindu sacred texts (18 Mahapuranas, Ramayana, Mahabharata, Gita, Upanishads) with exact verse citations and streaming LLM responses.
