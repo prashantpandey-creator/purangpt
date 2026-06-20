@@ -563,7 +563,7 @@ class SourceModel(BaseModel):
             "reference":  self.reference,
             "chapter":    self.chapter,
             "verse_range":self.verse_range,
-            "text":       self.display_text[:600],   # cap for SSE payload size
+            "text":       self.display_text[:2000],  # cap for SSE payload size
             "language":   self.language,
             "edition":    self.edition,
             "tradition":  self.tradition,
