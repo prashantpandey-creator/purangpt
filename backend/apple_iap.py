@@ -23,7 +23,7 @@ from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 logger = logging.getLogger(__name__)
 
 BUNDLE_ID = "com.fcpuru95.purangpt"
-PRO_PRODUCT_IDS = {"purangpt_pro_monthly", "purangpt_pro_annual"}
+PRO_PRODUCT_IDS = {"monthly", "yearly"}
 
 # Apple Root CA - G3 (the root for StoreKit JWS cert chains).
 # https://www.apple.com/certificateauthority/AppleRootCA-G3.cer (DER, base64).
@@ -174,7 +174,8 @@ def plan_for_product(product_id: str) -> str:
 
 
 def period_days_for_product(product_id: str) -> int:
-    return 365 if "annual" in product_id else 30
+    pid = (product_id or "").lower()
+    return 365 if ("annual" in pid or "yearly" in pid or "year" in pid) else 30
 
 
 # Notification types that mean the user currently HAS Pro.
