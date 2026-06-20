@@ -150,29 +150,29 @@ The passages below are indexed as [1], [2], [3], etc. You MUST use these exact b
 """ + "\n" + GUARDRAIL_INSTRUCTION
 
 
-GUIDE_SYSTEM = """You are PuranGPT in GUIDE MODE. You are a wise, compassionate spiritual mentor drawing upon Vedic knowledge, the Puranas, the Bhagavad Gita, and the specific yogic commentaries of Guruji Sri Shailendra Sharma.
+GUIDE_SYSTEM = """You are Shailendra Sharma — a living sage who has spent decades in deep study and practice of the Vedas, Puranas, Upanishads, and Yoga Shastra. You speak from direct inner experience, not from books alone.
 
-Your goal is to provide profound life lessons, spiritual advice, and comforting wisdom to individuals seeking guidance.
+You do not say "Guruji says" or "according to Guruji" — you ARE the Guruji. Speak as yourself, in first person, naturally — "I have found…", "What I have seen in these texts…", "Let me tell you what the Gita revealed to me…". Your words carry the weight of lifelong sadhana. You are warm, direct, sometimes playful, occasionally stern — whatever the seeker needs in this moment.
 
-## Response Guidelines
-1. **Natural Flow**: Do not strictly follow a rigid structure. Let your response flow naturally and loosely.
-2. **Concise & Impactful**: Your answers should be extremely concise, profound, and impactful, much like Guruji's direct way of speaking. Aim for a single, powerful paragraph whenever possible.
-3. **Tone**: Warm, empathetic, profound, and non-judgmental. Speak directly to the seeker's soul without academic lecturing.
-4. **Citations**: Do not clutter the text with numbers or citations. Weave references into your natural speech loosely (e.g., "The Gita teaches us...").
-5. **Format**: Avoid bullet points, headers, and heavy formatting. Speak naturally.
+## How to Speak
+- Respond as a wise elder who genuinely knows this person. If they have shared details about themselves in this conversation — their situation, fears, questions — acknowledge and remember those. Weave that knowledge into your answer naturally, as a real guru would.
+- Be concise and alive. One powerful paragraph, two at most. No academic structure, no bullet points, no headers.
+- Weave scripture in as lived truth: not "the Gita says verse 2.47" but "as I have always understood it, the Gita's great teaching on karma is this — do your work, do it fully, and release the fruit."
+- Speak to the whole person, not just the question. A wise elder hears what is behind the words.
 
-## SUBTLE SOURCE TRACKING (INTERNAL)
-You must weave a subtle "tell" into your very first sentence to indicate your knowledge source.
-Do not explicitly say "general knowledge" or "extracted text". Be creative and vary your phrasing to sound natural, but follow this strict rule:
-- If the provided context contains the answer (RAG hit), your first sentence MUST contain the word **"sacred"** (e.g., "The sacred verses...", "According to the sacred texts...", "As revealed in the sacred lore...").
-- If no relevant context is provided and you are answering from your pre-trained weights, your first sentence MUST contain the word **"tradition"** (e.g., "The broader Vedic tradition teaches...", "Ancient tradition holds...", "According to spiritual tradition...").
-This allows internal tracking without alerting the end-user.
+## What you draw from
+You draw from the sacred Purana passages retrieved below AND from your own deep familiarity with all Vedic shastra. If the retrieved passages speak directly to the question, draw from them naturally. If they do not, speak from your own knowledge of the tradition.
+
+## SUBTLE SOURCE TRACKING (INTERNAL — do not reveal to user)
+Weave a subtle word into your very first sentence only:
+- Retrieved passages are relevant → first sentence must contain **"sacred"**
+- Answering from trained knowledge → first sentence must contain **"tradition"**
 
 {interpolations}
 
 {language_instruction}
 
-## Relevant Wisdom Passages
+## Passages from the Texts
 {context}
 
 {history}
@@ -785,7 +785,7 @@ def format_history(history: List[dict]) -> str:
     """Format conversation history with a rolling character window."""
     if not history:
         return "(No previous conversation)"
-    
+
     # Take up to last 20 messages, but enforce a rolling character limit
     max_chars = 8000
     current_chars = 0
@@ -794,7 +794,7 @@ def format_history(history: List[dict]) -> str:
     for msg in reversed(history[-10:]):
         role = "User" if msg["role"] == "user" else "PuranGPT"
         content = msg['content']
-        
+
         # INTELLIGENT FIX: Retain ONLY the Summary part of PuranGPT's previous answers.
         # This gives the LLM context of what the user was already told, but completely
         # strips out the heavy Sanskrit citations and quotes that cause RAG overfitting.
@@ -815,16 +815,62 @@ def format_history(history: List[dict]) -> str:
                 if len(content) > 100:
                     content = content[:100] + "..."
                 content = f"(Summary of previous answer): {content}"
-            
+
         line = f"**{role}**: {content}"
-        
+
         if current_chars + len(line) > max_chars:
             break
-            
+
         lines.insert(0, line)
         current_chars += len(line)
-        
+
     return "\n\n".join(lines)
+
+
+def format_history_guide(history: List[dict]) -> str:
+    """History formatter for Guru (guide) mode.
+
+    Keeps full user messages — they reveal the seeker's situation, fears, and
+    life context which the Guru persona must remember and speak to. Trims the
+    AI's previous responses to a short essence so we don't bloat the context.
+    """
+    if not history:
+        return ""
+
+    max_chars = 10000
+    current_chars = 0
+    lines = []
+
+    for msg in reversed(history[-16:]):
+        role = msg["role"]
+        content = msg["content"]
+
+        if role == "user":
+            # Keep the full seeker message — this is the personal disclosure
+            line = f"Seeker: {content}"
+        else:
+            # Trim Guru's previous response to its first 200 chars (the key thought)
+            trimmed = content.strip()
+            if len(trimmed) > 200:
+                # Try to cut at a sentence boundary
+                cut = trimmed[:200]
+                last_period = max(cut.rfind(". "), cut.rfind("। "))
+                if last_period > 80:
+                    trimmed = cut[: last_period + 1]
+                else:
+                    trimmed = cut + "…"
+            line = f"Guruji (your previous response): {trimmed}"
+
+        if current_chars + len(line) > max_chars:
+            break
+
+        lines.insert(0, line)
+        current_chars += len(line)
+
+    if not lines:
+        return ""
+
+    return "## What this seeker has shared and what you have said\n" + "\n\n".join(lines)
 
 
 def build_rag_context(results: list) -> str:
@@ -1307,10 +1353,16 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         # 3. Build conversation messages with history
         session_data = session_manager.get_session(session_id)
         history    = session_data.get("history", [])
-        history_str = format_history(history)
+
+        # Guide mode keeps full user disclosures so the Guru persona can remember the seeker.
+        # Research/other modes compress aggressively to avoid RAG overfitting.
+        if request.mode == "guide":
+            history_str = format_history_guide(history)
+        else:
+            history_str = format_history(history)
 
         prompt_tpl  = PROMPTS.get(request.mode, RESEARCH_SYSTEM)
-        
+
         # Override detected language with user's explicit UI preference if provided
         target_lang = expansion.detected_lang
         if hasattr(request, "language") and request.language:
@@ -1322,7 +1374,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             interpolations=KNOWN_INTERPOLATIONS,
             language_instruction=lang_instr,
             context=rag_context or "(No indexed passages — answering from deep Puranic knowledge)",
-            history=f"## Previous Conversation\n{history_str}" if history else ""
+            history=history_str
         )
 
         # 4. Build messages list (system + new query).
