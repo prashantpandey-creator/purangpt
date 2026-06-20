@@ -222,6 +222,8 @@ The passages below are indexed as [1], [2], [3], etc. Use these exact bracketed 
 
 {context}
 
+{seeker_context}
+
 {history}
 """ + "\n" + GUARDRAIL_INSTRUCTION
 
@@ -797,6 +799,128 @@ def format_history_guide(history: List[dict]) -> str:
     return "## What this seeker has shared and what you have said\n" + "\n\n".join(lines)
 
 
+async def build_seeker_context(req: Request, user: Optional[dict], guest_id: Optional[str], history_len: int) -> str:
+    """Build a silent context block about the seeker from HTTP request metadata.
+
+    Injected into the Guru's system prompt so it can speak with genuine awareness
+    of who this person is — their location, device, language, time of day, whether
+    they are traveling — without revealing any of this to the seeker.
+
+    Uses ip-api.com with a 1-second timeout; degrades silently on failure.
+    """
+    lines = []
+
+    # ── Identity ─────────────────────────────────────────────────────────────
+    if user:
+        name = user.get("name") or user.get("display_name") or ""
+        lines.append(f"- Signed-in seeker{(' named ' + name) if name else ''}. They cared enough to create an account.")
+    else:
+        lines.append("- Guest visitor — they have not yet created an account. Speak with extra warmth to draw them in.")
+
+    # ── Conversation depth ────────────────────────────────────────────────────
+    if history_len == 0:
+        lines.append("- This is their very first message. They are arriving at the threshold for the first time.")
+    elif history_len <= 4:
+        lines.append(f"- Early conversation ({history_len} exchanges). Still finding their footing.")
+    else:
+        lines.append(f"- Deep conversation ({history_len} exchanges). A persistent seeker — honour that commitment.")
+
+    # ── Language / locale ─────────────────────────────────────────────────────
+    accept_lang = req.headers.get("accept-language", "")
+    home_country_code = None  # filled by geo below if available
+    if accept_lang:
+        primary_locale = accept_lang.split(",")[0].split(";")[0].strip().lower()
+        locale_map = {
+            "hi": ("Hindi (India)", "IN"), "hi-in": ("Hindi (India)", "IN"),
+            "ru": ("Russian", "RU"), "ru-ru": ("Russian", "RU"),
+            "de": ("German", "DE"), "fr": ("French", "FR"),
+            "es": ("Spanish", "ES"), "pt": ("Portuguese", "PT"),
+            "ar": ("Arabic", None), "zh": ("Chinese", "CN"),
+            "ja": ("Japanese", "JP"), "ko": ("Korean", "KR"),
+            "en-in": ("English (India)", "IN"), "en-gb": ("English (UK)", "GB"),
+            "en-us": ("English (US)", "US"), "en": ("English", None),
+        }
+        match = locale_map.get(primary_locale)
+        if match:
+            lang_label, home_country_code = match
+        else:
+            lang_label = primary_locale
+        lines.append(f"- Browser language: {lang_label}")
+
+    # ── Device type ───────────────────────────────────────────────────────────
+    ua = req.headers.get("user-agent", "").lower()
+    if any(x in ua for x in ["mobile", "android", "iphone", "ipad"]):
+        lines.append("- Writing from a mobile device — likely in motion, commuting, or lying in bed.")
+    elif any(x in ua for x in ["windows", "macintosh", "linux", "x11"]):
+        lines.append("- Writing from a desktop or laptop — deliberate, seated.")
+
+    # ── Geo-IP (with travel detection) ────────────────────────────────────────
+    ip = req.headers.get("x-forwarded-for", req.client.host if req.client else "").split(",")[0].strip()
+    if ip and ip not in ("127.0.0.1", "::1", ""):
+        try:
+            import aiohttp as _aiohttp
+            async with _aiohttp.ClientSession() as _sess:
+                async with _sess.get(
+                    f"http://ip-api.com/json/{ip}?fields=country,countryCode,regionName,city,timezone",
+                    timeout=_aiohttp.ClientTimeout(total=1.0)
+                ) as resp:
+                    if resp.status == 200:
+                        geo = await resp.json(content_type=None)
+                        city        = geo.get("city", "")
+                        region      = geo.get("regionName", "")
+                        country     = geo.get("country", "")
+                        country_code = geo.get("countryCode", "")
+                        tz          = geo.get("timezone", "")
+
+                        location_parts = [p for p in [city, region, country] if p]
+                        if location_parts:
+                            location_str = ", ".join(location_parts)
+                            # Travel detection: IP country differs from browser locale home country
+                            if (
+                                home_country_code
+                                and country_code
+                                and home_country_code.upper() != country_code.upper()
+                            ):
+                                lines.append(
+                                    f"- Currently in: {location_str} — but their browser is set to "
+                                    f"{lang_label}, suggesting they are likely TRAVELING and not originally from here. "
+                                    f"Do not assume this is their home. Treat them as a visitor in a foreign land."
+                                )
+                            else:
+                                lines.append(f"- Writing from: {location_str}")
+
+                        # Local time from timezone
+                        if tz:
+                            try:
+                                import zoneinfo
+                                from datetime import datetime as _dt
+                                local_hour = _dt.now(zoneinfo.ZoneInfo(tz)).hour
+                                if 5 <= local_hour < 9:
+                                    time_label = "early morning — a rare seeker who rises before the world"
+                                elif 9 <= local_hour < 12:
+                                    time_label = "morning"
+                                elif 12 <= local_hour < 17:
+                                    time_label = "afternoon"
+                                elif 17 <= local_hour < 21:
+                                    time_label = "evening"
+                                elif 21 <= local_hour < 24:
+                                    time_label = "late night — the hour of deep questions"
+                                else:
+                                    time_label = "the small hours of the night — perhaps unable to sleep"
+                                lines.append(f"- Local time: {time_label} ({local_hour:02d}:00 local, {tz})")
+                            except Exception:
+                                pass
+        except Exception:
+            pass  # Geo is optional — fail silently
+
+    if not lines:
+        return ""
+
+    return (
+        "## Silent context about this seeker (draw on this wisdom; never quote it back)\n"
+        + "\n".join(lines)
+    )
+
 def build_rag_context(results: list) -> str:
     if not results:
         return ""
@@ -1275,7 +1399,9 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         yield {"data": json.dumps({"type": "sources", "sources": all_sources})}
 
         # 3. Build conversation messages with history
-        session_data = session_manager.get_session(session_id)
+        # FIX: pass user_id and guest_id so the correct Postgres row is fetched.
+        # Without these args the session manager always returns an empty fallback.
+        session_data = session_manager.get_session(session_id, user_id, guest_id)
         history    = session_data.get("history", [])
 
         # The unified/guide personas keep full user disclosures so the Guru voice can
@@ -1284,6 +1410,9 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             history_str = format_history_guide(history)
         else:
             history_str = format_history(history)
+
+        # Build seeker context from HTTP metadata (geo, device, language, travel detection)
+        seeker_ctx = await build_seeker_context(req, user, guest_id, len(history))
 
         prompt_tpl  = PROMPTS.get(request.mode, UNIFIED_SYSTEM)
 
@@ -1315,6 +1444,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             interpolations=KNOWN_INTERPOLATIONS,
             language_instruction=combined_directives,
             context=rag_context or "(No indexed passages — answering from deep Puranic knowledge)",
+            seeker_context=seeker_ctx,
             history=history_str
         )
 
