@@ -268,6 +268,8 @@ class SanskritQueryProcessor:
             )
             # Strip markdown code fences if present
             raw = re.sub(r"```(?:json)?", "", raw).strip().rstrip("`").strip()
+            # Strip DeepSeek-style <think>...</think> tags if they leak into content
+            raw = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL).strip()
             data = json.loads(raw)
 
             if not data.get("is_sanskrit", False):
