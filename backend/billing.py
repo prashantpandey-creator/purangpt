@@ -186,6 +186,57 @@ def activate_user_subscription(user_id: str, plan: str, provider: str, external_
     finally:
         conn.close()
 
+def find_user_by_external_sub(external_sub_id: str) -> Optional[str]:
+    """Return the user_id that owns a given provider subscription id, or None."""
+    if not external_sub_id:
+        return None
+    conn = get_db_conn()
+    if not conn:
+        return None
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT user_id FROM subscriptions WHERE external_subscription_id = %s "
+                "ORDER BY current_period_start DESC LIMIT 1",
+                (external_sub_id,),
+            )
+            row = cur.fetchone()
+            return row[0] if row else None
+    except Exception as e:
+        logger.error(f"find_user_by_external_sub failed: {e}")
+        return None
+    finally:
+        conn.close()
+
+
+def downgrade_user(user_id: str) -> bool:
+    """Revoke Pro: set the profile back to free + mark the subscription canceled."""
+    conn = get_db_conn()
+    if not conn:
+        return False
+    now = datetime.now(timezone.utc)
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE profiles SET role='free', subscription_status='canceled', "
+                "subscription_plan='free', updated_at=%s WHERE id=%s",
+                (now, user_id),
+            )
+            cur.execute(
+                "UPDATE subscriptions SET status='canceled' WHERE user_id=%s AND status='active'",
+                (user_id,),
+            )
+        conn.commit()
+        logger.info(f"Downgraded user {user_id} to free.")
+        return True
+    except Exception as e:
+        logger.error(f"downgrade_user failed for {user_id}: {e}")
+        conn.rollback()
+        return False
+    finally:
+        conn.close()
+
+
 def verify_razorpay_payment(razorpay_order_id: str, razorpay_payment_id: str, razorpay_signature: str) -> bool:
     """
     Verifies Razorpay payment signature.

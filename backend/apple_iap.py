@@ -104,10 +104,11 @@ def _verify_chain(certs: list[x509.Certificate]) -> bool:
     return True
 
 
-def verify_transaction_jws(signed_jws: str) -> Optional[dict]:
+def _decode_verified_jws(signed_jws: str) -> Optional[dict]:
     """
-    Verify a StoreKit 2 JWSTransaction. Returns the decoded transaction payload
-    if the signature, cert chain, bundle id, and product are all valid; else None.
+    Verify the ES256 signature + Apple cert chain of any StoreKit/ASSN JWS and
+    return its decoded payload. Does NOT apply transaction-specific field checks
+    (bundle/product/expiry) — callers do that. Returns None on any failure.
     """
     try:
         header = jwt.get_unverified_header(signed_jws)
@@ -120,14 +121,27 @@ def verify_transaction_jws(signed_jws: str) -> Optional[dict]:
         if not _verify_chain(certs):
             return None
 
-        # Verify the JWS signature using the leaf cert's public key.
         leaf_pub = certs[0].public_key()
-        payload = jwt.decode(
+        return jwt.decode(
             signed_jws,
             key=leaf_pub,
             algorithms=["ES256"],
             options={"verify_aud": False},
         )
+    except Exception as e:
+        logger.error(f"[apple_iap] JWS decode failed: {e}")
+        return None
+
+
+def verify_transaction_jws(signed_jws: str) -> Optional[dict]:
+    """
+    Verify a StoreKit 2 JWSTransaction. Returns the decoded transaction payload
+    if the signature, cert chain, bundle id, and product are all valid; else None.
+    """
+    try:
+        payload = _decode_verified_jws(signed_jws)
+        if payload is None:
+            return None
 
         if payload.get("bundleId") != BUNDLE_ID:
             logger.warning(f"[apple_iap] bundleId mismatch: {payload.get('bundleId')}")
@@ -161,3 +175,76 @@ def plan_for_product(product_id: str) -> str:
 
 def period_days_for_product(product_id: str) -> int:
     return 365 if "annual" in product_id else 30
+
+
+# Notification types that mean the user currently HAS Pro.
+ACTIVE_NOTIFICATION_TYPES = {
+    "SUBSCRIBED",
+    "DID_RENEW",
+    "OFFER_REDEEMED",
+    "DID_CHANGE_RENEWAL_STATUS",  # may be re-enable; check transaction expiry
+}
+# Notification types that mean Pro should be revoked immediately.
+REVOKE_NOTIFICATION_TYPES = {
+    "EXPIRED",
+    "REFUND",
+    "REVOKE",
+    "GRACE_PERIOD_EXPIRED",
+}
+
+
+def decode_server_notification(signed_payload: str) -> Optional[dict]:
+    """
+    Decode an App Store Server Notification V2 (`signedPayload`).
+
+    Returns a normalized dict:
+      { notificationType, subtype, original_transaction_id, product_id,
+        plan, expires_date (datetime|None), is_active (bool) }
+    or None if the outer payload or nested transaction fails verification.
+    """
+    outer = _decode_verified_jws(signed_payload)
+    if outer is None:
+        return None
+
+    notification_type = outer.get("notificationType")
+    subtype = outer.get("subtype")
+
+    data = outer.get("data") or {}
+    if data.get("bundleId") and data["bundleId"] != BUNDLE_ID:
+        logger.warning(f"[apple_iap] ASSN bundleId mismatch: {data.get('bundleId')}")
+        return None
+
+    signed_tx = data.get("signedTransactionInfo")
+    if not signed_tx:
+        logger.warning("[apple_iap] ASSN missing signedTransactionInfo")
+        return None
+
+    tx = _decode_verified_jws(signed_tx)
+    if tx is None:
+        return None
+
+    product_id = tx.get("productId")
+    expires_ms = tx.get("expiresDate")
+    expires_dt = (
+        datetime.fromtimestamp(expires_ms / 1000, tz=timezone.utc) if expires_ms else None
+    )
+
+    is_active = notification_type in ACTIVE_NOTIFICATION_TYPES
+    if notification_type in REVOKE_NOTIFICATION_TYPES:
+        is_active = False
+    if tx.get("revocationDate"):
+        is_active = False
+    if expires_dt and expires_dt < datetime.now(timezone.utc):
+        is_active = False
+
+    return {
+        "notificationType": notification_type,
+        "subtype": subtype,
+        "original_transaction_id": str(
+            tx.get("originalTransactionId") or tx.get("transactionId") or ""
+        ),
+        "product_id": product_id,
+        "plan": plan_for_product(product_id) if product_id in PRO_PRODUCT_IDS else "free",
+        "expires_date": expires_dt,
+        "is_active": is_active,
+    }

@@ -2132,6 +2132,58 @@ async def apple_iap_verify(data: dict, user: dict = Depends(require_auth)):
 
     return {"is_pro": plan != "free", "verified": True, "plan": plan}
 
+@app.post("/api/iap/apple/notifications")
+async def apple_server_notifications(req: Request):
+    """
+    App Store Server Notifications V2 — Apple's authoritative server-to-server
+    channel for subscription lifecycle (renewals, expirations, refunds, billing
+    retry). Set this URL in App Store Connect (production + sandbox).
+
+    The signedPayload is a JWS verified against Apple's cert chain. We map the
+    original transaction id back to our user and grant/revoke Pro accordingly.
+    """
+    from backend.apple_iap import decode_server_notification, period_days_for_product
+    from backend.billing import find_user_by_external_sub, downgrade_user
+
+    try:
+        body = await req.json()
+    except Exception:
+        raise HTTPException(400, "Invalid JSON")
+
+    signed_payload = body.get("signedPayload")
+    if not signed_payload:
+        raise HTTPException(400, "Missing signedPayload")
+
+    note = decode_server_notification(signed_payload)
+    if not note:
+        # Invalid signature / unverifiable — ack so Apple stops retrying a bad one,
+        # but do nothing.
+        logger.warning("[apple_iap] ASSN failed verification")
+        return {"status": "ignored"}
+
+    user_id = find_user_by_external_sub(note["original_transaction_id"])
+    if not user_id:
+        # We haven't seen this transaction yet (e.g. notification arrived before
+        # the client verify call). Ack — the client verify path will create it.
+        logger.info(f"[apple_iap] ASSN {note['notificationType']} for unknown tx, acking")
+        return {"status": "unknown_transaction"}
+
+    if note["is_active"] and note["plan"] != "free":
+        period_days = period_days_for_product(note["product_id"] or "")
+        activate_user_subscription(
+            user_id=user_id,
+            plan=note["plan"],
+            provider="apple",
+            external_sub_id=note["original_transaction_id"],
+            period_end_days=period_days,
+        )
+        logger.info(f"[apple_iap] ASSN {note['notificationType']} → activated {user_id}")
+    else:
+        downgrade_user(user_id)
+        logger.info(f"[apple_iap] ASSN {note['notificationType']} → downgraded {user_id}")
+
+    return {"status": "ok"}
+
 # ── Library Endpoints ──────────────────────────────────────────────────────
 
 @app.get("/api/library/texts")
