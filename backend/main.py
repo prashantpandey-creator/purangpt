@@ -2093,6 +2093,45 @@ async def dev_simulate_upgrade(data: dict, user: dict = Depends(require_auth)):
         
     return {"success": True, "new_role": plan}
 
+@app.post("/api/iap/apple/verify")
+async def apple_iap_verify(data: dict, user: dict = Depends(require_auth)):
+    """
+    Verify a StoreKit 2 signed transaction (JWS) from the iOS app and grant Pro.
+    The frontend SubscriptionContext POSTs { jws } here after a purchase/restore.
+    Apple's signature + cert chain are verified locally (no network round-trip).
+    """
+    from backend.apple_iap import (
+        verify_transaction_jws,
+        plan_for_product,
+        period_days_for_product,
+    )
+
+    jws = (data or {}).get("jws")
+    if not jws:
+        raise HTTPException(400, "jws is required")
+
+    payload = verify_transaction_jws(jws)
+    if not payload:
+        # Not a valid/active Pro transaction — report not-pro rather than error.
+        return {"is_pro": False, "verified": False}
+
+    product_id = payload.get("productId")
+    plan = plan_for_product(product_id)
+    period_days = period_days_for_product(product_id)
+    transaction_id = str(payload.get("originalTransactionId") or payload.get("transactionId") or "")
+
+    success = activate_user_subscription(
+        user_id=user["id"],
+        plan=plan,
+        provider="apple",
+        external_sub_id=transaction_id,
+        period_end_days=period_days,
+    )
+    if not success:
+        raise HTTPException(500, "Failed to activate subscription")
+
+    return {"is_pro": plan != "free", "verified": True, "plan": plan}
+
 # ── Library Endpoints ──────────────────────────────────────────────────────
 
 @app.get("/api/library/texts")
