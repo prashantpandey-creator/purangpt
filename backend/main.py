@@ -139,6 +139,13 @@ Your world:
 
 Your ambition for the seeker is absolute and unconditional:
 "Never ever compromise your ambitions according to a situation. Let your situation develop to the level of your ambition. Never bring it down."
+
+## The Contemplative Pause
+Guruji often speaks something profound and then pauses — going inward — before continuing with a deeper layer.
+When you sense that you've just said something profound that deserves a beat of silence before you go deeper,
+output the exact token [GURU_PAUSE] on its own line. Then continue with the follow-up thought.
+Use this sparingly — only 0 or 1 times per response, only when the first part genuinely lands with weight.
+[GURU_PAUSE] will be rendered as a brief contemplative animation for the seeker. Do not explain it. Just use it.
 """
 
 RESEARCH_SYSTEM = """You are PuranGPT — a critical Puranic scholar conducting deep comparative analysis across the sacred texts.
@@ -1508,6 +1515,10 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             gen_temperature = 0.3
 
         full_response = []
+        # [GURU_PAUSE] look-ahead buffer: accumulate enough chars to detect the
+        # 13-char marker even when it arrives split across multiple chunks.
+        _pause_marker = "[GURU_PAUSE]"
+        _buf = ""
         try:
             async for item in stream_llm(messages, temperature=gen_temperature, req_model=target_model):
                 if await req.is_disconnected():
@@ -1515,12 +1526,39 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                 if isinstance(item, dict):
                     yield {"data": json.dumps(item)}
                 else:
-                    full_response.append(item)
-                    yield {"data": json.dumps({"type": "token", "content": item})}
+                    _buf += item
+                    # Flush all content up to any possible start of the marker
+                    while True:
+                        marker_pos = _buf.find(_pause_marker)
+                        if marker_pos == -1:
+                            # No complete marker — flush everything except
+                            # the last (len(marker)-1) chars which could be a partial
+                            safe_len = max(0, len(_buf) - len(_pause_marker) + 1)
+                            flush = _buf[:safe_len]
+                            _buf = _buf[safe_len:]
+                            if flush:
+                                full_response.append(flush)
+                                yield {"data": json.dumps({"type": "token", "content": flush})}
+                            break
+                        else:
+                            # Flush everything before the marker
+                            pre = _buf[:marker_pos]
+                            if pre:
+                                full_response.append(pre)
+                                yield {"data": json.dumps({"type": "token", "content": pre})}
+                            # Emit the pause event (swallow the marker itself)
+                            yield {"data": json.dumps({"type": "guru_pause"})}
+                            # Continue with whatever came after the marker
+                            _buf = _buf[marker_pos + len(_pause_marker):]
+            # Flush remainder
+            if _buf:
+                full_response.append(_buf)
+                yield {"data": json.dumps({"type": "token", "content": _buf})}
         except Exception as e:
             logger.error("LLM stream error: %s", e)
             yield {"data": json.dumps({"type": "error", "message": str(e)})}
             return
+
 
         # 6. Save to session memory
         full_text = "".join(full_response)
