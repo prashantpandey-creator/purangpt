@@ -831,7 +831,7 @@ def build_rag_context(results: list) -> str:
     if not results:
         return ""
     out = ["\n## Passages Retrieved from Indexed Corpus\n"]
-    for i, r in enumerate(results[:8], 1):
+    for i, r in enumerate(results[:10], 1):
         if isinstance(r, dict):
             ref  = r.get("reference", "")
             text = r.get("text", "") or r.get("excerpt", "")
@@ -839,11 +839,13 @@ def build_rag_context(results: list) -> str:
             edition = r.get("edition", "")
             bias    = r.get("bias", "")
         else:
+            # edition/bias live in chunk metadata, not top-level attrs (same bug as build_source_list).
+            chunk   = getattr(r, "chunk", {}) or {}
             ref     = getattr(r, "reference", "")
             text    = getattr(r, "text", "")
             lang    = getattr(r, "language", "")
-            edition = getattr(r, "edition", "")
-            bias    = getattr(r, "bias", "")
+            edition = chunk.get("edition", "")
+            bias    = chunk.get("bias", "")
         meta_parts = [p for p in [lang, edition, bias] if p]
         meta_str   = f" [{', '.join(meta_parts)}]" if meta_parts else ""
         out.append(f"**[{i}]** {ref}{meta_str}\n{text[:1500]}\n{'─'*60}")
@@ -853,7 +855,7 @@ def build_rag_context(results: list) -> str:
 def build_source_list(results: list) -> List[dict]:
     """Convert raw search results (SearchResult objects or dicts) to typed SourceModel dicts."""
     sources = []
-    for r in results[:8]:
+    for r in results[:10]:
         if isinstance(r, dict):
             sm = SourceModel(
                 text_id    = r.get("text_id", ""),
@@ -872,6 +874,9 @@ def build_source_list(results: list) -> List[dict]:
                 line_num   = int(r.get("line_num", 0)),
             )
         else:
+            # SearchResult: edition/tradition/bias live in the chunk metadata dict,
+            # not as top-level attrs (the old getattr always returned "" — a bug).
+            chunk = getattr(r, "chunk", {}) or {}
             sm = SourceModel(
                 text_id    = getattr(r, "id", ""),
                 text_name  = getattr(r, "purana", ""),
@@ -881,9 +886,9 @@ def build_source_list(results: list) -> List[dict]:
                 verse_range= getattr(r, "verse_range", ""),
                 text       = getattr(r, "text", ""),
                 language   = getattr(r, "language", "Sanskrit"),
-                edition    = getattr(r, "edition", ""),
-                tradition  = getattr(r, "tradition", ""),
-                bias       = getattr(r, "bias", ""),
+                edition    = chunk.get("edition", ""),
+                tradition  = chunk.get("tradition", ""),
+                bias       = chunk.get("bias", ""),
                 score      = float(getattr(r, "score", 0)),
             )
         sources.append(sm.to_frontend_dict())
@@ -1243,12 +1248,13 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         rag_context = ""
         if state.searcher and state.index_ready:
             try:
-                # Use the expanded query parts for semantic search
-                results = await state.searcher.hybrid_search(
-                    query=expansion.original, 
-                    top_k=request.top_k, 
-                    filters=request.filters, 
-                    sharma_weighting=(request.mode == "guide"),
+                # Dual-corpus retrieval (Puranas + Guruji) with mode-aware merge:
+                # guide → Guruji-first, research → Puranas primary w/ reserved Guruji slots.
+                results = await state.searcher.search_corpora(
+                    query=expansion.original,
+                    top_k=request.top_k,
+                    mode=request.mode,
+                    filters=request.filters,
                     embed_phrase=expansion.embed_phrase,
                     fts_phrase=expansion.fts_phrase,
                 )
@@ -1444,8 +1450,10 @@ async def search(request: SearchRequest):
     if not state.searcher:
         raise HTTPException(503, "Vector index not built. Run: python extract_and_index.py")
     expansion = await state.query_processor.expand(request.query)
-    results = await state.searcher.hybrid_search(
-        query=request.query, top_k=request.top_k, filters=request.filters,
+    # SearchRequest has no `mode` field → default to "research" (balanced merge).
+    results = await state.searcher.search_corpora(
+        query=request.query, top_k=request.top_k,
+        mode=getattr(request, "mode", "research"), filters=request.filters,
         embed_phrase=expansion.embed_phrase, fts_phrase=expansion.fts_phrase
     )
     return {
@@ -1649,7 +1657,7 @@ async def infer(request: InferRequest, user: Optional[dict] = Depends(get_curren
         all_passages = []
         if state.searcher and state.index_ready:
             try:
-                results = await state.searcher.hybrid_search(query=request.topic, top_k=request.top_k)
+                results = await state.searcher.search_corpora(query=request.topic, top_k=request.top_k, mode="research")
                 all_passages.extend(results)
             except Exception as e:
                 logger.warning("Vector search failed for infer: %s", e)

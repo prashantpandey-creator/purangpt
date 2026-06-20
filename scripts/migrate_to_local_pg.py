@@ -56,6 +56,27 @@ CREATE INDEX IF NOT EXISTS {TABLE_NAME}_fts_idx ON {TABLE_NAME} USING GIN (fts);
 """)
 conn.commit()
 
+# ── Guruji corpus table (separate corpus, same schema as purana_verses) ───────
+# Guruji Sri Shailendra Sharma's commentaries/discourses live in their own table
+# so they can be retrieved + cited reliably alongside the Puranas via a mode-aware
+# quota merge (see indexer/search.py search_corpora). Same columns/indexes.
+GURUJI_TABLE = "guruji_texts"
+
+cur.execute(f"""
+CREATE TABLE IF NOT EXISTS {GURUJI_TABLE} (
+    id TEXT PRIMARY KEY,
+    content TEXT,
+    metadata JSONB,
+    embedding vector(384),
+    fts tsvector GENERATED ALWAYS AS (to_tsvector('simple', content)) STORED
+);
+""")
+
+cur.execute(f"""
+CREATE INDEX IF NOT EXISTS {GURUJI_TABLE}_fts_idx ON {GURUJI_TABLE} USING GIN (fts);
+""")
+conn.commit()
+
 cur.execute(f"""
 CREATE OR REPLACE FUNCTION hybrid_search(
     query_text TEXT,
@@ -111,6 +132,64 @@ conn.commit()
 # Create standard pgvector index for fast semantic search
 cur.execute(f"""
 CREATE INDEX IF NOT EXISTS {TABLE_NAME}_embedding_idx ON {TABLE_NAME} USING hnsw (embedding vector_cosine_ops);
+""")
+conn.commit()
+
+# ── Guruji hybrid_search — exact copy of hybrid_search but over guruji_texts ──
+cur.execute(f"""
+CREATE OR REPLACE FUNCTION hybrid_search_guruji(
+    query_text TEXT,
+    query_embedding vector(384),
+    match_count INT,
+    filter_metadata JSONB DEFAULT '{{}}'::jsonb
+) RETURNS TABLE (
+    id TEXT,
+    content TEXT,
+    metadata JSONB,
+    similarity FLOAT
+) LANGUAGE plpgsql AS $$
+BEGIN
+    RETURN QUERY
+    WITH semantic_search AS (
+        SELECT
+            pv.id,
+            pv.content,
+            pv.metadata,
+            1 - (pv.embedding <=> query_embedding) as sim,
+            ROW_NUMBER() OVER (ORDER BY pv.embedding <=> query_embedding) as semantic_rank
+        FROM guruji_texts pv
+        WHERE pv.metadata @> filter_metadata
+        ORDER BY pv.embedding <=> query_embedding
+        LIMIT match_count * 2
+    ),
+    keyword_search AS (
+        SELECT
+            pv.id,
+            ts_rank(pv.fts, websearch_to_tsquery('simple', query_text)) as fts_rank,
+            ROW_NUMBER() OVER (ORDER BY ts_rank(pv.fts, websearch_to_tsquery('simple', query_text)) DESC) as keyword_rank
+        FROM guruji_texts pv
+        WHERE pv.fts @@ websearch_to_tsquery('simple', query_text)
+          AND pv.metadata @> filter_metadata
+        ORDER BY fts_rank DESC
+        LIMIT match_count * 2
+    )
+    SELECT
+        COALESCE(ss.id, ks.id) as id,
+        COALESCE(ss.content, (SELECT p.content FROM guruji_texts p WHERE p.id = ks.id)) as content,
+        COALESCE(ss.metadata, (SELECT p.metadata FROM guruji_texts p WHERE p.id = ks.id)) as metadata,
+        -- RRF calculation
+        COALESCE(1.0 / (60 + ss.semantic_rank), 0.0) + COALESCE(1.0 / (60 + ks.keyword_rank), 0.0) as similarity
+    FROM semantic_search ss
+    FULL OUTER JOIN keyword_search ks ON ss.id = ks.id
+    ORDER BY similarity DESC
+    LIMIT match_count;
+END;
+$$;
+""")
+conn.commit()
+
+cur.execute(f"""
+CREATE INDEX IF NOT EXISTS {GURUJI_TABLE}_embedding_idx ON {GURUJI_TABLE} USING hnsw (embedding vector_cosine_ops);
 """)
 conn.commit()
 

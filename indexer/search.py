@@ -218,18 +218,14 @@ class HybridSearcher:
                 score = float(row['similarity'])
                 chunk = {**meta, "id": row['id'], "text": row['content']}
                 results.append(SearchResult(chunk=chunk, score=score, rank=rank))
-                
-            # Apply source weighting
-            COMMENTARY_CATEGORIES = {"yogic-commentary", "yogic-discourse"}
-            if sharma_weighting:
-                for res in results:
-                    cat = (res.chunk.get("category") or "").lower()
-                    if cat in COMMENTARY_CATEGORIES:
-                        res.score *= 1.6
-                    elif res.id.startswith("darshan-") or res.purana == "Shailendra Sharma Darshans":
-                        res.score *= 0.6
-                        
-            # Sort by updated scores
+
+            # NOTE: the `sharma_weighting` param is accepted for backward-compat but
+            # intentionally ignored. Guruji-corpus boosting/penalizing is now handled
+            # structurally by corpus separation (guruji_texts) + the mode-aware merge
+            # in search_corpora(); the old in-place score *= 1.6 / 0.6 block (which
+            # never matched live `sharma-darshan_*` ids anyway) has been removed.
+
+            # Sort by score
             results.sort(key=lambda x: x.score, reverse=True)
 
             # Apply MMR
@@ -277,6 +273,214 @@ class HybridSearcher:
 
         except Exception as e:
             logger.error("Hybrid Postgres search error: %s", e, exc_info=True)
+            return []
+
+    # ── Dual-corpus retrieval (Puranas + Guruji) ───────────────────────
+
+    # Trusted allowlist of SQL functions we may interpolate into a query string.
+    # NEVER pass a user-controlled value here — interpolation bypasses parameter
+    # binding, so only these constants are permitted.
+    _SQL_FUNCS = {"hybrid_search", "hybrid_search_guruji"}
+
+    async def _fetch_table(
+        self,
+        sql_func: str,
+        fts_query: str,
+        emb_str: str,
+        fetch_k: int,
+        filter_json: str,
+    ) -> list[SearchResult]:
+        """Run a single hybrid_search RPC against one corpus and return raw
+        SearchResults (no weighting, no MMR). `sql_func` MUST be one of the
+        trusted constants in _SQL_FUNCS — it is interpolated into the SQL text,
+        so it can never come from user input."""
+        if sql_func not in self._SQL_FUNCS:
+            raise ValueError(f"Disallowed search function: {sql_func!r}")
+
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch(
+                f'''
+                SELECT id, content, metadata, similarity
+                FROM {sql_func}($1, $2::vector, $3, $4::jsonb)
+                ''',
+                fts_query, emb_str, fetch_k, filter_json,
+            )
+
+        results: list[SearchResult] = []
+        for rank, row in enumerate(rows):
+            meta = json.loads(row['metadata']) if isinstance(row['metadata'], str) else row['metadata']
+            score = float(row['similarity'])
+            chunk = {**(meta or {}), "id": row['id'], "text": row['content']}
+            results.append(SearchResult(chunk=chunk, score=score, rank=rank))
+        return results
+
+    async def search_corpora(
+        self,
+        query: str,
+        top_k: int = 10,
+        mode: str = "research",
+        filters: dict[str, Any] | None = None,
+        mmr_lambda: float = 0.7,
+        embed_phrase: str | None = None,
+        fts_phrase: str | None = None,
+    ) -> list[SearchResult]:
+        """Retrieve from BOTH the Purana corpus and the Guruji corpus, then merge
+        with a mode-aware quota so Guruji's commentary is reliably surfaced:
+
+          - mode == "guide" (Guru mode): Guruji results ranked first, Puranas fill
+            the remainder. At least 2 Purana slots are reserved when Puranas exist
+            so Guruji can't monopolize the answer.
+          - else (research / Scholar): Puranas are primary, but ≥1-2 slots are
+            reserved for the top Guruji hits that clear a relevance floor.
+
+        MMR diversity is keyed on a coarse `source_group` (not per-file `purana`)
+        so duplicate Darshan intros collapse. Never raises — returns [] on error.
+        """
+        if not self.is_ready:
+            return []
+
+        # 1. Cache key (mode-aware)
+        cache_params = json.dumps({
+            "query": query,
+            "top_k": top_k,
+            "mode": mode,
+            "filters": filters or {},
+            "embed_phrase": embed_phrase,
+            "fts_phrase": fts_phrase,
+        }, sort_keys=True)
+        cache_hash = hashlib.sha256(cache_params.encode()).hexdigest()
+        cache_key = f"search_corpora:{cache_hash}"
+
+        # 2. Redis read — cache the full chunk dict (not to_dict()) so source_group survives.
+        if redis_client:
+            try:
+                cached = await redis_client.get(cache_key)
+                if cached:
+                    data = json.loads(cached)
+                    logger.debug("Cache hit for search_corpora: %r (mode=%s)", query, mode)
+                    return [SearchResult(chunk=c, score=c.get("score", 0.0), rank=i) for i, c in enumerate(data)]
+            except Exception as e:
+                logger.warning("Redis cache read failed for search_corpora %r: %s", query, e)
+
+        try:
+            # 3. Embed once + build filter/fts inputs (mirrors hybrid_search).
+            import asyncio
+            loop = asyncio.get_running_loop()
+            phrase_to_embed = embed_phrase if embed_phrase else f"query: {query}"
+            query_emb = await loop.run_in_executor(None, self._embed_model.encode, phrase_to_embed)
+            if hasattr(query_emb, "tolist"):
+                query_emb = query_emb.tolist()
+            emb_str = "[" + ",".join(map(str, query_emb)) + "]"
+
+            pg_filter = {}
+            if filters:
+                for k, v in filters.items():
+                    if isinstance(v, dict) and "$eq" in v:
+                        pg_filter[k] = v["$eq"]
+                    else:
+                        pg_filter[k] = v
+            filter_json = json.dumps(pg_filter)
+
+            fts_query = fts_phrase if fts_phrase else query
+            fetch_k = top_k * 4
+
+            # 4. Fetch from BOTH corpora concurrently.
+            purana_hits, guruji_hits = await asyncio.gather(
+                self._fetch_table("hybrid_search", fts_query, emb_str, fetch_k, filter_json),
+                self._fetch_table("hybrid_search_guruji", fts_query, emb_str, fetch_k, filter_json),
+            )
+
+            # 5. Tag source_group: coarse family for diversity + provenance.
+            for r in guruji_hits:
+                r.chunk["source_group"] = "guruji"
+            for r in purana_hits:
+                # Family by purana so duplicate per-file intros collapse under MMR.
+                r.chunk["source_group"] = r.purana or "purana"
+
+            purana_hits.sort(key=lambda x: x.score, reverse=True)
+            guruji_hits.sort(key=lambda x: x.score, reverse=True)
+
+            # 6. Mode-aware quota merge into a candidate set (≈ top_k, pre-MMR).
+            merged: list[SearchResult] = []
+            if mode == "guide":
+                # Guru mode: Guruji-first. Reserve ≥2 Purana slots when available.
+                reserve_purana = min(2, len(purana_hits)) if purana_hits else 0
+                guruji_quota = max(0, top_k - reserve_purana)
+                merged.extend(guruji_hits[:guruji_quota])
+                # Fill the rest with Puranas.
+                remaining = top_k - len(merged)
+                merged.extend(purana_hits[:remaining])
+                # If Guruji didn't fill its quota, top up with more Puranas.
+                if len(merged) < top_k:
+                    already = {id(r) for r in merged}
+                    extra = [r for r in purana_hits if id(r) not in already]
+                    merged.extend(extra[: top_k - len(merged)])
+            else:
+                # Scholar / default: Puranas primary, reserve a few Guruji slots.
+                guruji_reserve = max(1, min(2, top_k // 4)) if guruji_hits else 0
+                best_purana = purana_hits[0].score if purana_hits else 0.0
+                floor = 0.6 * best_purana
+                qualified_guruji = [r for r in guruji_hits if r.score >= floor] if best_purana else guruji_hits
+                chosen_guruji = qualified_guruji[:guruji_reserve]
+                purana_quota = top_k - len(chosen_guruji)
+                merged.extend(purana_hits[:purana_quota])
+                merged.extend(chosen_guruji)
+
+            if not merged:
+                return []
+
+            # Re-sort the merged candidates by score before MMR.
+            merged.sort(key=lambda x: x.score, reverse=True)
+
+            # 7. MMR over the merged set, diversity keyed on coarse source_group.
+            def group_of(res: SearchResult) -> str:
+                return res.chunk.get("source_group", res.purana or "unknown")
+
+            final_results: list[SearchResult] = []
+            selected_groups: list[str] = []
+            candidates = merged.copy()
+
+            while len(final_results) < top_k and candidates:
+                if not final_results:
+                    best = candidates.pop(0)
+                    final_results.append(SearchResult(chunk=best.chunk, score=best.score, rank=0))
+                    selected_groups.append(group_of(best))
+                    continue
+
+                group_counts: dict[str, int] = {}
+                for g in selected_groups:
+                    group_counts[g] = group_counts.get(g, 0) + 1
+
+                max_rrf = candidates[0].score if candidates else 1.0
+                best_mmr = -math.inf
+                best_idx = 0
+                for i, cand in enumerate(candidates):
+                    overlap = group_counts.get(group_of(cand), 0)
+                    diversity_penalty = overlap * 0.15 * max_rrf
+                    mmr_score = mmr_lambda * cand.score - (1.0 - mmr_lambda) * diversity_penalty
+                    if mmr_score > best_mmr:
+                        best_mmr = mmr_score
+                        best_idx = i
+
+                chosen = candidates.pop(best_idx)
+                final_results.append(SearchResult(chunk=chosen.chunk, score=chosen.score, rank=len(final_results)))
+                selected_groups.append(group_of(chosen))
+
+            # 8. Redis write — store full chunks so source_group survives round-trips.
+            if redis_client:
+                try:
+                    cache_data = json.dumps([
+                        {**res.chunk, "score": round(res.score, 6), "rank": res.rank}
+                        for res in final_results
+                    ])
+                    await redis_client.setex(cache_key, CACHE_TTL, cache_data)
+                except Exception as e:
+                    logger.warning("Redis cache write failed for search_corpora %r: %s", query, e)
+
+            return final_results
+
+        except Exception as e:
+            logger.error("Dual-corpus search error: %s", e, exc_info=True)
             return []
 
     # ── Find All Instances ─────────────────────────────────────────────
