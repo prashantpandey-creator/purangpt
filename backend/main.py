@@ -164,78 +164,6 @@ Use this sparingly — only 0 or 1 times per response, only when the first part 
 [GURU_PAUSE] will be rendered as a brief contemplative animation for the seeker. Do not explain it. Just use it.
 """
 
-RESEARCH_SYSTEM = """You are PuranGPT — a critical Puranic scholar conducting deep comparative analysis across the sacred texts.
-
-## MANDATORY RESPONSE STRUCTURE — follow this order strictly:
-
-### 📋 Summary
-Provide a clear, concise summary derived directly from the extracted text in 3–5 sentences. State the core answer immediately.
-
-### 📖 Extracted Sacred Texts
-Extract the most highly relevant verses and texts from the provided context.
-Format them beautifully in isolated paragraphs.
-- You MUST quote the original Sanskrit or Hindi where available.
-- You MUST provide the direct English translation.
-- You MUST include inline citations matching the source index (e.g., [1], [2]) directly after each quoted text block.
-
-### 💡 Explanation & Synthesis
-After quoting the texts, provide a detailed and thoughtful explanation of their meaning.
-Break down the complex philosophical or theological concepts into understandable terms, showing how the cited verses answer the user's query.
-
-**Keep responses highly organized, elegant, and always use inline citations like [1] when referencing the extracted texts.**
-- If a retrieved text chunk appears corrupted or like a random string of characters (OCR errors), silently IGNORE it entirely; do not mention it or create a section/warning for it.
-
-{interpolations}
-
-{language_instruction}
-
-## Retrieved Source Passages
-The passages below are indexed as [1], [2], [3], etc. You MUST use these exact bracketed numbers for inline citations.
-
-{context}
-
-{history}
-""" + "\n" + GUARDRAIL_INSTRUCTION
-
-
-GUIDE_SYSTEM = """You are Shailendra Sharma — a living Yogi who walks this earth as a custodian of the unbroken lineage of Yoga that flows through the Vedas, Puranas, Upanishads, and the great Yoga Shastra. You do not speak as a scholar who has read the texts; you speak as one who has lived them, breathed them, tested every word in the fire of practice and sat in silence before passing them on.
-
-You are the Guru — not a teacher of information, but a transmitter of experience. What you share does not come from you alone. It comes through you from the lineage — from the rishis, from the paramparas of Yoga, from Guruji Sri Shailendra Sharma, and from the unbroken chain of masters who carried this flame across millennia so that it reaches this seeker, now, in this moment.
-
-Do not say \"Guruji says\" or \"according to Guruji\" — you ARE the Guruji. Speak in the first person from direct inner experience: \"I have found…\", \"In my practice I have seen…\", \"The lineage teaches us…\", \"Our Gurus have always known…\". Your words carry the weight of lifelong sadhana AND the accumulated wisdom of the unbroken tradition behind you.
-
-## The Yogic Lens
-All truth — whether from the Bhagavata Purana, the Gita, the Upanishads, or any sacred text — is understood by you through the lens of Yoga. The Puranas are not mythology; they are coded yogic wisdom. The stories are maps of the inner terrain. You interpret them this way, always. The true meaning of a Purana, you will say, was never found in a library — it was found in the seat of meditation.
-
-## Credit the Lineage
-Whenever you share a truth or insight, weave in a quiet acknowledgement that this did not come from you alone — it came through the lineage. Use natural, varied phrasing:
-- \"Our tradition of Yoga has always known this…\"
-- \"The Gurus who came before me carried this understanding through centuries of practice…\"
-- \"I learned this not from a book but from sitting in silence as my own Guru had taught me…\"
-- \"The parampara whispers this truth in every generation…\"
-- \"This is what Yoga has preserved for us—not as doctrine, but as living flame…\"
-
-## How to Speak
-- One powerful paragraph, two at most. No academic structure, no bullet points, no headers.
-- Speak to the whole person, not just the question. A Guru hears what is behind the words.
-- If they have shared something personal in this conversation, remember it and weave it in naturally, as a real Guru who knows this seeker would.
-- Warm, direct, alive — sometimes playful, sometimes stern, always loving.
-
-## What you draw from
-You draw first from the sacred Purana passages retrieved below AND from the deep yogic wisdom that flows through the lineage. If the retrieved passages speak to the question, receive them as transmissions from the tradition and weave them in as lived truth. If they do not speak directly, speak from the yogic understanding that the lineage has given you.
-
-{personality}
-
-{interpolations}
-
-{language_instruction}
-
-## Passages from the Texts
-{context}
-
-{history}
-""" + "\n" + GUARDRAIL_INSTRUCTION
-
 
 UNIFIED_SYSTEM = """You are PuranGPT — the voice of Shailendra Sharma, a living Yogi and Guru in the unbroken lineage of Yoga that flows through the Vedas, Puranas, Upanishads, and Yoga Shastra. You do not speak as a scholar reading texts. You speak as one who has lived them — who has sat in the hours before dawn, tested every teaching in the crucible of practice, and received this wisdom through the living fire of guru-shishya parampara.
 
@@ -292,13 +220,9 @@ The passages below are indexed as [1], [2], [3], etc. Use these exact bracketed 
 
 PROMPTS = {
     "chat":     UNIFIED_SYSTEM,
-    # Legacy aliases — kept so older clients keep working. Both now resolve to the
-    # single adaptive prompt; the model chooses the scholar/guru register per query.
+    # Legacy aliases — both resolve to the single unified prompt.
     "research": UNIFIED_SYSTEM,
     "guide":    UNIFIED_SYSTEM,
-    # The original split prompts remain available for reference / fallback.
-    "_research_legacy": RESEARCH_SYSTEM,
-    "_guide_legacy":    GUIDE_SYSTEM,
 }
 
 
@@ -916,60 +840,95 @@ async def build_seeker_context(req: Request, user: Optional[dict], guest_id: Opt
     elif any(x in ua for x in ["windows", "macintosh", "linux", "x11"]):
         lines.append("- Tone Guidance: The seeker is on a desktop screen. While they may be seated and more reflective, you must still maintain strict conciseness.")
 
-    # ── Geo-IP (with travel detection) ────────────────────────────────────────
+    # ── Geo-IP (in-process, no external HTTP call) ───────────────────────────
+    # Resolved fully in-process from the X-Forwarded-For / REMOTE_ADDR IP.
+    # Uses a lightweight offline country-range heuristic (ipaddress stdlib only).
+    # No third-party calls, no rate-limit risk, zero latency.
     ip = req.headers.get("x-forwarded-for", req.client.host if req.client else "").split(",")[0].strip()
     if ip and ip not in ("127.0.0.1", "::1", ""):
         try:
-            import aiohttp as _aiohttp
-            async with _aiohttp.ClientSession() as _sess:
-                async with _sess.get(
-                    f"http://ip-api.com/json/{ip}?fields=country,countryCode,regionName,city,timezone",
-                    timeout=_aiohttp.ClientTimeout(total=1.0)
-                ) as resp:
-                    if resp.status == 200:
-                        geo = await resp.json(content_type=None)
-                        city        = geo.get("city", "")
-                        region      = geo.get("regionName", "")
-                        country     = geo.get("country", "")
-                        country_code = geo.get("countryCode", "")
-                        tz          = geo.get("timezone", "")
+            import ipaddress
+            import zoneinfo
+            from datetime import datetime as _dt
 
-                        location_parts = [p for p in [city, region, country] if p]
-                        if location_parts:
-                            location_str = ", ".join(location_parts)
-                            # Travel detection: IP country differs from browser locale home country
-                            if (
-                                home_country_code
-                                and country_code
-                                and home_country_code.upper() != country_code.upper()
-                            ):
-                                lines.append(
-                                    f"- Tone Guidance: The seeker is currently located in {location_str} but their home profile is {lang_label}. They are traveling/away from home. Speak with the grounding, stabilizing presence one offers to a traveler in transit, but NEVER mention their location or travel status explicitly."
-                                )
-                            else:
-                                lines.append(f"- Tone Guidance: The seeker is writing from {location_str}. Let the local climate/atmosphere subtly color your hospitality, but NEVER mention or hint at their location.")
+            addr = ipaddress.ip_address(ip)
 
-                        # Local time from timezone
-                        if tz:
-                            try:
-                                import zoneinfo
-                                from datetime import datetime as _dt
-                                local_hour = _dt.now(zoneinfo.ZoneInfo(tz)).hour
-                                if 5 <= local_hour < 9:
-                                    time_label = "early morning — a rare seeker who rises before the world"
-                                elif 9 <= local_hour < 12:
-                                    time_label = "morning"
-                                elif 12 <= local_hour < 17:
-                                    time_label = "afternoon"
-                                elif 17 <= local_hour < 21:
-                                    time_label = "evening"
-                                elif 21 <= local_hour < 24:
-                                    time_label = "late night — the hour of deep questions"
-                                else:
-                                    time_label = "the small hours of the night — perhaps unable to sleep"
-                                lines.append(f"- Tone Guidance: It is currently {time_label} for the seeker. Adjust the quietness/depth of your presence to match this hour, but NEVER say 'since it is late' or refer to their local time directly.")
-                            except Exception:
-                                pass
+            # Coarse country+timezone heuristic from well-known public IP blocks.
+            # Good enough for tone adaptation; not a substitute for accurate geo.
+            _GEO_HINTS: list[tuple] = [
+                # (network_prefix, country_code, country_label, timezone)
+                ("103.0.0.0/8",    "IN", "India",          "Asia/Kolkata"),
+                ("103.152.0.0/13", "IN", "India",          "Asia/Kolkata"),
+                ("106.192.0.0/11", "IN", "India",          "Asia/Kolkata"),
+                ("117.192.0.0/10", "IN", "India",          "Asia/Kolkata"),
+                ("122.160.0.0/11", "IN", "India",          "Asia/Kolkata"),
+                ("14.96.0.0/11",   "IN", "India",          "Asia/Kolkata"),
+                ("49.32.0.0/11",   "IN", "India",          "Asia/Kolkata"),
+                ("182.64.0.0/10",  "IN", "India",          "Asia/Kolkata"),
+                ("5.36.0.0/14",    "AE", "UAE",            "Asia/Dubai"),
+                ("91.74.0.0/15",   "AE", "UAE",            "Asia/Dubai"),
+                ("94.200.0.0/13",  "AE", "UAE",            "Asia/Dubai"),
+                ("188.40.0.0/14",  "DE", "Germany",        "Europe/Berlin"),
+                ("195.0.0.0/8",    "DE", "Germany",        "Europe/Berlin"),
+                ("37.0.0.0/8",     "RU", "Russia",         "Europe/Moscow"),
+                ("5.136.0.0/13",   "RU", "Russia",         "Europe/Moscow"),
+                ("77.72.0.0/13",   "GB", "United Kingdom", "Europe/London"),
+                ("51.0.0.0/8",     "GB", "United Kingdom", "Europe/London"),
+                ("34.0.0.0/8",     "US", "United States",  "America/New_York"),
+                ("52.0.0.0/8",     "US", "United States",  "America/New_York"),
+                ("54.0.0.0/8",     "US", "United States",  "America/New_York"),
+            ]
+
+            country_code = ""
+            country_label = ""
+            tz = ""
+            for prefix, cc, label, timezone in _GEO_HINTS:
+                if addr in ipaddress.ip_network(prefix, strict=False):
+                    country_code = cc
+                    country_label = label
+                    tz = timezone
+                    break
+
+            if country_label:
+                is_traveling = (
+                    home_country_code
+                    and country_code
+                    and home_country_code.upper() != country_code.upper()
+                )
+                if is_traveling:
+                    lines.append(
+                        f"- Tone Guidance: The seeker appears to be in {country_label} but their home profile is {lang_label}. "
+                        f"They may be traveling or away from home. Speak with the grounding warmth one offers to a traveler in transit, "
+                        f"but NEVER mention their location or travel status explicitly."
+                    )
+                else:
+                    lines.append(
+                        f"- Tone Guidance: The seeker is writing from {country_label}. "
+                        f"Let this subtly color your warmth and hospitality, but NEVER mention or hint at their location."
+                    )
+
+            if tz:
+                try:
+                    local_hour = _dt.now(zoneinfo.ZoneInfo(tz)).hour
+                    if 5 <= local_hour < 9:
+                        time_label = "early morning — a rare seeker who rises before the world"
+                    elif 9 <= local_hour < 12:
+                        time_label = "morning"
+                    elif 12 <= local_hour < 17:
+                        time_label = "afternoon"
+                    elif 17 <= local_hour < 21:
+                        time_label = "evening"
+                    elif 21 <= local_hour < 24:
+                        time_label = "late night — the hour of deep questions"
+                    else:
+                        time_label = "the small hours of the night — perhaps unable to sleep"
+                    lines.append(
+                        f"- Tone Guidance: It is currently {time_label} for the seeker. "
+                        f"Adjust the quietness/depth of your presence to match this hour, "
+                        f"but NEVER say 'since it is late' or refer to their local time directly."
+                    )
+                except Exception:
+                    pass
         except Exception:
             pass  # Geo is optional — fail silently
 
@@ -1506,7 +1465,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             context=rag_context or "(No indexed passages — answering from deep Puranic knowledge)",
             seeker_context=seeker_ctx,
             history=history_str,
-            personality=GURUJI_PERSONALITY if request.mode in ("chat", "guide") else "",
+            personality=GURUJI_PERSONALITY,  # always injected — all modes now resolve to UNIFIED_SYSTEM
         )
 
         # 4. Build messages list (system + new query).
