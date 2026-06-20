@@ -425,64 +425,42 @@ async def _validate_llm_providers() -> None:
     Sets state.active_provider / state.active_model.
     """
     primary = os.getenv("LLM_PROVIDER", "deepseek").lower()
-    
-    # Simple list of providers to check, sorted by primary first
-    providers_to_check = [primary]
-    for p in ["deepseek", "gemini", "groq"]:
-        if p not in providers_to_check:
-            providers_to_check.append(p)
-            
-    for p in providers_to_check:
-        if p == "deepseek":
-            DEEPSEEK_API_KEY_VAL = os.getenv("DEEPSEEK_API_KEY", "")
-            if DEEPSEEK_API_KEY_VAL and not DEEPSEEK_API_KEY_VAL.startswith("your_"):
-                url = "https://api.deepseek.com/chat/completions"
-                headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY_VAL}", "Content-Type": "application/json"}
-                payload = {"model": "deepseek-chat", "messages": [{"role":"user","content":"hi"}], "max_tokens": 1, "stream": False}
-                try:
-                    async with get_http_session() as s:
-                        async with s.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as r:
-                            if r.status == 200:
-                                state.active_provider = "deepseek"
-                                state.active_model = "deepseek-chat"
-                                logger.info("✓ DeepSeek API key valid — model: deepseek-chat")
-                                return
-                except Exception:
-                    pass
-        elif p == "gemini":
-            GEMINI_API_KEY_VAL = os.getenv("GEMINI_API_KEY", "")
-            if GEMINI_API_KEY_VAL and not GEMINI_API_KEY_VAL.startswith("your_"):
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY_VAL}"
-                payload = {"contents": [{"parts": [{"text": "hi"}]}]}
-                try:
-                    async with get_http_session() as s:
-                        async with s.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as r:
-                            if r.status == 200:
-                                state.active_provider = "gemini"
-                                state.active_model = "gemini-2.5-flash"
-                                logger.info("✓ Gemini API key valid — model: gemini-2.5-flash")
-                                return
-                except Exception:
-                    pass
-        elif p == "groq":
-            GROQ_API_KEY_VAL = os.getenv("GROQ_API_KEY", "")
-            if GROQ_API_KEY_VAL and not GROQ_API_KEY_VAL.startswith("your_"):
-                url = "https://api.groq.com/openai/v1/chat/completions"
-                headers = {"Authorization": f"Bearer {GROQ_API_KEY_VAL}", "Content-Type": "application/json"}
-                payload = {"model": GROQ_MODEL, "messages": [{"role":"user","content":"hi"}], "max_tokens": 1, "stream": False}
-                try:
-                    async with get_http_session() as s:
-                        async with s.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as r:
-                            if r.status == 200:
-                                state.active_provider = "groq"
-                                state.active_model = GROQ_MODEL
-                                logger.info("✓ Groq API key valid — model: %s", GROQ_MODEL)
-                                return
-                except Exception:
-                    pass
 
-    logger.error("✗ No working LLM provider found! Check your API keys in .env")
+    # DeepSeek is the sole supported provider. We intentionally ignore any other
+    # value of LLM_PROVIDER (Gemini/Groq/Ollama support has been removed) and
+    # validate DeepSeek only.
+    if primary != "deepseek":
+        logger.info("LLM_PROVIDER=%s ignored — DeepSeek is the only supported provider", primary)
+
+    DEEPSEEK_API_KEY_VAL = os.getenv("DEEPSEEK_API_KEY", "")
+    if DEEPSEEK_API_KEY_VAL and not DEEPSEEK_API_KEY_VAL.startswith("your_"):
+        url = "https://api.deepseek.com/chat/completions"
+        headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY_VAL}", "Content-Type": "application/json"}
+        payload = {"model": "deepseek-chat", "messages": [{"role":"user","content":"hi"}], "max_tokens": 1, "stream": False}
+        try:
+            async with get_http_session() as s:
+                async with s.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as r:
+                    if r.status == 200:
+                        state.active_provider = "deepseek"
+                        state.active_model = "deepseek-chat"
+                        logger.info("✓ DeepSeek API key valid — model: deepseek-chat")
+                        return
+                    else:
+                        logger.error("✗ DeepSeek key check returned HTTP %s", r.status)
+        except Exception as e:
+            logger.error("✗ DeepSeek validation failed: %s", e)
+
+    # Even if the live probe failed (e.g. transient network), default to DeepSeek so
+    # requests still attempt it rather than hard-failing with "no provider".
+    if DEEPSEEK_API_KEY_VAL and not DEEPSEEK_API_KEY_VAL.startswith("your_"):
+        state.active_provider = "deepseek"
+        state.active_model = "deepseek-chat"
+        logger.warning("DeepSeek probe inconclusive — proceeding with DeepSeek anyway")
+        return
+
+    logger.error("✗ DEEPSEEK_API_KEY missing or invalid — chat will not work")
     state.active_provider = "none"
+
 
 
 # ── Lifespan ───────────────────────────────────────────────────────────────
@@ -761,65 +739,39 @@ class _ProviderRateLimited(Exception):
 _llm_semaphore = asyncio.Semaphore(20)
 
 async def stream_llm(messages: List[dict], temperature: float = 0.3, max_retries: int = 5, req_model: str = "auto", custom_keys: dict = None) -> AsyncGenerator[Union[str, dict], None]:
-    """Route to LLM provider with full cross-provider fallback: Groq → Gemini → DeepSeek → Ollama"""
+    """DeepSeek is the sole LLM provider (Groq / Gemini / Ollama support removed).
+
+    `req_model` may be "auto" (→ active DeepSeek model) or a "deepseek-<model>"
+    string. Deep Research drives `deepseek-reasoner` through its own client, so
+    here we only ever serve deepseek-chat for normal chat + sub-queries.
+    """
     custom_keys = custom_keys or custom_keys_var.get()
 
-    if req_model == "auto":
-        provider = state.active_provider if state.active_provider and state.active_provider != "none" else "deepseek"
-        model = state.active_model if state.active_model else "deepseek-chat"
-        req_model = f"{provider}-{model}"
+    if req_model == "auto" or not req_model:
+        active = state.active_model if (state.active_model and state.active_model.startswith("deepseek")) else "deepseek-chat"
+        model_name = active
+    elif req_model.startswith("deepseek-deepseek-"):
+        # "deepseek-" provider prefix + "deepseek-chat" model → strip one prefix.
+        model_name = req_model[len("deepseek-"):]
+    elif req_model.startswith("deepseek-"):
+        model_name = req_model
+    else:
+        model_name = "deepseek-chat"
 
     async with _llm_semaphore:
         try:
-            if req_model.startswith("groq"):
-                if not custom_keys.get("groq") and not GROQ_API_KEY:
-                    raise HTTPException(status_code=503, detail="GROQ_API_KEY missing")
-                async for token in stream_groq(messages, temperature, max_retries, req_model.replace("groq-", ""), custom_keys.get("groq")):
-                    yield token
-                return
-            elif req_model.startswith("deepseek"):
-                model_name = req_model[len("deepseek-"):] or "deepseek-chat"
-                async for token in stream_deepseek(messages, temperature, model_name, custom_keys.get("deepseek")):
-                    yield token
-                return
-            elif req_model.startswith("ollama"):
-                async for token in stream_ollama(messages, temperature, os.getenv("OLLAMA_MODEL", "qwen2.5:7b")):
-                    yield token
-                return
-            elif req_model.startswith("gemini"):
-                async for token in stream_gemini(messages, temperature, custom_keys.get("gemini")):
-                    yield token
-                return
-            elif req_model.startswith("zhipu"):
-                async for token in stream_zhipu(messages, temperature, req_model.replace("zhipu-", ""), custom_keys.get("zhipu")):
-                    yield token
-                return
+            async for token in stream_deepseek(messages, temperature, model_name, custom_keys.get("deepseek")):
+                yield token
+            return
         except (_ProviderRateLimited, HTTPException) as e:
-            status = getattr(e, 'status_code', 429)
-            if status not in (429, 503, 413):
-                raise
-            logger.warning(f"Primary LLM ({req_model}) rate-limited or unavailable: {e}")
+            logger.warning(f"DeepSeek unavailable ({req_model}): {e}")
+        except Exception as e:
+            logger.error(f"DeepSeek stream error: {e}")
 
-        # ── Fallback cascade ─────────────────────────────
-        # Fallback 1: Ollama local — only if explicitly configured. In production
-        # there is no Ollama, so attempting localhost:11434 just adds latency before
-        # the real failure. Gate it behind OLLAMA_BASE_URL being set.
-        if os.getenv("OLLAMA_BASE_URL"):
-            try:
-                logger.info("Last resort: falling back to local Ollama...")
-                yield {"type": "info", "message": "Using local model (may be slower)..."}
-                async for token in stream_ollama(messages, temperature, os.getenv("OLLAMA_MODEL", "qwen2.5:7b")):
-                    yield token
-                return
-            except Exception as e:
-                logger.error(f"Ollama fallback failed: {e}")
-
-        # All providers exhausted. We are already mid-stream (headers sent), so we
-        # CANNOT raise an HTTPException to set a status code — that produces a broken
-        # response. Emit a single typed terminal error event and stop; the SSE client
-        # handles {"type":"error"} and the consumer (event_gen) finalizes the stream.
-        logger.error("All LLM providers failed for this request")
-        yield {"type": "error", "message": "All AI providers are temporarily unavailable. Please try again in a moment."}
+        # No other providers to fall back to. We are mid-stream (headers sent), so
+        # emit a single typed terminal error event; event_gen finalizes the stream.
+        logger.error("DeepSeek failed for this request")
+        yield {"type": "error", "message": "The model is temporarily unavailable. Please try again in a moment."}
         return
 
 
