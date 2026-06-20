@@ -45,9 +45,12 @@ Use these notes when changing retrieval, Guide Mode, Research Mode, corpus loadi
 
 ## Provider routing
 
-- Research Mode should use the Groq-first `premium` route because citation-heavy synthesis was truncating/weak on the Gemini-first scale lane.
-- Guide Mode should use the Groq-first `mentor` route.
-- Gemini may still be present as fallback but can hit 429/503; do not rely on it as the primary path for Research Mode quality.
+- **DeepSeek is the SOLE LLM provider** (2026-06 rework). `stream_llm` and startup
+  validation route only to DeepSeek; `LLM_PROVIDER` is ignored. Gemini/Groq/Ollama/
+  Together/Zhipu code, keys and `stream_*` functions were deleted — do NOT reintroduce
+  them or reference a `stream_gemini`/`stream_groq` (they don't exist).
+- Chat uses `deepseek-chat`; Deep Research uses `deepseek-reasoner` (its own client).
+- There are no longer separate Research/Guide routes — there is one adaptive chat mode.
 
 ## Deployment caveat
 

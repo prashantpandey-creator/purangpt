@@ -47,13 +47,14 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s — %(mes
 logger = logging.getLogger("purangpt.backend")
 
 # ── Config ─────────────────────────────────────────────────────────────────
+# DeepSeek is the SOLE LLM provider. (Gemini/Groq/Ollama/Together/Zhipu were
+# removed in the 2026-06 rework — do not reintroduce other providers.)
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
-TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY", "")
-ZHIPU_API_KEY    = os.getenv("ZHIPU_API_KEY", "")
 
 def any_llm_configured() -> bool:
-    """True if ANY usable LLM provider key is set. DeepSeek is the prod primary."""
-    return any([DEEPSEEK_API_KEY, TOGETHER_API_KEY, ZHIPU_API_KEY])
+    """True if DeepSeek is usable: a configured key, a per-request BYOK key, or a
+    successful startup validation."""
+    return bool(DEEPSEEK_API_KEY or custom_keys_var.get().get("deepseek"))
 
 
 INDEX_DIR     = os.getenv("INDEX_DIR",   "./data/indexes")
@@ -253,16 +254,6 @@ class AppState:
 state = AppState()
 
 
-def has_llm_provider() -> bool:
-    """True if any LLM provider is usable: a configured cloud key, a per-request
-    BYOK key, or a provider that passed startup validation. Used to gate chat so
-    a DeepSeek-only deployment (the documented primary) isn't wrongly rejected."""
-    return bool(
-        custom_keys_var.get()
-        or GROQ_API_KEY or GEMINI_API_KEY or DEEPSEEK_API_KEY
-        or TOGETHER_API_KEY or ZHIPU_API_KEY
-        or state.active_provider not in ("none", "unknown")
-    )
 
 
 # ── GRETIL Corpus Loader ───────────────────────────────────────────────────
@@ -534,11 +525,7 @@ app.add_middleware(
 @app.middleware("http")
 async def extract_custom_keys(request: Request, call_next):
     keys = {
-        "groq": request.headers.get("x-groq-key"),
-        "together": request.headers.get("x-together-key"),
         "deepseek": request.headers.get("x-deepseek-key"),
-        "gemini": request.headers.get("x-gemini-key"),
-        "zhipu": request.headers.get("x-zhipu-key"),
     }
     custom_keys_var.set({k: v for k, v in keys.items() if v})
     return await call_next(request)
@@ -663,76 +650,6 @@ async def stream_deepseek(messages: List[dict], temperature: float = 0.3, req_mo
                     except (json.JSONDecodeError, KeyError, IndexError):
                         continue
 
-async def stream_together(messages: List[dict], temperature: float = 0.3, req_model: str = "Qwen/Qwen2.5-72B-Instruct-Turbo", custom_key: str = None) -> AsyncGenerator[Union[str, dict], None]:
-    key = custom_key or TOGETHER_API_KEY
-    if not key:
-        raise HTTPException(status_code=503, detail="TOGETHER_API_KEY not configured")
-    url = "https://api.together.xyz/v1/chat/completions"
-    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
-    payload = {"model": req_model, "messages": messages, "stream": True, "temperature": temperature}
-    async with get_http_session() as sess:
-        async with sess.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=120)) as resp:
-            if resp.status != 200:
-                body = await resp.text()
-                raise HTTPException(status_code=resp.status, detail=f"Together error: {body}")
-            async for raw_line in resp.content:
-                line = raw_line.decode("utf-8").strip()
-                if not line or line == "data: [DONE]": continue
-                if line.startswith("data: "):
-                    try:
-                        data = json.loads(line[6:])
-                        token = data["choices"][0]["delta"].get("content", "")
-                        if token: yield token
-                    except (json.JSONDecodeError, KeyError, IndexError):
-                        continue
-
-async def stream_zhipu(messages: List[dict], temperature: float = 0.3, req_model: str = "glm-5.1", custom_key: str = None) -> AsyncGenerator[Union[str, dict], None]:
-    key = custom_key or ZHIPU_API_KEY
-    if not key:
-        raise HTTPException(status_code=503, detail="ZHIPU_API_KEY not configured")
-    url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
-    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
-    payload = {"model": req_model, "messages": messages, "stream": True, "temperature": temperature}
-    async with get_http_session() as sess:
-        async with sess.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=120)) as resp:
-            if resp.status != 200:
-                body = await resp.text()
-                raise HTTPException(status_code=resp.status, detail=f"Zhipu error: {body}")
-            async for raw_line in resp.content:
-                line = raw_line.decode("utf-8").strip()
-                if not line or line == "data: [DONE]": continue
-                if line.startswith("data: "):
-                    try:
-                        data = json.loads(line[6:])
-                        token = data["choices"][0]["delta"].get("content", "")
-                        if token: yield token
-                    except (json.JSONDecodeError, KeyError, IndexError):
-                        continue
-
-async def stream_ollama(messages: List[dict], temperature: float = 0.3, req_model: str = "qwen2.5:7b") -> AsyncGenerator[Union[str, dict], None]:
-    url = f"{os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')}/api/chat"
-    payload = {"model": req_model, "messages": messages, "stream": True, "options": {"temperature": temperature}}
-    async with get_http_session() as sess:
-        async with sess.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=120)) as resp:
-            if resp.status != 200:
-                body = await resp.text()
-                raise HTTPException(status_code=resp.status, detail=f"Ollama error: {body}")
-            async for raw_line in resp.content:
-                line = raw_line.decode("utf-8").strip()
-                if not line: continue
-                try:
-                    data = json.loads(line)
-                    token = data.get("message", {}).get("content", "")
-                    if token: yield token
-                    if data.get("done"): break
-                except Exception:
-                    continue
-
-class _ProviderRateLimited(Exception):
-    """Raised internally when a provider exhausts its rate limit — triggers cross-provider fallback."""
-    def __init__(self, provider: str):
-        self.provider = provider
-        super().__init__(f"{provider} rate limit exhausted")
 
 # Semaphore: max 20 concurrent LLM calls. All providers are async I/O; the
 # old value of 3 caused every request to queue behind slow Reasoner calls.
@@ -763,7 +680,7 @@ async def stream_llm(messages: List[dict], temperature: float = 0.3, max_retries
             async for token in stream_deepseek(messages, temperature, model_name, custom_keys.get("deepseek")):
                 yield token
             return
-        except (_ProviderRateLimited, HTTPException) as e:
+        except HTTPException as e:
             logger.warning(f"DeepSeek unavailable ({req_model}): {e}")
         except Exception as e:
             logger.error(f"DeepSeek stream error: {e}")
@@ -1087,8 +1004,7 @@ async def status():
         "version":         "2.0",
         "llm_provider":    state.active_provider,
         "model":           state.active_model or "deepseek-chat",
-        "groq_key_valid":  bool(os.getenv("GROQ_API_KEY", "")),
-        "gemini_key_valid":bool(os.getenv("GEMINI_API_KEY", "")),
+        "deepseek_key_valid": bool(DEEPSEEK_API_KEY or custom_keys_var.get().get("deepseek")),
         "index_ready":     state.index_ready,
         "total_verses":    getattr(state, "total_verses", 0),
         "gretil_loaded":   state.gretil_loaded,
@@ -1411,7 +1327,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             {"role": "user",   "content": request.query},
         ]
 
-        # 5. Determine Model — always use the active validated provider (gemini in prod).
+        # 5. Determine Model — always use the active validated provider (deepseek-chat).
         # Previously Pro users were hardcoded to deepseek-reasoner which caused 30-60s
         # waits and total failures when DeepSeek was slow/down. Now everyone goes through
         # the same validated active provider so fallback logic works correctly.
@@ -1434,7 +1350,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                     full_response.append(item)
                     yield {"data": json.dumps({"type": "token", "content": item})}
         except Exception as e:
-            logger.error("Groq stream error: %s", e)
+            logger.error("LLM stream error: %s", e)
             yield {"data": json.dumps({"type": "error", "message": str(e)})}
             return
 
@@ -1578,7 +1494,7 @@ async def instances(request: InstancesRequest):
             "source":    "GRETIL Sanskrit corpus + vector index",
         }
 
-    # 3. Groq fallback
+    # 3. LLM fallback (DeepSeek)
     msgs = [
         {"role": "system", "content": RESEARCH_SYSTEM.format(
             interpolations=KNOWN_INTERPOLATIONS, language_instruction="", context="", history="")},
@@ -1593,7 +1509,7 @@ async def instances(request: InstancesRequest):
         "total":      None,
         "instances":  [],
         "llm_answer": "".join(answer_parts),
-        "source":     "Groq LLM (scholarly knowledge)",
+        "source":     "DeepSeek LLM (scholarly knowledge)",
     }
 
 @app.get("/api/citation-lookup")

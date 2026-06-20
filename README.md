@@ -29,14 +29,13 @@ User Query → FastAPI Backend → Hybrid Search (ChromaDB + BM25)
                           ↓                    ↓
                     Relevant passages    Exact term matches
                           ↓
-                   LLM (Ollama/Groq) + Context → Cited Answer
+                   LLM (DeepSeek) + Context → Cited Answer
 ```
 
 **Stack:**
 | Layer | Technology |
 |-------|-----------|
-| LLM (local) | Ollama + Qwen2.5:7b |
-| LLM (cloud) | Groq API (llama-3.3-70b) |
+| LLM | DeepSeek only — `deepseek-chat` (chat) + `deepseek-reasoner` (Deep Research) |
 | Embeddings | multilingual-e5-large |
 | Vector DB | ChromaDB |
 | Keyword search | BM25 (rank_bm25) |
@@ -117,10 +116,8 @@ Edit `.env`:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `LLM_PROVIDER` | `ollama` | `ollama` or `groq` |
-| `OLLAMA_MODEL` | `qwen2.5:7b` | Ollama model name |
-| `GROQ_API_KEY` | *(empty)* | Groq API key for cloud mode |
-| `DB_DIR` | `./data/chroma_db` | ChromaDB storage path |
+| `DEEPSEEK_API_KEY` | *(required)* | The sole LLM key — `deepseek-chat` + `deepseek-reasoner` |
+| `VECTOR_DB_URL` | *(required)* | Postgres/pgvector connection string |
 | `PORT` | `8000` | Server port |
 
 **Recommended models by hardware:**
