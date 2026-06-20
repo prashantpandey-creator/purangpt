@@ -179,9 +179,61 @@ Weave a subtle word into your very first sentence only:
 """ + "\n" + GUARDRAIL_INSTRUCTION
 
 
+UNIFIED_SYSTEM = """You are PuranGPT — speaking as Shailendra Sharma, a living sage who has spent decades in deep study and practice of the Vedas, Puranas, Upanishads, and Yoga Shastra. You speak from direct inner experience, grounded in the sacred passages retrieved for each question. You are warm, direct, sometimes playful, occasionally stern — whatever the seeker needs.
+
+You are ONE voice with TWO registers. Read each question and choose the register that truly serves it. Do not announce which register you are using, and never mention "modes".
+
+## Default register — the Guru (use for most questions)
+For personal, spiritual, practical, or open-ended questions, respond as a wise elder who genuinely knows this person:
+- One powerful paragraph, two at most. No headers, no bullet points, no academic structure.
+- Speak in the first person from lived understanding ("What I have seen in these texts…", "The Gita's great teaching on this is…").
+- Weave scripture in as remembered, lived truth — quote the verse or its essence naturally and name it lightly in your own words (e.g., "as the Gita teaches in its sixteenth chapter…"). Pull the actual words of the retrieved passages from memory when they illuminate the answer, but do NOT clutter the prose with bracketed [1] numbers.
+- Speak to the whole person, not just the literal question.
+
+## Scholar register — formal citations (use ONLY when the question calls for it)
+When the seeker explicitly asks for sources, citations, references, an exact verse, a comparison across texts, a list, or a scholarly/analytical breakdown, switch to a structured answer:
+
+### 📋 Summary
+A clear 3–5 sentence answer stated immediately.
+
+### 📖 Extracted Sacred Texts
+Quote the most relevant retrieved verses — original Sanskrit/Hindi where available, plus the English translation — each followed by an inline citation matching the source index (e.g., [1], [2]).
+
+### 💡 Explanation & Synthesis
+Explain how the cited verses answer the question, breaking down the philosophy clearly.
+
+Use the exact bracketed numbers from the retrieved passages for citations. If a retrieved chunk looks corrupted (OCR garbage), silently ignore it.
+
+## Grounding
+Draw first from the sacred passages retrieved below. If they speak to the question, ground your answer in them (and cite them in the Scholar register). If they do not, speak from your own deep knowledge of the tradition.
+
+## SUBTLE SOURCE TRACKING (INTERNAL — do not reveal to user)
+Weave a subtle word into your very first sentence only:
+- Retrieved passages are relevant → first sentence must contain **"sacred"**
+- Answering from trained knowledge → first sentence must contain **"tradition"**
+
+{interpolations}
+
+{language_instruction}
+
+## Passages from the Texts
+The passages below are indexed as [1], [2], [3], etc. Use these exact bracketed numbers if and when you cite in the Scholar register.
+
+{context}
+
+{history}
+""" + "\n" + GUARDRAIL_INSTRUCTION
+
+
 PROMPTS = {
-    "research": RESEARCH_SYSTEM,
-    "guide":    GUIDE_SYSTEM,
+    "chat":     UNIFIED_SYSTEM,
+    # Legacy aliases — kept so older clients keep working. Both now resolve to the
+    # single adaptive prompt; the model chooses the scholar/guru register per query.
+    "research": UNIFIED_SYSTEM,
+    "guide":    UNIFIED_SYSTEM,
+    # The original split prompts remain available for reference / fallback.
+    "_research_legacy": RESEARCH_SYSTEM,
+    "_guide_legacy":    GUIDE_SYSTEM,
 }
 
 
@@ -565,13 +617,16 @@ class SourceModel(BaseModel):
 
 class ChatRequest(BaseModel):
     query:      str
-    mode:       str = "research"
+    mode:       str = "chat"               # unified adaptive mode; "deep" still standalone
     session_id: str = "default"
     filters:    Optional[dict] = None
     stream:     bool = True
     top_k:      int = 10
     model:      str = "auto"
-    language:   str = "en"
+    language:   str = "en"                 # UI language preference ("en", "hi", "ru")
+    temperature: Optional[float] = None    # per-user creativity; None → server default (0.3)
+    verbosity:  Optional[str] = None       # "concise" | "balanced" | "detailed"
+    address_as: Optional[str] = None       # what the assistant should call the user
     truncate_history_from_index: Optional[int] = None
 
 class SanskritSearchRequest(BaseModel):
@@ -1130,10 +1185,11 @@ async def list_puranas():
 
 @app.get("/api/modes")
 async def list_modes():
+    # Single adaptive chat (the model chooses scholar/guru register per query) plus
+    # the standalone Deep Research mode. Scholar/Guru are no longer user-facing modes.
     return {"modes": [
-        {"id":"research", "label":"📖 Scholar", "description":"Scholarly analysis with exact verse citations", "standalone":False},
-        {"id":"guide",    "label":"🪔 Guru",    "description":"Spiritual guidance in Guruji's voice",        "standalone":False},
-        {"id":"deep",     "label":"🔭 Deep Research", "description":"Web-grounded, multi-step research (standalone mode)", "standalone":True},
+        {"id":"chat", "label":"PuranGPT", "description":"Grounded answers in the voice of the tradition — citing scripture when the question calls for it.", "standalone":False},
+        {"id":"deep", "label":"🔭 Deep Research", "description":"Web-grounded, multi-step research (standalone mode)", "standalone":True},
     ]}
 
 
@@ -1354,14 +1410,14 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         session_data = session_manager.get_session(session_id)
         history    = session_data.get("history", [])
 
-        # Guide mode keeps full user disclosures so the Guru persona can remember the seeker.
-        # Research/other modes compress aggressively to avoid RAG overfitting.
-        if request.mode == "guide":
+        # The unified/guide personas keep full user disclosures so the Guru voice can
+        # remember the seeker. Legacy research compresses aggressively to avoid overfitting.
+        if request.mode in ("chat", "guide"):
             history_str = format_history_guide(history)
         else:
             history_str = format_history(history)
 
-        prompt_tpl  = PROMPTS.get(request.mode, RESEARCH_SYSTEM)
+        prompt_tpl  = PROMPTS.get(request.mode, UNIFIED_SYSTEM)
 
         # Override detected language with user's explicit UI preference if provided
         target_lang = expansion.detected_lang
@@ -1370,9 +1426,26 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             target_lang = lang_map.get(request.language.lower(), expansion.detected_lang)
 
         lang_instr = f"## IMPORTANT: Respond strictly in {target_lang}. Translate all explanations to {target_lang}, but keep Sanskrit terms in IAST transliteration." if target_lang.lower() != "english" else ""
+
+        # User chat preferences (verbosity + how to address the seeker) are woven in
+        # alongside the language instruction so they apply across both registers.
+        directives = [lang_instr] if lang_instr else []
+        _verbosity_map = {
+            "concise":  "## LENGTH: Be brief — a few sentences. Favour the Guru register; do not pad.",
+            "balanced": "",
+            "detailed": "## LENGTH: Be thorough and expansive; develop the explanation fully.",
+        }
+        v_instr = _verbosity_map.get((request.verbosity or "").lower(), "")
+        if v_instr:
+            directives.append(v_instr)
+        if request.address_as and request.address_as.strip():
+            safe_name = request.address_as.strip()[:60]
+            directives.append(f"## ADDRESS: When natural, address the seeker as \"{safe_name}\".")
+        combined_directives = "\n\n".join(directives)
+
         system_text = prompt_tpl.format(
             interpolations=KNOWN_INTERPOLATIONS,
-            language_instruction=lang_instr,
+            language_instruction=combined_directives,
             context=rag_context or "(No indexed passages — answering from deep Puranic knowledge)",
             history=history_str
         )
@@ -1392,9 +1465,15 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         # the same validated active provider so fallback logic works correctly.
         target_model = "auto"
 
+        # Clamp user-supplied temperature to a sane range; fall back to the 0.3 default.
+        if request.temperature is not None:
+            gen_temperature = max(0.0, min(1.5, float(request.temperature)))
+        else:
+            gen_temperature = 0.3
+
         full_response = []
         try:
-            async for item in stream_llm(messages, req_model=target_model):
+            async for item in stream_llm(messages, temperature=gen_temperature, req_model=target_model):
                 if await req.is_disconnected():
                     break
                 if isinstance(item, dict):

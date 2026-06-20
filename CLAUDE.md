@@ -113,23 +113,29 @@ SSE events from `/api/chat`: `sources` → `reasoning` (R1 only) → `token` × 
 
 ## Chat Modes
 
-Defined in `backend/main.py` (`PROMPTS` dict — `RESEARCH_SYSTEM`, `GUIDE_SYSTEM`),
-advertised via `GET /api/modes`, and must stay in sync with the frontend's
-`QueryMode` type in `purangpt-next/src/lib/api.ts`. There are **two** modes:
+Defined in `backend/main.py` (`PROMPTS` dict), advertised via `GET /api/modes`, and kept in
+sync with the frontend `QueryMode` in `purangpt-next/src/lib/api.ts`. There is now **one
+user-facing chat mode** plus the standalone Deep Research mode:
 
-- `research` — **Scholar Mode**: academic, mandatory structure (Summary → Extracted Sacred Texts → Explanation), inline `[1]` citations. UI label "Scholar Mode".
-- `guide` — **Guru Mode**: warm, concise single-paragraph guidance in Guruji Sri Shailendra Sharma's voice, no citation clutter. Retrieval applies `sharma_weighting`. UI label "Guru Mode".
+- `chat` — **PuranGPT** (the only chat mode): a single **adaptive** prompt (`UNIFIED_SYSTEM`).
+  The model reads each query and chooses its register: by **default** it answers as the Guru
+  (Shailendra Sharma's first-person voice — warm, concise, scripture woven in loosely, no `[1]`
+  clutter); it **escalates** to the **Scholar** layout (Summary → Extracted Sacred Texts →
+  Explanation with inline `[1]` citations) only when the question asks for sources/citations/
+  comparison/analysis. Retrieval always runs; the SSE `sources` event is always emitted so the
+  UI can show citations when present. Keeps the internal "sacred"/"tradition" grounding tell.
+- `research` / `guide` — **legacy aliases**, both now resolve to `UNIFIED_SYSTEM` (the original
+  split `RESEARCH_SYSTEM` / `GUIDE_SYSTEM` are retained as `_research_legacy` / `_guide_legacy`).
+- `deep` — **Deep Research** (`backend/agents/deep_research.py`): **standalone** web-grounded
+  mode, reached only via the side-panel "Deep Research" link → `/dashboard/deep-research` page
+  (sends `mode: "deep"`). `/api/chat` dispatches `mode == "deep"` to the two-stage agent
+  (clarify → DuckDuckGo → DeepSeek-R1 synthesis with streamed `reasoning`).
+
+`ChatRequest` also carries per-user `temperature` (clamped 0.0–1.5, default 0.3), `verbosity`
+(`concise|balanced|detailed`), and `address_as` (how the assistant addresses the seeker); the
+latter two are woven into the system prompt alongside the language instruction.
 
 (The earlier `yogic`/`compare`/`translate`/`find_instances` modes no longer exist.)
-
-A third mode, `deep` — **Deep Research** (`backend/agents/deep_research.py`) — is a
-**standalone** web-grounded mode, intentionally kept out of the in-chat Scholar/Guru
-toggle. It is reached only via the side-panel "Deep Research" link → the
-`/dashboard/deep-research` page, which sends `mode: "deep"`. The `/api/chat` handler
-dispatches `mode == "deep"` to the interactive two-stage agent (clarifying question →
-DuckDuckGo search → DeepSeek-R1 synthesis with streamed `reasoning`). Frontend
-`QueryMode` is `guide | research | deep`; the `/chat` route only maps `guide | research`
-so deep can never appear as a chat toggle.
 
 ## Deploy
 
