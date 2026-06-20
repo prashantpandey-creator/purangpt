@@ -180,7 +180,32 @@ class SessionManager:
             for msg in messages:
                 if msg.get("role") == "user":
                     content = msg.get("content", "").strip()
-                    title = content[:40] + ("..." if len(content) > 40 else "")
+                    # Deterministic title from first query
+                    _GURUJI_KEY_TERMS = {
+                        "ojas", "amrita", "prana", "kundalini", "samadhi", "khechari",
+                        "mudra", "bandha", "kriya", "shiva", "shakti", "mercury",
+                        "parada", "time", "immortality", "nada", "bindu", "chakra",
+                        "dhyana", "dharana", "yama", "niyama", "asana", "pranayama",
+                        "guru", "shishya", "parampara", "veda", "purana", "upanishad",
+                        "gita", "yoga", "yogi", "akasha", "tattva", "karma", "bhakti",
+                        "jnana", "tantra"
+                    }
+                    import re
+                    words = [w for w in re.findall(r'\b\w+\b', content) if len(w) > 3]
+                    skt_terms = [w.title() for w in words if w.lower() in _GURUJI_KEY_TERMS]
+                    
+                    if skt_terms:
+                        # "Ojas and Time" or just "Ojas"
+                        title = " and ".join(list(dict.fromkeys(skt_terms))[:2])
+                    else:
+                        # fallback: first 4 meaningful words
+                        stop_words = {"what", "how", "why", "who", "when", "where", "is", "are", "do", "does", "can", "could", "would", "the", "this", "that", "please", "tell", "know", "about", "with"}
+                        meaningful = [w.title() for w in words if w.lower() not in stop_words][:4]
+                        if meaningful:
+                            title = " ".join(meaningful)
+                        else:
+                            title = content[:30].title() + ("..." if len(content) > 30 else "")
+                    
                     session["title"] = title
                     break
                     

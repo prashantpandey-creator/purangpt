@@ -731,17 +731,38 @@ def format_history_guide(history: List[dict]) -> str:
             # Keep the full seeker message — this is the personal disclosure
             line = f"Seeker: {content}"
         else:
-            # Trim Guru's previous response to its first 200 chars (the key thought)
-            trimmed = content.strip()
-            if len(trimmed) > 200:
-                # Try to cut at a sentence boundary
-                cut = trimmed[:200]
-                last_period = max(cut.rfind(". "), cut.rfind("। "))
-                if last_period > 80:
-                    trimmed = cut[: last_period + 1]
-                else:
-                    trimmed = cut + "…"
-            line = f"Guruji (your previous response): {trimmed}"
+            # Keyword + first-sentence distillation
+            content_str = content.strip()
+            
+            # 1. Take the first sentence
+            first_sentence = content_str[:300]
+            period_idx = max(first_sentence.find(". "), first_sentence.find("। "), first_sentence.find("?\n"), first_sentence.find("!\n"))
+            if period_idx > 0:
+                first_sentence = first_sentence[:period_idx + 1]
+            elif len(content_str) > 300:
+                first_sentence += "…"
+
+            # 2. Extract key terms
+            _GURUJI_KEY_TERMS = {
+                "ojas", "amrita", "prana", "kundalini", "samadhi", "khechari",
+                "mudra", "bandha", "kriya", "shiva", "shakti", "mercury",
+                "parada", "time", "immortality", "nada", "bindu", "chakra",
+                "dhyana", "dharana", "yama", "niyama", "asana", "pranayama",
+                "guru", "shishya", "parampara", "veda", "purana", "upanishad",
+                "gita", "yoga", "yogi", "akasha", "tattva", "karma", "bhakti",
+                "jnana", "tantra", "dharma", "shastra", "rishi", "darshan"
+            }
+            import re
+            tokens = set(re.findall(r'\b\w+\b', content_str.lower()))
+            found_terms = _GURUJI_KEY_TERMS.intersection(tokens)
+            
+            # 3. Format
+            if found_terms:
+                terms_str = ", ".join(sorted(found_terms))
+                line = f"Guruji (your previous response): {first_sentence} [key terms: {terms_str}]"
+            else:
+                line = f"Guruji (your previous response): {first_sentence}"
+
 
         if current_chars + len(line) > max_chars:
             break
@@ -1507,6 +1528,15 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
 
         # 6. Save to session memory
         full_text = "".join(full_response)
+        
+        AI_DISCLAIMERS = re.compile(
+            r"(As an AI|as a language model|I don't have personal experiences|"
+            r"I cannot provide|I'm just an AI|artificial intelligence)",
+            re.IGNORECASE
+        )
+        if AI_DISCLAIMERS.search(full_text):
+            logger.warning("AI disclaimer detected in response: %s", full_text[:100].replace('\n', ' '))
+            
         session_data = session_manager.append_messages(session_id, [
             {"role": "user",      "content": request.query},
             {"role": "assistant", "content": full_text}
@@ -1838,9 +1868,19 @@ async def infer(request: InferRequest, user: Optional[dict] = Depends(get_curren
             elif isinstance(item, dict):
                 yield {"data": json.dumps(item)}
 
+        full_text = "".join(full_response)
+        
+        AI_DISCLAIMERS = re.compile(
+            r"(As an AI|as a language model|I don't have personal experiences|"
+            r"I cannot provide|I'm just an AI|artificial intelligence)",
+            re.IGNORECASE
+        )
+        if AI_DISCLAIMERS.search(full_text):
+            logger.warning("AI disclaimer detected in INFER response: %s", full_text[:100].replace('\n', ' '))
+            
         session_manager.append_messages(request.session_id, [
             {"role": "user",      "content": f"[INFER] {request.topic}"},
-            {"role": "assistant", "content": "".join(full_response)},
+            {"role": "assistant", "content": full_text},
         ], user_id)
         yield {"data": json.dumps({"type": "done"})}
 
