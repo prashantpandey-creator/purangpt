@@ -678,7 +678,9 @@ async def stream_llm(messages: List[dict], temperature: float = 0.3, max_retries
     custom_keys = custom_keys or custom_keys_var.get()
 
     if req_model == "auto":
-        req_model = "deepseek-deepseek-v4-flash"
+        provider = state.active_provider if state.active_provider and state.active_provider != "none" else "deepseek"
+        model = state.active_model if state.active_model else "deepseek-chat"
+        req_model = f"{provider}-{model}"
 
     async with _llm_semaphore:
         try:
