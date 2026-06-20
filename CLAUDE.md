@@ -30,7 +30,7 @@ Any session on this machine already has what it needs — these are the entry po
 | API | FastAPI + uvicorn (port 8000) |
 | LLM | Gemini (`gemini-2.5-flash`, current prod primary via `LLM_PROVIDER=gemini`); DeepSeek/Groq fallback |
 | Vector search | Postgres **pgvector** + FTS via `hybrid_search` SQL function (`indexer/search.py` → `HybridSearcher`) |
-| Profiles/billing | Same Postgres DB (`backend/db_client.py`, psycopg2) |
+| Profiles/billing | `purangpt-pgvector-1` (same DB as vectors, using `VECTOR_DB_URL`, `backend/db_client.py`) |
 | Sanskrit corpus | GRETIL (42 texts, ~40M chars, loaded at startup into memory) |
 | Embeddings | `intfloat/multilingual-e5-small` (384-dim) — generated locally, stored in pgvector |
 | Research mode | `backend/agents/deep_research.py` — DeepSeek-R1 reasoner with streamed `reasoning_content` |
@@ -60,7 +60,7 @@ engine/
 
 indexer/
   search.py         # HybridSearcher — asyncpg pool + sentence-transformers → pgvector RRF
-  build_index.py    # One-time indexer: chunks JSONL → pgvector (run offline, not at startup)
+  pg_ingest.py      # One-time indexer: chunks JSONL → pgvector (run offline, not at startup)
 
 data_pipeline/      # Offline text ingestion (download → extract → chunk → index)
   downloader.py     fetch_*.py scripts  # PDF + web scrapers for text acquisition
@@ -70,7 +70,7 @@ data_pipeline/      # Offline text ingestion (download → extract → chunk →
 
 | Variable | Required | Notes |
 |----------|----------|-------|
-| `VECTOR_DB_URL` | **Yes** | `postgresql://postgres:<pw>@purangpt-pgvector-1:5432/purangpt` in Docker (pgvector container, NOT logto-db). Without it `index_ready: false`. Password is rotated and stored in GitHub secret `VECTOR_DB_URL`. |
+| `VECTOR_DB_URL` | **Yes** | `postgresql://postgres:postgres@pgvector:5432/purangpt` in Docker (pgvector container, NOT logto-db). Without it `index_ready: false`. Note the password was reset to `postgres` to match local dev. Stored in GitHub secret `VECTOR_DB_URL`. |
 | `GEMINI_API_KEY` | Yes | Primary LLM (`LLM_PROVIDER=gemini`); if quota is exhausted, auto-falls back to DeepSeek |
 | `DEEPSEEK_API_KEY` | Yes | Fallback LLM + R1 deep-research mode |
 | `GROQ_API_KEY` | No | Second fallback LLM |
