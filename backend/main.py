@@ -368,36 +368,68 @@ def expand_query_terms(query: str) -> list:
 
 async def _validate_llm_providers() -> None:
     """
-    Probe DeepSeek API synchronously on startup to guarantee validity.
-    Sets state.active_provider / state.active_model so every request knows
-    which provider is live without retrying a known-bad key every time.
+    Probe LLM APIs synchronously on startup to guarantee validity.
+    Reads LLM_PROVIDER from env to determine primary provider, with fallbacks.
+    Sets state.active_provider / state.active_model.
     """
-    DEEPSEEK_API_KEY_VAL = os.getenv("DEEPSEEK_API_KEY", "")
+    primary = os.getenv("LLM_PROVIDER", "deepseek").lower()
+    
+    # Simple list of providers to check, sorted by primary first
+    providers_to_check = [primary]
+    for p in ["deepseek", "gemini", "groq"]:
+        if p not in providers_to_check:
+            providers_to_check.append(p)
+            
+    for p in providers_to_check:
+        if p == "deepseek":
+            DEEPSEEK_API_KEY_VAL = os.getenv("DEEPSEEK_API_KEY", "")
+            if DEEPSEEK_API_KEY_VAL and not DEEPSEEK_API_KEY_VAL.startswith("your_"):
+                url = "https://api.deepseek.com/chat/completions"
+                headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY_VAL}", "Content-Type": "application/json"}
+                payload = {"model": "deepseek-chat", "messages": [{"role":"user","content":"hi"}], "max_tokens": 1, "stream": False}
+                try:
+                    async with get_http_session() as s:
+                        async with s.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as r:
+                            if r.status == 200:
+                                state.active_provider = "deepseek"
+                                state.active_model = "deepseek-chat"
+                                logger.info("✓ DeepSeek API key valid — model: deepseek-chat")
+                                return
+                except Exception:
+                    pass
+        elif p == "gemini":
+            GEMINI_API_KEY_VAL = os.getenv("GEMINI_API_KEY", "")
+            if GEMINI_API_KEY_VAL and not GEMINI_API_KEY_VAL.startswith("your_"):
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY_VAL}"
+                payload = {"contents": [{"parts": [{"text": "hi"}]}]}
+                try:
+                    async with get_http_session() as s:
+                        async with s.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as r:
+                            if r.status == 200:
+                                state.active_provider = "gemini"
+                                state.active_model = "gemini-2.5-flash"
+                                logger.info("✓ Gemini API key valid — model: gemini-2.5-flash")
+                                return
+                except Exception:
+                    pass
+        elif p == "groq":
+            GROQ_API_KEY_VAL = os.getenv("GROQ_API_KEY", "")
+            if GROQ_API_KEY_VAL and not GROQ_API_KEY_VAL.startswith("your_"):
+                url = "https://api.groq.com/openai/v1/chat/completions"
+                headers = {"Authorization": f"Bearer {GROQ_API_KEY_VAL}", "Content-Type": "application/json"}
+                payload = {"model": GROQ_MODEL, "messages": [{"role":"user","content":"hi"}], "max_tokens": 1, "stream": False}
+                try:
+                    async with get_http_session() as s:
+                        async with s.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as r:
+                            if r.status == 200:
+                                state.active_provider = "groq"
+                                state.active_model = GROQ_MODEL
+                                logger.info("✓ Groq API key valid — model: %s", GROQ_MODEL)
+                                return
+                except Exception:
+                    pass
 
-    if not DEEPSEEK_API_KEY_VAL or DEEPSEEK_API_KEY_VAL.startswith("your_"):
-        logger.error("✗ DeepSeek API key missing or invalid in .env")
-        state.active_provider = "none"
-        return
-
-    url = "https://api.deepseek.com/chat/completions"
-    headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY_VAL}", "Content-Type": "application/json"}
-    payload = {"model": "deepseek-v4-flash", "messages": [{"role":"user","content":"hi"}],
-               "max_tokens": 1, "stream": False}
-    try:
-        async with get_http_session() as s:
-            async with s.post(url, headers=headers, json=payload,
-                              timeout=aiohttp.ClientTimeout(total=10)) as r:
-                if r.status == 200:
-                    state.active_provider = "deepseek"
-                    state.active_model    = "deepseek-v4-flash"
-                    logger.info("✓ DeepSeek API key valid — model: deepseek-v4-flash")
-                    return
-                body = await r.text()
-                logger.warning("✗ DeepSeek API key invalid (HTTP %d): %s", r.status, body[:120])
-    except Exception as e:
-        logger.warning("✗ DeepSeek probe failed: %s", e)
-        
-    logger.error("✗ No working LLM provider found — check your DEEPSEEK_API_KEY!")
+    logger.error("✗ No working LLM provider found! Check your API keys in .env")
     state.active_provider = "none"
 
 
@@ -1002,8 +1034,8 @@ async def status():
         "version":         "2.0",
         "llm_provider":    state.active_provider,
         "model":           state.active_model or "deepseek-chat",
-        "groq_key_valid":  False,
-        "gemini_key_valid":False,
+        "groq_key_valid":  bool(os.getenv("GROQ_API_KEY", "")),
+        "gemini_key_valid":bool(os.getenv("GEMINI_API_KEY", "")),
         "index_ready":     state.index_ready,
         "total_verses":    getattr(state, "total_verses", 0),
         "gretil_loaded":   state.gretil_loaded,

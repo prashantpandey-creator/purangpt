@@ -40,6 +40,9 @@ Any session on this machine already has what it needs — these are the entry po
 ## Common Issues & Gotchas
 
 - **SSE Yielding format**: When yielding events to `EventSourceResponse` (sse_starlette), the yielded dictionary MUST contain valid SSE kwargs like `data`, `event`, `id`, or `retry`. Do not yield arbitrary dicts like `{"type": "status", "message": "..."}` directly, as it will cause a `TypeError: ServerSentEvent.__init__() got an unexpected keyword argument`. A `safe_sse_stream` wrapper is now used in `backend/main.py` to auto-correct malformed dicts into a `{"data": json.dumps(...)}` format to prevent these crashes.
+- **LLM Routing and `<think>` tags**: 
+  - `stream_llm(req_model="auto")` dynamically routes to `state.active_provider` and `state.active_model`. Do not hardcode "deepseek" in `stream_llm`, or else `LLM_PROVIDER` environment variable will be ignored.
+  - When querying DeepSeek for JSON-only responses (like in `SanskritQueryProcessor`), remember that DeepSeek reasoning models will output `<think>...</think>` tags alongside the JSON. The JSON parser must strip `<think>` tags before calling `json.loads` to prevent crashes.
 
 ## Key Files
 
