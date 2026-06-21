@@ -28,7 +28,7 @@ Any session on this machine already has what it needs — these are the entry po
 | Layer | Technology |
 |-------|-----------|
 | API | FastAPI + uvicorn (port 8000) |
-| LLM | **DeepSeek only** — `deepseek-chat` for chat, `deepseek-reasoner` for Deep Research. No other provider exists (Gemini/Groq/Ollama/Together/Zhipu were removed 2026-06). |
+| LLM | **Generic key-driven providers** — `get_providers()` in `main.py` reads a list of OpenAI-compatible endpoints (deepseek, groq, openai, openrouter, together, xai, mistral) and uses whichever have a real key, in priority order, with automatic failover. DeepSeek is just the first default. Deep Research uses `deepseek-reasoner` via its own client. |
 | Vector search | Postgres **pgvector** + FTS via `hybrid_search` SQL function (`indexer/search.py` → `HybridSearcher`) |
 | Profiles/billing | `purangpt-pgvector-1` (same DB as vectors, using `VECTOR_DB_URL`, `backend/db_client.py`) |
 | Sanskrit corpus | GRETIL (42 texts, ~40M chars, loaded at startup into memory) |
@@ -37,14 +37,25 @@ Any session on this machine already has what it needs — these are the entry po
 
 **There is no Supabase, no ChromaDB, no Pinecone, no Ollama in production.** Those existed in earlier versions and are gone.
 
-**LLM provider — DeepSeek ONLY.** `stream_llm` and startup validation route exclusively to DeepSeek; `LLM_PROVIDER` is ignored. Gemini/Groq/Ollama/Together/Zhipu code, keys, and `stream_*` functions have been deleted — do **not** reintroduce them or call a `stream_gemini`/`stream_groq` (they don't exist; doing so previously 500'd every chat). Deep Research uses `deepseek-reasoner` via its own client.
+**LLM providers — generic and key-driven (no hardcoded provider).** As of 2026-06,
+`stream_llm` is fully provider-agnostic. It calls `get_providers()`, which returns every
+provider in `_PROVIDER_DEFS` that has a real env key (`DEEPSEEK_API_KEY`, `GROQ_API_KEY`,
+`OPENAI_API_KEY`, `OPENROUTER_API_KEY`, `TOGETHER_API_KEY`, `XAI_API_KEY`, `MISTRAL_API_KEY`),
+plus a per-request BYOK key on top. All of these speak the **same OpenAI `/chat/completions`
+protocol**, so a single `stream_one_provider()` serves all of them — there are **no
+provider-named streaming functions** anymore (the old `stream_gemini`/`stream_deepseek`/
+`stream_groq` are gone, and that is intentional — do not add them back; that pattern caused
+recurring `NameError` crashes). `stream_llm` streams from the first working provider and
+fails over to the next ONLY before any token is emitted. Per-provider model overrides via
+env (`DEEPSEEK_MODEL`, `GROQ_MODEL`, …). To add/swap a provider: set its env key — no code
+change. Deep Research uses `deepseek-reasoner` via its own client (`backend/agents/deep_research.py`).
 
 ## Common Issues & Gotchas
 
 - **SSE Yielding format**: When yielding events to `EventSourceResponse` (sse_starlette), the yielded dictionary MUST contain valid SSE kwargs like `data`, `event`, `id`, or `retry`. Do not yield arbitrary dicts like `{"type": "status", "message": "..."}` directly, as it will cause a `TypeError: ServerSentEvent.__init__() got an unexpected keyword argument`. A `safe_sse_stream` wrapper is now used in `backend/main.py` to auto-correct malformed dicts into a `{"data": json.dumps(...)}` format to prevent these crashes.
 - **LLM Routing and `<think>` tags**:
-  - `stream_llm(req_model="auto")` resolves to `state.active_model` (always `deepseek-chat`). DeepSeek is the only provider — `LLM_PROVIDER` is intentionally ignored.
-  - When querying DeepSeek for JSON-only responses (like in `SanskritQueryProcessor`), remember that DeepSeek reasoning models will output `<think>...</think>` tags alongside the JSON. The JSON parser must strip `<think>` tags before calling `json.loads` to prevent crashes.
+  - `stream_llm(req_model="auto")` lets each configured provider use its own default model. Pass `"<provider>:<model>"` (e.g. `"deepseek:deepseek-reasoner"`) to pin a model, or any plain string to override the model on every provider. Routing re-reads `get_providers()` per request, so a key added at runtime works without restart.
+  - Reasoning models (`deepseek-reasoner`, or any model whose name contains `reasoner`/`thinking`) reject a `temperature` param — `stream_one_provider` omits it automatically. They also emit `reasoning_content` (surfaced as `{"type":"reasoning"}` SSE) and may wrap JSON in `<think>...</think>` — `SanskritQueryProcessor` strips those before `json.loads`.
 
 ## Key Files
 
@@ -107,8 +118,9 @@ This context is injected as `{seeker_context}` into `UNIFIED_SYSTEM`. It is phra
 | Variable | Required | Notes |
 |----------|----------|-------|
 | `VECTOR_DB_URL` | **Yes** | `postgresql://postgres:postgres@pgvector:5432/purangpt` in Docker (pgvector container, NOT logto-db). Without it `index_ready: false`. Stored in GitHub secret `VECTOR_DB_URL`. |
-| `DEEPSEEK_API_KEY` | **Yes** | The ONLY LLM key. Powers chat (`deepseek-chat`) + Deep Research (`deepseek-reasoner`). Without it chat cannot generate. |
-| `LLM_PROVIDER` | No | **Ignored** — kept only for backward compat. DeepSeek is always used regardless of value. |
+| `DEEPSEEK_API_KEY` | One of these | Default/first LLM provider. Powers chat + Deep Research (`deepseek-reasoner`). |
+| `GROQ_API_KEY` / `OPENAI_API_KEY` / `OPENROUTER_API_KEY` / `TOGETHER_API_KEY` / `XAI_API_KEY` / `MISTRAL_API_KEY` | One of these | Any of these enables chat on its own and acts as failover. At least one LLM key must be set. Optional per-provider model override via `<PROVIDER>_MODEL` env. |
+| `LLM_PROVIDER` | No | **Ignored** — providers are auto-detected from whichever keys are set. |
 | `FERNET_KEY` | Yes | Encrypts sensitive user data at rest; fail-fast in prod if missing |
 | `LOGTO_ENDPOINT` | No | Auth JWT issuer verification |
 
