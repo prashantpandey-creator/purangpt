@@ -36,6 +36,7 @@ Every agent MUST:
 - Landing page keeps the **CitationComparison** (grounded-vs-general). The BG 16.23–16.24 scripture block, corpus bento grid, and locked-sources preview were **moved to `/about`**; About is i18n (en/hi/ru).
 - Homepage has a **Guruji/Gita section** (Sanskrit verse → Yogeshwari translation → citation).
 - `glass-panel` / `saffron-glow` are global utilities in `globals.css`.
+- **Theme = "Twilight Sanctum"** (2026-06-21): indigo-aubergine base `#0A0810`, candlelit gold accent `#cba455` (token `--gold` / Tailwind `saffron`), highlight `#e7cd84`, slate `#7e92b8`, ivory text `#e2d4b2`. Restrained glow only on focal points. Chat empty-state is one centred logo→title→input→suggestions group. Do NOT reintroduce neon `#ff9933`. See CLAUDE.md UI guidelines.
 
 ### Known issues / open risks
 - **DB migration pending:** `guruji_texts` table + `hybrid_search_guruji()` not yet on prod. Run `migrate_to_local_pg.py` DDL then `split_guruji_corpus.py` before merging backend PR. Until then, all results come from `purana_verses` only (safe fallback).
@@ -46,6 +47,12 @@ Every agent MUST:
 ---
 
 ## Ledger (newest first)
+
+### 2026-06-21 — Frontend: "Twilight Sanctum" theme + centred empty-state · `claude/chat-tier-modes-naming-48z104` · agent(sonnet)
+- What & why: old UI leaned on one neon-saffron (`#ff9933`) sprayed everywhere with heavy halos → read as cheap. Reworked into a researched, restrained palette; also unified the chat empty-state into one centred logo→title→input→suggestions composition (was: title floating mid-screen, input pinned to bottom).
+- Changed: `purangpt-next` — `src/app/globals.css` (`:root` tokens, softened glows, indigo body bg), `tailwind.config.ts` (`saffron` → `#cba455`), `src/components/chat/ChatInterface.tsx` (centred empty state, viewport-bound mobile keyboard), `Logo.tsx` (softer glow), ~200 hex/rgb literals swept across components. `CLAUDE.md` UI guidelines rewritten to lock the direction.
+- New state / gotchas: Palette = indigo-aubergine base `#0A0810` / surfaces `#141121`·`#16131F`, candlelit gold `#cba455` (token `--gold`, Tailwind `saffron` class), highlight `#e7cd84`, aged brass `#b8893b`, moonlit slate `#7e92b8`, ivory text `#e2d4b2`. Glow reserved for focal points via `--glow-gold-*` (≤0.30 alpha). **TRAP: Tailwind arbitrary values can't contain spaces — write `rgba(203,164,85,0.3)` no-space inside `[...]`.** Don't reintroduce `#ff9933`.
+- Follow-ups / risks: none — `tsc --noEmit` + `next build` both clean.
 
 ### 2026-06-21 — Fix: chat dead-air / 60s hang — cap query-expansion LLM call · `claude/chat-tier-modes-naming-48z104` · agent(sonnet)
 - What & why: prod chat streamed **zero tokens for 60s** then closed. Root cause: the Sanskrit query-expansion step (`SanskritQueryProcessor._expand_sanskrit`) calls the LLM via `call_llm_once`, whose shared aiohttp client has a 60s timeout. Under DeepSeek slowness this blocks the whole `/api/chat` *before* search or generation — pure dead air. Expansion is only a nice-to-have and already has a graceful passthrough fallback, so it must never stall the stream.
