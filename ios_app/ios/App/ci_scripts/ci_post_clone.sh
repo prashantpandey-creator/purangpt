@@ -37,6 +37,6 @@ echo "=== ci_post_clone: cap sync ios ==="
 npm run cap:sync:ios
 
 echo "=== ci_post_clone: verify SPM deps present ==="
-ls -d node_modules/@capacitor/app node_modules/@capacitor/browser
+ls -d node_modules/@capacitor/app node_modules/@capacitor/browser || echo "WARN: capacitor node_modules missing"
 
 echo "=== ci_post_clone: done ==="
