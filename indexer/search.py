@@ -151,6 +151,7 @@ class HybridSearcher:
         sharma_weighting: bool = True,
         embed_phrase: str | None = None,
         fts_phrase: str | None = None,
+        corpus_type: str | None = None,
     ) -> list[SearchResult]:
         """
         Executes the hybrid_search RPC on Postgres, which performs pgvector distance
@@ -190,6 +191,10 @@ class HybridSearcher:
             except Exception as e:
                 logger.warning("Redis cache read failed for hybrid_search %r: %s", query, e)
 
+        # Guruji material categories — chunks with these categories are from Shailendra
+        # Sharma's darshans/commentaries (voice/cognition), NOT citable scripture.
+        GURUJI_CATEGORIES = {"yogic-commentary", "yogic-discourse"}
+
         try:
             # 3. Generate query embedding — use enriched phrase if provided
             import asyncio
@@ -214,12 +219,13 @@ class HybridSearcher:
             # 3. Execute Postgres hybrid_search function
             # Use fts_phrase for FTS if given (OR-joined synonyms), else raw query.
             fts_query = fts_phrase if fts_phrase else query
-            fetch_k = top_k * 4
+            # Fetch more candidates when we'll be filtering by corpus_type post-query.
+            fetch_k = top_k * 6 if corpus_type else top_k * 4
             async with self._pool.acquire() as conn:
                 rows = await conn.fetch('''
                     SELECT id, content, metadata, similarity
-                    FROM hybrid_search($1, $2::vector, $3, $4::jsonb)
-                ''', fts_query, emb_str, fetch_k, filter_json)
+                    FROM hybrid_search($1, $2::vector, $3, $4::jsonb, $5)
+                ''', fts_query, emb_str, fetch_k, filter_json, float(semantic_weight))
 
             if not rows:
                 return []
@@ -231,13 +237,23 @@ class HybridSearcher:
                 score = float(row['similarity'])
                 chunk = {**meta, "id": row['id'], "text": row['content']}
                 results.append(SearchResult(chunk=chunk, score=score, rank=rank))
-                
+
+            # corpus_type filter: "scripture" excludes Guruji chunks; "guruji" keeps only them.
+            # This runs BEFORE sharma_weighting so score inflation doesn't fight the filter.
+            if corpus_type == "scripture":
+                results = [r for r in results
+                           if (r.chunk.get("category") or "").lower() not in GURUJI_CATEGORIES
+                           and not r.id.startswith("darshan-")]
+            elif corpus_type == "guruji":
+                results = [r for r in results
+                           if (r.chunk.get("category") or "").lower() in GURUJI_CATEGORIES
+                           or r.id.startswith("darshan-")]
+
             # Apply source weighting
-            COMMENTARY_CATEGORIES = {"yogic-commentary", "yogic-discourse"}
             if sharma_weighting:
                 for res in results:
                     cat = (res.chunk.get("category") or "").lower()
-                    if cat in COMMENTARY_CATEGORIES:
+                    if cat in GURUJI_CATEGORIES:
                         res.score *= 1.6
                     elif res.id.startswith("darshan-") or res.purana == "Shailendra Sharma Darshans":
                         res.score *= 0.6

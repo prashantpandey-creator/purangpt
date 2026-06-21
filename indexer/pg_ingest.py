@@ -60,13 +60,17 @@ class PostgresIndexer:
                 ON {TABLE_NAME} USING GIN (to_tsvector('english', content));
             """)
             
-            # Create hybrid_search function
+            # Create hybrid_search function.
+            # Uses 'simple' text search config (not 'english') so Sanskrit transliterated
+            # terms (narada, vishnu, dharma) match without being stemmed/stop-word-dropped.
+            # semantic_weight is passed as a parameter (0.0–1.0); keyword weight = 1 - it.
             cur.execute(f"""
                 CREATE OR REPLACE FUNCTION hybrid_search(
                     search_query TEXT,
                     query_embedding vector(384),
                     match_count INT,
-                    filter_metadata JSONB DEFAULT '{{}}'::jsonb
+                    filter_metadata JSONB DEFAULT '{{}}'::jsonb,
+                    semantic_weight FLOAT DEFAULT 0.7
                 )
                 RETURNS TABLE (
                     id TEXT,
@@ -76,13 +80,16 @@ class PostgresIndexer:
                 )
                 LANGUAGE plpgsql
                 AS $$
+                DECLARE
+                    kw_weight FLOAT := GREATEST(0.0, LEAST(1.0, 1.0 - semantic_weight));
+                    sem_weight FLOAT := GREATEST(0.0, LEAST(1.0, semantic_weight));
                 BEGIN
                     RETURN QUERY
                     WITH semantic_search AS (
-                        SELECT 
-                            v.id, 
-                            v.content, 
-                            v.metadata, 
+                        SELECT
+                            v.id,
+                            v.content,
+                            v.metadata,
                             1 - (v.embedding <=> query_embedding) AS semantic_sim
                         FROM {TABLE_NAME} v
                         WHERE v.metadata @> filter_metadata
@@ -90,22 +97,22 @@ class PostgresIndexer:
                         LIMIT match_count * 2
                     ),
                     keyword_search AS (
-                        SELECT 
-                            v.id, 
-                            v.content, 
-                            v.metadata, 
-                            ts_rank_cd(to_tsvector('english', v.content), websearch_to_tsquery('english', search_query)) AS keyword_sim
+                        SELECT
+                            v.id,
+                            v.content,
+                            v.metadata,
+                            ts_rank_cd(to_tsvector('simple', v.content), websearch_to_tsquery('simple', search_query)) AS keyword_sim
                         FROM {TABLE_NAME} v
                         WHERE v.metadata @> filter_metadata
-                          AND to_tsvector('english', v.content) @@ websearch_to_tsquery('english', search_query)
+                          AND to_tsvector('simple', v.content) @@ websearch_to_tsquery('simple', search_query)
                         ORDER BY keyword_sim DESC
                         LIMIT match_count * 2
                     )
-                    SELECT 
+                    SELECT
                         COALESCE(ss.id, ks.id) as id,
                         COALESCE(ss.content, ks.content) as content,
                         COALESCE(ss.metadata, ks.metadata) as metadata,
-                        (COALESCE(ss.semantic_sim, 0.0) * 0.7 + COALESCE(ks.keyword_sim, 0.0) * 0.3) AS similarity
+                        (COALESCE(ss.semantic_sim, 0.0) * sem_weight + COALESCE(ks.keyword_sim, 0.0) * kw_weight) AS similarity
                     FROM semantic_search ss
                     FULL OUTER JOIN keyword_search ks ON ss.id = ks.id
                     ORDER BY similarity DESC

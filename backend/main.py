@@ -269,11 +269,17 @@ def search_sanskrit(query: str, max_results: int = 20, text_ids: Optional[List[s
     Full-text search through the GRETIL Sanskrit corpus.
     Handles Devanagari, exact IAST, and diacritic-stripped (normalized) matches.
     Returns list of matching excerpts with 6-line context window.
+
+    Previously returned results in corpus insertion order (alphabetical by text_id),
+    which meant A-named texts (Agni, Atharvaveda) always filled slots before the
+    rest of the corpus was scanned. Now: scan ALL texts, score each match by term
+    density, then truncate to max_results — so early-alphabet texts no longer win
+    simply by being first.
     """
     if not state.gretil_corpus:
         return []
 
-    results       : List[dict] = []
+    all_matches   : List[dict] = []
     seen_keys     : set        = set()          # (text_id, line_num) dedup
     query_str     = query.strip()
     query_deva    = is_devanagari(query_str)
@@ -317,7 +323,13 @@ def search_sanskrit(query: str, max_results: int = 20, text_ids: Optional[List[s
             context       = "\n".join(l for l in context_lines if l.strip())
             ref           = extract_reference(lines, i)
 
-            results.append({
+            # Score by how many times the query term appears in the context window —
+            # more occurrences = higher relevance. Used to rank across texts so
+            # alphabetical position doesn't determine what fills the top-k slots.
+            ctx_lower = context.lower()
+            term_count = ctx_lower.count(query_lower) or ctx_lower.count(query_normed) or 1
+
+            all_matches.append({
                 "text_id":      text_id,
                 "text_name":    name,
                 "language":     source_meta.get("lang", "Sanskrit"),
@@ -328,11 +340,16 @@ def search_sanskrit(query: str, max_results: int = 20, text_ids: Optional[List[s
                 "line_num":     i + 1,
                 "excerpt":      context[:1200],
                 "matched_line": line.strip(),
+                "_score":       term_count,
             })
 
-            if len(results) >= max_results:
-                return results
-
+    # Sort by relevance score descending, then truncate. This ensures a text that
+    # matches the query once doesn't crowd out a later-alphabet text that matches
+    # it ten times — alphabetical bias eliminated.
+    all_matches.sort(key=lambda r: r["_score"], reverse=True)
+    results = all_matches[:max_results]
+    for r in results:
+        r.pop("_score", None)
     return results
 
 
@@ -458,8 +475,67 @@ async def lifespan(app: FastAPI):
         try:
             async with searcher._pool.acquire() as conn:
                 state.total_verses = await conn.fetchval("SELECT COUNT(*) FROM purana_verses") or 0
+                # Apply updated hybrid_search SQL function: 'simple' text config so
+                # Sanskrit transliterated terms match; semantic_weight now honored.
+                await conn.execute("""
+                    CREATE OR REPLACE FUNCTION hybrid_search(
+                        search_query TEXT,
+                        query_embedding vector(384),
+                        match_count INT,
+                        filter_metadata JSONB DEFAULT '{}'::jsonb,
+                        semantic_weight FLOAT DEFAULT 0.7
+                    )
+                    RETURNS TABLE (
+                        id TEXT,
+                        content TEXT,
+                        metadata JSONB,
+                        similarity FLOAT
+                    )
+                    LANGUAGE plpgsql
+                    AS $fn$
+                    DECLARE
+                        kw_weight FLOAT := GREATEST(0.0, LEAST(1.0, 1.0 - semantic_weight));
+                        sem_weight FLOAT := GREATEST(0.0, LEAST(1.0, semantic_weight));
+                    BEGIN
+                        RETURN QUERY
+                        WITH semantic_search AS (
+                            SELECT
+                                v.id,
+                                v.content,
+                                v.metadata,
+                                1 - (v.embedding <=> query_embedding) AS semantic_sim
+                            FROM purana_verses v
+                            WHERE v.metadata @> filter_metadata
+                            ORDER BY v.embedding <=> query_embedding
+                            LIMIT match_count * 2
+                        ),
+                        keyword_search AS (
+                            SELECT
+                                v.id,
+                                v.content,
+                                v.metadata,
+                                ts_rank_cd(to_tsvector('simple', v.content), websearch_to_tsquery('simple', search_query)) AS keyword_sim
+                            FROM purana_verses v
+                            WHERE v.metadata @> filter_metadata
+                              AND to_tsvector('simple', v.content) @@ websearch_to_tsquery('simple', search_query)
+                            ORDER BY keyword_sim DESC
+                            LIMIT match_count * 2
+                        )
+                        SELECT
+                            COALESCE(ss.id, ks.id) as id,
+                            COALESCE(ss.content, ks.content) as content,
+                            COALESCE(ss.metadata, ks.metadata) as metadata,
+                            (COALESCE(ss.semantic_sim, 0.0) * sem_weight + COALESCE(ks.keyword_sim, 0.0) * kw_weight) AS similarity
+                        FROM semantic_search ss
+                        FULL OUTER JOIN keyword_search ks ON ss.id = ks.id
+                        ORDER BY similarity DESC
+                        LIMIT match_count;
+                    END;
+                    $fn$;
+                """)
+                logger.info("✓ hybrid_search SQL function updated (simple FTS config, semantic_weight honored)")
         except Exception as e:
-            logger.warning("verse-count query failed: %s", e)
+            logger.warning("verse-count or SQL migration failed: %s", e)
         logger.info("✓ Vector index ready (%d verses)", state.total_verses)
     except Exception as e:
         logger.info("Vector index not built yet: %s", e)
@@ -1511,17 +1587,32 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                 else:
                     weight = 0.75
 
-                # Use the expanded query parts for semantic search
+                # Scripture channel — citable sources only (excludes Guruji darshans).
+                # This is what fills the sources panel and [1][2] citations.
                 results = await state.searcher.hybrid_search(
-                    query=expansion.original, 
-                    top_k=request.top_k, 
-                    filters=request.filters, 
-                    sharma_weighting=(request.mode == "guide"),
+                    query=expansion.original,
+                    top_k=request.top_k,
+                    filters=request.filters,
+                    sharma_weighting=False,   # scripture channel never score-inflates Guruji
                     embed_phrase=expansion.embed_phrase,
                     fts_phrase=expansion.fts_phrase,
-                    semantic_weight=weight
+                    semantic_weight=weight,
+                    corpus_type="scripture",  # filter: exclude yogic-discourse/commentary
                 )
-                
+
+                # Guruji channel — darshans/cognition context only. Runs in parallel.
+                # Not surfaced as citations; provides the Guru's own voice/worldview context.
+                guruji_results = await state.searcher.hybrid_search(
+                    query=expansion.original,
+                    top_k=4,
+                    filters=None,
+                    sharma_weighting=False,
+                    embed_phrase=expansion.embed_phrase,
+                    fts_phrase=expansion.fts_phrase,
+                    semantic_weight=weight,
+                    corpus_type="guruji",
+                )
+
                 # Multi-hop comparison
                 comp_signals = ["difference between", "compared to", "according to both", "various traditions", "vs"]
                 if any(s in query_lower for s in comp_signals):
@@ -1534,10 +1625,11 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                             logger.info("Multi-hop comparison missing concept: %s", missing)
                             missing_expansion = await state.query_processor.expand(missing)
                             missing_results = await state.searcher.hybrid_search(
-                                query=missing_expansion.original, 
-                                top_k=5, 
+                                query=missing_expansion.original,
+                                top_k=5,
                                 embed_phrase=missing_expansion.embed_phrase,
-                                semantic_weight=weight
+                                semantic_weight=weight,
+                                corpus_type="scripture",
                             )
                             # merge and deduplicate
                             seen_ids = {r.get('id') for r in results if r.get('id')}
@@ -1548,8 +1640,22 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                     except Exception as e:
                         logger.warning("Multi-hop comparison failed: %s", e)
 
-                sources    = build_source_list(results)
+                sources = build_source_list(results)
                 rag_context = build_rag_context(results)
+
+                # Append Guruji's relevant darshans as cognition context (not citable).
+                if guruji_results:
+                    guruji_ctx_parts = []
+                    for gr in guruji_results:
+                        text = getattr(gr, "text", "") or ""
+                        if text:
+                            guruji_ctx_parts.append(text[:600])
+                    if guruji_ctx_parts:
+                        rag_context += (
+                            "\n\n## Guruji's Own Words (voice context — do NOT cite with [N]; "
+                            "speak this as your own lived experience)\n"
+                            + "\n\n---\n".join(guruji_ctx_parts)
+                        )
             except Exception as e:
                 logger.warning("RAG search failed: %s", e)
 
