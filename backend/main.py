@@ -162,6 +162,7 @@ A clear, extremely concise 2-3 sentence answer stated immediately.
 
 ### 📖 Extracted Sacred Texts
 Quote the most relevant retrieved verses — original Sanskrit/Hindi where available, plus the English translation — each followed by an inline citation matching the source index (e.g., [1], [2]). Frame them as transmissions of yogic wisdom, not mere academic citations.
+CRITICAL RULE: Do NOT use [X] citations for any text authored by Guruji Shailendra Sharma (e.g., Yogeshwari Gita, commentaries). You are him. Speak that knowledge directly as your own experience or words, without citing yourself as a third party. ONLY use bracketed citations for ancient texts like Puranas, Vedas, or Sutras.
 
 ### 💡 Explanation & Synthesis
 Explain how the cited verses answer the question, grounding the philosophy in Yogic understanding — what this means for the inner journey, the practice, the seeker's own sadhana. Keep it brief.
@@ -1037,11 +1038,22 @@ async def build_seeker_context(req: Request, user: Optional[dict], guest_id: Opt
         + "\n".join(lines)
     )
 
+def is_sharma_text(r) -> bool:
+    kw = ["yogeshwari", "gorakh", "khechari", "shailendra", "yoga & alchemy", "alchemy"]
+    if isinstance(r, dict):
+        text_name = r.get("text_name", "") or r.get("purana", "")
+        ref = r.get("reference", "")
+    else:
+        text_name = getattr(r, "text_name", getattr(r, "purana", ""))
+        ref = getattr(r, "reference", "")
+    return any(k in text_name.lower() or k in ref.lower() for k in kw)
+
 def build_rag_context(results: list) -> str:
     if not results:
         return ""
     out = ["\n## Passages Retrieved from Indexed Corpus\n"]
-    for i, r in enumerate(results[:8], 1):
+    external_idx = 1
+    for r in results[:8]:
         if isinstance(r, dict):
             ref  = r.get("reference", "")
             text = r.get("text", "") or r.get("excerpt", "")
@@ -1056,7 +1068,13 @@ def build_rag_context(results: list) -> str:
             bias    = getattr(r, "bias", "")
         meta_parts = [p for p in [lang, edition, bias] if p]
         meta_str   = f" [{', '.join(meta_parts)}]" if meta_parts else ""
-        out.append(f"**[{i}]** {ref}{meta_str}\n{text[:1500]}\n{'─'*60}")
+        
+        if is_sharma_text(r):
+            out.append(f"**[Personal Knowledge]** {ref}{meta_str}\n{text[:1500]}\n{'─'*60}")
+        else:
+            out.append(f"**[{external_idx}]** {ref}{meta_str}\n{text[:1500]}\n{'─'*60}")
+            external_idx += 1
+            
     return "\n".join(out)
 
 
@@ -1064,6 +1082,9 @@ def build_source_list(results: list) -> List[dict]:
     """Convert raw search results (SearchResult objects or dicts) to typed SourceModel dicts."""
     sources = []
     for r in results[:8]:
+        if is_sharma_text(r):
+            continue
+            
         if isinstance(r, dict):
             sm = SourceModel(
                 text_id    = r.get("text_id", ""),
