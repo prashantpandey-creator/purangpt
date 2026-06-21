@@ -66,22 +66,35 @@ def _slice_function(text: str, func_name: str) -> str:
     return "\n".join(lines[start:end])
 
 
-def _extract(path: str, regex: re.Pattern, scope: str = None) -> List[str]:
+def _extract(path: str, regex: re.Pattern, scope=None) -> List[str]:
+    """Extract matched types from `path`, optionally restricted to one or more
+    generator functions.
+
+    scope: None  → scan the whole file (legacy).
+           str   → restrict to that one function's block.
+           list  → UNION the blocks of every named function (e.g. /api/chat is
+                   fed by both event_gen AND deep_research, which emit different
+                   event types into the same frontend contract).
+    """
     with open(path, "r", encoding="utf-8") as f:
         text = f.read()
     if scope:
-        text = _slice_function(text, scope)
+        names = [scope] if isinstance(scope, str) else list(scope)
+        text = "\n".join(_slice_function(text, n) for n in names)
     return sorted(set(regex.findall(text)))
 
 
 def check_contract(backend_path: str, frontend_path: str,
-                   backend_scope: str = None) -> Dict[str, Any]:
+                   backend_scope=None) -> Dict[str, Any]:
     """Compare emitted backend SSE types vs declared frontend ChatEvent types.
 
-    backend_scope: if given, only SSE emits inside that backend generator
-    function are considered (e.g. "event_gen" for /api/chat). This prevents
-    conflating other SSE endpoints that live in the same file. If None, the
-    whole backend file is scanned (legacy behavior).
+    backend_scope: restrict which backend generator(s) count as the /api/chat
+    contract. Accepts a single function name (str) or a LIST of them, whose
+    emits are unioned. /api/chat is fed by MORE than one generator —
+    `event_gen` (normal chat) and the deep-research path (`deep_research`),
+    which emits `reasoning`/`info` — so a single scope misses those. This still
+    excludes unrelated SSE endpoints (e.g. /api/sanskrit-search) in the same
+    file. If None, the whole backend file is scanned (legacy behavior).
 
     Returns the standard envelope. On a missing/unreadable path, returns
     success=False with an errors[] entry (code="path_not_found"); never raises
@@ -126,9 +139,11 @@ _DEFAULT_FRONTEND = os.path.join(
     _REPO, "..", "purangpt-next", "src", "lib", "api.ts")
 
 
-# /api/chat is served by the event_gen() generator in backend/main.py. Scoping
-# to it avoids conflating the other SSE endpoints (/api/sanskrit-search, etc.).
-_DEFAULT_SCOPE = "event_gen"
+# /api/chat is served by MULTIPLE generators in backend/main.py: event_gen
+# (normal chat) and deep_research (Deep Research mode, which emits reasoning/info).
+# Both feed the same frontend ChatEvent contract, so both must be in scope.
+# Scoping to this set still excludes unrelated endpoints (/api/sanskrit-search, etc.).
+_DEFAULT_SCOPE = ["event_gen", "deep_research"]
 
 
 def main(argv: List[str]) -> int:
@@ -141,7 +156,8 @@ def main(argv: List[str]) -> int:
     if "--frontend" in argv:
         frontend = argv[argv.index("--frontend") + 1]
     if "--scope" in argv:
-        scope = argv[argv.index("--scope") + 1]
+        # comma-separated list, e.g. --scope event_gen,deep_research
+        scope = [s.strip() for s in argv[argv.index("--scope") + 1].split(",") if s.strip()]
     if "--no-scope" in argv:
         scope = None  # scan whole backend file (legacy)
 

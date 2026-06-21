@@ -1446,6 +1446,9 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         return EventSourceResponse(safe_sse_stream(deep_gen()), headers={"X-Accel-Buffering": "no"})
 
     # ── Standard Chat ────────────────────────────────────────────────────────
+    # Fetch session early so event_gen can read history_len before its own get_session call.
+    session_data = session_manager.get_session(session_id, user_id, guest_id)
+
     async def event_gen() -> AsyncGenerator[dict, None]:
         # Immediate feedback so the UI shows motion while we translate+search,
         # rather than dead air until the first LLM token.

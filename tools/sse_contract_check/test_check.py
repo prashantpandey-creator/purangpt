@@ -27,6 +27,24 @@ async def other_endpoint_gen():
     # Events from a DIFFERENT endpoint — must NOT be counted as chat drift.
     yield {"type": "search_complete", "count": 0}
     yield {"type": "translation_ready", "result_index": 0}
+
+async def deep_research():
+    # Deep Research feeds the SAME /api/chat ChatEvent contract and emits
+    # 'reasoning' — so it MUST be in scope alongside event_gen.
+    yield {"type": "reasoning", "content": "thinking..."}
+    yield {"type": "info", "message": "researching"}
+"""
+
+# Frontend that matches the UNION of event_gen + deep_research (the real /api/chat
+# contract): the four base events plus reasoning + info.
+FRONTEND_MULTI_GEN = """
+export type ChatEvent =
+  | { type: "token"; content: string }
+  | { type: "status"; message: string }
+  | { type: "error"; message: string }
+  | { type: "done"; session_id?: string }
+  | { type: "reasoning"; content: string }
+  | { type: "info"; message: string };
 """
 
 FRONTEND_IN_SYNC = """
@@ -119,10 +137,42 @@ def test_scoped_to_endpoint_excludes_other_functions():
     print("ok: scoped_to_endpoint_excludes_other_functions")
 
 
+def test_multi_scope_unions_chat_and_deep_research():
+    """v3 fix: /api/chat is fed by MULTIPLE generators (event_gen + deep_research).
+    Scope must accept a list and UNION their emits, so 'reasoning'/'info' from the
+    deep-research path are counted — while still excluding unrelated endpoints."""
+    with tempfile.TemporaryDirectory() as tmp:
+        be = _write(tmp, "main.py", BACKEND_FIXTURE)
+        fe = _write(tmp, "api.ts", FRONTEND_MULTI_GEN)
+        env = check_contract(be, fe, backend_scope=["event_gen", "deep_research"])
+    d = env["data"]
+    # reasoning + info now seen (from deep_research), base events from event_gen
+    assert "reasoning" in d["backend_types"], d["backend_types"]
+    assert "info" in d["backend_types"], d["backend_types"]
+    assert "token" in d["backend_types"], d["backend_types"]
+    # unrelated endpoint still excluded
+    assert "search_complete" not in d["backend_types"], d["backend_types"]
+    assert d["in_sync"] is True, d
+    assert d["backend_only"] == [] and d["frontend_only"] == [], d
+    print("ok: multi_scope_unions_chat_and_deep_research")
+
+
+def test_single_scope_still_accepts_string():
+    """Backward compat: a bare string scope must still work (not just a list)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        be = _write(tmp, "main.py", BACKEND_FIXTURE)
+        fe = _write(tmp, "api.ts", FRONTEND_IN_SYNC)
+        env = check_contract(be, fe, backend_scope="event_gen")
+    assert env["data"]["in_sync"] is True, env["data"]
+    print("ok: single_scope_still_accepts_string")
+
+
 if __name__ == "__main__":
     test_envelope_shape()
     test_in_sync_true_when_matching()
     test_drift_detected()
     test_error_envelope_on_missing_path()
     test_scoped_to_endpoint_excludes_other_functions()
+    test_multi_scope_unions_chat_and_deep_research()
+    test_single_scope_still_accepts_string()
     print("\nALL TESTS PASSED")

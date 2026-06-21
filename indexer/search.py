@@ -99,7 +99,7 @@ class HybridSearcher:
             from sentence_transformers import SentenceTransformer
             import logging
             logger = logging.getLogger("purangpt.search")
-            cls._shared_model = SentenceTransformer("nomic-ai/nomic-embed-text-v1.5", trust_remote_code=True)
+            cls._shared_model = SentenceTransformer("intfloat/multilingual-e5-small")
             logger.info("Embedding model preloaded ✓ (shared across workers)")
         return cls._shared_model
 

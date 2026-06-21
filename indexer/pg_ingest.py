@@ -20,7 +20,7 @@ from sentence_transformers import SentenceTransformer
 logger  = logging.getLogger(__name__)
 console = Console()
 
-DEFAULT_EMBED_MODEL  = "nomic-ai/nomic-embed-text-v1.5"
+DEFAULT_EMBED_MODEL  = "intfloat/multilingual-e5-small"
 TABLE_NAME           = "purana_verses"
 EMBED_BATCH_SIZE     = 32
 
