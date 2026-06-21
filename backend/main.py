@@ -46,15 +46,42 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s — %(message)s")
 logger = logging.getLogger("purangpt.backend")
 
-# ── Config ─────────────────────────────────────────────────────────────────
-# DeepSeek is the SOLE primary provider, but we allow Gemini as a circuit-breaker fallback.
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+# ── LLM Providers (generic, key-driven) ─────────────────────────────────────
+# There is NO hardcoded provider. The app reads a list of OpenAI-compatible
+# chat-completions endpoints and tries them IN ORDER until one answers. To add a
+# provider, just set its env key — no code changes, no provider-specific paths.
+#
+# Every modern LLM API below speaks the SAME OpenAI /chat/completions protocol
+# (DeepSeek, Groq, OpenAI, OpenRouter, Together, xAI, Mistral, …), so one
+# streaming function serves all of them. Order here = failover priority.
+#
+# Each provider: env var for the key, base_url, and default model.
+_PROVIDER_DEFS = [
+    {"name": "deepseek",   "env": "DEEPSEEK_API_KEY",   "base_url": "https://api.deepseek.com",            "model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat")},
+    {"name": "groq",       "env": "GROQ_API_KEY",       "base_url": "https://api.groq.com/openai/v1",      "model": os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")},
+    {"name": "openai",     "env": "OPENAI_API_KEY",     "base_url": "https://api.openai.com/v1",           "model": os.getenv("OPENAI_MODEL", "gpt-4o-mini")},
+    {"name": "openrouter", "env": "OPENROUTER_API_KEY", "base_url": "https://openrouter.ai/api/v1",        "model": os.getenv("OPENROUTER_MODEL", "deepseek/deepseek-chat")},
+    {"name": "together",   "env": "TOGETHER_API_KEY",   "base_url": "https://api.together.xyz/v1",         "model": os.getenv("TOGETHER_MODEL", "deepseek-ai/DeepSeek-V3")},
+    {"name": "xai",        "env": "XAI_API_KEY",        "base_url": "https://api.x.ai/v1",                 "model": os.getenv("XAI_MODEL", "grok-2-latest")},
+    {"name": "mistral",    "env": "MISTRAL_API_KEY",    "base_url": "https://api.mistral.ai/v1",           "model": os.getenv("MISTRAL_MODEL", "mistral-large-latest")},
+]
+
+def get_providers() -> List[dict]:
+    """Return the configured providers (those with a real key), in priority order.
+    A per-request BYOK 'deepseek' key, if present, is injected as top priority."""
+    out = []
+    byok = custom_keys_var.get().get("deepseek")
+    if byok:
+        out.append({"name": "byok", "key": byok, "base_url": "https://api.deepseek.com", "model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat")})
+    for p in _PROVIDER_DEFS:
+        key = os.getenv(p["env"], "")
+        if key and not key.startswith("your_"):
+            out.append({"name": p["name"], "key": key, "base_url": p["base_url"], "model": p["model"]})
+    return out
 
 def any_llm_configured() -> bool:
-    """True if DeepSeek or Gemini is usable: a configured key, a per-request BYOK key, or a
-    successful startup validation."""
-    return bool(DEEPSEEK_API_KEY or GEMINI_API_KEY or custom_keys_var.get().get("deepseek"))
+    """True if ANY provider has a usable key (env or per-request BYOK)."""
+    return len(get_providers()) > 0
 
 
 INDEX_DIR     = os.getenv("INDEX_DIR",   "./data/indexes")
@@ -369,46 +396,43 @@ def expand_query_terms(query: str) -> list:
 
 async def _validate_llm_providers() -> None:
     """
-    Probe LLM APIs synchronously on startup to guarantee validity.
-    Reads LLM_PROVIDER from env to determine primary provider, with fallbacks.
-    Sets state.active_provider / state.active_model.
+    Probe configured providers on startup and pick the first that answers.
+    Provider-agnostic: walks get_providers() (env-key driven) in priority order.
+    Sets state.active_provider / state.active_model for display/health only —
+    actual routing always re-reads get_providers() per request, so a key added
+    later still works without restart.
     """
-    primary = os.getenv("LLM_PROVIDER", "deepseek").lower()
+    providers = get_providers()
+    if not providers:
+        logger.error("✗ No LLM provider key configured — chat will not work. Set any of: %s",
+                     ", ".join(p["env"] for p in _PROVIDER_DEFS))
+        state.active_provider = "none"
+        state.active_model = ""
+        return
 
-    # DeepSeek is the sole supported provider. We intentionally ignore any other
-    # value of LLM_PROVIDER (Gemini/Groq/Ollama support has been removed) and
-    # validate DeepSeek only.
-    if primary != "deepseek":
-        logger.info("LLM_PROVIDER=%s ignored — DeepSeek is the only supported provider", primary)
-
-    DEEPSEEK_API_KEY_VAL = os.getenv("DEEPSEEK_API_KEY", "")
-    if DEEPSEEK_API_KEY_VAL and not DEEPSEEK_API_KEY_VAL.startswith("your_"):
-        url = "https://api.deepseek.com/chat/completions"
-        headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY_VAL}", "Content-Type": "application/json"}
-        payload = {"model": "deepseek-chat", "messages": [{"role":"user","content":"hi"}], "max_tokens": 1, "stream": False}
+    # Try each in order; the first that returns 200 becomes the displayed active one.
+    for p in providers:
+        url = f"{p['base_url'].rstrip('/')}/chat/completions"
+        headers = {"Authorization": f"Bearer {p['key']}", "Content-Type": "application/json"}
+        payload = {"model": p["model"], "messages": [{"role": "user", "content": "hi"}], "max_tokens": 1, "stream": False}
         try:
             async with get_http_session() as s:
                 async with s.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as r:
                     if r.status == 200:
-                        state.active_provider = "deepseek"
-                        state.active_model = "deepseek-chat"
-                        logger.info("✓ DeepSeek API key valid — model: deepseek-chat")
+                        state.active_provider = p["name"]
+                        state.active_model = p["model"]
+                        logger.info("✓ LLM provider '%s' valid — model: %s", p["name"], p["model"])
                         return
-                    else:
-                        logger.error("✗ DeepSeek key check returned HTTP %s", r.status)
+                    logger.warning("provider '%s' probe returned HTTP %s — trying next", p["name"], r.status)
         except Exception as e:
-            logger.error("✗ DeepSeek validation failed: %s", e)
+            logger.warning("provider '%s' probe failed (%s) — trying next", p["name"], e)
 
-    # Even if the live probe failed (e.g. transient network), default to DeepSeek so
-    # requests still attempt it rather than hard-failing with "no provider".
-    if DEEPSEEK_API_KEY_VAL and not DEEPSEEK_API_KEY_VAL.startswith("your_"):
-        state.active_provider = "deepseek"
-        state.active_model = "deepseek-chat"
-        logger.warning("DeepSeek probe inconclusive — proceeding with DeepSeek anyway")
-        return
-
-    logger.error("✗ DEEPSEEK_API_KEY missing or invalid — chat will not work")
-    state.active_provider = "none"
+    # All probes inconclusive (transient network etc.) — proceed anyway with the
+    # highest-priority configured provider so requests still attempt it.
+    p = providers[0]
+    state.active_provider = p["name"]
+    state.active_model = p["model"]
+    logger.warning("All provider probes inconclusive — proceeding with '%s'", p["name"])
 
 
 
@@ -572,42 +596,6 @@ class InstancesRequest(BaseModel):
 # ── LLM Streaming ──────────────────────────────────────────────────────────
 import asyncio
 
-
-
-async def stream_deepseek(messages: List[dict], temperature: float = 0.3, req_model: str = "deepseek-chat", custom_key: str = None) -> AsyncGenerator[Union[str, dict], None]:
-    key = custom_key or DEEPSEEK_API_KEY
-    if not key:
-        raise HTTPException(status_code=503, detail="DEEPSEEK_API_KEY not configured")
-    url = "https://api.deepseek.com/chat/completions"
-    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
-    payload = {"model": req_model, "messages": messages, "stream": True}
-    if req_model != "deepseek-reasoner":
-        payload["temperature"] = temperature
-
-    async with get_http_session() as sess:
-        async with sess.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=120)) as resp:
-            if resp.status != 200:
-                body = await resp.text()
-                raise HTTPException(status_code=resp.status, detail=f"DeepSeek error: {body}")
-            async for raw_line in resp.content:
-                line = raw_line.decode("utf-8").strip()
-                if not line or line == "data: [DONE]": continue
-                if line.startswith("data: "):
-                    try:
-                        data = json.loads(line[6:])
-                        delta = data["choices"][0]["delta"]
-                        
-                        # Yield reasoning token if present
-                        reasoning = delta.get("reasoning_content", "")
-                        if reasoning:
-                            yield {"type": "reasoning", "content": reasoning}
-                            
-                        # Yield standard content token if present
-                        token = delta.get("content", "")
-                        if token: yield token
-                    except (json.JSONDecodeError, KeyError, IndexError):
-                        continue
-
 import time
 
 class CircuitBreaker:
@@ -640,118 +628,121 @@ class CircuitBreaker:
             return True
         return True
 
-ds_circuit_breaker = CircuitBreaker()
+# One circuit breaker per provider name, so a flapping provider gets skipped
+# briefly without affecting the others. Created lazily.
+_breakers: Dict[str, CircuitBreaker] = {}
 
-async def stream_gemini(messages: List[dict], temperature: float = 0.3) -> AsyncGenerator[Union[str, dict], None]:
-    if not GEMINI_API_KEY:
-        raise HTTPException(status_code=503, detail="GEMINI_API_KEY not configured for fallback")
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key={GEMINI_API_KEY}"
-    
-    gemini_contents = []
-    system_instruction = None
-    for msg in messages:
-        if msg["role"] == "system":
-            system_instruction = {"parts": [{"text": msg["content"]}]}
-        elif msg["role"] in ["user", "assistant"]:
-            role = "user" if msg["role"] == "user" else "model"
-            gemini_contents.append({"role": role, "parts": [{"text": msg["content"]}]})
-            
-    payload = {
-        "contents": gemini_contents,
-        "generationConfig": {"temperature": temperature}
-    }
-    if system_instruction:
-        payload["systemInstruction"] = system_instruction
-        
-    headers = {"Content-Type": "application/json"}
-    
+def _breaker(name: str) -> CircuitBreaker:
+    if name not in _breakers:
+        _breakers[name] = CircuitBreaker()
+    return _breakers[name]
+
+
+async def stream_one_provider(
+    provider: dict, messages: List[dict], temperature: float = 0.3, model_override: str = None,
+) -> AsyncGenerator[Union[str, dict], None]:
+    """Stream from a SINGLE OpenAI-compatible chat-completions endpoint.
+
+    Works identically for DeepSeek, Groq, OpenAI, OpenRouter, Together, xAI,
+    Mistral, etc. — they all speak the same protocol. No provider-specific code.
+    Raises on non-200 so the caller can fail over to the next provider.
+    """
+    model = model_override or provider["model"]
+    url = f"{provider['base_url'].rstrip('/')}/chat/completions"
+    headers = {"Authorization": f"Bearer {provider['key']}", "Content-Type": "application/json"}
+    payload = {"model": model, "messages": messages, "stream": True}
+    # Reasoning/thinking models reject a temperature param; everything else accepts it.
+    if "reasoner" not in model and "thinking" not in model:
+        payload["temperature"] = temperature
+
     async with get_http_session() as sess:
         async with sess.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=120)) as resp:
             if resp.status != 200:
                 body = await resp.text()
-                raise HTTPException(status_code=resp.status, detail=f"Gemini error: {body}")
-            
+                raise HTTPException(status_code=resp.status, detail=f"{provider['name']} error: {body[:300]}")
             async for raw_line in resp.content:
                 line = raw_line.decode("utf-8").strip()
-                if not line or line.startswith("data: [DONE]"): continue
+                if not line or line == "data: [DONE]":
+                    continue
                 if line.startswith("data: "):
                     try:
                         data = json.loads(line[6:])
-                        if "candidates" in data and len(data["candidates"]) > 0:
-                            parts = data["candidates"][0].get("content", {}).get("parts", [])
-                            for p in parts:
-                                if "text" in p:
-                                    yield p["text"]
-                    except (json.JSONDecodeError, KeyError):
+                        delta = data["choices"][0]["delta"]
+                        # Reasoning tokens (R1 / thinking models) — surfaced separately.
+                        reasoning = delta.get("reasoning_content", "")
+                        if reasoning:
+                            yield {"type": "reasoning", "content": reasoning}
+                        token = delta.get("content", "")
+                        if token:
+                            yield token
+                    except (json.JSONDecodeError, KeyError, IndexError):
                         continue
 
 
-# Semaphore: max 20 concurrent LLM calls. All providers are async I/O; the
-# old value of 3 caused every request to queue behind slow Reasoner calls.
+# Semaphore: max 20 concurrent LLM calls (all async I/O).
 _llm_semaphore = asyncio.Semaphore(20)
 
+
 async def stream_llm(messages: List[dict], temperature: float = 0.3, max_retries: int = 5, req_model: str = "auto", custom_keys: dict = None) -> AsyncGenerator[Union[str, dict], None]:
-    """DeepSeek is the sole LLM provider (Groq / Gemini / Ollama support removed).
+    """Provider-agnostic streaming with automatic failover.
 
-    `req_model` may be "auto" (→ active DeepSeek model) or a "deepseek-<model>"
-    string. Deep Research drives `deepseek-reasoner` through its own client, so
-    here we only ever serve deepseek-chat for normal chat + sub-queries.
+    Walks the configured providers (get_providers(), env-key driven, priority
+    order) and streams from the first one that works. If a provider errors
+    BEFORE emitting any token, we transparently try the next. Once tokens have
+    started flowing we commit to that provider (can't un-send a half-answer).
+
+    `req_model`:
+      - "auto"/None → each provider uses its own default model.
+      - "<provider>:<model>" → pin model on its matching provider (e.g. "deepseek:deepseek-reasoner").
+      - any other string → used as the model override on every provider.
+    Adding a key for any provider makes it work — no code changes needed.
     """
-    custom_keys = custom_keys or custom_keys_var.get()
+    providers = get_providers()
+    if not providers:
+        yield {"type": "error", "message": "No model is configured. Please set an API key."}
+        return
 
-    if req_model == "auto" or not req_model:
-        active = state.active_model if (state.active_model and state.active_model.startswith("deepseek")) else "deepseek-chat"
-        model_name = active
-    elif req_model.startswith("deepseek-deepseek-"):
-        # "deepseek-" provider prefix + "deepseek-chat" model → strip one prefix.
-        model_name = req_model[len("deepseek-"):]
-    elif req_model.startswith("deepseek-"):
-        model_name = req_model
-    else:
-        model_name = "deepseek-chat"
+    # Resolve an optional model override from req_model.
+    model_override = None
+    pinned_provider = None
+    if req_model and req_model != "auto":
+        if ":" in req_model:
+            pinned_provider, model_override = req_model.split(":", 1)
+        else:
+            model_override = req_model
 
     async with _llm_semaphore:
-        use_fallback = False
-        if not ds_circuit_breaker.allow_request():
-            logger.warning("DeepSeek circuit breaker OPEN. Using Gemini fallback.")
-            use_fallback = True
-
-        if not use_fallback:
+        last_error = None
+        for provider in providers:
+            # If a provider was pinned by name, only use that one.
+            if pinned_provider and provider["name"] != pinned_provider and provider["name"] != "byok":
+                continue
+            br = _breaker(provider["name"])
+            if not br.allow_request():
+                logger.warning("provider '%s' circuit OPEN — skipping", provider["name"])
+                continue
+            emitted = False
             try:
-                success_yielded = False
-                async for token in stream_deepseek(messages, temperature, model_name, custom_keys.get("deepseek")):
+                async for token in stream_one_provider(provider, messages, temperature, model_override):
+                    emitted = True
                     yield token
-                    success_yielded = True
-                
-                if success_yielded:
-                    ds_circuit_breaker.record_success()
-                return
-            except HTTPException as e:
-                if e.status_code in [500, 502, 503, 504]:
-                    ds_circuit_breaker.record_failure()
-                    logger.warning(f"DeepSeek 5xx error, recorded failure. Fallback to Gemini. {e}")
-                    use_fallback = True
-                else:
-                    logger.warning(f"DeepSeek unavailable ({req_model}): {e}")
-            except asyncio.TimeoutError:
-                ds_circuit_breaker.record_failure()
-                logger.warning("DeepSeek timed out. Fallback to Gemini.")
-                use_fallback = True
-            except Exception as e:
-                logger.error(f"DeepSeek stream error: {e}")
-                use_fallback = True
+                if emitted:
+                    br.record_success()
+                    return
+                # Provider returned 200 but no tokens — soft failure, try next.
+                logger.warning("provider '%s' produced no tokens — trying next", provider["name"])
+            except (HTTPException, asyncio.TimeoutError, Exception) as e:
+                last_error = e
+                br.record_failure()
+                if emitted:
+                    # Already streamed a partial answer — can't fail over without
+                    # showing two half-answers. Stop cleanly here.
+                    logger.error("provider '%s' dropped mid-stream after emitting tokens: %s", provider["name"], e)
+                    return
+                logger.warning("provider '%s' failed before any token (%s) — failing over", provider["name"], e)
+                continue
 
-        if use_fallback and GEMINI_API_KEY:
-            try:
-                async for token in stream_gemini(messages, temperature):
-                    yield token
-                return
-            except Exception as e:
-                logger.error(f"Gemini fallback failed: {e}")
-
-        # No other providers to fall back to. We are mid-stream (headers sent), so
-        # emit a single typed terminal error event; event_gen finalizes the stream.
-        logger.error("All LLM providers failed for this request")
+        logger.error("All %d LLM provider(s) failed. Last error: %s", len(providers), last_error)
         yield {"type": "error", "message": "The model is temporarily unavailable. Please try again in a moment."}
         return
 
@@ -1282,8 +1273,9 @@ async def status():
         "status":          "ok" if provider_ok else "degraded",
         "version":         "2.0",
         "llm_provider":    state.active_provider,
-        "model":           state.active_model or "deepseek-chat",
-        "deepseek_key_valid": bool(DEEPSEEK_API_KEY or custom_keys_var.get().get("deepseek")),
+        "model":           state.active_model or "(none)",
+        "llm_key_valid":   any_llm_configured(),
+        "providers_configured": [p["name"] for p in get_providers()],
         "index_ready":     state.index_ready,
         "total_verses":    getattr(state, "total_verses", 0),
         "gretil_loaded":   state.gretil_loaded,
