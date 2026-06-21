@@ -1,4 +1,4 @@
-"""Tests for <tool_name> — write these FIRST (Rule 2), before implementing run().
+"""Tests for <tool_name> — write these FIRST (Rule 0 precondition A), before run().
 
 Run: venv/bin/python -m tools._template.test_check   (from purangpt/ repo root)
 

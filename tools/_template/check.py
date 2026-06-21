@@ -3,9 +3,9 @@
 COPY-ME TEMPLATE. To make a new Rule-0 tool:
   cp -r tools/_template tools/<name>
 then rename this module's logic, fill in `run()`, update README.md, and write
-tests FIRST in test_check.py (Rule 2). Keep the {success,data,metadata,errors}
-envelope and the --json CLI exactly as-is so the tool is a drop-in sub-agent
-replacement (Rule 3) and chainable.
+tests FIRST in test_check.py (Rule 0, precondition A). Keep the
+{success,data,metadata,errors} envelope and the --json CLI exactly as-is so the
+tool is a drop-in sub-agent replacement (Rule 0, precondition B) and chainable.
 
 Input contract:  run(<your args>) -> dict (envelope)
 Output contract (envelope.data on success): { ... your fields ... }

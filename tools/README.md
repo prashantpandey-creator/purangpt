@@ -12,7 +12,8 @@ Each tool is an importable package (`tools.<name>`) exposing a `check.py` with:
 - `test_<...>.py` (tests-first), and a co-located `README.md`.
 
 To create a new tool: `cp -r tools/_template tools/<name>`, then fill in the
-three functions and the README, tests-first (Rules 2–3).
+three functions and the README, tests-first (Rule 0, preconditions A & B in
+`.agents/AGENTS.md`).
 
 ## Registry
 

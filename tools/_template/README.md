@@ -2,8 +2,8 @@
 
 COPY-ME TEMPLATE. Replace `<tool_name>` and every section below. This README
 covers the two things the JSON descriptor can't: the **failure-mode table** and a
-**runnable example** (Rule 3b). Purpose + I/O live in the descriptor — don't
-re-prose them.
+**runnable example** (Rule 0, precondition B). Purpose + I/O live in the
+descriptor — don't re-prose them.
 
 One-line purpose: _what decision tree / parse-filter-reshape this replaces_.
 
