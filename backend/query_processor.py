@@ -27,7 +27,7 @@ from typing import Optional
 try:
     import redis.asyncio as redis
     REDIS_URL = os.getenv("REDIS_URL", "")
-    redis_client = redis.from_url(REDIS_URL, protocol=2, username=None, password=None) if REDIS_URL else None
+    redis_client = redis.from_url(REDIS_URL) if REDIS_URL else None
 except ImportError:
     redis_client = None
 
