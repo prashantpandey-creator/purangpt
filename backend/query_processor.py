@@ -25,9 +25,20 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 try:
+    import redis as redis_sync
     import redis.asyncio as redis
     REDIS_URL = os.getenv("REDIS_URL", "")
-    redis_client = redis.from_url(REDIS_URL) if REDIS_URL else None
+    if REDIS_URL:
+        try:
+            _probe = redis_sync.from_url(REDIS_URL, socket_connect_timeout=2)
+            _probe.ping()
+            _probe.close()
+            redis_client = redis.from_url(REDIS_URL)
+        except Exception as _e:
+            logging.getLogger(__name__).warning("Redis unavailable (%s) — expansion cache disabled", _e)
+            redis_client = None
+    else:
+        redis_client = None
 except ImportError:
     redis_client = None
 
