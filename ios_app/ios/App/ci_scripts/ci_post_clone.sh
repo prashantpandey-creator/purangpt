@@ -1,18 +1,29 @@
 #!/bin/sh
-# Xcode Cloud post-clone — resolve Capacitor SPM local-path packages.
+# Xcode Cloud post-clone — install Capacitor deps so SPM local-path packages resolve.
 #
-# Package.swift (ios_app/ios/App/CapApp-SPM/Package.swift) references node_modules
-# via ../../../node_modules, which resolves to ios_app/ios/node_modules. npm
-# installs to ios_app/node_modules, so we symlink ios_app/ios/node_modules to it.
+# Package.swift (ios_app/ios/App/CapApp-SPM/Package.swift) references
+# ../../../node_modules. In the Xcode Cloud container, SPM resolves this relative
+# to the workspace dir (ios_app/ios/App/), so it lands at ios_app/node_modules —
+# exactly where `npm ci` installs. No symlink needed.
 set -e
 
-echo "=== ci_post_clone: node setup ==="
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-if command -v nvm >/dev/null 2>&1; then
-  nvm install 20 --no-progress
-  nvm use 20
+echo "=== ci_post_clone: locating node ==="
+# Xcode Cloud runners ship Homebrew. node may or may not already be on PATH.
+if ! command -v node >/dev/null 2>&1; then
+  echo "node not on PATH; installing via Homebrew"
+  brew install node@20
+  export PATH="$(brew --prefix node@20)/bin:$PATH"
 fi
+
+# Ensure brew's node bin is on PATH even if node@20 was already installed.
+if command -v brew >/dev/null 2>&1; then
+  export PATH="$(brew --prefix)/bin:$PATH"
+  if brew --prefix node@20 >/dev/null 2>&1; then
+    export PATH="$(brew --prefix node@20)/bin:$PATH"
+  fi
+fi
+
+echo "node: $(command -v node || echo MISSING)"
 node --version
 npm --version
 
@@ -25,8 +36,7 @@ npm ci || npm install
 echo "=== ci_post_clone: cap sync ios ==="
 npm run cap:sync:ios
 
-echo "=== ci_post_clone: link node_modules for SPM ==="
-# Package.swift resolves ../../../node_modules -> ios_app/ios/node_modules
-ln -sfn "$APP_ROOT/node_modules" "$APP_ROOT/ios/node_modules"
+echo "=== ci_post_clone: verify SPM deps present ==="
+ls -d node_modules/@capacitor/app node_modules/@capacitor/browser
 
 echo "=== ci_post_clone: done ==="
