@@ -11,15 +11,15 @@ echo "=== ci_post_clone: locating node ==="
 # Xcode Cloud runners ship Homebrew. node may or may not already be on PATH.
 if ! command -v node >/dev/null 2>&1; then
   echo "node not on PATH; installing via Homebrew"
-  brew install node@20
-  export PATH="$(brew --prefix node@20)/bin:$PATH"
+  brew install node@22
+  export PATH="$(brew --prefix node@22)/bin:$PATH"
 fi
 
-# Ensure brew's node bin is on PATH even if node@20 was already installed.
+# Ensure brew's node bin is on PATH even if node@22 was already installed.
 if command -v brew >/dev/null 2>&1; then
   export PATH="$(brew --prefix)/bin:$PATH"
-  if brew --prefix node@20 >/dev/null 2>&1; then
-    export PATH="$(brew --prefix node@20)/bin:$PATH"
+  if brew --prefix node@22 >/dev/null 2>&1; then
+    export PATH="$(brew --prefix node@22)/bin:$PATH"
   fi
 fi
 
