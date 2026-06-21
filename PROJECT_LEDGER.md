@@ -36,7 +36,7 @@ Every agent MUST:
 - Landing page keeps the **CitationComparison** (grounded-vs-general). The BG 16.23–16.24 scripture block, corpus bento grid, and locked-sources preview were **moved to `/about`**; About is i18n (en/hi/ru).
 - Homepage has a **Guruji/Gita section** (Sanskrit verse → Yogeshwari translation → citation).
 - `glass-panel` / `saffron-glow` are global utilities in `globals.css`.
-- **Theme = "Twilight Sanctum"** (2026-06-21): indigo-aubergine base `#0A0810`, candlelit gold accent `#cba455` (token `--gold` / Tailwind `saffron`), highlight `#e7cd84`, slate `#7e92b8`, ivory text `#e2d4b2`. Restrained glow only on focal points. Chat empty-state is one centred logo→title→input→suggestions group. Do NOT reintroduce neon `#ff9933`. See CLAUDE.md UI guidelines.
+- **Theme** (2026-06-21): candlelit gold accent `#cba455` (token `--gold` / Tailwind `saffron`), highlight `#e7cd84`, slate `#7e92b8`, ivory text `#e2d4b2`. **Chat page = true-black OLED** (`#000` base/topbar/thread, neutral-dark surfaces `#0e0e11`/`#141416`) — the earlier indigo base was dropped per user request. Landing/marketing still use the warmer dark from globals. Restrained glow only on focal points. Side panel uses warm Quicksand (`--font-sidebar`). Do NOT reintroduce neon `#ff9933`. See CLAUDE.md UI guidelines.
 
 ### Known issues / open risks
 - **DB migration pending:** `guruji_texts` table + `hybrid_search_guruji()` not yet on prod. Run `migrate_to_local_pg.py` DDL then `split_guruji_corpus.py` before merging backend PR. Until then, all results come from `purana_verses` only (safe fallback).
@@ -47,6 +47,12 @@ Every agent MUST:
 ---
 
 ## Ledger (newest first)
+
+### 2026-06-21 — Frontend: chat page → OLED black + uniform topbar + warm sidebar · `claude/chat-tier-modes-naming-48z104` · agent(sonnet)
+- What & why: user feedback on the chat page. Moved off the indigo "Twilight" surfaces to a true-black OLED feel and cleaned up several chrome details.
+- Changed: `purangpt-next` — `globals.css` (`--bg-deep`/`--dark-bg` → `#000`, surfaces neutral `#0e0e11`/`#141416`, body bg pure black + single faint gold top-glow, no blue radial), `layout.tsx` (html/body → black; **added Quicksand font as `--font-sidebar`** for a warm/curvy side panel), `DashboardShell.tsx` (removed topbar border + made it `#000` uniform with chat; top-right emblem now becomes a profile-initials avatar once `initialized && user`), `Sidebar.tsx` (`--font-ui`/`--font-display` → `--font-sidebar`, tightened over-wide tracking, dropped the "Sacred Texts AI" wordmark tagline via `tagline={null}`), `ChatInterface.tsx` (root/composer/bubble/error bgs → black-neutral; empty-state hint restyled small Marcellus), `i18n.ts` (`ui.welcome_hint` en/hi/ru → "Under the discipleship of Sri Shailendra Sharma").
+- New state / gotchas: chat is now pure `#000` across topbar+thread (no divider). Sidebar text uses `--font-sidebar` (Quicksand, latin-only → Devanagari falls back to system). `tsc` + `next build` clean.
+- Follow-ups / risks: none.
 
 ### 2026-06-21 — Frontend: "Twilight Sanctum" theme + centred empty-state · `claude/chat-tier-modes-naming-48z104` · agent(sonnet)
 - What & why: old UI leaned on one neon-saffron (`#ff9933`) sprayed everywhere with heavy halos → read as cheap. Reworked into a researched, restrained palette; also unified the chat empty-state into one centred logo→title→input→suggestions composition (was: title floating mid-screen, input pinned to bottom).
