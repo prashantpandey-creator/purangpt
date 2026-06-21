@@ -63,7 +63,23 @@ def _is_likely_sanskrit(query: str) -> bool:
     Returns True if any token matches Sanskrit phoneme patterns.
     Intentionally has false positives — the LLM will catch non-Sanskrit.
     """
-    tokens = query.lower().split()
+    stop_words = {
+        "a", "an", "the", "and", "or", "but", "if", "because", "as", "what",
+        "when", "where", "how", "why", "who", "which", "this", "that", "these",
+        "those", "then", "just", "so", "than", "such", "both", "through", "about",
+        "for", "is", "of", "to", "in", "it", "you", "he", "she", "we", "they",
+        "i", "me", "my", "mine", "your", "yours", "his", "her", "hers", "its",
+        "our", "ours", "their", "theirs", "am", "are", "was", "were", "be", "been",
+        "being", "have", "has", "had", "do", "does", "did", "will", "would", "shall",
+        "should", "can", "could", "may", "might", "must", "idea", "data", "media",
+        "can", "not", "no", "yes", "on", "at", "by", "with", "from", "into", "up",
+        "down", "in", "out", "over", "under", "again", "further", "then", "once",
+        "here", "there", "all", "any", "both", "each", "few", "more", "most", "other",
+        "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too",
+        "very", "can", "will", "just", "don", "should", "now"
+    }
+
+    tokens = [t for t in query.lower().split() if t not in stop_words]
     for tok in tokens:
         # Check root membership
         for root in _SKT_ROOTS:
@@ -235,6 +251,75 @@ class SanskritQueryProcessor:
 
         # ── Sanskrit path: call LLM to expand ─────────────────────────────
         return await self._expand_sanskrit(query)
+
+    async def expand_with_history(self, query: str, history_str: str) -> QueryExpansion:
+        """
+        Merges query rewriting (for short follow-ups) and Sanskrit expansion into ONE LLM call.
+        Bypasses cache because the history makes the context unique.
+        """
+        prompt = f"""You are a Sanskrit NLP and Vedic philosophy expert.
+Conversation history:
+{history_str}
+
+The user's follow-up query is: "{query}"
+
+Step 1: Mentally rewrite the follow-up query to be self-contained, using context from the history.
+Step 2: Determine if the REWRITTEN query contains Sanskrit terms (in any romanization scheme).
+
+Respond with ONLY valid JSON, no extra text:
+{{
+  "rewritten_query": "the self-contained version of the query",
+  "is_sanskrit": true,
+  "canonical_iast": "the canonical IAST form of the primary term",
+  "synonyms": ["shiva", "rudra"],
+  "english_gloss": "brief English gloss, max 12 words",
+  "devanagari": "महेश्वर"
+}}
+
+If the rewritten query is plain English with NO Sanskrit terms, respond:
+{{
+  "rewritten_query": "the self-contained version of the query",
+  "is_sanskrit": false,
+  "canonical_iast": "the self-contained version of the query",
+  "synonyms": [],
+  "english_gloss": "",
+  "devanagari": ""
+}}
+"""
+        messages = [{"role": "user", "content": prompt}]
+        try:
+            resp = await self._call_llm(messages, temperature=0.0, req_model="auto")
+            import re
+            json_str = re.search(r"\{.*\}", resp.replace("\n", " "), re.DOTALL)
+            if json_str:
+                data = json.loads(json_str.group(0))
+                rewritten = data.get("rewritten_query", query)
+                is_sanskrit = data.get("is_sanskrit", False)
+                
+                # If the LLM says it's not Sanskrit, return fast
+                if not is_sanskrit:
+                    return QueryExpansion(
+                        original=rewritten,
+                        detected_lang="English",
+                        is_sanskrit=False,
+                        canonical=rewritten
+                    )
+                
+                # Otherwise return the full expansion using the rewritten query as original
+                return QueryExpansion(
+                    original=rewritten,
+                    detected_lang="Sanskrit (Roman)",
+                    is_sanskrit=True,
+                    canonical=data.get("canonical_iast", rewritten),
+                    synonyms=data.get("synonyms", []),
+                    english_gloss=data.get("english_gloss", ""),
+                    devanagari=data.get("devanagari", "")
+                )
+        except Exception as e:
+            logger.error("Combined rewrite+expansion failed: %s", e)
+            
+        # Fallback if the combined prompt fails
+        return await self.expand(query)
 
     async def _expand_sanskrit(self, query: str) -> QueryExpansion:
         """LLM-powered expansion for Sanskrit terms in Roman script."""

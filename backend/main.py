@@ -1453,21 +1453,18 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         # rather than dead air until the first LLM token.
         yield {"data": json.dumps({"type": "status", "message": "🔍 Searching the sacred texts…"}) }
 
-        # 0. Query Rewriting (if follow-up)
+        # 0 & 1. Query Rewriting and Expansion (Merged for performance)
         actual_query = request.query
         history_len = len(session_data.get("history", []))
+        
         if history_len > 0 and len(actual_query) < 40:
             history_str = "\n".join([f"{m['role']}: {m['content']}" for m in session_data["history"][-2:]])
-            rewrite_prompt = f"Rewrite this follow-up query to be self-contained, based on the conversation history.\nHistory:\n{history_str}\nQuery: {actual_query}\nOutput ONLY the rewritten query without quotes."
-            try:
-                rewritten = await call_llm_once([{"role": "user", "content": rewrite_prompt}], temperature=0.0, req_model="auto")
-                actual_query = rewritten.strip(' "\'')
-                logger.info("Query rewritten: %r -> %r", request.query, actual_query)
-            except Exception as e:
-                logger.warning("Query rewrite failed: %s", e)
+            expansion = await state.query_processor.expand_with_history(actual_query, history_str)
+            actual_query = expansion.original # The processor assigns the rewritten query to 'original'
+            logger.info("Query merged rewritten: %r -> %r", request.query, actual_query)
+        else:
+            expansion = await state.query_processor.expand(actual_query)
 
-        # 1. Query Expansion (Sanskrit awareness + Language Detection)
-        expansion = await state.query_processor.expand(actual_query)
         logger.info("Query: %r | Detected: %s | Skrt: %s | Canonical: %s | Synonyms: %s", 
                     actual_query, expansion.detected_lang, expansion.is_sanskrit, 
                     expansion.canonical, expansion.synonyms)
