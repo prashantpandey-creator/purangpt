@@ -159,16 +159,17 @@ def activate_user_subscription(user_id: str, plan: str, provider: str, external_
 
     try:
         with conn.cursor() as cur:
-            # 1. Update user profile
+            # 1. Upsert user profile — handles new users who purchase before first chat.
             cur.execute("""
-                UPDATE profiles SET
-                    role = %s,
+                INSERT INTO profiles (id, role, subscription_status, subscription_plan, subscription_expires_at, created_at, updated_at)
+                VALUES (%s, %s, 'active', %s, %s, %s, %s)
+                ON CONFLICT (id) DO UPDATE SET
+                    role = EXCLUDED.role,
                     subscription_status = 'active',
-                    subscription_plan = %s,
-                    subscription_expires_at = %s,
-                    updated_at = %s
-                WHERE id = %s
-            """, (plan, plan, expires_at, now, user_id))
+                    subscription_plan = EXCLUDED.subscription_plan,
+                    subscription_expires_at = EXCLUDED.subscription_expires_at,
+                    updated_at = EXCLUDED.updated_at
+            """, (user_id, plan, plan, expires_at, now, now))
 
             # 2. Insert record in subscriptions table
             cur.execute("""
