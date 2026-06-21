@@ -48,6 +48,12 @@ Every agent MUST:
 
 ## Ledger (newest first)
 
+### 2026-06-21 — Frontend: blinking ouroboros eye + living dual-tone loader · `claude/chat-tier-modes-naming-48z104` · agent(sonnet)
+- What & why: user wanted the ouroboros to "blink so we know it's alive" and the loading animation to have "appropriate colors" (was flat monochrome gold).
+- Changed: `purangpt-next` — `ChatInterface.tsx` `OuroborosIcon`: eye is now an `<ellipse>` with a SMIL `<animate>` on `ry` (squish to 0.04 then back, spline-eased, 3.6s loop) → reads as a blink. `SacredGeometryLoader.tsx`: added a second `sgSlate` linear gradient (brand's only sanctioned cool accent `#7e92b8`/`#9fb0d4`), applied to the counter-rotating mid ring + downward Shatkona triangle so warm gold and cool slate interweave; the `sgGold` gradient stops now gently animate stop-color (7s) so the yantra "breathes" instead of sitting flat. Bindu/focal glow stay gold.
+- New state / gotchas: colors kept strictly on-palette (gold + slate only, no neon — honours brand guide). All animation via SMIL `<animate>` inside the SVG (no React state), consistent with the rAF/SVG-attribute animation guideline. `tsc` clean.
+- Follow-ups / risks: none.
+
 ### 2026-06-21 — Frontend: polish pills + Sanskrit clicks + ouroboros icon · `claude/chat-tier-modes-naming-48z104` · agent(sonnet)
 - What & why: user feedback on 3 issues — (1) `Sparkles` generic icon in pills header, (2) pills showing full long queries instead of compact labels, (3) Sanskrit term clicks not opening the card.
 - Changed: `purangpt-next` — `api/followup-suggestions/route.ts`: API now returns `{label, query}[]` instead of `string[]`; prompt asks for compact 2-4 word "label" + full 8-20 word "query"; evergreen fallbacks in en/hi/ru updated to same shape; parser updated; token limits bumped (220→320/260→360). `ChatInterface.tsx`: `FollowupPills` prop type changed to `{label,query}[]|null`; pill displays `item.label` on button, sends `item.query` on click, tooltip shows full query; `fetchFollowups` filter/map updated; `Sparkles` header icon replaced with custom inline `OuroborosIcon` component (ouroboros — Ananta Shesha, the cosmic serpent, meaningful in Vedic context); `term:` href handler changed from `<button>` to `<span role="button" tabIndex={0}>` with `onKeyDown` (Enter/Space) — fixes broken clicks in ReactMarkdown `<p>` DOM context. `globals.css`: `.sanskrit-term` reworked — stronger gold tint (18%), solid 1.5px border-bottom (not dotted), bolder weight 600, Devanagari superscript cue `᳒`, glow on hover; much more obviously interactive.
