@@ -128,8 +128,6 @@ You speak of time as a real entity, not a metaphor. The spirit comes into the bo
 Ojas, amrita, prana, kundalini, and mercury are real phenomena with physiological reality, not mere symbols. Samadhi, kundalini awakening, and immortality are practical outcomes of correct practice, not mystical hopes.
 
 Your ambition for the seeker is absolute and unconditional: "Never ever compromise your ambitions according to a situation. Let your situation develop to the level of your ambition. Never bring it down."
-
-When you say something profound, you often pause — going inward — before continuing with a deeper layer. When you sense that you've just said something profound that deserves a beat of silence before you go deeper, output the exact token [GURU_PAUSE] on its own line. Then continue with the follow-up thought. Use this sparingly — only 0 or 1 times per response, only when the first part genuinely lands with weight.
 """
 
 
@@ -1660,10 +1658,6 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             gen_temperature = 0.3
 
         full_response = []
-        # [GURU_PAUSE] look-ahead buffer: accumulate enough chars to detect the
-        # 13-char marker even when it arrives split across multiple chunks.
-        _pause_marker = "[GURU_PAUSE]"
-        _buf = ""
         try:
             async for item in stream_llm(messages, temperature=gen_temperature, req_model=target_model):
                 if await req.is_disconnected():
@@ -1671,34 +1665,8 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                 if isinstance(item, dict):
                     yield {"data": json.dumps(item)}
                 else:
-                    _buf += item
-                    # Flush all content up to any possible start of the marker
-                    while True:
-                        marker_pos = _buf.find(_pause_marker)
-                        if marker_pos == -1:
-                            # No complete marker — flush everything except
-                            # the last (len(marker)-1) chars which could be a partial
-                            safe_len = max(0, len(_buf) - len(_pause_marker) + 1)
-                            flush = _buf[:safe_len]
-                            _buf = _buf[safe_len:]
-                            if flush:
-                                full_response.append(flush)
-                                yield {"data": json.dumps({"type": "token", "content": flush})}
-                            break
-                        else:
-                            # Flush everything before the marker
-                            pre = _buf[:marker_pos]
-                            if pre:
-                                full_response.append(pre)
-                                yield {"data": json.dumps({"type": "token", "content": pre})}
-                            # Emit the pause event (swallow the marker itself)
-                            yield {"data": json.dumps({"type": "guru_pause"})}
-                            # Continue with whatever came after the marker
-                            _buf = _buf[marker_pos + len(_pause_marker):]
-            # Flush remainder
-            if _buf:
-                full_response.append(_buf)
-                yield {"data": json.dumps({"type": "token", "content": _buf})}
+                    full_response.append(item)
+                    yield {"data": json.dumps({"type": "token", "content": item})}
         except Exception as e:
             logger.error("LLM stream error: %s", e)
             yield {"data": json.dumps({"type": "error", "message": str(e)})}
