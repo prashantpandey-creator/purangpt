@@ -1584,6 +1584,18 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         # 6. Save to session memory
         full_text = "".join(full_response)
         
+        # 3.3 Scholar output validation
+        query_lower = request.query.lower()
+        has_scholar_signal = any(s in query_lower for s in ['cite', 'citation', 'reference', 'verse', 'source', 'what exactly does', 'according to the text', 'exact words'])
+        if has_scholar_signal:
+            scholar_validation = re.compile(r'(chapter|verse|book|canto|sutra|gita|purana|shloka|volume) \d+', re.IGNORECASE)
+            if not scholar_validation.search(full_text):
+                logger.warning("Scholar validation failed: no precise verse found in output.")
+                fallback_msg = "\n\n[Sources consulted but precise verse not found.]"
+                full_text += fallback_msg
+                # Send the final fallback msg to the stream
+                yield {"data": json.dumps({"type": "token", "content": fallback_msg})}
+
         AI_DISCLAIMERS = re.compile(
             r"(As an AI|as a language model|I don't have personal experiences|"
             r"I cannot provide|I'm just an AI|artificial intelligence)",
