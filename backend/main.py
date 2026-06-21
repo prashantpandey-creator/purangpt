@@ -90,6 +90,14 @@ GRETIL_DIR    = Path("./data/raw_texts/gretil")
 FRONTEND_DIR  = Path(__file__).parent.parent / "frontend"
 MAX_HISTORY   = 100  # messages kept in session memory
 
+# Shared secret used by the Next.js /api/v1/chat proxy to forward a Pro user's
+# identity without a Logto JWT. Set INTERNAL_SERVICE_KEY to any random string
+# in both the backend .env and the frontend env. Requests that include:
+#   X-Internal-Service-Key: <INTERNAL_SERVICE_KEY>
+#   X-Internal-User-Sub: <user_sub>
+# are trusted as that user with the role looked up from the backend profiles table.
+INTERNAL_SERVICE_KEY = os.getenv("INTERNAL_SERVICE_KEY", "")
+
 
 from backend.auth import get_current_user, require_auth, require_role, get_guest_id, check_guest_rate_limit, consume_guest_unit, increment_guest_usage, validate_query
 from backend.db_client import update_profile, get_admin_stats, get_all_users, encrypt_keys, decrypt_keys, increment_usage, check_rate_limit, check_research_limit, increment_research_usage
@@ -1431,10 +1439,22 @@ async def safe_sse_stream(generator):
 @app.post("/api/chat")
 async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depends(get_current_user)):
     validate_query(request.query)
-        
+
+    # Internal service key — used by the Next.js /api/v1/chat proxy to forward
+    # a Pro user's identity without a Logto JWT. Only trusted when the shared
+    # secret matches and is non-empty (prevents a missing-key footgun).
+    if not user and INTERNAL_SERVICE_KEY:
+        svc_key = req.headers.get("X-Internal-Service-Key", "")
+        svc_sub = req.headers.get("X-Internal-User-Sub", "")
+        if svc_key == INTERNAL_SERVICE_KEY and svc_sub:
+            from backend.db_client import get_profile, create_profile_if_not_exists
+            profile = get_profile(svc_sub) or create_profile_if_not_exists(svc_sub)
+            if profile:
+                user = {"id": svc_sub, "role": profile.get("role", "free"), "email": profile.get("email", "")}
+
     # Check BYOK
     is_byok = bool(custom_keys_var.get())
-    
+
     # Rate Limiting — atomically consume one unit at the gate so concurrent
     # requests can't each pass a pre-flight read and overrun the limit. The DB
     # ops are sync, so run them in a threadpool to avoid blocking the event loop.
