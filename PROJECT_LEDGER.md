@@ -48,6 +48,12 @@ Every agent MUST:
 
 ## Ledger (newest first)
 
+### 2026-06-21 — Fix: ouroboros snake now actually rotates (closest-side mask) · `claude/chat-tier-modes-naming-48z104` · agent(sonnet)
+- What & why: the spinning logo never visibly rotated. Root cause: `ui/Logo.tsx` layer masks used `radial-gradient(circle, …)` which **defaults to farthest-corner**, so all % mapped to ~1.41× the radius → the static centre layer covered the whole ring and the rotating layer only held the empty corner margin. Nothing moved.
+- Changed: `purangpt-next/src/components/ui/Logo.tsx` — added **`closest-side`** to both masks (100% = edge/half-width, matching the measured profile: figure 0–60%, gap ~67%, ring 70–90%); idle spin 0.3→0.45.
+- New state / gotchas: **TRAP — any CSS `radial-gradient`/mask sized in % for the logo MUST use `closest-side`**, or the geometry is off by √2. Verified by simulating both masked layers in PIL (static=figure only, rotating=ring only, head moves on rotation).
+- Follow-ups / risks: none.
+
 ### 2026-06-21 — Frontend: emblem de-noise + welcome hero redesign + compact sidebar · `claude/chat-tier-modes-naming-48z104` · agent(sonnet)
 - What & why: the `logo-emblem.png` shipped with a baked-in **green/teal noise background** (looked corrupt on black & hid the ouroboros). Cleaned it and redesigned the chat welcome hero; tidied the sidebar.
 - Changed: `purangpt-next` — `public/logo-emblem.png` (keyed warm-vs-green, removed speckle via scipy connected-components, recentred, → transparent PNG, 1.2MB→250KB), `ui/Logo.tsx` (re-measured radial profile → **mask split moved into the 65–70% gap so ONLY the snake ring rotates**, not the figure; idle spin 0.18→0.3), `chat/ChatInterface.tsx` (welcome hero: larger centred logo, softer gold-gradient Marcellus title, ॥-flanked divider, discipleship line as small dedication), `chat/Sidebar.tsx` (**removed the conversation search box** + its dead state/imports; compacted vertical spacing across header/zones/rows/footer).
