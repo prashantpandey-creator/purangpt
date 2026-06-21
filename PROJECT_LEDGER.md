@@ -48,6 +48,12 @@ Every agent MUST:
 
 ## Ledger (newest first)
 
+### 2026-06-21 — Frontend: 3D logo wobble + dramatic floating captions in loader · `claude/chat-tier-modes-naming-48z104` · agent(sonnet)
+- What & why: user asked for the chat load animation to "rotate on its vertical axis making it 3D" and for the loading text to appear/disappear dramatically at different positions around the animation rather than sitting statically below it.
+- Changed: `purangpt-next` — `ui/Logo.tsx` (new `tiltRef` wrapper; rAF loop now adds independent Y+X sinusoidal phases → `perspective(${size*3}px) rotateY()deg) rotateX()deg)` on the tiltRef, giving a slow 3-D rock; amplitude/speed scale with `isThinking`); `chat/SacredGeometryLoader.tsx` (yantra enlarged 144→200 px, 3-D rock added to `svgWrapRef` via same rAF loop; static caption below removed and replaced with two independent `FloatingCaption` slots cycling phrases at diagonal anchor positions — upper-left↔lower-right and upper-right↔lower-left — with a 1.3 s stagger so two captions are always visible simultaneously); `chat/ChatInterface.tsx` (empty-state logo 116→132 px).
+- New state / gotchas: **TRAP — tiltRef wrapper must be `display: inline-block` with explicit `width/height`** or it collapses to 0 and the glow/mask disappear. `perspective()` is on `tiltRef`; `overflow: hidden + border-radius` clipping is on `outerRef` (child) — this is the correct order: clip in 2-D then tilt in 3-D so the circle becomes an oval visually.
+- Follow-ups / risks: none.
+
 ### 2026-06-21 — Fix: ouroboros snake now actually rotates (closest-side mask) · `claude/chat-tier-modes-naming-48z104` · agent(sonnet)
 - What & why: the spinning logo never visibly rotated. Root cause: `ui/Logo.tsx` layer masks used `radial-gradient(circle, …)` which **defaults to farthest-corner**, so all % mapped to ~1.41× the radius → the static centre layer covered the whole ring and the rotating layer only held the empty corner margin. Nothing moved.
 - Changed: `purangpt-next/src/components/ui/Logo.tsx` — added **`closest-side`** to both masks (100% = edge/half-width, matching the measured profile: figure 0–60%, gap ~67%, ring 70–90%); idle spin 0.3→0.45.
