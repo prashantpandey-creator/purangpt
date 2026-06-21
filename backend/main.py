@@ -1326,10 +1326,23 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         # rather than dead air until the first LLM token.
         yield {"data": json.dumps({"type": "status", "message": "🔍 Searching the sacred texts…"}) }
 
-        # 0. Query Expansion (Sanskrit awareness + Language Detection)
-        expansion = await state.query_processor.expand(request.query)
+        # 0. Query Rewriting (if follow-up)
+        actual_query = request.query
+        history_len = len(session_data.get("history", []))
+        if history_len > 0 and len(actual_query) < 40:
+            history_str = "\n".join([f"{m['role']}: {m['content']}" for m in session_data["history"][-2:]])
+            rewrite_prompt = f"Rewrite this follow-up query to be self-contained, based on the conversation history.\nHistory:\n{history_str}\nQuery: {actual_query}\nOutput ONLY the rewritten query without quotes."
+            try:
+                rewritten = await call_llm_once([{"role": "user", "content": rewrite_prompt}], temperature=0.0, req_model="auto")
+                actual_query = rewritten.strip(' "\'')
+                logger.info("Query rewritten: %r -> %r", request.query, actual_query)
+            except Exception as e:
+                logger.warning("Query rewrite failed: %s", e)
+
+        # 1. Query Expansion (Sanskrit awareness + Language Detection)
+        expansion = await state.query_processor.expand(actual_query)
         logger.info("Query: %r | Detected: %s | Skrt: %s | Canonical: %s | Synonyms: %s", 
-                    request.query, expansion.detected_lang, expansion.is_sanskrit, 
+                    actual_query, expansion.detected_lang, expansion.is_sanskrit, 
                     expansion.canonical, expansion.synonyms)
 
         yield {"data": json.dumps({
@@ -1342,11 +1355,25 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             "english_gloss": expansion.english_gloss
         })}
 
-        # 1. RAG search (vector index if available)
+        # 2. RAG search (vector index if available)
         sources = []
         rag_context = ""
         if state.searcher and state.index_ready:
             try:
+                # Determine adaptive semantic weight
+                query_lower = actual_query.lower()
+                scholar_signals = ['cite', 'citation', 'reference', 'verse', 'source', 'what exactly does', 'according to the text', 'exact words']
+                has_scholar_signal = any(s in query_lower for s in scholar_signals)
+                
+                if request.mode == "research":
+                    weight = 0.6
+                elif has_scholar_signal:
+                    weight = 0.6
+                elif expansion.is_sanskrit and not expansion.english_gloss:
+                    weight = 0.5
+                else:
+                    weight = 0.75
+
                 # Use the expanded query parts for semantic search
                 results = await state.searcher.hybrid_search(
                     query=expansion.original, 
@@ -1355,7 +1382,35 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                     sharma_weighting=(request.mode == "guide"),
                     embed_phrase=expansion.embed_phrase,
                     fts_phrase=expansion.fts_phrase,
+                    semantic_weight=weight
                 )
+                
+                # Multi-hop comparison
+                comp_signals = ["difference between", "compared to", "according to both", "various traditions", "vs"]
+                if any(s in query_lower for s in comp_signals):
+                    comp_ctx = build_rag_context(results)
+                    comp_prompt = f"What key concept is missing from these passages to answer '{actual_query}'? One phrase only.\nPassages:\n{comp_ctx}"
+                    try:
+                        missing = await call_llm_once([{"role": "user", "content": comp_prompt}], temperature=0.0)
+                        missing = missing.strip(' "\'.')
+                        if missing and len(missing) > 2 and len(missing) < 30 and missing.lower() not in actual_query.lower():
+                            logger.info("Multi-hop comparison missing concept: %s", missing)
+                            missing_expansion = await state.query_processor.expand(missing)
+                            missing_results = await state.searcher.hybrid_search(
+                                query=missing_expansion.original, 
+                                top_k=5, 
+                                embed_phrase=missing_expansion.embed_phrase,
+                                semantic_weight=weight
+                            )
+                            # merge and deduplicate
+                            seen_ids = {r.get('id') for r in results if r.get('id')}
+                            for mr in missing_results:
+                                if mr.get('id') not in seen_ids:
+                                    results.append(mr)
+                                    seen_ids.add(mr.get('id'))
+                    except Exception as e:
+                        logger.warning("Multi-hop comparison failed: %s", e)
+
                 sources    = build_source_list(results)
                 rag_context = build_rag_context(results)
             except Exception as e:
