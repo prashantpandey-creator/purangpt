@@ -47,6 +47,12 @@ Every agent MUST:
 
 ## Ledger (newest first)
 
+### 2026-06-21 — Fix: chat dead-air / 60s hang — cap query-expansion LLM call · `claude/chat-tier-modes-naming-48z104` · agent(sonnet)
+- What & why: prod chat streamed **zero tokens for 60s** then closed. Root cause: the Sanskrit query-expansion step (`SanskritQueryProcessor._expand_sanskrit`) calls the LLM via `call_llm_once`, whose shared aiohttp client has a 60s timeout. Under DeepSeek slowness this blocks the whole `/api/chat` *before* search or generation — pure dead air. Expansion is only a nice-to-have and already has a graceful passthrough fallback, so it must never stall the stream.
+- Changed: `backend/query_processor.py` — `import asyncio`; new `EXPANSION_TIMEOUT_S` (env-tunable, default 8s); wrapped the expansion `_call_llm` in `asyncio.wait_for(...)`; added an explicit `asyncio.TimeoutError` log → falls through to the existing passthrough `QueryExpansion`.
+- New state / gotchas: chat now starts within ≤8s even if expansion's LLM is unresponsive (it degrades to the raw query). Generation keeps its own longer timeout. **Two prod-infra issues remain (need SSH, not code):** `/api/status` shows `index_ready:false` + `total_verses:0` (vector index/DB down → only GRETIL grounding), and `llm_provider` has fallen back from Gemini to **deepseek**.
+- Follow-ups / risks: needs to reach `main` to deploy (backend deploys only on push to main w/ backend paths). This branch also carries the **un-migrated dual-corpus** work — do NOT bulk-merge to main without running the DDL; prefer a clean hotfix branch off `origin/main` carrying only this change. Fix prod DB/index + Gemini key separately via SSH.
+
 ### 2026-06-21 — AI merge-conflict bot for claude/** branches (both repos) · `claude/chat-tier-modes-naming-48z104` · agent(sonnet)
 - What & why: a drifted `claude/**` branch kept conflicting with `main` in the frontend deploy's auto-merge step, which **silently skipped the deploy** (root cause of "logo changes never showed up"). Added a bot so this self-heals.
 - Changed: NEW `.github/scripts/ai-merge-resolve.py` (stdlib-only; resolves conflict markers via free-tier Gemini `gemini-2.0-flash`), NEW `.github/scripts/merge-bot.sh` + `.github/workflows/merge-bot.yml` (on push to main: merge main into each active claude/** branch, AI-resolve, push, open one deduped issue if it can't; skips branches idle >30d). Frontend also made its `deploy.yml` auto-merge step AI-assisted. Same files added to **both** repos.

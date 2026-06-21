@@ -16,6 +16,7 @@ Key outputs per query:
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
@@ -33,6 +34,13 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 CACHE_TTL = 86400 * 7  # Cache expansions for 7 days
+
+# Hard cap on the query-expansion LLM call. Expansion is a *nice-to-have* that
+# precedes search + generation, so it must never stall the chat. If the LLM is
+# slow/unresponsive (e.g. DeepSeek under load), we bail to a passthrough query
+# rather than letting the user stare at dead air. Generation itself keeps its
+# own longer timeout.
+EXPANSION_TIMEOUT_S = float(os.getenv("EXPANSION_TIMEOUT_S", "8"))
 
 # ── Sanskrit phoneme heuristic ─────────────────────────────────────────────
 # Common endings of Sanskrit words in Roman transliteration.
@@ -262,9 +270,12 @@ class SanskritQueryProcessor:
         # 2. Call LLM
         prompt = _SANSKRIT_EXPANSION_PROMPT.format(query=query)
         try:
-            raw = await self._call_llm(
-                [{"role": "user", "content": prompt}],
-                temperature=0.0,  # deterministic
+            raw = await asyncio.wait_for(
+                self._call_llm(
+                    [{"role": "user", "content": prompt}],
+                    temperature=0.0,  # deterministic
+                ),
+                timeout=EXPANSION_TIMEOUT_S,
             )
             # Strip markdown code fences if present
             raw = re.sub(r"```(?:json)?", "", raw).strip().rstrip("`").strip()
@@ -323,6 +334,11 @@ class SanskritQueryProcessor:
 
         except (json.JSONDecodeError, KeyError) as e:
             logger.warning("Sanskrit expansion JSON parse failed for %r: %s", query, e)
+        except asyncio.TimeoutError:
+            logger.warning(
+                "Sanskrit expansion timed out (>%ss) for %r — passing query through",
+                EXPANSION_TIMEOUT_S, query,
+            )
         except Exception as e:
             logger.warning("Sanskrit expansion failed for %r: %s", query, e)
 
