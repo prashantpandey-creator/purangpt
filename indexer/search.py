@@ -94,12 +94,12 @@ class HybridSearcher:
     @classmethod
     def preload_model(cls):
         """Load the embedding model into the class once. Safe to call in the
-        gunicorn master before forking — the loaded weights are then shared with
-        every worker via copy-on-write. Idempotent."""
+        master process before gunicorn forks workers."""
         if cls._shared_model is None:
             from sentence_transformers import SentenceTransformer
-            logger.info("Preloading SentenceTransformer (intfloat/multilingual-e5-small) in master…")
-            cls._shared_model = SentenceTransformer("intfloat/multilingual-e5-small")
+            import logging
+            logger = logging.getLogger("purangpt.search")
+            cls._shared_model = SentenceTransformer("nomic-ai/nomic-embed-text-v1.5", trust_remote_code=True)
             logger.info("Embedding model preloaded ✓ (shared across workers)")
         return cls._shared_model
 

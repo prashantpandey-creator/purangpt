@@ -20,7 +20,7 @@ from sentence_transformers import SentenceTransformer
 logger  = logging.getLogger(__name__)
 console = Console()
 
-DEFAULT_EMBED_MODEL  = "intfloat/multilingual-e5-small"
+DEFAULT_EMBED_MODEL  = "nomic-ai/nomic-embed-text-v1.5"
 TABLE_NAME           = "purana_verses"
 EMBED_BATCH_SIZE     = 32
 
@@ -30,7 +30,7 @@ class PostgresIndexer:
         self.model_name = model_name
         
         console.print(f"[bold cyan]Loading SentenceTransformer:[/] {self.model_name}")
-        self.model = SentenceTransformer(self.model_name)
+        self.model = SentenceTransformer(self.model_name, trust_remote_code=True)
         
         self.conn = psycopg2.connect(self.db_url)
         self.conn.autocommit = True

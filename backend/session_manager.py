@@ -270,3 +270,42 @@ class SessionManager:
             return []
         finally:
             conn.close()
+
+    async def generate_user_profile(self, user_id: str) -> str:
+        """Reads the journey_summary of all of a user's sessions and generates
+        a 1-paragraph summary of their spiritual/philosophical level."""
+        conn = self._get_conn()
+        if not conn:
+            return ""
+            
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT journey_summary FROM chat_sessions WHERE logto_user_id = %s AND journey_summary IS NOT NULL AND journey_summary != ''", (user_id,))
+                rows = cur.fetchall()
+                
+            summaries = [row["journey_summary"] for row in rows]
+            if not summaries:
+                return "New seeker. No established philosophical baseline yet."
+                
+            # We defer the LLM import locally to avoid circular dependencies
+            from backend.main import call_llm_once
+            
+            prompt = (
+                "You are profiling a spiritual seeker's philosophical baseline based on their past session summaries.\n"
+                "Synthesize the following session summaries into a SINGLE paragraph (max 100 words) describing "
+                "their core spiritual inquiries, their level of scriptural understanding, and any recurring themes.\n\n"
+                "Session summaries:\n" + "\n".join(f"- {s}" for s in summaries)
+            )
+            
+            profile = await call_llm_once([
+                {"role": "system", "content": "You are an analytical profiling assistant. Be clinical and precise."},
+                {"role": "user", "content": prompt}
+            ], temperature=0.1)
+            
+            return profile.strip()
+            
+        except Exception as e:
+            logger.error(f"Error generating user profile for {user_id}: {e}")
+            return ""
+        finally:
+            conn.close()

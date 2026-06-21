@@ -47,14 +47,14 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s — %(mes
 logger = logging.getLogger("purangpt.backend")
 
 # ── Config ─────────────────────────────────────────────────────────────────
-# DeepSeek is the SOLE LLM provider. (Gemini/Groq/Ollama/Together/Zhipu were
-# removed in the 2026-06 rework — do not reintroduce other providers.)
+# DeepSeek is the SOLE primary provider, but we allow Gemini as a circuit-breaker fallback.
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 def any_llm_configured() -> bool:
-    """True if DeepSeek is usable: a configured key, a per-request BYOK key, or a
+    """True if DeepSeek or Gemini is usable: a configured key, a per-request BYOK key, or a
     successful startup validation."""
-    return bool(DEEPSEEK_API_KEY or custom_keys_var.get().get("deepseek"))
+    return bool(DEEPSEEK_API_KEY or GEMINI_API_KEY or custom_keys_var.get().get("deepseek"))
 
 
 INDEX_DIR     = os.getenv("INDEX_DIR",   "./data/indexes")
@@ -608,6 +608,83 @@ async def stream_deepseek(messages: List[dict], temperature: float = 0.3, req_mo
                     except (json.JSONDecodeError, KeyError, IndexError):
                         continue
 
+import time
+
+class CircuitBreaker:
+    def __init__(self, failure_threshold=3, reset_timeout=120):
+        self.failure_threshold = failure_threshold
+        self.reset_timeout = reset_timeout
+        self.failures = 0
+        self.last_failure_time = 0
+        self.state = "CLOSED"  # CLOSED, OPEN, HALF_OPEN
+
+    def record_failure(self):
+        self.failures += 1
+        self.last_failure_time = time.time()
+        if self.failures >= self.failure_threshold:
+            self.state = "OPEN"
+            
+    def record_success(self):
+        self.failures = 0
+        self.state = "CLOSED"
+        
+    def allow_request(self):
+        if self.state == "CLOSED":
+            return True
+        if self.state == "OPEN":
+            if time.time() - self.last_failure_time > self.reset_timeout:
+                self.state = "HALF_OPEN"
+                return True
+            return False
+        if self.state == "HALF_OPEN":
+            return True
+        return True
+
+ds_circuit_breaker = CircuitBreaker()
+
+async def stream_gemini(messages: List[dict], temperature: float = 0.3) -> AsyncGenerator[Union[str, dict], None]:
+    if not GEMINI_API_KEY:
+        raise HTTPException(status_code=503, detail="GEMINI_API_KEY not configured for fallback")
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key={GEMINI_API_KEY}"
+    
+    gemini_contents = []
+    system_instruction = None
+    for msg in messages:
+        if msg["role"] == "system":
+            system_instruction = {"parts": [{"text": msg["content"]}]}
+        elif msg["role"] in ["user", "assistant"]:
+            role = "user" if msg["role"] == "user" else "model"
+            gemini_contents.append({"role": role, "parts": [{"text": msg["content"]}]})
+            
+    payload = {
+        "contents": gemini_contents,
+        "generationConfig": {"temperature": temperature}
+    }
+    if system_instruction:
+        payload["systemInstruction"] = system_instruction
+        
+    headers = {"Content-Type": "application/json"}
+    
+    async with get_http_session() as sess:
+        async with sess.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=120)) as resp:
+            if resp.status != 200:
+                body = await resp.text()
+                raise HTTPException(status_code=resp.status, detail=f"Gemini error: {body}")
+            
+            async for raw_line in resp.content:
+                line = raw_line.decode("utf-8").strip()
+                if not line or line.startswith("data: [DONE]"): continue
+                if line.startswith("data: "):
+                    try:
+                        data = json.loads(line[6:])
+                        if "candidates" in data and len(data["candidates"]) > 0:
+                            parts = data["candidates"][0].get("content", {}).get("parts", [])
+                            for p in parts:
+                                if "text" in p:
+                                    yield p["text"]
+                    except (json.JSONDecodeError, KeyError):
+                        continue
+
 
 # Semaphore: max 20 concurrent LLM calls. All providers are async I/O; the
 # old value of 3 caused every request to queue behind slow Reasoner calls.
@@ -634,18 +711,47 @@ async def stream_llm(messages: List[dict], temperature: float = 0.3, max_retries
         model_name = "deepseek-chat"
 
     async with _llm_semaphore:
-        try:
-            async for token in stream_deepseek(messages, temperature, model_name, custom_keys.get("deepseek")):
-                yield token
-            return
-        except HTTPException as e:
-            logger.warning(f"DeepSeek unavailable ({req_model}): {e}")
-        except Exception as e:
-            logger.error(f"DeepSeek stream error: {e}")
+        use_fallback = False
+        if not ds_circuit_breaker.allow_request():
+            logger.warning("DeepSeek circuit breaker OPEN. Using Gemini fallback.")
+            use_fallback = True
+
+        if not use_fallback:
+            try:
+                success_yielded = False
+                async for token in stream_deepseek(messages, temperature, model_name, custom_keys.get("deepseek")):
+                    yield token
+                    success_yielded = True
+                
+                if success_yielded:
+                    ds_circuit_breaker.record_success()
+                return
+            except HTTPException as e:
+                if e.status_code in [500, 502, 503, 504]:
+                    ds_circuit_breaker.record_failure()
+                    logger.warning(f"DeepSeek 5xx error, recorded failure. Fallback to Gemini. {e}")
+                    use_fallback = True
+                else:
+                    logger.warning(f"DeepSeek unavailable ({req_model}): {e}")
+            except asyncio.TimeoutError:
+                ds_circuit_breaker.record_failure()
+                logger.warning("DeepSeek timed out. Fallback to Gemini.")
+                use_fallback = True
+            except Exception as e:
+                logger.error(f"DeepSeek stream error: {e}")
+                use_fallback = True
+
+        if use_fallback and GEMINI_API_KEY:
+            try:
+                async for token in stream_gemini(messages, temperature):
+                    yield token
+                return
+            except Exception as e:
+                logger.error(f"Gemini fallback failed: {e}")
 
         # No other providers to fall back to. We are mid-stream (headers sent), so
         # emit a single typed terminal error event; event_gen finalizes the stream.
-        logger.error("DeepSeek failed for this request")
+        logger.error("All LLM providers failed for this request")
         yield {"type": "error", "message": "The model is temporarily unavailable. Please try again in a moment."}
         return
 
