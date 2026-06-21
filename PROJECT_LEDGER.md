@@ -47,6 +47,12 @@ Every agent MUST:
 
 ## Ledger (newest first)
 
+### 2026-06-21 — AI merge-conflict bot for claude/** branches (both repos) · `claude/chat-tier-modes-naming-48z104` · agent(sonnet)
+- What & why: a drifted `claude/**` branch kept conflicting with `main` in the frontend deploy's auto-merge step, which **silently skipped the deploy** (root cause of "logo changes never showed up"). Added a bot so this self-heals.
+- Changed: NEW `.github/scripts/ai-merge-resolve.py` (stdlib-only; resolves conflict markers via free-tier Gemini `gemini-2.0-flash`), NEW `.github/scripts/merge-bot.sh` + `.github/workflows/merge-bot.yml` (on push to main: merge main into each active claude/** branch, AI-resolve, push, open one deduped issue if it can't; skips branches idle >30d). Frontend also made its `deploy.yml` auto-merge step AI-assisted. Same files added to **both** repos.
+- New state / gotchas: needs `GEMINI_API_KEY` repo secret (backend already has it; **verify/add on `purangpt-next`**). Branch pushes use `GITHUB_TOKEN` → don't re-trigger workflows (no loops/surprise deploys). File contents are sent to Gemini free tier — fine for now, swap to paid key if data policy tightens. Bot in this repo only activates once `merge-bot.yml` reaches `main`.
+- Follow-ups / risks: confirm `GEMINI_API_KEY` exists as an Actions secret in `purangpt-next`; otherwise the frontend bot falls back to opening issues instead of auto-resolving.
+
 ### 2026-06-20 — Backend: dual-corpus Guruji search · `claude/chat-tier-modes-naming-48z104` (PR pending) · agent(opus)
 - What & why: Guruji commentary was flooding results (buggy ×1.6 boost, ×0.6 penalty never matched live ids `sharma-darshan_*`). Plan: separate `guruji_texts` table + mode-aware quota merge so Guruji is reliably *alongside* Puranas (not drowning them).
 - Changed: `indexer/search.py` (remove buggy multiplier; add `_fetch_table`, `search_corpora` with dual-corpus concurrent fetch + mode-aware merge + MMR on `source_group`); `backend/main.py` (`/api/chat`, `/api/search`, `/api/infer` → `search_corpora`; cap 8→10; fix edition/tradition/bias getattr bug); `scripts/migrate_to_local_pg.py` (`guruji_texts` table + `hybrid_search_guruji` SQL); `scripts/split_guruji_corpus.py` (NEW — one-off row migration preserving embeddings).
