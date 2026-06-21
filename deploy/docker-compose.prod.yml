@@ -59,11 +59,31 @@ services:
     depends_on:
       - redis
 
+  static-files:
+    image: nginx:alpine
+    container_name: purangpt_static
+    volumes:
+      - /data/purangpt/static:/usr/share/nginx/html/static:ro
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=coolify
+      - traefik.http.routers.purangpt-static.rule=Host(`purangpt.com`) && PathPrefix(`/static/`)
+      - traefik.http.routers.purangpt-static.entrypoints=https
+      - traefik.http.routers.purangpt-static.tls=true
+      - traefik.http.routers.purangpt-static.tls.certresolver=letsencrypt
+      - traefik.http.routers.purangpt-static.priority=20
+      - traefik.http.services.purangpt-static.loadbalancer.server.port=80
+    networks:
+      - default
+      - coolify
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./purangpt-next
       args:
         NEXT_PUBLIC_API_URL: ""
+        NEXT_PUBLIC_CORPUS_URL: "https://purangpt.com/static/corpus.db.gz"
         NEXT_PUBLIC_REVENUECAT_APPLE_KEY: ${NEXT_PUBLIC_REVENUECAT_APPLE_KEY}
         NEXT_PUBLIC_RAZORPAY_KEY_ID: ${NEXT_PUBLIC_RAZORPAY_KEY_ID}
         NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
