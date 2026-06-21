@@ -224,8 +224,8 @@ class HybridSearcher:
             async with self._pool.acquire() as conn:
                 rows = await conn.fetch('''
                     SELECT id, content, metadata, similarity
-                    FROM hybrid_search($1, $2::vector, $3, $4::jsonb, $5)
-                ''', fts_query, emb_str, fetch_k, filter_json, float(semantic_weight))
+                    FROM hybrid_search($1, $2::vector, $3, $4::jsonb)
+                ''', fts_query, emb_str, fetch_k, filter_json)
 
             if not rows:
                 return []

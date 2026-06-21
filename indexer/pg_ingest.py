@@ -61,16 +61,14 @@ class PostgresIndexer:
             """)
             
             # Create hybrid_search function.
-            # Uses 'simple' text search config (not 'english') so Sanskrit transliterated
-            # terms (narada, vishnu, dharma) match without being stemmed/stop-word-dropped.
-            # semantic_weight is passed as a parameter (0.0–1.0); keyword weight = 1 - it.
+            # Uses 'simple' text search config + pre-computed fts column + RRF fusion
+            # (1/(60+rank)) — matches the production function shape.
             cur.execute(f"""
                 CREATE OR REPLACE FUNCTION hybrid_search(
-                    search_query TEXT,
+                    query_text TEXT,
                     query_embedding vector(384),
                     match_count INT,
-                    filter_metadata JSONB DEFAULT '{{}}'::jsonb,
-                    semantic_weight FLOAT DEFAULT 0.7
+                    filter_metadata JSONB DEFAULT '{{}}'::jsonb
                 )
                 RETURNS TABLE (
                     id TEXT,
@@ -80,39 +78,41 @@ class PostgresIndexer:
                 )
                 LANGUAGE plpgsql
                 AS $$
-                DECLARE
-                    kw_weight FLOAT := GREATEST(0.0, LEAST(1.0, 1.0 - semantic_weight));
-                    sem_weight FLOAT := GREATEST(0.0, LEAST(1.0, semantic_weight));
                 BEGIN
                     RETURN QUERY
-                    WITH semantic_search AS (
+                    WITH query_terms AS (
+                        SELECT websearch_to_tsquery('simple', regexp_replace(trim(query_text), '\\s+', ' OR ', 'g')) AS q
+                    ),
+                    semantic_search AS (
                         SELECT
-                            v.id,
-                            v.content,
-                            v.metadata,
-                            1 - (v.embedding <=> query_embedding) AS semantic_sim
-                        FROM {TABLE_NAME} v
-                        WHERE v.metadata @> filter_metadata
-                        ORDER BY v.embedding <=> query_embedding
+                            pv.id,
+                            pv.content,
+                            pv.metadata,
+                            1 - (pv.embedding <=> query_embedding) AS sim,
+                            ROW_NUMBER() OVER (ORDER BY pv.embedding <=> query_embedding) AS semantic_rank
+                        FROM {TABLE_NAME} pv
+                        WHERE pv.embedding IS NOT NULL
+                          AND pv.metadata @> filter_metadata
+                        ORDER BY pv.embedding <=> query_embedding
                         LIMIT match_count * 2
                     ),
                     keyword_search AS (
                         SELECT
-                            v.id,
-                            v.content,
-                            v.metadata,
-                            ts_rank_cd(to_tsvector('simple', v.content), websearch_to_tsquery('simple', search_query)) AS keyword_sim
-                        FROM {TABLE_NAME} v
-                        WHERE v.metadata @> filter_metadata
-                          AND to_tsvector('simple', v.content) @@ websearch_to_tsquery('simple', search_query)
-                        ORDER BY keyword_sim DESC
+                            pv.id,
+                            ts_rank(pv.fts, qt.q) AS fts_rank,
+                            ROW_NUMBER() OVER (ORDER BY ts_rank(pv.fts, qt.q) DESC) AS keyword_rank
+                        FROM {TABLE_NAME} pv
+                        CROSS JOIN query_terms qt
+                        WHERE pv.fts @@ qt.q
+                          AND pv.metadata @> filter_metadata
+                        ORDER BY fts_rank DESC
                         LIMIT match_count * 2
                     )
                     SELECT
-                        COALESCE(ss.id, ks.id) as id,
-                        COALESCE(ss.content, ks.content) as content,
-                        COALESCE(ss.metadata, ks.metadata) as metadata,
-                        (COALESCE(ss.semantic_sim, 0.0) * sem_weight + COALESCE(ks.keyword_sim, 0.0) * kw_weight) AS similarity
+                        COALESCE(ss.id, ks.id) AS id,
+                        COALESCE(ss.content, (SELECT p.content FROM {TABLE_NAME} p WHERE p.id = ks.id)) AS content,
+                        COALESCE(ss.metadata, (SELECT p.metadata FROM {TABLE_NAME} p WHERE p.id = ks.id)) AS metadata,
+                        (COALESCE(1.0 / (60 + ss.semantic_rank), 0.0) + COALESCE(1.0 / (60 + ks.keyword_rank), 0.0))::FLOAT AS similarity
                     FROM semantic_search ss
                     FULL OUTER JOIN keyword_search ks ON ss.id = ks.id
                     ORDER BY similarity DESC

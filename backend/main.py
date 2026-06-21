@@ -475,67 +475,8 @@ async def lifespan(app: FastAPI):
         try:
             async with searcher._pool.acquire() as conn:
                 state.total_verses = await conn.fetchval("SELECT COUNT(*) FROM purana_verses") or 0
-                # Apply updated hybrid_search SQL function: 'simple' text config so
-                # Sanskrit transliterated terms match; semantic_weight now honored.
-                await conn.execute("""
-                    CREATE OR REPLACE FUNCTION hybrid_search(
-                        search_query TEXT,
-                        query_embedding vector(384),
-                        match_count INT,
-                        filter_metadata JSONB DEFAULT '{}'::jsonb,
-                        semantic_weight FLOAT DEFAULT 0.7
-                    )
-                    RETURNS TABLE (
-                        id TEXT,
-                        content TEXT,
-                        metadata JSONB,
-                        similarity FLOAT
-                    )
-                    LANGUAGE plpgsql
-                    AS $fn$
-                    DECLARE
-                        kw_weight FLOAT := GREATEST(0.0, LEAST(1.0, 1.0 - semantic_weight));
-                        sem_weight FLOAT := GREATEST(0.0, LEAST(1.0, semantic_weight));
-                    BEGIN
-                        RETURN QUERY
-                        WITH semantic_search AS (
-                            SELECT
-                                v.id,
-                                v.content,
-                                v.metadata,
-                                1 - (v.embedding <=> query_embedding) AS semantic_sim
-                            FROM purana_verses v
-                            WHERE v.metadata @> filter_metadata
-                            ORDER BY v.embedding <=> query_embedding
-                            LIMIT match_count * 2
-                        ),
-                        keyword_search AS (
-                            SELECT
-                                v.id,
-                                v.content,
-                                v.metadata,
-                                ts_rank_cd(to_tsvector('simple', v.content), websearch_to_tsquery('simple', search_query)) AS keyword_sim
-                            FROM purana_verses v
-                            WHERE v.metadata @> filter_metadata
-                              AND to_tsvector('simple', v.content) @@ websearch_to_tsquery('simple', search_query)
-                            ORDER BY keyword_sim DESC
-                            LIMIT match_count * 2
-                        )
-                        SELECT
-                            COALESCE(ss.id, ks.id) as id,
-                            COALESCE(ss.content, ks.content) as content,
-                            COALESCE(ss.metadata, ks.metadata) as metadata,
-                            (COALESCE(ss.semantic_sim, 0.0) * sem_weight + COALESCE(ks.keyword_sim, 0.0) * kw_weight) AS similarity
-                        FROM semantic_search ss
-                        FULL OUTER JOIN keyword_search ks ON ss.id = ks.id
-                        ORDER BY similarity DESC
-                        LIMIT match_count;
-                    END;
-                    $fn$;
-                """)
-                logger.info("✓ hybrid_search SQL function updated (simple FTS config, semantic_weight honored)")
         except Exception as e:
-            logger.warning("verse-count or SQL migration failed: %s", e)
+            logger.warning("verse-count query failed: %s", e)
         logger.info("✓ Vector index ready (%d verses)", state.total_verses)
     except Exception as e:
         logger.info("Vector index not built yet: %s", e)
