@@ -40,7 +40,6 @@ Thumbs.db
 
 ## Node (iOS app)
 ios_app/node_modules/
-ios_app/ios/
 ios_app/android/
 
 ## IDE
