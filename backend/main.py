@@ -230,6 +230,29 @@ PROMPTS = {
     "guide":    UNIFIED_SYSTEM,
 }
 
+# Keyword → visual form mapping. Deterministic — no LLM involved.
+# Order matters: first match wins. Keep the most specific patterns first.
+_VISUAL_KEYWORD_MAP: list[tuple[list[str], str]] = [
+    (["chakra", "muladhara", "swadhisthana", "manipura", "anahata", "vishuddha", "ajna", "sahasrara",
+      "kundalini", "spine", "nadis", "sushumna", "ida", "pingala", "seven", "energy center"],          "chakra"),
+    (["om", "aum", "pranava", "first sound", "primordial sound", "nada brahma", "shabda brahman"],      "om"),
+    (["nada", "sound", "vibration", "frequency", "mantra", "resonance", "voice", "music", "spanda"],    "nada"),
+    (["yantra", "mandala", "sri yantra", "sacred geometry", "bindu visarga", "triangle", "geometry"],   "yantra"),
+    (["prana", "pranayama", "breath", "life force", "apana", "vyana", "udana", "samana", "ojas", "vayu"], "prana"),
+    (["yuga", "kali yuga", "satya yuga", "treta", "dvapara", "age", "cycle of time", "mahayuga",
+      "kalpa", "manvantara", "epoch"],                                                                   "yuga"),
+    (["kala", "time", "eternal", "moment", "eternity", "mahakala", "shiva kala", "past", "future"],     "kala"),
+    (["dhyana", "meditation", "concentration", "dharana", "samadhi", "bindu", "focus", "one point",
+      "ekagrata", "mindfulness", "witness", "awareness", "consciousness", "atman", "self"],              "bindu"),
+]
+
+def _pick_visual_form(query: str) -> str | None:
+    q = query.lower()
+    for keywords, form in _VISUAL_KEYWORD_MAP:
+        if any(kw in q for kw in keywords):
+            return form
+    return None
+
 # Injected as an additional directive when the seeker opts into Socratic challenge mode.
 # The Guru becomes a sharp dialectician — questioning premises, making the seeker defend
 # their view, refusing to simply agree. Sharp but never hostile. Love through pressure.
@@ -1760,6 +1783,12 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             gen_temperature = max(0.0, min(1.5, float(request.temperature)))
         else:
             gen_temperature = 0.3
+
+        # Emit visual event for Pro users — deterministic keyword match, not AI-generated.
+        # Fires before first token so the field erupts as Guruji begins speaking.
+        visual_form = _pick_visual_form(request.query)
+        if visual_form and user and user.get("role") in ("pro", "scholar", "admin"):
+            yield {"data": json.dumps({"type": "visual", "form": visual_form})}
 
         full_response = []
         try:
