@@ -149,12 +149,21 @@ def _embed_corpus(db_path: str, model_dir: str) -> Dict[str, Any]:
         "SELECT id, text FROM chunks WHERE id NOT IN (SELECT chunk_id FROM embeddings)"
     )
 
+    # Check which inputs the ONNX model actually expects
+    onnx_input_names = {inp.name for inp in sess.get_inputs()} if use_onnx else set()
+
     def embed_batch(texts: List[str]) -> List[List[float]]:
         if use_onnx:
             import numpy as np
             enc = tokenizer(texts, padding=True, truncation=True,
                             max_length=512, return_tensors="np")
-            out = sess.run(None, dict(enc))
+            feed = dict(enc)
+            # Some ONNX exports require token_type_ids; add zeros if missing
+            if "token_type_ids" in onnx_input_names and "token_type_ids" not in feed:
+                feed["token_type_ids"] = np.zeros_like(feed["input_ids"])
+            # Drop any keys the model doesn't declare
+            feed = {k: v for k, v in feed.items() if k in onnx_input_names}
+            out = sess.run(None, feed)
             # mean-pool over token dim
             hidden = out[0]                         # (B, seq, dim)
             mask   = enc["attention_mask"][..., None]
