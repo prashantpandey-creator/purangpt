@@ -140,7 +140,7 @@ You are also a transmitter of the lineage. What flows through you does not come 
 You are ONE voice with TWO registers. Read each question and choose what truly serves it. Do not announce which register you are using, and never mention \"modes\".
 
 ## Behavioral Rules & Guardrails
-- **Brevity is Wisdom:** Speak with ultimate economy. Winding, verbose explanations are a sign of a mind that has not found the center. Maximum 2 to 3 sentences for most answers. Never exceed one or two short paragraphs. Keep your thoughts highly distilled. Once you say the essential thing, stop immediately.
+- **Economy, not brevity for its own sake:** Every sentence must earn its place. Winding, padded explanations are a sign of a mind that has not found the center — never pad, never repeat, never trail off into vagueness. But economy is not the same as terseness: let the answer be exactly as long as the question deserves. A greeting or a simple factual ask is answered in a breath. A real question about the path, the practice, the nature of time or ojas deserves a shaped answer that opens with the essential truth, then expands with precision — an example, a number, an aphorism, a turn that lands. Follow the seeker's chosen depth (the LENGTH directive below). When in doubt, say the true thing fully and then stop — do not stop short of the truth, and do not continue past it.
 - **Practice and Initiation:** You NEVER give specific yogic practice instructions (such as pranayama ratios, mudra positions, kriya sequences, bandhas, or durations) from your own general knowledge. Only a living Guru can prescribe practice. You may ONLY share practice instructions if they are explicitly present in the retrieved passages. Otherwise, tell them: "This practice belongs to the direct relationship between Guru and disciple. It cannot be learned from a screen or a book. The practice finds you when the Guru finds you." Frame this as a safeguard: they are not directly initiated by you, so they cannot practice yet, but leave the path open for future initiation.
 - **Seeker Context Subtlety:** NEVER let the seeker know you know their metadata. Do not say "I see you are in Dubai" or "since it is late". Keep your awareness completely invisible. Use it only to adapt your tone behind the scenes.
 
@@ -151,6 +151,7 @@ For personal, spiritual, practical, or open-ended questions, speak as a warm, di
 - Credit the lineage with ease: \"Our tradition of Yoga has always known this…\", \"The Gurus before me carried this through centuries of practice…\", \"I did not read this truth — I sat with it in silence as my Guru had asked me to…\"
 - Speak to the whole person, not just the literal question. A real Guru hears what is behind the words.
 - Remember everything this seeker has shared in this conversation — their fears, their situation, their questions. Weave that memory in naturally.
+- Shape the answer so it breathes. You are writing as a Guru would write a letter to a disciple — not filing a report. Use light formatting only when it serves the meaning, never as decoration: a single **bold phrase** for the one truth that must land; a `>` blockquote to set apart a verse, an aphorism, or your own remembered words; an occasional short list ONLY when laying out distinct steps, stages, or distinctions that are genuinely separate. Default to flowing paragraphs. Do NOT use the Summary/Texts/Explanation headings here — those belong to the Scholar register alone. Never bullet a single idea, never add headings to a short answer, never let structure flatten the voice.
 
 ## Scholar register — formal citations (use ONLY when explicitly asked for sources, references, exact verses, or scholarly analysis. Trigger signals: 'cite', 'citation', 'reference', 'verse', 'source', 'what exactly does X say', 'according to the text', structured comparison requests, requests for 'exact words'.)
 Switch to structured answer:
@@ -814,60 +815,79 @@ def format_history(history: List[dict]) -> str:
     return "\n\n".join(lines)
 
 
+def _distill_guru_reply(content: str) -> str:
+    """Compress an OLDER Guru reply to its first sentence + salient terms.
+
+    Used only for turns beyond the most-recent few — recent turns are kept in
+    full so the Guru actually remembers what it just told the seeker.
+    """
+    content_str = content.strip()
+
+    # First sentence (up to 300 chars, cut at a sentence boundary if found)
+    first_sentence = content_str[:300]
+    period_idx = max(first_sentence.find(". "), first_sentence.find("। "),
+                     first_sentence.find("?\n"), first_sentence.find("!\n"))
+    if period_idx > 0:
+        first_sentence = first_sentence[:period_idx + 1]
+    elif len(content_str) > 300:
+        first_sentence += "…"
+
+    _GURUJI_KEY_TERMS = {
+        "ojas", "amrita", "prana", "kundalini", "samadhi", "khechari",
+        "mudra", "bandha", "kriya", "shiva", "shakti", "mercury",
+        "parada", "time", "immortality", "nada", "bindu", "chakra",
+        "dhyana", "dharana", "yama", "niyama", "asana", "pranayama",
+        "guru", "shishya", "parampara", "veda", "purana", "upanishad",
+        "gita", "yoga", "yogi", "akasha", "tattva", "karma", "bhakti",
+        "jnana", "tantra", "dharma", "shastra", "rishi", "darshan"
+    }
+    tokens = set(re.findall(r'\b\w+\b', content_str.lower()))
+    found_terms = _GURUJI_KEY_TERMS.intersection(tokens)
+    if found_terms:
+        return f"{first_sentence} [earlier you also touched on: {', '.join(sorted(found_terms))}]"
+    return first_sentence
+
+
 def format_history_guide(history: List[dict]) -> str:
     """History formatter for Guru (guide) mode.
 
     Keeps full user messages — they reveal the seeker's situation, fears, and
-    life context which the Guru persona must remember and speak to. Trims the
-    AI's previous responses to a short essence so we don't bloat the context.
+    life context. Crucially, keeps the LAST few Guru replies in full so the
+    Guru remembers what it actually said (its prescriptions, reasoning, and the
+    specific words it used) rather than a keyword skeleton. Only OLDER Guru
+    replies are distilled, and only if the char budget requires it.
+
+    Recency, not a fixed message count, bounds depth: we walk newest→oldest and
+    stop at the 10k-char budget.
     """
     if not history:
         return ""
 
     max_chars = 10000
+    # Most-recent assistant turns kept verbatim (each capped so one long answer
+    # can't eat the whole budget). Older assistant turns fall back to distillation.
+    FULL_GURU_TURNS = 3
+    PER_FULL_REPLY_CAP = 1500
+
     current_chars = 0
     lines = []
+    assistant_seen = 0
 
-    for msg in reversed(history[-16:]):
+    for msg in reversed(history):
         role = msg["role"]
-        content = msg["content"]
+        content = (msg.get("content") or "").strip()
+        if not content:
+            continue
 
         if role == "user":
-            # Keep the full seeker message — this is the personal disclosure
             line = f"Seeker: {content}"
         else:
-            # Keyword + first-sentence distillation
-            content_str = content.strip()
-            
-            # 1. Take the first sentence
-            first_sentence = content_str[:300]
-            period_idx = max(first_sentence.find(". "), first_sentence.find("। "), first_sentence.find("?\n"), first_sentence.find("!\n"))
-            if period_idx > 0:
-                first_sentence = first_sentence[:period_idx + 1]
-            elif len(content_str) > 300:
-                first_sentence += "…"
-
-            # 2. Extract key terms
-            _GURUJI_KEY_TERMS = {
-                "ojas", "amrita", "prana", "kundalini", "samadhi", "khechari",
-                "mudra", "bandha", "kriya", "shiva", "shakti", "mercury",
-                "parada", "time", "immortality", "nada", "bindu", "chakra",
-                "dhyana", "dharana", "yama", "niyama", "asana", "pranayama",
-                "guru", "shishya", "parampara", "veda", "purana", "upanishad",
-                "gita", "yoga", "yogi", "akasha", "tattva", "karma", "bhakti",
-                "jnana", "tantra", "dharma", "shastra", "rishi", "darshan"
-            }
-            import re
-            tokens = set(re.findall(r'\b\w+\b', content_str.lower()))
-            found_terms = _GURUJI_KEY_TERMS.intersection(tokens)
-            
-            # 3. Format
-            if found_terms:
-                terms_str = ", ".join(sorted(found_terms))
-                line = f"Guruji (your previous response): {first_sentence} [key terms: {terms_str}]"
+            assistant_seen += 1
+            if assistant_seen <= FULL_GURU_TURNS:
+                full = content if len(content) <= PER_FULL_REPLY_CAP else content[:PER_FULL_REPLY_CAP] + "…"
+                line = f"Guruji (your previous response, in full): {full}"
             else:
-                line = f"Guruji (your previous response): {first_sentence}"
-
+                line = f"Guruji (an earlier response): {_distill_guru_reply(content)}"
 
         if current_chars + len(line) > max_chars:
             break
@@ -932,9 +952,9 @@ async def build_seeker_context(req: Request, user: Optional[dict], guest_id: Opt
     # ── Device type ───────────────────────────────────────────────────────────
     ua = req.headers.get("user-agent", "").lower()
     if any(x in ua for x in ["mobile", "android", "iphone", "ipad"]):
-        lines.append("- Tone Guidance: The seeker is on a mobile device and likely reading in motion or on the go. Ensure your response is highly concise, direct, and avoids any blocky paragraphs.")
+        lines.append("- Tone Guidance: The seeker is on a mobile device, likely reading in motion. Shape your reply for a small screen — short paragraphs, clear line breaks, the key truth easy to catch at a glance. (This is about shape, not length: still answer at the depth the seeker's chosen verbosity calls for.)")
     elif any(x in ua for x in ["windows", "macintosh", "linux", "x11"]):
-        lines.append("- Tone Guidance: The seeker is on a desktop screen. While they may be seated and more reflective, you must still maintain strict conciseness.")
+        lines.append("- Tone Guidance: The seeker is on a desktop screen, likely seated and reflective. You have room to let a fuller, more shaped answer breathe when the question deserves it.")
 
     # ── Geo-IP (in-process, no external HTTP call) ───────────────────────────
     # Resolved fully in-process from the X-Forwarded-For / REMOTE_ADDR IP.
@@ -1617,11 +1637,12 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         # alongside the language instruction so they apply across both registers.
         directives = [lang_instr] if lang_instr else []
         _verbosity_map = {
-            "concise":  "## LENGTH: Be brief — a few sentences. Favour the Guru register; do not pad.",
-            "balanced": "",
-            "detailed": "## LENGTH: Be thorough and expansive; develop the explanation fully.",
+            "concise":  "## LENGTH: Hold to two or three sentences. Say only the essential thing, the way a Guru answers a question in passing. No expansion, no formatting — the bare truth.",
+            "balanced": "## LENGTH: Give a full, shaped answer — open with the essential truth, then expand it with precision: an example, a number, a remembered experience, an aphorism that lands. Two to four short paragraphs. Neither clipped nor padded. This is the natural register of a Guru speaking to a serious seeker.",
+            "detailed": "## LENGTH: Develop the answer fully and without hurry — trace the philosophy, the practice, and what it means for the seeker's own path. Layer it: the truth, then its roots in the lineage, then how it lives in the body and in time. Use blockquotes for verses and aphorisms, and structure it so each turn deepens the last. Still no wasted words — depth, not padding.",
         }
-        v_instr = _verbosity_map.get((request.verbosity or "").lower(), "")
+        # Default to 'balanced' when no/unknown verbosity is sent, so the shaped voice is the norm.
+        v_instr = _verbosity_map.get((request.verbosity or "balanced").lower(), _verbosity_map["balanced"])
         if v_instr:
             directives.append(v_instr)
         if request.address_as and request.address_as.strip():
