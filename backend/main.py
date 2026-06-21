@@ -1589,10 +1589,9 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         yield {"data": json.dumps({"type": "sources", "sources": all_sources})}
 
         # 3. Build conversation messages with history
-        # FIX: pass user_id and guest_id so the correct Postgres row is fetched.
-        # Without these args the session manager always returns an empty fallback.
-        session_data = session_manager.get_session(session_id, user_id, guest_id)
-        history    = session_data.get("history", [])
+        # Re-fetch to get the latest state (concurrent requests may have updated it).
+        fresh_session = session_manager.get_session(session_id, user_id, guest_id)
+        history    = fresh_session.get("history", [])
 
         # The unified/guide personas keep full user disclosures so the Guru voice can
         # remember the seeker. Legacy research compresses aggressively to avoid overfitting.
@@ -1699,23 +1698,23 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         if AI_DISCLAIMERS.search(full_text):
             logger.warning("AI disclaimer detected in response: %s", full_text[:100].replace('\n', ' '))
             
-        session_data = session_manager.append_messages(session_id, [
+        saved_session = session_manager.append_messages(session_id, [
             {"role": "user",      "content": request.query},
             {"role": "assistant", "content": full_text}
         ], user_id, guest_id)
-        
+
         # Guest units are already consumed atomically at the gate above. For
         # signed-in users, record the message + usage log now (atomic SQL inside).
         if user:
             asyncio.create_task(asyncio.to_thread(
                 increment_usage, user.get("id"), session_id
             ))
-        
+
         # 7. Done signal with source metadata
         yield {"data": json.dumps({
             "type":         "done",
             "session_id":   session_id,
-            "history_len":  len(session_data["history"]),
+            "history_len":  len(saved_session["history"]),
             "sources_used": [s.get("text_name") or s.get("purana","") for s in all_sources[:4]],
             "grounding_quality": grounding_quality,
             "total_sources_found": len(all_sources)
