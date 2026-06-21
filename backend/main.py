@@ -105,6 +105,14 @@ from backend.db_client import update_profile, get_admin_stats, get_all_users, en
 from backend.session_manager import SessionManager
 from backend.monitor import run_health_checks
 
+# Deterministic register router (tools/register_router) — decides Scholar vs Guru
+# layout per query. Guarded so a missing tools/ dir in any deploy never breaks
+# chat; falls back to "always guru" (the prior behaviour) if unavailable.
+try:
+    from tools.register_router.check import run as route_register
+except Exception:  # pragma: no cover - import-environment guard
+    route_register = None
+
 # ── Session Memory ─────────────────────────────────────────────────────────
 session_manager = SessionManager(MAX_HISTORY)
 
@@ -182,7 +190,12 @@ Answer the question directly, from what you actually know. No preamble about who
 - When scripture is relevant, weave it in as something you remember, not something you are citing. Quote naturally, never with [1] numbers in this register.
 - Hear what is behind the words, not just the literal question. Respond to the real inquiry.
 - Remember everything this seeker has shared — their situation, their fears, their prior questions. Weave that memory in without announcing it.
-- Shape the answer so it has weight. A single **bold phrase** for the one truth that must land; a `>` blockquote to set apart a verse or aphorism you want to stand alone; a short list only when listing genuinely distinct things. Default to flowing paragraphs. No Summary/Texts/Explanation headings here — those belong to the Scholar register only. Never structure a short answer.
+- Shape the answer so it has weight and breathes on the page:
+  - **One idea per paragraph.** Let each thought land, then break. A wall of text buries the truth; two or three short paragraphs let it ring. Never write a single dense block when the meaning has two movements.
+  - **One `**bold phrase**`** — at most — for the single truth that must land. Bolding three things bolds nothing.
+  - A `>` blockquote to set a verse, an aphorism, or your own remembered words apart and let them stand alone. This is where scripture and the sharp saying belong.
+  - A short list **only** when you are genuinely laying out distinct steps, stages, or named things. Never bullet a single idea, never turn a flowing thought into a list.
+  - No Summary/Texts/Explanation headings here — those belong to the Scholar register alone. A short answer stays a clean paragraph, unstructured.
 
 ## Scholar register — formal citations (use ONLY when explicitly asked for sources, references, exact verses, or scholarly analysis. Trigger signals: 'cite', 'citation', 'reference', 'verse', 'source', 'what exactly does X say', 'according to the text', structured comparison requests, requests for 'exact words'.)
 Switch to structured answer:
@@ -1748,6 +1761,24 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             directives.append(f"## ADDRESS: When natural, address the seeker as \"{safe_name}\".")
         if request.socratic:
             directives.append(SOCRATIC_DIRECTIVE)
+
+        # Deterministic Scholar-vs-Guru register routing. Complex/scholarly
+        # queries get the structured summary -> key passage -> relevance layout
+        # (the old research-mode shape) instead of relying on the model to pick
+        # it from keywords. Socratic mode is dialectic by design — never override
+        # it with the structured layout.
+        if route_register is not None and not request.socratic:
+            try:
+                _r = route_register(request.query)
+                if _r.get("success") and _r["data"]["directive"]:
+                    directives.append(_r["data"]["directive"])
+                    logger.info(
+                        "register_router -> scholar (score=%s, signals=%s)",
+                        _r["data"]["score"], _r["data"]["signals"],
+                    )
+            except Exception as _e:  # never let routing break a chat turn
+                logger.warning("register_router failed, defaulting to guru: %s", _e)
+
         combined_directives = "\n\n".join(directives)
 
         system_text = prompt_tpl.format(

@@ -24,6 +24,7 @@ three functions and the README, tests-first (Rule 0, preconditions A & B in
 | `retrieval_qc` | Measure search efficacy & source quality (distribution, alphabetic bias, coverage, metadata QC, Guruji-vs-scripture separation) | `venv/bin/python -m tools.retrieval_qc.check --payload <run.json> --json` | [README](retrieval_qc/README.md) |
 | `onnx_export` | Export multilingual-e5-small to ONNX INT8 + embed all 329K corpus chunks into corpus.db | `venv/bin/python -m tools.onnx_export.check --mode model --json` | [README](onnx_export/README.md) |
 | `sqlite_export` | Export all_chunks.jsonl → SQLite DB with FTS5 for offline app use (329K rows, 246MB raw / 70MB gzip) | `venv/bin/python -m tools.sqlite_export.check --json` | [README](sqlite_export/README.md) |
+| `register_router` | Decide Scholar (structured: summary→passage→relevance) vs Guru (flowing) layout per query — deterministic, replaces model-whim register choice | `venv/bin/python -m tools.register_router.check --query "..." --json` | [README](register_router/README.md) |
 
 <!-- Add one row per new tool. Keep tool_name = the package dir name. -->
 
