@@ -57,72 +57,93 @@ GUEST_DAILY_LIMIT = int(os.getenv("GUEST_DAILY_LIMIT", "10"))  # conservative de
 MAX_QUERY_LENGTH  = int(os.getenv("MAX_QUERY_LENGTH", "2000"))  # chars; ~500 tokens
 
 
+def _verify_google_token(access_token: str) -> Optional[dict]:
+    """Verify a Google OAuth access_token via Google's tokeninfo endpoint.
+    Returns {'id': google_sub, 'email': email, 'role': role} or None."""
+    try:
+        resp = requests.get(
+            "https://www.googleapis.com/oauth2/v3/tokeninfo",
+            params={"access_token": access_token},
+            timeout=5,
+        )
+        if not resp.ok:
+            return None
+        info = resp.json()
+        # tokeninfo returns error if token is invalid/expired
+        if "error" in info or not info.get("sub"):
+            return None
+        user_id = info["sub"]
+        email = info.get("email")
+        from backend.db_client import create_profile_if_not_exists
+        profile = create_profile_if_not_exists(user_id, email)
+        role = profile.get("role", "free") if profile else "free"
+        return {"id": user_id, "role": role, "email": email}
+    except Exception as e:
+        logger.error(f"Google token verification failed: {e}")
+        return None
+
+
 def get_current_user(credentials: HTTPAuthorizationCredentials = Security(security)) -> Optional[dict]:
-    """Extracts the Bearer token and verifies it against Logto JWKS."""
+    """Extracts the Bearer token and verifies it against Logto JWKS.
+    Falls back to Google tokeninfo for users authenticated via direct Google OAuth."""
     if not credentials:
         return None
 
     token = credentials.credentials
     jwks = get_jwks()
-    if not jwks:
-        return None
 
-    try:
-        # Decode the unverified header to get the key ID (kid)
-        unverified_header = jwt.get_unverified_header(token)
-        kid = unverified_header.get("kid")
-        rsa_key = _find_rsa_key(jwks, kid)
-
-        # Unknown kid usually means Logto rotated its signing keys since we cached
-        # the JWKS — force a refresh once before rejecting.
-        if not rsa_key:
-            jwks = get_jwks(force=True)
+    # Try Logto JWT verification first
+    if jwks:
+        try:
+            # Decode the unverified header to get the key ID (kid)
+            unverified_header = jwt.get_unverified_header(token)
+            kid = unverified_header.get("kid")
             rsa_key = _find_rsa_key(jwks, kid)
 
-        if not rsa_key:
-            logger.error("Unable to find appropriate key in JWKS (kid=%s)", kid)
-            return None
+            # Unknown kid usually means Logto rotated its signing keys since we cached
+            # the JWKS — force a refresh once before rejecting.
+            if not rsa_key:
+                jwks = get_jwks(force=True)
+                rsa_key = _find_rsa_key(jwks, kid)
 
-        # Verify signature + issuer. Audience verification stays optional: standard
-        # Logto access tokens carry the API resource indicator in `aud`, but the
-        # opaque/userinfo tokens used here may not — so we gate on iss + signature
-        # and only enforce aud when explicitly turned on. Issuer check defaults ON
-        # (the live Logto issuer is https://auth.purangpt.com/oidc) but can be
-        # disabled via DISABLE_JWT_ISSUER_CHECK without a redeploy if it ever
-        # mismatches (e.g. endpoint change).
-        verify_aud = bool(os.getenv("ENFORCE_JWT_AUDIENCE"))
-        verify_iss = not os.getenv("DISABLE_JWT_ISSUER_CHECK")
-        payload = jwt.decode(
-            token,
-            rsa_key,
-            algorithms=["RS256"],
-            issuer=LOGTO_ISSUER if verify_iss else None,
-            audience=LOGTO_API_RESOURCE_INDICATOR if verify_aud else None,
-            options={"verify_aud": verify_aud, "verify_iss": verify_iss},
-        )
-        
-        # Logto token `sub` is the user ID
-        user_id = payload.get("sub")
-        if not user_id:
-            return None
+            if rsa_key:
+                # Verify signature + issuer. Audience verification stays optional: standard
+                # Logto access tokens carry the API resource indicator in `aud`, but the
+                # opaque/userinfo tokens used here may not — so we gate on iss + signature
+                # and only enforce aud when explicitly turned on. Issuer check defaults ON
+                # (the live Logto issuer is https://auth.purangpt.com/oidc) but can be
+                # disabled via DISABLE_JWT_ISSUER_CHECK without a redeploy if it ever
+                # mismatches (e.g. endpoint change).
+                verify_aud = bool(os.getenv("ENFORCE_JWT_AUDIENCE"))
+                verify_iss = not os.getenv("DISABLE_JWT_ISSUER_CHECK")
+                payload = jwt.decode(
+                    token,
+                    rsa_key,
+                    algorithms=["RS256"],
+                    issuer=LOGTO_ISSUER if verify_iss else None,
+                    audience=LOGTO_API_RESOURCE_INDICATOR if verify_aud else None,
+                    options={"verify_aud": verify_aud, "verify_iss": verify_iss},
+                )
 
-        # Fetch or dynamically create user profile in local Postgres
-        from backend.db_client import create_profile_if_not_exists
-        email = payload.get("email")
-        profile = create_profile_if_not_exists(user_id, email)
-        role = profile.get("role", "free") if profile else "free"
-        
-        return {"id": user_id, "role": role, "email": email}
-        
-    except jwt.ExpiredSignatureError:
-        logger.error("Token signature has expired")
-        return None
-    except jwt.JWTClaimsError:
-        logger.error("Incorrect claims, please check the audience and issuer")
-        return None
-    except Exception as e:
-        logger.error(f"Error validating token: {e}")
-        return None
+                # Logto token `sub` is the user ID
+                user_id = payload.get("sub")
+                if user_id:
+                    from backend.db_client import create_profile_if_not_exists
+                    email = payload.get("email")
+                    profile = create_profile_if_not_exists(user_id, email)
+                    role = profile.get("role", "free") if profile else "free"
+                    return {"id": user_id, "role": role, "email": email}
+
+        except jwt.ExpiredSignatureError:
+            logger.warning("Logto token expired; trying Google fallback")
+        except jwt.JWTClaimsError:
+            logger.warning("Logto JWT claims error; trying Google fallback")
+        except Exception:
+            pass  # Not a Logto JWT — fall through to Google check
+
+    # Fall back to Google access_token verification (direct Google OAuth users).
+    # Google access tokens are opaque strings (not JWTs), so JWKS fails above.
+    return _verify_google_token(token)
 
 
 def require_auth(user: Optional[dict] = Depends(get_current_user)) -> dict:
