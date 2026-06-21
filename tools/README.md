@@ -21,6 +21,7 @@ three functions and the README, tests-first (Rule 0, preconditions A & B in
 |-----------|---------|---------------|------|
 | `sse_contract_check` | Detect drift between the backend `/api/chat` SSE event types (scoped to `event_gen`) and the frontend `ChatEvent` union | `venv/bin/python -m tools.sse_contract_check.check --json` | [README](sse_contract_check/README.md) |
 | `doc_path_audit` | Pre-flight orientation pass: surface stale file-path claims in `.md` docs before any session action | `venv/bin/python -m tools.doc_path_audit.check --json` | [README](doc_path_audit/README.md) |
+| `retrieval_qc` | Measure search efficacy & source quality (distribution, alphabetic bias, coverage, metadata QC, Guruji-vs-scripture separation) | `venv/bin/python -m tools.retrieval_qc.check --payload <run.json> --json` | [README](retrieval_qc/README.md) |
 
 <!-- Add one row per new tool. Keep tool_name = the package dir name. -->
 

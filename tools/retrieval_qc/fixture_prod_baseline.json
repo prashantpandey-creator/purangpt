@@ -1,0 +1,547 @@
+{
+ "queries": [
+  {
+   "query": "what is dharma",
+   "kind": "hybrid",
+   "results": [
+    {
+     "source": "Shailendra Sharma Darshan — online-darshan-2",
+     "score": 0.0262,
+     "rank": 0,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_online-darshan-2-e2ebb32dac"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — online-darshan-2",
+     "score": 0.0258,
+     "rank": 1,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_guruji.com.ua_online-darshan-2-48a0270c6e"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans202102-2",
+     "score": 0.0239,
+     "rank": 2,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_darshans202102-2-d3ff3fe80a"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans201615",
+     "score": 0.0235,
+     "rank": 3,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_darshans201615-b365c140a2"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans202209",
+     "score": 0.0225,
+     "rank": 4,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_darshans202209-60ea843ba2"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — online-darshan-2",
+     "score": 0.0254,
+     "rank": 5,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_guruji.com.ua_online-darshan-2-a26ddb69da"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans202102-2",
+     "score": 0.0235,
+     "rank": 6,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_guruji.com.ua_darshans202102-2-84f2ae06c3"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans202406",
+     "score": 0.0219,
+     "rank": 7,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_darshans202406-34c09fd58f"
+    }
+   ]
+  },
+  {
+   "query": "how to attain moksha",
+   "kind": "hybrid",
+   "results": [
+    {
+     "source": "Shailendra Sharma Darshan — darshans202003-2",
+     "score": 0.0258,
+     "rank": 0,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_darshans202003-2-d1e93a02b3"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans201819",
+     "score": 0.025,
+     "rank": 1,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_guruji.com.ua_darshans201819-6abdc2a79e"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — shiva-sutras-special-discussion",
+     "score": 0.0242,
+     "rank": 2,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_shiva-sutras-special-discussion-5e16e8c1b9"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans202003-2",
+     "score": 0.0254,
+     "rank": 3,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_guruji.com.ua_darshans202003-2-5c451eb125"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans201819",
+     "score": 0.0246,
+     "rank": 4,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_darshans201819-6aa9d066cd"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans13",
+     "score": 0.0229,
+     "rank": 5,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_darshans13-e30063c197"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans202406",
+     "score": 0.0225,
+     "rank": 6,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_guruji.com.ua_darshans202406-0ff1be949b"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — shiva-sutras-special-discussion",
+     "score": 0.0239,
+     "rank": 7,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_guruji.com.ua_shiva-sutras-special-discussion-7e3d09473a"
+    }
+   ]
+  },
+  {
+   "query": "the nature of Vishnu",
+   "kind": "hybrid",
+   "results": [
+    {
+     "source": "Shailendra Sharma Darshan — darshans201718",
+     "score": 0.0262,
+     "rank": 0,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_darshans201718-e1b28ded7e"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshan201811",
+     "score": 0.0258,
+     "rank": 1,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_darshan201811-62983fd37c"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans201710",
+     "score": 0.0246,
+     "rank": 2,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_darshans201710-7a28d773b5"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans202109",
+     "score": 0.0239,
+     "rank": 3,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_guruji.com.ua_darshans202109-143a523301"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshan201811",
+     "score": 0.0254,
+     "rank": 4,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_guruji.com.ua_darshan201811-b7fe965858"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans202602",
+     "score": 0.0232,
+     "rank": 5,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_darshans202602-46f49c4e53"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans201710",
+     "score": 0.0242,
+     "rank": 6,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_guruji.com.ua_darshans201710-be40eeb7b1"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans201618",
+     "score": 0.0225,
+     "rank": 7,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_guruji.com.ua_darshans201618-c9cf96de79"
+    }
+   ]
+  },
+  {
+   "query": "what is kundalini",
+   "kind": "hybrid",
+   "results": [
+    {
+     "source": "Shailendra Sharma Darshan — kundalini-2",
+     "score": 0.0262,
+     "rank": 0,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_kundalini-2-c714c7abcd"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans201903",
+     "score": 0.0254,
+     "rank": 1,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_darshans201903-8cb45e469a"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans201820",
+     "score": 0.0246,
+     "rank": 2,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_darshans201820-7f4cab712c"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — kundalini-2",
+     "score": 0.0258,
+     "rank": 3,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_guruji.com.ua_kundalini-2-da508b8ed3"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans201903",
+     "score": 0.025,
+     "rank": 4,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_guruji.com.ua_darshans201903-fc975b943f"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans202018-2",
+     "score": 0.0232,
+     "rank": 5,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_darshans202018-2-f857e7effa"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans201820",
+     "score": 0.0242,
+     "rank": 6,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_guruji.com.ua_darshans201820-b8002b3e8f"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — discussion-on-hatha-yoga-pradipika",
+     "score": 0.0225,
+     "rank": 7,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_discussion-on-hatha-yoga-pradipika-ca236ba45b"
+    }
+   ]
+  },
+  {
+   "query": "the story of creation",
+   "kind": "hybrid",
+   "results": [
+    {
+     "source": "Shailendra Sharma Darshan — 2063",
+     "score": 0.0262,
+     "rank": 0,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_2063-0e79504925"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans201610-2",
+     "score": 0.0254,
+     "rank": 1,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_darshans201610-2-470dc53b34"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans20189",
+     "score": 0.0246,
+     "rank": 2,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_darshans20189-9cdd4ebf1f"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — 2063",
+     "score": 0.0258,
+     "rank": 3,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_guruji.com.ua_2063-45eeb25cb6"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans202309-2",
+     "score": 0.0239,
+     "rank": 4,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_darshans202309-2-1cae14d126"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans201610-2",
+     "score": 0.025,
+     "rank": 5,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_guruji.com.ua_darshans201610-2-c3ca5a2c92"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans20166",
+     "score": 0.0229,
+     "rank": 6,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_darshans20166-4686a62cd6"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans20189",
+     "score": 0.0242,
+     "rank": 7,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_guruji.com.ua_darshans20189-cac79326c8"
+    }
+   ]
+  },
+  {
+   "query": "the duties of a king",
+   "kind": "hybrid",
+   "results": [
+    {
+     "source": "Shailendra Sharma Darshan — darshans201907",
+     "score": 0.0258,
+     "rank": 0,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_darshans201907-181362bffe"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans201907",
+     "score": 0.0254,
+     "rank": 1,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_guruji.com.ua_darshans201907-da4947fbec"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans202115",
+     "score": 0.0235,
+     "rank": 2,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_guruji.com.ua_darshans202115-9868f26a0b"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — compilation7-2",
+     "score": 0.0222,
+     "rank": 3,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_compilation7-2-a146a08908"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — darshans202115",
+     "score": 0.0232,
+     "rank": 4,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_darshans202115-1bef16ee1c"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — compilation6-2",
+     "score": 0.0216,
+     "rank": 5,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_gurujidarshan.com_compilation6-2-e55c56aa6d"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — compilation7-2",
+     "score": 0.0219,
+     "rank": 6,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_guruji.com.ua_compilation7-2-e637a7b022"
+    },
+    {
+     "source": "Shailendra Sharma Darshan — compilation6-2",
+     "score": 0.0213,
+     "rank": 7,
+     "category": "yogic-discourse",
+     "id": "sharma-darshan_guruji.com.ua_compilation6-2-ab5c4e2b63"
+    }
+   ]
+  }
+ ],
+ "expectations": [
+  {
+   "query": "the practice of yoga",
+   "expect_source_contains": "Yoga",
+   "top_k": 8
+  },
+  {
+   "query": "the goddess Durga",
+   "expect_source_contains": "Markandeya",
+   "top_k": 8
+  },
+  {
+   "query": "the nature of Vishnu",
+   "expect_source_contains": "Vishnu",
+   "top_k": 8
+  }
+ ],
+ "corpus": {
+  "sources": [
+   {
+    "name": "Skanda Purana",
+    "chunks": 55807,
+    "category": "mahapurana"
+   },
+   {
+    "name": "Mahabharata",
+    "chunks": 53602,
+    "category": "other"
+   },
+   {
+    "name": "Padma Purana",
+    "chunks": 37412,
+    "category": "mahapurana"
+   },
+   {
+    "name": "Brahma Vaivarta Purana",
+    "chunks": 28393,
+    "category": "mahapurana"
+   },
+   {
+    "name": "Ramayana (Valmiki)",
+    "chunks": 12681,
+    "category": "vaishnava"
+   },
+   {
+    "name": "Narada Purana",
+    "chunks": 10586,
+    "category": "vaishnava"
+   },
+   {
+    "name": "Atharvaveda (Paippalada)",
+    "chunks": 10053,
+    "category": "vedic"
+   },
+   {
+    "name": "Brahmanda Purana",
+    "chunks": 9455,
+    "category": "mixed"
+   },
+   {
+    "name": "Brahma Purana",
+    "chunks": 9317,
+    "category": "mixed"
+   },
+   {
+    "name": "Bhagavata Purana",
+    "chunks": 9108,
+    "category": "vaishnava"
+   },
+   {
+    "name": "Bhavishya Purana",
+    "chunks": 8953,
+    "category": "mahapurana"
+   },
+   {
+    "name": "Garuda Purana",
+    "chunks": 8573,
+    "category": "vaishnava"
+   },
+   {
+    "name": "Rigveda (Aufrecht ed.)",
+    "chunks": 7015,
+    "category": "vedic"
+   },
+   {
+    "name": "Matsya Purana (Ch. 1-176)",
+    "chunks": 5930,
+    "category": "mixed"
+   },
+   {
+    "name": "Linga Purana (Part 1, Ch. 1-108)",
+    "chunks": 4572,
+    "category": "shaiva"
+   },
+   {
+    "name": "Kurma Purana",
+    "chunks": 4175,
+    "category": "shaiva-vaishnava"
+   },
+   {
+    "name": "Vishnu Purana (Critical Edition)",
+    "chunks": 3867,
+    "category": "vaishnava"
+   },
+   {
+    "name": "Markandeya Purana",
+    "chunks": 3323,
+    "category": "shakta"
+   },
+   {
+    "name": "Vamana Purana",
+    "chunks": 3198,
+    "category": "vaishnava"
+   },
+   {
+    "name": "Agni Purana",
+    "chunks": 2555,
+    "category": "mixed"
+   },
+   {
+    "name": "Kaushitaki Brahmana",
+    "chunks": 2305,
+    "category": "vedic"
+   },
+   {
+    "name": "Varaha Purana",
+    "chunks": 2103,
+    "category": "mahapurana"
+   },
+   {
+    "name": "Mimamsa Sutras",
+    "chunks": 1965,
+    "category": "other"
+   },
+   {
+    "name": "Manusmriti",
+    "chunks": 1792,
+    "category": "dharma"
+   },
+   {
+    "name": "Yoga Vasistha",
+    "chunks": 1122,
+    "category": "other"
+   },
+   {
+    "name": "Bhagavad Gita (with Shankara Bhashya)",
+    "chunks": 1056,
+    "category": "vaishnava"
+   },
+   {
+    "name": "Amarakosha",
+    "chunks": 604,
+    "category": "kosha"
+   },
+   {
+    "name": "Mandukya Upanishad (with Gaudapada Karika)",
+    "chunks": 544,
+    "category": "vedanta"
+   },
+   {
+    "name": "Nyayasutras",
+    "chunks": 414,
+    "category": "other"
+   },
+   {
+    "name": "Shailendra Sharma Darshan — mysrical-stories",
+    "chunks": 342,
+    "category": "yogic-discourse"
+   }
+  ]
+ }
+}
