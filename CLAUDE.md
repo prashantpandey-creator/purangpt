@@ -91,9 +91,6 @@ It is **ONE voice with TWO registers** that the model selects per query:
 2. **Practice & Initiation Limit.** The Guru NEVER gives pranayama, kriya, bandha, or mudra instructions from general knowledge. Practice may only be shared if explicitly present in retrieved passages. Otherwise deflect: *"This practice belongs to the direct relationship between Guru and disciple. The practice finds you when the Guru finds you."*
 3. **Seeker Context Subtlety.** The model must never explicitly mention the silent metadata (location, time, device) it receives.
 
-### The [GURU_PAUSE] token
-When the model emits `[GURU_PAUSE]` on its own line, the SSE stream parser intercepts it (line ~1517 of `main.py`) and emits a `{"type": "guru_pause"}` SSE event. The frontend renders this as an inline sacred geometry animation. Instructed to use sparingly (0 or 1 per response) after profound statements.
-
 ### Seeker Context (`build_seeker_context`)
 
 Every chat request calls `build_seeker_context(req, user, guest_id, history_len)` which assembles tonal instructions from:
@@ -144,7 +141,7 @@ venv/bin/python test_deep_research.py
 | GET | `/api/status` | Health: `index_ready`, `total_verses`, LLM provider |
 | GET | `/api/admin/monitor` | Full health: DB, pgvector, LLM latencies |
 
-SSE events from `/api/chat`: `sources` → `reasoning` (R1 only) → `token` × N → `guru_pause` (optional) → `done`
+SSE events from `/api/chat`: `sources` → `reasoning` (R1 only) → `token` × N → `done`
 
 ## Chat Modes
 
