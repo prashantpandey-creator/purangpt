@@ -597,6 +597,7 @@ if FRONTEND_DIR.exists():
 class SourceModel(BaseModel):
     """Typed representation of a single retrieved source passage."""
     text_id:    str = ""
+    chunk_id:   str = ""          # exact verse/chunk PK — enables Explorer deep-link
     text_name:  str = ""          # human-readable name (Bhagavata Purana, etc.)
     purana:     str = ""          # same as text_name for vector-index results
     reference:  str = ""          # e.g. "Skandha 10 · Ch. 29 · Verse 14"
@@ -623,6 +624,7 @@ class SourceModel(BaseModel):
         """Serialise to the shape expected by the frontend source-card renderer."""
         return {
             "text_id":    self.text_id,
+            "chunk_id":   self.chunk_id,
             "text_name":  self.display_name,
             "purana":     self.purana or self.text_name,
             "reference":  self.reference,
@@ -1174,6 +1176,7 @@ def build_source_list(results: list) -> List[dict]:
         if isinstance(r, dict):
             sm = SourceModel(
                 text_id    = r.get("text_id", ""),
+                chunk_id   = r.get("id", "") or r.get("chunk_id", ""),
                 text_name  = r.get("text_name", "") or r.get("purana", ""),
                 purana     = r.get("purana", "") or r.get("text_name", ""),
                 reference  = r.get("reference", ""),
@@ -1191,6 +1194,7 @@ def build_source_list(results: list) -> List[dict]:
         else:
             sm = SourceModel(
                 text_id    = getattr(r, "id", ""),
+                chunk_id   = getattr(r, "id", ""),
                 text_name  = getattr(r, "purana", ""),
                 purana     = getattr(r, "purana", ""),
                 reference  = getattr(r, "reference", ""),
