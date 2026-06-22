@@ -2106,6 +2106,65 @@ async def get_text(text_id: str, page: int = 1, size: int = 100):
 
 # ── Content Explorer endpoints ────────────────────────────────────────────
 
+_GUIDE_INTRO_CACHE: dict[str, dict] = {}
+
+@app.get("/api/explore/{text_id}/intro")
+async def get_explore_intro(text_id: str):
+    """
+    AI-generated guide intro for a text: what it is, why it matters,
+    the 5 must-read chapters, and the best entry point for a newcomer.
+    Cached in-process after first generation.
+    """
+    if text_id in _GUIDE_INTRO_CACHE:
+        return _GUIDE_INTRO_CACHE[text_id]
+
+    # Get text metadata from catalog
+    catalog_resp = await list_puranas()
+    catalog = catalog_resp.get("puranas", [])
+    meta = next((t for t in catalog if t["id"] == text_id), None)
+    if not meta:
+        raise HTTPException(404, f"Text {text_id} not found in catalog")
+
+    text_name = meta["name"]
+    tradition = meta.get("tradition", "")
+    category = meta.get("category", "")
+
+    prompt = f"""You are a scholar and guide introducing {text_name} to someone who has never read it.
+
+Write a JSON response with exactly this structure:
+{{
+  "tagline": "One evocative sentence that captures the soul of this text (max 15 words)",
+  "what_it_is": "2-3 sentences: what this text is, its scale, its place in the tradition",
+  "why_it_matters": "2-3 sentences: why a modern person should care. Concrete, not generic",
+  "famous_stories": [
+    {{"title": "Story name", "chapter_hint": "rough location e.g. Book 10 or Chapter 22-30", "description": "1 sentence of pure drama or insight"}},
+    ... (4-6 entries)
+  ],
+  "entry_chapters": [
+    {{"chapter_hint": "Chapter/Book/Skandha number or range", "label": "short label", "for_reader": "who this entry is best for e.g. 'seekers of devotion', 'lovers of mythology'"}},
+    ... (3 entries)
+  ],
+  "one_line_pitch": "If someone asks you why they should read this in 10 words or less"
+}}
+
+Tradition: {tradition}. Category: {category}.
+Be specific and concrete. Avoid generic spiritual platitudes. Name actual stories, characters, events."""
+
+    try:
+        msgs = [{"role": "user", "content": prompt}]
+        raw = await call_llm_once(msgs, temperature=0.3)
+        # Strip markdown fences if present
+        raw = raw.strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+        data = json.loads(raw)
+        result = {"text_id": text_id, "text_name": text_name, **data}
+        _GUIDE_INTRO_CACHE[text_id] = result
+        return result
+    except Exception as e:
+        logger.error("Guide intro generation failed for %s: %s", text_id, e)
+        raise HTTPException(500, f"Failed to generate intro: {e}")
+
 @app.get("/api/verses/{chunk_id}")
 async def get_verse(chunk_id: str):
     """Fetch a single verse/chunk by ID."""
