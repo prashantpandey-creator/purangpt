@@ -1709,9 +1709,31 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                 rag_context += f"\n\n## Additional Sanskrit Primary Sources (GRETIL)\n{skt_ctx}"
 
         all_sources = sources + skt_results[:3]
-        
+
+        # Suppress sources for casual/conversational queries (greetings, small
+        # talk, meta-questions about the app). RAG context is still injected into
+        # the LLM prompt — we just don't surface citations in the UI.
+        _casual_patterns = {
+            "hi", "hello", "hey", "hii", "hiii", "yo", "sup", "howdy",
+            "namaste", "namaskar", "pranam", "jai", "hare",
+            "good morning", "good evening", "good night", "good afternoon",
+            "thanks", "thank you", "bye", "goodbye", "see you",
+            "how are you", "what are you", "who are you", "what is this",
+            "what can you do", "help", "ok", "okay", "hmm", "hm",
+            "yes", "no", "sure", "cool", "nice", "wow", "great",
+        }
+        _q_stripped = actual_query.strip().lower().rstrip("!?.,:;")
+        _is_casual = (
+            _q_stripped in _casual_patterns
+            or len(_q_stripped) < 4
+            or (_q_stripped.startswith(("hi ", "hey ", "hello ")) and len(_q_stripped) < 20)
+        )
+
         # Determine grounding quality
-        if len(sources) > 0:
+        if _is_casual:
+            grounding_quality = "ungrounded"
+            all_sources = []
+        elif len(sources) > 0:
             grounding_quality = "grounded"
         elif len(skt_results) > 0:
             grounding_quality = "partial"
@@ -2080,6 +2102,48 @@ async def get_text(text_id: str, page: int = 1, size: int = 100):
         "start_line": start
     }
 
+
+
+# ── Content Explorer endpoints ────────────────────────────────────────────
+
+@app.get("/api/verses/{chunk_id}")
+async def get_verse(chunk_id: str):
+    """Fetch a single verse/chunk by ID."""
+    if not state.searcher or not state.searcher.is_ready:
+        raise HTTPException(503, "Search not ready")
+    chunk = await state.searcher.get_chunk_by_id(chunk_id)
+    if not chunk:
+        raise HTTPException(404, f"Chunk {chunk_id} not found")
+    return chunk
+
+@app.get("/api/verses/{chunk_id}/similar")
+async def get_similar_verses(chunk_id: str, top_k: int = 10):
+    """Find semantically similar verses across the entire corpus."""
+    if not state.searcher or not state.searcher.is_ready:
+        raise HTTPException(503, "Search not ready")
+    top_k = min(top_k, 50)
+    results = await state.searcher.find_similar_verses(chunk_id, top_k)
+    return {
+        "source_id": chunk_id,
+        "count": len(results),
+        "similar": [r.to_dict() for r in results],
+    }
+
+@app.get("/api/chapters/{text_id}/{chapter}")
+async def get_chapter(text_id: str, chapter: int, limit: int = 500):
+    """Fetch all indexed verses for a text + chapter, in order."""
+    if not state.searcher or not state.searcher.is_ready:
+        raise HTTPException(503, "Search not ready")
+    limit = min(limit, 1000)
+    verses = await state.searcher.get_chapter_verses(text_id, chapter, limit)
+    if not verses:
+        raise HTTPException(404, f"No verses found for {text_id} chapter {chapter}")
+    return {
+        "text_id": text_id,
+        "chapter": chapter,
+        "count": len(verses),
+        "verses": verses,
+    }
 
 
 class InferRequest(BaseModel):
