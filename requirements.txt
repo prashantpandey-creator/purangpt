@@ -65,3 +65,7 @@ gunicorn>=21.2.0
 
 # ── Caching ────────────────────────────────────────────────────────────────
 redis>=4.6.0,<5.0.0
+
+# ── Workspace (document upload + ingestion) ────────────────────────────────
+python-docx>=1.1.0
+trafilatura>=1.8.0

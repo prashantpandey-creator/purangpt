@@ -574,6 +574,92 @@ class TextExtractor:
 
 
 # ---------------------------------------------------------------------------
+# DOCX and URL extraction (workspace feature)
+# ---------------------------------------------------------------------------
+
+def extract_docx(path: Path) -> dict:
+    """
+    Extract text from a DOCX file. Returns a dict compatible with
+    PDFResult.to_dict() so the chunker can consume it uniformly.
+
+    Each paragraph break in the DOCX becomes part of the page text.
+    We group ~50 paragraphs per "page" to mimic the pages dict structure.
+    """
+    try:
+        from docx import Document as DocxDocument
+    except ImportError:
+        raise ImportError("python-docx is required: pip install python-docx")
+
+    doc = DocxDocument(str(path))
+    paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
+
+    if not paragraphs:
+        return {"source_file": path.name, "total_pages": 0, "pages": {}}
+
+    # Group paragraphs into synthetic "pages" of ~50 paragraphs each
+    page_size = 50
+    pages: dict[str, dict] = {}
+    for i in range(0, len(paragraphs), page_size):
+        page_num = (i // page_size) + 1
+        page_text = "\n\n".join(paragraphs[i:i + page_size])
+        pages[str(page_num)] = {
+            "text": page_text,
+            "confidence": 1.0,
+            "method": "python-docx",
+            "word_count": len(page_text.split()),
+        }
+
+    return {
+        "source_file": path.name,
+        "source_path": str(path.resolve()),
+        "total_pages": len(pages),
+        "extraction_method": "python-docx",
+        "pages": pages,
+    }
+
+
+def extract_url(url: str) -> dict:
+    """
+    Extract main content from a URL using trafilatura.
+    Returns a dict compatible with PDFResult.to_dict().
+    """
+    try:
+        import trafilatura
+    except ImportError:
+        raise ImportError("trafilatura is required: pip install trafilatura")
+
+    downloaded = trafilatura.fetch_url(url)
+    if not downloaded:
+        return {"source_file": url, "total_pages": 0, "pages": {}}
+
+    text = trafilatura.extract(downloaded, include_comments=False, include_tables=True)
+    if not text:
+        return {"source_file": url, "total_pages": 0, "pages": {}}
+
+    # Split into synthetic pages by double-newlines (~50 paragraphs each)
+    paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
+    page_size = 50
+    pages: dict[str, dict] = {}
+    for i in range(0, max(len(paragraphs), 1), page_size):
+        page_num = (i // page_size) + 1
+        page_text = "\n\n".join(paragraphs[i:i + page_size])
+        pages[str(page_num)] = {
+            "text": page_text,
+            "confidence": 1.0,
+            "method": "trafilatura",
+            "word_count": len(page_text.split()),
+        }
+
+    return {
+        "source_file": url,
+        "source_path": url,
+        "total_pages": len(pages),
+        "extraction_method": "trafilatura",
+        "pages": pages,
+    }
+
+
+# ---------------------------------------------------------------------------
 # CLI entry point
 # ---------------------------------------------------------------------------
 
