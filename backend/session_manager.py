@@ -89,6 +89,35 @@ class SessionManager:
                     PRIMARY KEY (guest_id, usage_date)
                 );
                 CREATE INDEX IF NOT EXISTS idx_guest_usage_date ON guest_usage(usage_date);
+
+                -- Workspace: uploaded document tracking
+                CREATE TABLE IF NOT EXISTS workspace_documents (
+                    doc_id        TEXT PRIMARY KEY,
+                    user_id       TEXT NOT NULL,
+                    filename      TEXT NOT NULL,
+                    doc_type      TEXT NOT NULL,
+                    source_url    TEXT,
+                    status        TEXT NOT NULL DEFAULT 'pending',
+                    error_msg     TEXT,
+                    chunk_count   INT DEFAULT 0,
+                    section_count INT DEFAULT 0,
+                    title         TEXT,
+                    thread_map    JSONB,
+                    created_at    TIMESTAMPTZ DEFAULT NOW(),
+                    updated_at    TIMESTAMPTZ DEFAULT NOW()
+                );
+                CREATE INDEX IF NOT EXISTS idx_workspace_user ON workspace_documents(user_id);
+
+                -- Workspace: per-user reading progress (semantic coverage tracking)
+                CREATE TABLE IF NOT EXISTS reading_progress (
+                    user_id     TEXT NOT NULL,
+                    doc_id      TEXT NOT NULL,
+                    chunk_id    TEXT NOT NULL,
+                    read_at     TIMESTAMPTZ DEFAULT NOW(),
+                    time_spent  INT,
+                    PRIMARY KEY (user_id, doc_id, chunk_id)
+                );
+                CREATE INDEX IF NOT EXISTS idx_progress_user_doc ON reading_progress(user_id, doc_id);
                 """)
             conn.commit()
         except Exception as e:

@@ -27,7 +27,7 @@ from typing import Any, AsyncGenerator, Dict, List, Optional
 
 import aiohttp
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Request, Depends
+from fastapi import FastAPI, File, Form, HTTPException, Request, Depends, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -597,6 +597,7 @@ if FRONTEND_DIR.exists():
 class SourceModel(BaseModel):
     """Typed representation of a single retrieved source passage."""
     text_id:    str = ""
+    chunk_id:   str = ""          # exact verse/chunk PK — enables Explorer deep-link
     text_name:  str = ""          # human-readable name (Bhagavata Purana, etc.)
     purana:     str = ""          # same as text_name for vector-index results
     reference:  str = ""          # e.g. "Skandha 10 · Ch. 29 · Verse 14"
@@ -623,6 +624,7 @@ class SourceModel(BaseModel):
         """Serialise to the shape expected by the frontend source-card renderer."""
         return {
             "text_id":    self.text_id,
+            "chunk_id":   self.chunk_id,
             "text_name":  self.display_name,
             "purana":     self.purana or self.text_name,
             "reference":  self.reference,
@@ -1174,6 +1176,7 @@ def build_source_list(results: list) -> List[dict]:
         if isinstance(r, dict):
             sm = SourceModel(
                 text_id    = r.get("text_id", ""),
+                chunk_id   = r.get("id", "") or r.get("chunk_id", ""),
                 text_name  = r.get("text_name", "") or r.get("purana", ""),
                 purana     = r.get("purana", "") or r.get("text_name", ""),
                 reference  = r.get("reference", ""),
@@ -1191,6 +1194,7 @@ def build_source_list(results: list) -> List[dict]:
         else:
             sm = SourceModel(
                 text_id    = getattr(r, "id", ""),
+                chunk_id   = getattr(r, "id", ""),
                 text_name  = getattr(r, "purana", ""),
                 purana     = getattr(r, "purana", ""),
                 reference  = getattr(r, "reference", ""),
@@ -1709,9 +1713,31 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                 rag_context += f"\n\n## Additional Sanskrit Primary Sources (GRETIL)\n{skt_ctx}"
 
         all_sources = sources + skt_results[:3]
-        
+
+        # Suppress sources for casual/conversational queries (greetings, small
+        # talk, meta-questions about the app). RAG context is still injected into
+        # the LLM prompt — we just don't surface citations in the UI.
+        _casual_patterns = {
+            "hi", "hello", "hey", "hii", "hiii", "yo", "sup", "howdy",
+            "namaste", "namaskar", "pranam", "jai", "hare",
+            "good morning", "good evening", "good night", "good afternoon",
+            "thanks", "thank you", "bye", "goodbye", "see you",
+            "how are you", "what are you", "who are you", "what is this",
+            "what can you do", "help", "ok", "okay", "hmm", "hm",
+            "yes", "no", "sure", "cool", "nice", "wow", "great",
+        }
+        _q_stripped = actual_query.strip().lower().rstrip("!?.,:;")
+        _is_casual = (
+            _q_stripped in _casual_patterns
+            or len(_q_stripped) < 4
+            or (_q_stripped.startswith(("hi ", "hey ", "hello ")) and len(_q_stripped) < 20)
+        )
+
         # Determine grounding quality
-        if len(sources) > 0:
+        if _is_casual:
+            grounding_quality = "ungrounded"
+            all_sources = []
+        elif len(sources) > 0:
             grounding_quality = "grounded"
         elif len(skt_results) > 0:
             grounding_quality = "partial"
@@ -2082,6 +2108,107 @@ async def get_text(text_id: str, page: int = 1, size: int = 100):
 
 
 
+# ── Content Explorer endpoints ────────────────────────────────────────────
+
+_GUIDE_INTRO_CACHE: dict[str, dict] = {}
+
+@app.get("/api/explore/{text_id}/intro")
+async def get_explore_intro(text_id: str):
+    """
+    AI-generated guide intro for a text: what it is, why it matters,
+    the 5 must-read chapters, and the best entry point for a newcomer.
+    Cached in-process after first generation.
+    """
+    if text_id in _GUIDE_INTRO_CACHE:
+        return _GUIDE_INTRO_CACHE[text_id]
+
+    # Get text metadata from catalog
+    catalog_resp = await list_puranas()
+    catalog = catalog_resp.get("puranas", [])
+    meta = next((t for t in catalog if t["id"] == text_id), None)
+    if not meta:
+        raise HTTPException(404, f"Text {text_id} not found in catalog")
+
+    text_name = meta["name"]
+    tradition = meta.get("tradition", "")
+    category = meta.get("category", "")
+
+    prompt = f"""You are a scholar and guide introducing {text_name} to someone who has never read it.
+
+Write a JSON response with exactly this structure:
+{{
+  "tagline": "One evocative sentence that captures the soul of this text (max 15 words)",
+  "what_it_is": "2-3 sentences: what this text is, its scale, its place in the tradition",
+  "why_it_matters": "2-3 sentences: why a modern person should care. Concrete, not generic",
+  "famous_stories": [
+    {{"title": "Story name", "chapter_hint": "rough location e.g. Book 10 or Chapter 22-30", "description": "1 sentence of pure drama or insight"}},
+    ... (4-6 entries)
+  ],
+  "entry_chapters": [
+    {{"chapter_hint": "Chapter/Book/Skandha number or range", "label": "short label", "for_reader": "who this entry is best for e.g. 'seekers of devotion', 'lovers of mythology'"}},
+    ... (3 entries)
+  ],
+  "one_line_pitch": "If someone asks you why they should read this in 10 words or less"
+}}
+
+Tradition: {tradition}. Category: {category}.
+Be specific and concrete. Avoid generic spiritual platitudes. Name actual stories, characters, events."""
+
+    try:
+        msgs = [{"role": "user", "content": prompt}]
+        raw = await call_llm_once(msgs, temperature=0.3)
+        # Strip markdown fences if present
+        raw = raw.strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+        data = json.loads(raw)
+        result = {"text_id": text_id, "text_name": text_name, **data}
+        _GUIDE_INTRO_CACHE[text_id] = result
+        return result
+    except Exception as e:
+        logger.error("Guide intro generation failed for %s: %s", text_id, e)
+        raise HTTPException(500, f"Failed to generate intro: {e}")
+
+@app.get("/api/verses/{chunk_id}")
+async def get_verse(chunk_id: str):
+    """Fetch a single verse/chunk by ID."""
+    if not state.searcher or not state.searcher.is_ready:
+        raise HTTPException(503, "Search not ready")
+    chunk = await state.searcher.get_chunk_by_id(chunk_id)
+    if not chunk:
+        raise HTTPException(404, f"Chunk {chunk_id} not found")
+    return chunk
+
+@app.get("/api/verses/{chunk_id}/similar")
+async def get_similar_verses(chunk_id: str, top_k: int = 10):
+    """Find semantically similar verses across the entire corpus."""
+    if not state.searcher or not state.searcher.is_ready:
+        raise HTTPException(503, "Search not ready")
+    top_k = min(top_k, 50)
+    results = await state.searcher.find_similar_verses(chunk_id, top_k)
+    return {
+        "source_id": chunk_id,
+        "count": len(results),
+        "similar": [r.to_dict() for r in results],
+    }
+
+@app.get("/api/chapters/{text_id}/{chapter}")
+async def get_chapter(text_id: str, chapter: int, limit: int = 500):
+    """Fetch all indexed verses for a text + chapter, in order."""
+    if not state.searcher or not state.searcher.is_ready:
+        raise HTTPException(503, "Search not ready")
+    limit = min(limit, 1000)
+    verses = await state.searcher.get_chapter_verses(text_id, chapter, limit)
+    if not verses:
+        raise HTTPException(404, f"No verses found for {text_id} chapter {chapter}")
+    return {
+        "text_id": text_id,
+        "chapter": chapter,
+        "count": len(verses),
+        "verses": verses,
+    }
+
+
 class InferRequest(BaseModel):
     topic: str
     mode: str = "synthesis"      # synthesis | contradiction | evolution | practical
@@ -2223,6 +2350,426 @@ async def index_status():
         "index_ready":     state.index_ready,
         "vector_docs":     state.searcher.total_documents if state.searcher else 0,
     }
+
+
+# ── Workspace Endpoints ───────────────────────────────────────────────────
+
+WORKSPACE_UPLOAD_DIR = Path("data/workspace")
+
+@app.post("/api/workspace/upload")
+async def workspace_upload(
+    file: UploadFile | None = File(None),
+    url: str | None = Form(None),
+    user: dict = Depends(require_auth),
+):
+    """Upload a document (PDF/DOCX) or submit a URL for workspace ingestion."""
+    import uuid as _uuid
+    from backend.workspace_ingest import ingest_document
+
+    user_id = user["id"]
+
+    if not file and not url:
+        raise HTTPException(400, "Provide either a file upload or a URL")
+
+    doc_id = str(_uuid.uuid4())
+
+    if file:
+        ext = (file.filename or "upload").rsplit(".", 1)[-1].lower()
+        if ext not in ("pdf", "docx"):
+            raise HTTPException(400, f"Unsupported file type: .{ext}. Use PDF or DOCX.")
+        doc_type = ext
+        filename = file.filename or f"upload.{ext}"
+
+        user_dir = WORKSPACE_UPLOAD_DIR / user_id / doc_id
+        user_dir.mkdir(parents=True, exist_ok=True)
+        file_path = user_dir / f"original.{ext}"
+        content = await file.read()
+        file_path.write_bytes(content)
+    else:
+        doc_type = "url"
+        filename = url[:100]
+        file_path = None
+
+    # Insert tracking row
+    from backend.db_client import get_db_conn
+    conn = get_db_conn()
+    if conn:
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """INSERT INTO workspace_documents (doc_id, user_id, filename, doc_type, source_url, status)
+                       VALUES (%s, %s, %s, %s, %s, 'pending')""",
+                    (doc_id, user_id, filename, doc_type, url),
+                )
+            conn.commit()
+        finally:
+            conn.close()
+
+    # Kick off async ingestion
+    asyncio.create_task(ingest_document(
+        doc_id=doc_id,
+        file_path=file_path,
+        source_url=url,
+        doc_type=doc_type,
+        user_id=user_id,
+        filename=filename,
+    ))
+
+    return {"doc_id": doc_id, "status": "pending"}
+
+
+@app.get("/api/workspace/docs")
+async def workspace_list_docs(user: dict = Depends(require_auth)):
+    """List all workspace documents for the authenticated user."""
+    from backend.db_client import get_db_conn
+    conn = get_db_conn()
+    if not conn:
+        raise HTTPException(503, "Database unavailable")
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """SELECT doc_id, filename, doc_type, status, error_msg,
+                          chunk_count, section_count, title, created_at, updated_at
+                   FROM workspace_documents WHERE user_id = %s
+                   ORDER BY created_at DESC""",
+                (user["id"],),
+            )
+            rows = cur.fetchall()
+        return {"documents": [dict(r) for r in rows]}
+    finally:
+        conn.close()
+
+
+@app.get("/api/workspace/docs/{doc_id}")
+async def workspace_doc_status(doc_id: str, user: dict = Depends(require_auth)):
+    """Get status and metadata for a workspace document."""
+    from backend.db_client import get_db_conn
+    conn = get_db_conn()
+    if not conn:
+        raise HTTPException(503, "Database unavailable")
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """SELECT doc_id, filename, doc_type, status, error_msg,
+                          chunk_count, section_count, title, thread_map,
+                          created_at, updated_at
+                   FROM workspace_documents WHERE doc_id = %s AND user_id = %s""",
+                (doc_id, user["id"]),
+            )
+            row = cur.fetchone()
+        if not row:
+            raise HTTPException(404, "Document not found")
+        result = dict(row)
+        if result.get("thread_map") and isinstance(result["thread_map"], str):
+            result["thread_map"] = json.loads(result["thread_map"])
+        return result
+    finally:
+        conn.close()
+
+
+@app.delete("/api/workspace/docs/{doc_id}")
+async def workspace_delete_doc(doc_id: str, user: dict = Depends(require_auth)):
+    """Delete a workspace document and all its chunks."""
+    from backend.db_client import get_db_conn
+    conn = get_db_conn()
+    if not conn:
+        raise HTTPException(503, "Database unavailable")
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT doc_id FROM workspace_documents WHERE doc_id = %s AND user_id = %s",
+                (doc_id, user["id"]),
+            )
+            if not cur.fetchone():
+                raise HTTPException(404, "Document not found")
+            cur.execute(
+                "DELETE FROM purana_verses WHERE metadata->>'doc_id' = %s",
+                (doc_id,),
+            )
+            cur.execute(
+                "DELETE FROM reading_progress WHERE doc_id = %s AND user_id = %s",
+                (doc_id, user["id"]),
+            )
+            cur.execute(
+                "DELETE FROM workspace_documents WHERE doc_id = %s AND user_id = %s",
+                (doc_id, user["id"]),
+            )
+        conn.commit()
+        # Clean up files
+        import shutil
+        upload_dir = WORKSPACE_UPLOAD_DIR / user["id"] / doc_id
+        if upload_dir.exists():
+            shutil.rmtree(upload_dir)
+        return {"deleted": True}
+    finally:
+        conn.close()
+
+
+_WORKSPACE_INTRO_CACHE: dict[str, dict] = {}
+
+@app.get("/api/workspace/docs/{doc_id}/intro")
+async def workspace_doc_intro(doc_id: str, user: dict = Depends(require_auth)):
+    """AI-generated guide intro for a workspace document."""
+    if doc_id in _WORKSPACE_INTRO_CACHE:
+        return _WORKSPACE_INTRO_CACHE[doc_id]
+
+    if not state.searcher or not state.searcher.is_ready:
+        raise HTTPException(503, "Search not ready")
+
+    # Fetch first chunks from each section
+    from backend.db_client import get_db_conn
+    conn = get_db_conn()
+    if not conn:
+        raise HTTPException(503, "Database unavailable")
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT title, section_count FROM workspace_documents WHERE doc_id = %s AND user_id = %s",
+                (doc_id, user["id"]),
+            )
+            doc_row = cur.fetchone()
+        if not doc_row:
+            raise HTTPException(404, "Document not found")
+    finally:
+        conn.close()
+
+    doc_title = doc_row["title"] or doc_id
+    section_count = doc_row["section_count"] or 1
+
+    # Sample first chunk from up to 6 sections
+    sample_sections = min(section_count, 6)
+    excerpts = []
+    for ch in range(1, sample_sections + 1):
+        try:
+            verses = await state.searcher.get_chapter_verses(doc_id, ch, limit=1)
+            if verses:
+                section_title = verses[0].get("book_section", f"Section {ch}")
+                excerpts.append(f"[{section_title}]: {verses[0].get('text', '')[:400]}")
+        except Exception:
+            pass
+
+    if not excerpts:
+        raise HTTPException(500, "No chunks found for document")
+
+    prompt = f"""You are reading a document titled "{doc_title}". Based on these excerpts from different sections, write a guide introduction as JSON:
+{{
+  "tagline": "One sentence capturing the core subject (max 15 words)",
+  "what_it_is": "2-3 sentences: what this document is about, its scope, its depth",
+  "why_it_matters": "2-3 sentences: why a reader should care about this content",
+  "key_sections": [
+    {{"section_num": N, "title": "Section title", "description": "1 sentence summary"}},
+    ... (up to 6)
+  ],
+  "entry_points": [
+    {{"section_num": N, "label": "short label", "for_reader": "who should start here"}},
+    ... (3 entries)
+  ],
+  "one_line_pitch": "10 words or less on why to read this"
+}}
+
+Document excerpts:
+{chr(10).join(excerpts)}
+
+Be specific to THIS document. Do not guess content you haven't seen."""
+
+    try:
+        raw = await call_llm_once([{"role": "user", "content": prompt}], temperature=0.3)
+        raw = raw.strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+        data = json.loads(raw)
+        result = {"doc_id": doc_id, "doc_title": doc_title, **data}
+        _WORKSPACE_INTRO_CACHE[doc_id] = result
+        return result
+    except Exception as e:
+        logger.error("Workspace intro generation failed for %s: %s", doc_id, e)
+        raise HTTPException(500, f"Failed to generate intro: {e}")
+
+
+@app.get("/api/workspace/docs/{doc_id}/threads")
+async def workspace_doc_threads(doc_id: str, user: dict = Depends(require_auth)):
+    """Get or generate thread map (choice-driven navigation paths) for a document."""
+    from backend.db_client import get_db_conn
+    conn = get_db_conn()
+    if not conn:
+        raise HTTPException(503, "Database unavailable")
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT title, section_count, thread_map FROM workspace_documents WHERE doc_id = %s AND user_id = %s",
+                (doc_id, user["id"]),
+            )
+            doc_row = cur.fetchone()
+        if not doc_row:
+            raise HTTPException(404, "Document not found")
+    finally:
+        conn.close()
+
+    # Return cached thread map if exists
+    if doc_row.get("thread_map"):
+        tm = doc_row["thread_map"]
+        if isinstance(tm, str):
+            tm = json.loads(tm)
+        return tm
+
+    if not state.searcher or not state.searcher.is_ready:
+        raise HTTPException(503, "Search not ready")
+
+    doc_title = doc_row["title"] or doc_id
+    section_count = doc_row["section_count"] or 1
+
+    # Sample chunks from across the document
+    excerpts = []
+    chunk_ids_by_section: dict[int, list[str]] = {}
+    for ch in range(1, min(section_count + 1, 12)):
+        try:
+            verses = await state.searcher.get_chapter_verses(doc_id, ch, limit=3)
+            for v in verses:
+                section_title = v.get("book_section", f"Section {ch}")
+                excerpts.append(f"[Section {ch}: {section_title}] {v.get('text', '')[:300]}")
+                chunk_ids_by_section.setdefault(ch, []).append(v.get("id", ""))
+        except Exception:
+            pass
+
+    if not excerpts:
+        return {"threads": [], "branch_points": []}
+
+    prompt = f"""You are analyzing a document titled "{doc_title}" to create reading paths.
+
+Based on these excerpts, generate a JSON thread map with 3-5 reading threads.
+Each thread is a different way to navigate the document — by narrative, by theme, by concept, etc.
+
+{{
+  "threads": [
+    {{
+      "id": "slug",
+      "label": "Thread Name (3-5 words)",
+      "description": "One sentence describing this path",
+      "icon": "one of: book, users, sparkles, compass, lightbulb",
+      "section_sequence": [1, 3, 5, 2]
+    }}
+  ]
+}}
+
+Document excerpts:
+{chr(10).join(excerpts[:20])}
+
+Return ONLY valid JSON. Each section_sequence should list section numbers (1-{section_count}) in the recommended reading order for that thread."""
+
+    try:
+        raw = await call_llm_once([{"role": "user", "content": prompt}], temperature=0.4)
+        raw = raw.strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+        thread_map = json.loads(raw)
+
+        # Cache in DB
+        from backend.workspace_ingest import update_doc_status, _get_pool
+        pool = await _get_pool()
+        try:
+            await update_doc_status(pool, doc_id, doc_row.get("status", "ready"), thread_map=thread_map)
+        finally:
+            await pool.close()
+
+        return thread_map
+    except Exception as e:
+        logger.error("Thread generation failed for %s: %s", doc_id, e)
+        return {"threads": [], "error": str(e)}
+
+
+@app.post("/api/workspace/progress")
+async def workspace_mark_read(
+    data: dict,
+    user: dict = Depends(require_auth),
+):
+    """Mark a chunk as read. Body: {"doc_id": "...", "chunk_id": "...", "time_spent": 5}"""
+    doc_id = data.get("doc_id")
+    chunk_id = data.get("chunk_id")
+    time_spent = data.get("time_spent")
+
+    if not doc_id or not chunk_id:
+        raise HTTPException(400, "doc_id and chunk_id required")
+
+    from backend.db_client import get_db_conn
+    conn = get_db_conn()
+    if not conn:
+        raise HTTPException(503, "Database unavailable")
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """INSERT INTO reading_progress (user_id, doc_id, chunk_id, time_spent)
+                   VALUES (%s, %s, %s, %s)
+                   ON CONFLICT (user_id, doc_id, chunk_id) DO UPDATE SET
+                       read_at = NOW(),
+                       time_spent = COALESCE(reading_progress.time_spent, 0) + COALESCE(EXCLUDED.time_spent, 0)""",
+                (user["id"], doc_id, chunk_id, time_spent),
+            )
+        conn.commit()
+        return {"ok": True}
+    finally:
+        conn.close()
+
+
+@app.get("/api/workspace/docs/{doc_id}/progress")
+async def workspace_doc_progress(doc_id: str, user: dict = Depends(require_auth)):
+    """Reading stats + semantic coverage for a document."""
+    from backend.db_client import get_db_conn
+    conn = get_db_conn()
+    if not conn:
+        raise HTTPException(503, "Database unavailable")
+    try:
+        with conn.cursor() as cur:
+            # Get doc info
+            cur.execute(
+                "SELECT chunk_count, section_count, title FROM workspace_documents WHERE doc_id = %s AND user_id = %s",
+                (doc_id, user["id"]),
+            )
+            doc = cur.fetchone()
+            if not doc:
+                raise HTTPException(404, "Document not found")
+
+            # Count read chunks
+            cur.execute(
+                "SELECT COUNT(*) AS read_count FROM reading_progress WHERE doc_id = %s AND user_id = %s",
+                (doc_id, user["id"]),
+            )
+            read_count = cur.fetchone()["read_count"]
+
+            # Section-level coverage
+            cur.execute(
+                """SELECT (pv.metadata->>'chapter')::int AS section_num,
+                          pv.metadata->>'book_section' AS section_title,
+                          COUNT(pv.id) AS total_chunks,
+                          COUNT(rp.chunk_id) AS read_chunks
+                   FROM purana_verses pv
+                   LEFT JOIN reading_progress rp
+                       ON rp.chunk_id = pv.id AND rp.user_id = %s AND rp.doc_id = %s
+                   WHERE pv.metadata->>'doc_id' = %s
+                   GROUP BY section_num, section_title
+                   ORDER BY section_num""",
+                (user["id"], doc_id, doc_id),
+            )
+            sections = []
+            for row in cur.fetchall():
+                sections.append({
+                    "section_num": row["section_num"],
+                    "title": row["section_title"] or f"Section {row['section_num']}",
+                    "total": row["total_chunks"],
+                    "read": row["read_chunks"],
+                    "coverage": round(row["read_chunks"] / max(row["total_chunks"], 1) * 100, 1),
+                })
+
+        total = doc["chunk_count"] or 1
+        return {
+            "doc_id": doc_id,
+            "title": doc["title"],
+            "total_chunks": total,
+            "read_chunks": read_count,
+            "overall_coverage": round(read_count / total * 100, 1),
+            "sections": sections,
+        }
+    finally:
+        conn.close()
 
 
 # ── Auth Endpoints ────────────────────────────────────────────────────────

@@ -327,6 +327,67 @@ class HybridSearcher:
         )
         return [r for r in results if r.score >= min_score]
 
+    # ── Content Explorer Data Layer ──────────────────────────────────
+
+    async def get_chunk_by_id(self, chunk_id: str) -> dict[str, Any] | None:
+        """Fetch a single verse/chunk by its primary key."""
+        if not self._pool:
+            return None
+        async with self._pool.acquire() as conn:
+            row = await conn.fetchrow(
+                'SELECT id, content, metadata FROM purana_verses WHERE id = $1',
+                chunk_id
+            )
+        if not row:
+            return None
+        meta = json.loads(row['metadata']) if isinstance(row['metadata'], str) else row['metadata']
+        return {**meta, "id": row['id'], "text": row['content']}
+
+    async def find_similar_verses(self, chunk_id: str, top_k: int = 10) -> list[SearchResult]:
+        """Find the top_k most semantically similar verses to the given chunk."""
+        if not self._pool:
+            return []
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch('''
+                WITH source AS (
+                    SELECT embedding FROM purana_verses WHERE id = $1
+                )
+                SELECT pv.id, pv.content, pv.metadata,
+                       1 - (pv.embedding <=> s.embedding) AS similarity
+                FROM purana_verses pv, source s
+                WHERE pv.id != $1
+                  AND pv.embedding IS NOT NULL
+                ORDER BY pv.embedding <=> s.embedding
+                LIMIT $2
+            ''', chunk_id, top_k)
+        results = []
+        for rank, row in enumerate(rows):
+            meta = json.loads(row['metadata']) if isinstance(row['metadata'], str) else row['metadata']
+            chunk = {**meta, "id": row['id'], "text": row['content']}
+            results.append(SearchResult(chunk=chunk, score=float(row['similarity']), rank=rank))
+        return results
+
+    async def get_chapter_verses(
+        self, text_id: str, chapter: int, limit: int = 500
+    ) -> list[dict[str, Any]]:
+        """Fetch all verses for a given text + chapter, ordered by verse_range."""
+        if not self._pool:
+            return []
+        filter_meta = json.dumps({"purana": text_id, "chapter": chapter})
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch('''
+                SELECT id, content, metadata
+                FROM purana_verses
+                WHERE metadata @> $1::jsonb
+                ORDER BY id
+                LIMIT $2
+            ''', filter_meta, limit)
+        results = []
+        for row in rows:
+            meta = json.loads(row['metadata']) if isinstance(row['metadata'], str) else row['metadata']
+            results.append({**meta, "id": row['id'], "text": row['content']})
+        return results
+
     # ── Purana Statistics ──────────────────────────────────────────────
 
     def get_purana_stats(self) -> list[dict[str, Any]]:

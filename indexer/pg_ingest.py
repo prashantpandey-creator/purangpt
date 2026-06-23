@@ -46,7 +46,8 @@ class PostgresIndexer:
                     id TEXT PRIMARY KEY,
                     content TEXT NOT NULL,
                     metadata JSONB NOT NULL,
-                    embedding vector(384)
+                    embedding vector(384),
+                    fts tsvector GENERATED ALWAYS AS (to_tsvector('simple', COALESCE(content, ''))) STORED
                 );
             """)
             # Create HNSW index for fast vector search
@@ -54,10 +55,15 @@ class PostgresIndexer:
                 CREATE INDEX IF NOT EXISTS {TABLE_NAME}_embedding_idx 
                 ON {TABLE_NAME} USING hnsw (embedding vector_cosine_ops);
             """)
-            # Create GIN index for full text search
+            # Create GIN index on the stored fts column
             cur.execute(f"""
-                CREATE INDEX IF NOT EXISTS {TABLE_NAME}_fts_idx 
-                ON {TABLE_NAME} USING GIN (to_tsvector('english', content));
+                CREATE INDEX IF NOT EXISTS {TABLE_NAME}_fts_idx
+                ON {TABLE_NAME} USING GIN (fts);
+            """)
+            # Create GIN index on metadata for filter queries
+            cur.execute(f"""
+                CREATE INDEX IF NOT EXISTS {TABLE_NAME}_metadata_idx
+                ON {TABLE_NAME} USING GIN (metadata);
             """)
             
             # Create hybrid_search function.
