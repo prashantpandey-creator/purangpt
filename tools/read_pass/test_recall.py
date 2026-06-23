@@ -2,9 +2,10 @@
 
 The mind model (daddy's design): a seeker's question is a CUE. recall() pulls ONLY
 the relevant fragment of long-term memory into working memory — the matching
-entities, their one-hop associative cluster (neighbors via edges), the decode keys
-that apply, and the Sat/Asat valence. NOT a dump of all 14k nodes; selective recall,
-the way a human surfaces just the relevant cluster from a cue.
+entities, their one-hop associative cluster (neighbors via edges), and the decode
+keys that apply. NOT a dump of all 14k nodes; selective recall, the way a human
+surfaces just the relevant cluster from a cue. (No Sat/Asat or guna valence axis —
+removed 2026-06-23; see test_no_valence_axis_is_imposed for why.)
 
 Deterministic graph walk + string match — no LLM, no network. So it gets tests.
 Run: venv/bin/python -m tools.read_pass.test_recall   (exit 0)
@@ -102,12 +103,18 @@ def test_decode_keys_attached_for_recalled_entities_only():
     assert "Brahma" not in syms
 
 
-def test_sat_asat_valence_tagged():
-    # Kauravas decode = "inner demonic tendencies" → Asat. Krishna = Self → Sat.
+def test_no_valence_axis_is_imposed():
+    # DESIGN (daddy, 2026-06-23): the Sat/Asat keyword valence was REMOVED. 74% of
+    # the 613 real decode meanings use Sharma's consciousness/Time/void vocabulary,
+    # not Sat/Asat or guna words — a keyword classifier tagged only minor entities
+    # and adversarially mislabeled the demon as "ego" (the corpus says the demon IS
+    # dormant consciousness, not its enemy). Rather than impose a taxonomy the data
+    # doesn't yet speak, we ship the meanings + relationships and let any graded
+    # axis (e.g. the three gunas) EMERGE from the corpus, then encode that pattern.
     env = recall.recall("Krishna versus the Kauravas", _mem())
-    by_id = {e["id"]: e for e in env["data"]["entities"]}
-    assert by_id["kauravas"].get("valence") == "asat"
-    assert by_id["krsna"].get("valence") == "sat"
+    for e in env["data"]["entities"]:
+        # no valence field is emitted onto entities anymore
+        assert "valence" not in e, "valence axis was removed — must not reappear by assumption"
 
 
 def test_empty_cue_recalls_nothing_gracefully():
@@ -131,6 +138,23 @@ def test_render_context_produces_injectable_text_block():
     assert "Kṛṣṇa" in block or "Krishna" in block
     assert "Kutastha" in block          # the decoded meaning is in the block
     assert "Arjuna" in block
+
+
+def test_render_context_has_no_adversarial_valence_framing():
+    # the removed valence block phrased entities as "Forces of limitation/ego (Asat)"
+    # — an adversarial misread of Sharma (the demon IS dormant consciousness, not its
+    # enemy). That framing must never reach the live prompt. The block carries the
+    # decoded meanings + relationships, not a good-vs-evil scoreboard.
+    env = recall.recall("Krishna versus the Kauravas", _mem())
+    block = recall.render_context(env["data"])
+    low = block.lower()
+    assert "forces of limitation" not in low
+    assert "forces of" not in low
+    assert "(asat)" not in low
+    assert "(sat)" not in low
+    # but the decoded meaning of the Kauravas IS still present — we keep the lens,
+    # we drop only the adversarial scoreboard
+    assert "demonic" in low or "kaurava" in low
 
 
 # --- SCALE / SELECTIVITY against a hub-heavy graph (the real-data lesson) -----

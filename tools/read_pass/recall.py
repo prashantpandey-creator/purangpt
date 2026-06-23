@@ -7,7 +7,7 @@ The mind model (daddy's design):
             │ recall(cue)                           │ associative pull
             │                                       ▼
     LONG-TERM MEMORY ("subconscious")
-      • SEMANTIC: the graph (entities + edges) + 613 decode keys + Sat/Asat
+      • SEMANTIC: the graph (entities + edges) + 613 decode keys (the lens)
       • EPISODIC: stories, disciple conversations   (future write-path)
 
 A seeker's question is a CUE. recall() does NOT dump all 14k nodes into the
@@ -18,7 +18,9 @@ prompt — that's not how a mind works. It surfaces ONLY the relevant cluster:
   2. EXPAND  one hop along edges → the associative cluster (a Krishna cue also
              surfaces Arjuna, whom he guides), the way one memory cues the next.
   3. DECODE  attach the decryption keys whose symbol matches a recalled entity
-             (Sharma's lens), and infer each entity's Sat/Asat valence.
+             (Sharma's lens — the decoded meaning IS the teaching). No imposed
+             Sat/Asat or guna axis; any graded texture is left to emerge from the
+             corpus by pattern (see the design note above _valence_of's removal).
   4. RENDER  emit an injectable {knowledge_context} text block for the live
              UNIFIED_SYSTEM prompt.
 
@@ -82,31 +84,24 @@ def _cue_tokens(cue: str) -> List[str]:
     return toks
 
 
-# Sat/Asat valence: Sharma reads every character as pointing toward awakening
-# (Sat — Time-consciousness) or limitation (Asat — dormant/ego). Inferred from
-# the decoded MEANING text, since that's where the doctrine lives.
-_ASAT_CUES = ("demon", "ego", "ignoran", "limit", "dormant", "desire", "delusion",
-              "asat", "unreal", "asleep", "bondage", "craving", "tamas", "raja",
-              "fictit", "sense satisf", "physical limit")
-_SAT_CUES = ("consciousness", "self", "kutastha", "time", "awaken", "liberat",
-             "yogi", "yoga", "atman", "soul", "witness", "sat ", "brahma",
-             "immortal", "void", "realiz", "divine", "supreme", "truth")
-
-
-def _valence_of(meaning: str) -> Optional[str]:
-    m = (meaning or "").lower()
-    asat = any(c in m for c in _ASAT_CUES)
-    sat = any(c in m for c in _SAT_CUES)
-    if asat and not sat:
-        return "asat"
-    if sat and not asat:
-        return "sat"
-    if asat and sat:
-        # both present → the dominant cue wins by first occurrence
-        ai = min((m.find(c) for c in _ASAT_CUES if c in m), default=10**9)
-        si = min((m.find(c) for c in _SAT_CUES if c in m), default=10**9)
-        return "asat" if ai < si else "sat"
-    return None
+# NOTE — the graded "valence" axis is DELIBERATELY ABSENT (daddy, 2026-06-23).
+#
+# An earlier version tagged each recalled entity Sat/Asat by keyword-matching the
+# decoded meaning. Two problems killed it:
+#   1. SPARSE: 74% of the 613 real decode meanings speak Sharma's
+#      consciousness/Time/matter/void vocabulary, NOT Sat/Asat or guna words —
+#      so the matcher tagged only a handful of minor entities and missed every
+#      central figure (Krishna, Arjuna, Shiva all came back untagged).
+#   2. ADVERSARIAL: it rendered the demon as a "Force of limitation/ego", a
+#      misread of the doctrine — Sharma reads the demon AS dormant consciousness,
+#      not as consciousness's enemy.
+#
+# The three gunas (sattva/rajas/tamas) are the natural graded axis here, but the
+# corpus itself counsels patience: one decode key reads "Vedas — scriptures
+# dealing with three gunas; TO BE TRANSCENDED" (gunatita). So rather than impose
+# a taxonomy the data doesn't yet speak, we ship the decoded meanings +
+# relationships now and let any guna structure EMERGE from the corpus by pattern,
+# then encode the observed pattern — not an assumed one. Seam marked below.
 
 
 # --- the retrieval -----------------------------------------------------------
@@ -237,18 +232,13 @@ def recall(cue: str, memory: Memory, expand: bool = True) -> Dict[str, Any]:
 
         decode_keys = _attach_keys(recalled_names, memory.keys)
 
-        # tag valence onto each recalled entity from its matching decode key(s)
-        meaning_by_name: Dict[str, str] = {}
-        for k in decode_keys:
-            meaning_by_name[_norm(k["symbol"])] = k["meaning"]
+        # the recalled entities — name, kind, the verses where they appear, and
+        # whether the cue named them directly (seed) vs. surfaced by association.
+        # NO valence axis: see the design note above (_valence_of removed).
         out_entities = []
         for e in recalled:
-            names = [_norm(e.get("name", ""))] + [_norm(f) for f in e.get("all_forms", [])]
-            meaning = next((meaning_by_name[n] for n in names if n in meaning_by_name), "")
-            val = _valence_of(meaning) if meaning else None
             out_entities.append({
                 "id": e["id"], "name": e.get("name", ""), "kind": e.get("kind", ""),
-                "valence": val,
                 "verse_ranges": e.get("verse_ranges", [])[:3],
                 "is_seed": e["id"] in seed_ids,
             })
@@ -287,14 +277,11 @@ def render_context(data: Dict[str, Any], max_entities: int = 12,
         for k in keys:
             lines.append(f"  • {k['symbol']} — {k['meaning']}")
 
-    # the entities + their spiritual valence
-    ents = data.get("entities", [])[:max_entities]
-    sat = [e["name"] for e in ents if e.get("valence") == "sat"]
-    asat = [e["name"] for e in ents if e.get("valence") == "asat"]
-    if sat:
-        lines.append(f"\nForces pointing toward awakening (Sat): {', '.join(sat)}")
-    if asat:
-        lines.append(f"Forces of limitation/ego (Asat): {', '.join(asat)}")
+    # SEAM (guna axis — intentionally empty; see design note at _valence_of's
+    # removal). When a graded quality (sattva/rajas/tamas) eventually emerges from
+    # the corpus by pattern, render it here as the texture of the field — never as
+    # a good-vs-evil scoreboard, and never preaching "be sattvic" (the doctrine is
+    # gunatita: transcend all three). Until then, the meanings ARE the teaching.
 
     # the associative relationships
     rels = data.get("relationships", [])[:8]
