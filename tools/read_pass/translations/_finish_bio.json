@@ -1,0 +1,44 @@
+{
+  "success": true,
+  "data": {
+    "out_md": "tools/read_pass/translations/the_awakener_EN_v2.md",
+    "n_windows_total": 120,
+    "missing_indices": [
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      26,
+      27,
+      28,
+      29,
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87,
+      88,
+      89
+    ],
+    "n_translated_now": 24,
+    "gaps_remaining": 0,
+    "ratio": 1.015,
+    "src_chars": 1359347,
+    "out_chars": 1380060
+  },
+  "metadata": {
+    "src_path": "data/raw_texts/sharma_ru/mossin_awakener_ru.txt",
+    "out_dir": "tools/read_pass/translations",
+    "model": "deepseek-chat"
+  },
+  "errors": []
+}
