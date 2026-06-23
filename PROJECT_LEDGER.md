@@ -36,7 +36,7 @@ Every agent MUST:
 - Landing page keeps the **CitationComparison** (grounded-vs-general). The BG 16.23–16.24 scripture block, corpus bento grid, and locked-sources preview were **moved to `/about`**; About is i18n (en/hi/ru).
 - Homepage has a **Guruji/Gita section** (Sanskrit verse → Yogeshwari translation → citation).
 - `glass-panel` / `saffron-glow` are global utilities in `globals.css`.
-- **Chat layout (2026-06-22): Bindu gravity-center.** ONE persistent `GurujiBindu` pinned top-center (no more per-message Bindus); messages scroll beneath it. Sent query plays a "consume" entrance toward the Bindu; older exchanges collapse to their ghost-echo question (tap to expand), latest always expanded. Stream engine untouched. Empty-state hero Bindu unchanged. NOT yet visually verified on prod.
+- **Chat layout (2026-06-22): Bindu gravity-center.** ONE persistent Bindu pinned top-center (no more per-message Bindus); messages scroll beneath it. **(2026-06-23) The emblem is now `ShaktiBindu` (Prāṇa Breath void, lab E2) — golden ring + bindu core with three flame-breaths orbiting as a balanced trinity; `GurujiBindu` flame is orphaned but kept for rollback.** A full-viewport `VoidField` + `CosmicHum` Nāda sit behind the whole chat, all driven by one shared `binduPulse` intelligence signal. Sent query plays a "consume" entrance toward the Bindu; older exchanges collapse to their ghost-echo question (tap to expand), latest always expanded. Stream engine untouched. Empty-state hero Bindu unchanged. NOT yet visually verified on prod.
 - **Theme** (2026-06-21): candlelit gold accent `#cba455` (token `--gold` / Tailwind `saffron`), highlight `#e7cd84`, slate `#7e92b8`, ivory text `#e2d4b2`. **Chat page = true-black OLED** (`#000` base/topbar/thread, neutral-dark surfaces `#0e0e11`/`#141416`) — the earlier indigo base was dropped per user request. Landing/marketing still use the warmer dark from globals. Restrained glow only on focal points. Side panel uses warm Quicksand (`--font-sidebar`). Do NOT reintroduce neon `#ff9933`. See CLAUDE.md UI guidelines.
 
 ### Known issues / open risks
@@ -48,6 +48,19 @@ Every agent MUST:
 ---
 
 ## Ledger (newest first)
+
+### 2026-06-23 — Prāṇa Breath live emblem + WebGL screenshot harness + state-aware Nāda · `claude/chat-tier-modes-naming-48z104` · agent(opus)
+- What & why: user chose the "Prāṇa Breath" Shakti void (Bindu Lab E2) as the main chat emblem, and asked for a visual-feedback loop so shaders are tuned against real pixels instead of guessed blind. Also reworked the Nāda hum (intrusive at rest) and made Aurora Curtains (E4) transformative.
+- Changed: `purangpt-next` —
+  · `lib/binduShaders.mjs` (+ `.d.ts`): single source of truth for ALL Bindu Lab shaders (VS/NOISE/ITER_A..E, E1..E5), imported by both the lab page and the screenshot harness.
+  · `scripts/shotBindu.mjs`: headless-Chromium (SwiftShader) WebGL2 screenshot tool → PNGs in gitignored `scratch/bindu-shots/`. Usage: `CHROME_BIN=<chrome-headless-shell> node scripts/shotBindu.mjs E2 E4 --t=0,3,6 --lv=0,1`.
+  · `components/guruji/ShaktiBindu.tsx`: NEW live center emblem (E2 Prāṇa) — same `state`/`size` contract as GurujiBindu, reduced-motion freeze + SVG fallback. `ChatInterface.tsx` now imports ShaktiBindu (GurujiBindu orphaned, kept for rollback).
+  · E2 tuned vs screenshots: orbital travel ~4× faster (was ~1 lap / 6½ min), livelier flame churn, lifecycle floored (0.22) + three breaths anchored ~120° apart so the emblem stays balanced, deeper rest→think contrast.
+  · E4 Aurora Curtains made transformative: global swirl rotation, migrating bands, faster churn, breathing dissolve threshold (was a near-static shimmer).
+  · `CosmicHum.tsx` (commit a1ec52f): state-aware Nāda — dark/veiled/near-subliminal at rest (200 Hz lowpass, harmonics + Aum formants gated off), blooms (1500 Hz, fifth/aura/formants, deeper breath) when thinking.
+  · Earlier this session (commit 9559b66): 5 Shakti sub-variations E1–E5 added to `/bindu-lab` (Quantum Foam, Prāṇa Breath, Saṅgam, Aurora Curtains, Comet Trails).
+- New state / gotchas: **Playwright's own browser download dies through the egress proxy** (it drops large transfers mid-stream) — fetch the zip with `curl -C - --cacert /root/.ccr/ca-bundle.crt <cdn url>` (resumable, completes) and point Playwright at it via `executablePath`/`CHROME_BIN`. **SwiftShader aborts E4 at full size** (heaviest shader) → render at `--size=128`; fine on real GPUs. `playwright` added as devDependency. tsc clean (only pre-existing sql.js/onnxruntime-web). Auto-deploys on branch push (PR #30).
+- Follow-ups / risks: verify Prāṇa emblem + Nāda live on prod; user may want E3/E5 promoted instead, or further E2 balance/brightness tuning (now cheap via the screenshot harness).
 
 ### 2026-06-22 — Bindu gravity-center chat: fixed top Bindu + consume FX + collapsing history · `claude/chat-tier-modes-naming-48z104` · agent(sonnet)
 - What & why: product direction — the chat stops being a stack of bubbles-with-Bindus and becomes ONE living Bindu the conversation orbits. Three locked decisions: (1) consume = middle-ground (query compresses/fades toward the Bindu over ~0.8s, no per-char particle sim); (2) collapse-on-new-answer (older exchanges shrink to just their ghost-echo question, tap to expand; latest always expanded); (3) Bindu fixed at top center — it IS the interface, messages scroll beneath it.
