@@ -49,6 +49,12 @@ Every agent MUST:
 
 ## Ledger (newest first)
 
+### 2026-06-24 — Brand logo: flame + approved Prāṇa Shakti aura (unified mark) · `claude/chat-tier-modes-naming-48z104` · agent(opus)
+- What & why: user asked whether the approved aura was in the logo (it wasn't — logo had only the Guruji flame). Chose "flame + aura together." Wrapped the logo's fire heart in the approved Prāṇa-aura so the mark matches the main chat emblem's identity.
+- Changed: `purangpt-next/src/components/ui/ConcentricBindu.tsx` — added `auraWisp()` to the logo's WebGL shader: 5 orbiting flame-energy wisps (condense→orbit→dissolve, drift blue→pink→gold), composited (premultiplied, additive) around the central Guruji flame, inside the SVG concentric rings. Aura brightness gated by `lv` (`alive`) — calm at rest, brighter when thinking. Verified at 240/120/64/32px (aura clearly visible to ~64px).
+- New state / gotchas: shader now does flame (3 fbm) + 5 wisps (1 fbm each) per pixel — fine at logo sizes; screenshot at ≤360px renders OK under SwiftShader. tsc clean. Auto-deploys.
+- Follow-ups / risks: favicon/app-icons still old static mark — regenerate from this flame+aura mark. If aura should be stronger/weaker, tune `g` (0.66 + lv·0.45) and wisp `e` in `auraWisp`.
+
 ### 2026-06-24 — Brand logo: real turbulent WebGL flame in the centre (corrected) · `claude/chat-tier-modes-naming-48z104` · agent(opus)
 - What & why: the prior "candle flame" pass put a flat SVG teardrop in the logo centre — user rejected it ("very bad"). The intent was the EARLIER complex render — the domain-warped, licking, flickering Guruji fire (its "peculiar movement") — in the middle of the existing ring design. Replaced the teardrop with that actual flame.
 - Changed: `purangpt-next/src/components/ui/ConcentricBindu.tsx` — centre is now a small per-instance WebGL2 canvas running the Guruji flame shader (flame layers only — core/corona/inner/outer/bloom + domain-warp + diya flicker; rings stripped, `st` zoomed ×1.45 to sit inside the field), composited UNDER the existing crisp SVG concentric rings (transparent centre). DPR capped at 2; `alive` leaps the fire + pulses the rings; graceful static-SVG flame fallback if WebGL2 missing; reduced-motion freezes a frame. Same component API → `Logo.tsx` untouched. Removed obsolete `scripts/shotLogo.mjs`.
