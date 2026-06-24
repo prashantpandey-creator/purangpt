@@ -370,18 +370,33 @@ class HybridSearcher:
     async def get_chapter_verses(
         self, text_id: str, chapter: int, limit: int = 500
     ) -> list[dict[str, Any]]:
-        """Fetch all verses for a given text + chapter, ordered by verse_range."""
+        """Fetch all verses for a given text + chapter, ordered by verse_range.
+
+        Matches on the chunk ID prefix `{text_id}-{chapter}-` rather than the
+        `purana` metadata field. `text_id` is the slug (e.g. "mahabharata"), but
+        metadata stores the DISPLAY name (e.g. "Mahabharata") — so the old
+        `metadata @> {"purana": text_id}` filter never matched and every chapter
+        came back empty (App Store rejection 2.1(a), June 2026). The ID is
+        canonically `{slug}-{chapter}-{verse}`, so a prefix match is exact.
+
+        `_` and `%` are SQL LIKE wildcards and several slugs contain `_`
+        (linga_1, shiva_1_7), so the prefix is escaped and matched with
+        ESCAPE '\\'.
+        """
         if not self._pool:
             return []
-        filter_meta = json.dumps({"purana": text_id, "chapter": chapter})
+        # Escape LIKE wildcards in the slug so e.g. "linga_1" doesn't match
+        # "lingaX1". Backslash is the escape char (declared via ESCAPE below).
+        safe = text_id.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        prefix = f"{safe}-{chapter}-%"
         async with self._pool.acquire() as conn:
             rows = await conn.fetch('''
                 SELECT id, content, metadata
                 FROM purana_verses
-                WHERE metadata @> $1::jsonb
+                WHERE id LIKE $1 ESCAPE '\\'
                 ORDER BY id
                 LIMIT $2
-            ''', filter_meta, limit)
+            ''', prefix, limit)
         results = []
         for row in rows:
             meta = json.loads(row['metadata']) if isinstance(row['metadata'], str) else row['metadata']
