@@ -2,6 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Work-in-Progress — READ FIRST
+
+**[`../PROJECT_LEDGER.md`](../PROJECT_LEDGER.md)** is the shared WIP state for all
+agents across both repos. Read its Current State before starting; update it after
+finishing. It tracks what's done, what's blocked, and what's active so sessions
+don't duplicate or conflict.
+
 ## What This Is
 
 PuranGPT backend — a FastAPI RAG engine for querying Hindu sacred texts (18 Mahapuranas, Ramayana, Mahabharata, Gita, Upanishads) with exact verse citations and streaming LLM responses. The Guru persona is Shailendra Sharma — a living Yogi and custodian of the unbroken lineage of Yoga.
@@ -28,7 +35,7 @@ Any session on this machine already has what it needs — these are the entry po
 | Layer | Technology |
 |-------|-----------|
 | API | FastAPI + uvicorn (port 8000) |
-| LLM | **Generic key-driven providers** — `get_providers()` in `main.py` reads a list of OpenAI-compatible endpoints (deepseek, groq, openai, openrouter, together, xai, mistral) and uses whichever have a real key, in priority order, with automatic failover. DeepSeek is just the first default. Deep Research uses `deepseek-reasoner` via its own client. |
+| LLM | **Generic key-driven providers** — `get_providers()` in `backend/main.py` reads a list of OpenAI-compatible endpoints (deepseek, groq, openai, openrouter, together, xai, mistral) and uses whichever have a real key, in priority order, with automatic failover. DeepSeek is just the first default. Deep Research uses `deepseek-reasoner` via its own client. |
 | Vector search | Postgres **pgvector** + FTS via `hybrid_search` SQL function (`indexer/search.py` → `HybridSearcher`) |
 | Profiles/billing | `purangpt-pgvector-1` (same DB as vectors, using `VECTOR_DB_URL`, `backend/db_client.py`) |
 | Sanskrit corpus | GRETIL (42 texts, ~40M chars, loaded at startup into memory) |
@@ -172,3 +179,107 @@ Defined in `backend/main.py` (`PROMPTS` dict), advertised via `GET /api/modes`, 
 GitHub Actions (`.github/workflows/deploy.yml`) triggers on push to `main` when backend files change. It SSHes to Hetzner (`204.168.176.229`), hard-resets the tree, and rebuilds the Docker container. Requires `VPS_SSH_KEY` secret on `prashantpandey-creator/purangpt`.
 
 **Never edit files directly on the server** — it dirties the git tree and silently blocks future deploys.
+
+## Active Workstreams (read before touching prompts or intelligence code)
+
+Two parallel efforts are converging on Guruji's behaviour. If you're editing one,
+know the other exists so you don't break it.
+
+### 1. read_pass — Proactive Comprehension (offline intelligence layer)
+
+**Status (2026-06-23 post-audit):** Full 12-module engine built (97 tests). **8 REAL
+texts decoded** (Bhagavata, Mahabharata, Ramayana, Brahma, Padma, Skanda, Gheranda,
+Bhagavata-proof). **16 fabricated texts quarantined** to `out/quarantine/` — they were
+decoded against Bhagavata chunk windows, not their own text (identical `bhagavata-1-*`
+chunk IDs, `bhp_` markers, 419-420 record counts). The pipeline works; the bug was
+upstream chunk routing. `graph_manifest.json` needs rebuild from only the 8 real texts
+(current manifest is 70% fabricated data).
+
+**Audit tool:** `venv/bin/python -m tools.graph_health.check --json` (12 tests).
+
+**Key components:** `group.py` (windowing) → `comprehend.py` (LLM decode with Sharma
+lens, 390 chunks in `sharma_texts.jsonl`) → `verify.py` (deterministic citation
+grounding) → `predicate.py` (verb normalization) → `graph.py` (union-find entity
+merge, manifest mode) → `identity.py` (typed same_as/avatar_of/aspect_of edges, 2006
+discovered, never merged into manifest) → `resolve.py` → `synthesize.py` →
+`insights.py` → `timeline.py` → `guruji_ram.py` (613 keys) → `recall.py` + `decode.py`
+(live query-time intelligence).
+
+**Lens integration:**
+- Awakener EN (145 chunks) → IN `sharma_texts.jsonl` (comprehend lens)
+- Guruji RAM (613 keys) → IN `recall.py`, `factsheet.py`, `decode.py` (query-time)
+- Awakener NOT in RAM corpus dir (`data/raw_texts/sharma/`)
+- `sharma_biography.json` (780 events, 285 encounters) → orphaned, not wired
+
+**What it does NOT touch:** `backend/main.py`, any live prompts, the production
+system. It's offline, writes flat JSONL to `tools/read_pass/out/` (gitignored).
+
+**Integration:** `{knowledge_context}` is already wired at `build_knowledge_context()`
+(main.py:158) — `recall.py` + `factsheet.py` + `decode.py` inject graph data at
+query time, fail-graceful (returns `""` on any error). **However**, the graph files
+are gitignored and local-only — NOT on the prod server yet (STEP 2b of roadmap). So
+recall is dark in production; every seeker currently gets the amnesiac Guru.
+
+**Comprehension providers:** `comprehend.py` supports DeepSeek (default), Gemini
+(historical fallback — hit free-tier 429 on the original Bhagavata run), and
+**in-house Claude** (`INHOUSE_DECODE=1`, Workflow fan-out, disk-cached). **Gemini is
+NOT the primary provider anymore.** New decode runs should default to DeepSeek or
+in-house.
+
+Full design: [`tools/read_pass/ARCHITECTURE.md`](tools/read_pass/ARCHITECTURE.md).
+
+### 2. Personality Restructuring (live prompts — frontend work)
+
+**Status:** In progress (separate sessions).
+
+**What it touches:** `UNIFIED_SYSTEM`, `GURUJI_PERSONALITY`, and voice/policy
+constants in `backend/main.py`. Potentially also frontend chat UI/UX in
+`purangpt-next/`.
+
+**What it does NOT touch:** `tools/read_pass/` or the offline comprehension pipeline.
+
+### 3. Seeker Memory ("Smriti" — Guruji remembers the person)
+
+**Status (2026-06-23):** Phase 0 BUILT (flag OFF, 15/15 tests). Design from a
+12-agent Smriti workflow.
+
+**What it is:** Cross-session memory of the *seeker*, not the *texts*. Three memory
+axes (keep straight — confusing them is the trap):
+- **Conversation memory** (`{history}`) — one chat remembers itself. ✅ DONE, live.
+- **Seeker memory** (`{seeker_memory}`, NEW) — Guruji remembers *you* across chats.
+  🟡 Phase 0 built, Phases 1-4 pending.
+- **Graph/knowledge** (`{knowledge_context}`) — Guruji remembers the *texts*. ✅
+  Built, not shipped to prod.
+
+**What's built (Phase 0):**
+- `tools/seeker_memory/distill.py` — pure REVISE distiller (overwrite-on-contradiction,
+  NOT append; LLM injected as `caller`). 10 tests.
+- `_maybe_distill_seeker_summary` in `main.py` (~line 910) — fire-and-forget beside
+  `increment_usage`. Flag `SEEKER_MEMORY_ENABLED` **OFF** by default; cadence+staleness
+  gated (restart-proof via `journey_summary_at`); cheap-tier `SEEKER_MEMORY_MODEL`;
+  hard timeout; every failure swallowed.
+- Schema: `ALTER TABLE` adds `journey_summary_at`, `profiles.seeker_profile`,
+  `profiles.seeker_profile_at` (idempotent in `_init_db`).
+
+**What touches:** `backend/main.py` (the fire-and-forget hook + helper),
+`backend/session_manager.py` (schema + save/gate helpers), `tools/seeker_memory/`.
+When flag is OFF, behaviour is **byte-identical** to before — the hook is a no-op.
+
+**Roadmap:** `tools/read_pass/CONSCIOUSNESS_ROADMAP.md` (STEP 2, phases 0-4).
+
+### Coordination rules
+
+- **Don't cross the streams.** If you're doing personality/prompt work, don't edit
+  `tools/read_pass/` or `tools/seeker_memory/`. If you're doing read-pass work, don't
+  edit the live prompts in `main.py`. Seeker memory touches `main.py` only through
+  the flag-gated fire-and-forget hook.
+- **The Practice & Initiation Limit** is lifted for the offline read-pass only
+  (knowledge-layer comprehends everything). The live prompt still has it. If
+  personality restructuring removes it from the live prompt, that's a deliberate
+  decision — but know that the read-pass was designed assuming the live mouth has
+  *some* guardrail.
+- **The `PROMPTS` dict, `build_seeker_context()`, and the `{...}` template variable
+  pattern in `UNIFIED_SYSTEM`** are the shared surface. All workstreams need these
+  to survive intact. Add variables; don't rename or restructure the pattern without
+  checking all sides. The seeker memory slot `{seeker_memory}` is not yet in the
+  template — that's Phase 2.

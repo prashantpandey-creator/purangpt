@@ -70,3 +70,6 @@ keys.txt
 secrets/*.dec
 secrets/*.dec.*
 secrets/*.plain.*
+
+# read_pass generated comprehension output (regenerable, large)
+tools/read_pass/out/

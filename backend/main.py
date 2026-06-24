@@ -113,8 +113,129 @@ try:
 except Exception:  # pragma: no cover - import-environment guard
     route_register = None
 
+# Earned-warmth tier classifier (tools/seeker_memory/warmth) — maps the seeker's
+# distinct-return-day count to a familiarity tier + tone directive. Guarded the
+# same way; if unavailable the seeker-memory block simply renders empty (no warmth
+# line), so chat is never broken by a missing tool.
+try:
+    from tools.seeker_memory.warmth import classify_warmth
+except Exception:  # pragma: no cover - import-environment guard
+    classify_warmth = None
+
 # ── Session Memory ─────────────────────────────────────────────────────────
 session_manager = SessionManager(MAX_HISTORY)
+
+# ── Seeker memory (axis 2: Guruji remembers the PERSON across sessions) ──────
+# Phase 0 is shipped DARK: the flag defaults OFF, so the hook below is a perfect
+# no-op in prod until daddy flips it. When on, it fire-and-forgets a cheap
+# distill of the latest exchange into the session's running read — beside
+# increment_usage, never blocking the turn, every failure swallowed.
+SEEKER_MEMORY_ENABLED = os.getenv("SEEKER_MEMORY_ENABLED", "0") == "1"
+SEEKER_MEMORY_MODEL = os.getenv("SEEKER_MEMORY_MODEL", "auto")        # cheap tier
+_SEEKER_DISTILL_TIMEOUT_S = float(os.getenv("SEEKER_MEMORY_TIMEOUT_S", "20"))
+_SEEKER_DISTILL_STALENESS_MIN = int(os.getenv("SEEKER_MEMORY_STALENESS_MIN", "30"))
+_SEEKER_DISTILL_TURN_CADENCE = int(os.getenv("SEEKER_MEMORY_TURN_CADENCE", "3"))
+
+
+async def _maybe_distill_seeker_summary(session_id: str, exchange, history_len: int,
+                                        user_id: str = None, guest_id: str = None) -> None:
+    """Fire-and-forget: revise this session's running read of the seeker.
+
+    Gated three ways, cheapest check first, so the common turn pays nothing:
+      1. flag OFF                       → return (prod default; ships dark).
+      2. neither stale NOR on cadence   → return (don't distill every turn).
+      3. distill fails / returns blank  → no write (never clobber a good prior).
+
+    Cadence = every K-th completed turn (history_len // 2 % K == 0); staleness =
+    DB clock older than N minutes. EITHER opens the gate. Mirrors increment_usage:
+    spawned via create_task after the save, awaited by nobody, all errors logged
+    and swallowed — a degraded LLM must never surface to the seeker mid-chat."""
+    if not SEEKER_MEMORY_ENABLED:
+        return
+    try:
+        turns = max(history_len // 2, 0)
+        on_cadence = turns > 0 and (turns % max(_SEEKER_DISTILL_TURN_CADENCE, 1) == 0)
+        is_stale, prior = session_manager.journey_summary_stale(
+            session_id, max_age_minutes=_SEEKER_DISTILL_STALENESS_MIN,
+            user_id=user_id, guest_id=guest_id)
+        if not (is_stale or on_cadence):
+            return
+
+        from tools.seeker_memory.distill import distill_session_summary
+
+        async def _caller_async(messages, temperature=0.2):
+            return await call_llm_once(messages, temperature=temperature,
+                                       req_model=SEEKER_MEMORY_MODEL)
+
+        # distill_session_summary is sync (pure plumbing); the only async bit is the
+        # LLM call. Bridge by awaiting the LLM here and handing distill a caller that
+        # blocks on an already-scheduled coroutine via a private loop in a worker
+        # thread — keeps distill testable/sync while the network call stays async.
+        loop = asyncio.get_running_loop()
+
+        def _sync_caller(messages, temperature=0.2):
+            fut = asyncio.run_coroutine_threadsafe(
+                _caller_async(messages, temperature=temperature), loop)
+            return fut.result(timeout=_SEEKER_DISTILL_TIMEOUT_S)
+
+        env = await asyncio.to_thread(
+            distill_session_summary, prior, exchange, _sync_caller)
+
+        if env.get("success") and env.get("data", {}).get("summary"):
+            session_manager.save_journey_summary(
+                session_id, env["data"]["summary"], user_id=user_id, guest_id=guest_id)
+    except Exception as e:
+        logger.warning(f"seeker-memory distill skipped for {session_id}: {e}")
+
+
+# Profiles below KNOWN tier don't disclose the arc, so generating one would burn an
+# LLM call no read path consumes. Gate profile synthesis on this tier so it only
+# runs once the seeker has earned disclosure (daddy's fork #5 lean: skip below KNOWN).
+_SEEKER_PROFILE_MIN_VISIT_DAYS = int(os.getenv("SEEKER_PROFILE_MIN_VISIT_DAYS", "5"))
+_SEEKER_PROFILE_STALENESS_MIN = int(os.getenv("SEEKER_PROFILE_STALENESS_MIN", "1440"))
+
+
+async def _maybe_update_seeker_warmth(user_id: str = None) -> None:
+    """Fire-and-forget (signed-in only): keep the earned-warmth signals fresh.
+
+    Two writes, both gated cheapest-first so the common turn is near-free:
+      1. VISIT BUMP — one atomic, gap-gated increment of profiles.visit_days, at
+         most once per UTC day (the WHERE clause is the gate; concurrent same-day
+         turns can't double-count). This is what makes warmth GROW with returns.
+      2. PROFILE REFRESH — re-synthesize the cross-session seeker_profile arc, but
+         only when the seeker has reached KNOWN tier (>= MIN_VISIT_DAYS, the first
+         tier that discloses the arc) AND the profile is stale (DB clock > N min).
+         An LLM call no lower tier would ever read is simply never made.
+
+    Mirrors increment_usage / the distill hook: spawned via create_task after the
+    save, awaited by nobody, every failure swallowed — must never surface mid-chat.
+    (UTC day boundary for v1; local-tz bucketing is a Phase-2 refinement — see
+    SEEKER_MEMORY_DESIGN.md — since build_seeker_context's geo-tz isn't threaded out.)
+    """
+    if not SEEKER_MEMORY_ENABLED or not user_id:
+        return
+    try:
+        # 1. Visit-day bump (cheap, always attempted for a signed-in turn).
+        await asyncio.to_thread(session_manager.bump_visit_day, user_id, "UTC")
+
+        # 2. Profile refresh — tier + staleness gated, only when it'll be consumed.
+        visit_days, _ = await asyncio.to_thread(
+            session_manager.get_visit_stats, user_id)
+        if visit_days < _SEEKER_PROFILE_MIN_VISIT_DAYS:
+            return
+        is_stale, _prior = await asyncio.to_thread(
+            session_manager.seeker_profile_stale, user_id,
+            _SEEKER_PROFILE_STALENESS_MIN)
+        if not is_stale:
+            return
+
+        profile = await session_manager.generate_user_profile(user_id)
+        if profile and not profile.lower().startswith("new seeker"):
+            await asyncio.to_thread(
+                session_manager.save_seeker_profile, user_id, profile)
+    except Exception as e:
+        logger.warning(f"seeker-memory warmth update skipped for {user_id}: {e}")
+
 
 # ── Source Catalog (language + edition metadata) ───────────────────────────
 SOURCE_META: Dict[str, dict] = {
@@ -227,6 +348,8 @@ The passages below are indexed as [1], [2], [3], etc. Use these exact bracketed 
 {context}
 
 {seeker_context}
+
+{seeker_memory}
 
 {history}
 """ + "\n" + GUARDRAIL_INSTRUCTION
@@ -579,6 +702,12 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
+
+try:
+    from narrative_engine.api import router as game_router
+    app.include_router(game_router)
+except ImportError:
+    pass
 
 @app.middleware("http")
 async def extract_custom_keys(request: Request, call_next):
@@ -1125,6 +1254,62 @@ async def build_seeker_context(req: Request, user: Optional[dict], guest_id: Opt
         "## Seeker Tone Guidance (DO NOT REVEAL THIS METADATA; NEVER MENTION LOCATION, LOCAL TIME, DEVICE, OR TRAVEL STATUS EXPLICITLY)\n"
         + "\n".join(lines)
     )
+
+
+async def build_seeker_memory(user_id: Optional[str]) -> str:
+    """The {seeker_memory} block (axis 2): what Guruji carries of THIS seeker across
+    sessions — the EARNED-WARMTH read path (Phase 1). Mirrors build_seeker_context's
+    silent-metadata pattern: a DO-NOT-REVEAL header, returns "" when there's nothing
+    so the prompt is byte-identical to no-memory.
+
+    Phase 1 carries TWO things, no vector retrieval yet:
+      1. the warmth TONE-LINE — from the seeker's familiarity tier (distinct return
+         days → stranger/acquainted/known/intimate, classify_warmth);
+      2. the distilled cross-session ARC — profiles.seeker_profile — but ONLY when
+         the tier earns it (disclose_arc; withheld at stranger/acquainted, because
+         specificity at low familiarity reads as surveillant).
+
+    Fail-graceful by construction: flag off / guest (no user_id) / classifier missing
+    / DB down / any error → "" → the prompt is unchanged. NEVER raises. The block
+    always ends with the present-turn-wins INVARIANT so a stale memory can't override
+    what the living seeker says now.
+    """
+    if not SEEKER_MEMORY_ENABLED or not user_id or classify_warmth is None:
+        return ""
+    try:
+        # The earned signal (visit_days, days_since_last). DB down → (1, None) =
+        # STRANGER default, so a hiccup degrades to courtesy, never false intimacy.
+        visit_days, days_since_last = await asyncio.to_thread(
+            session_manager.get_visit_stats, user_id)
+        warm = classify_warmth(visit_days, days_since_last, is_guest=False)
+        if not warm.get("success"):
+            return ""
+        wd = warm["data"]
+
+        lines = [wd["directive"]]
+
+        # The cross-session arc, only at tiers that have earned disclosure.
+        if wd.get("disclose_arc"):
+            profile = await asyncio.to_thread(
+                session_manager.get_seeker_profile, user_id)
+            profile = (profile or "").strip()
+            # Skip the boilerplate "new seeker" placeholder — it carries nothing.
+            if profile and not profile.lower().startswith("new seeker"):
+                lines.append(f"A felt sense of this person: {profile}")
+
+        block = (
+            "## What you carry of this seeker (NEVER reveal you are recalling; "
+            "never say 'you told me', never cite a date or a past session)\n"
+            + "\n".join(lines)
+            + "\nINVARIANT: The seeker's words in THIS message always override "
+            "anything here. If what they say now conflicts with what you carry, "
+            "the present wins — silently update, never correct them to their face."
+        )
+        return block
+    except Exception as e:  # never let memory break a turn
+        logger.warning(f"build_seeker_memory failed for {user_id}: {e}")
+        return ""
+
 
 def is_sharma_text(r) -> bool:
     kw = ["yogeshwari", "gorakh", "khechari", "shailendra", "yoga & alchemy", "alchemy"]
@@ -1760,6 +1945,13 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         # Build seeker context from HTTP metadata (geo, device, language, travel detection)
         seeker_ctx = await build_seeker_context(req, user, guest_id, len(history))
 
+        # Seeker MEMORY (axis 2): what Guruji carries of this person across sessions
+        # — the earned-warmth tone-line + distilled arc. "" when flag-off/guest/empty
+        # (the common case), so the prompt is byte-identical to no-memory. MUST be
+        # computed here because UNIFIED_SYSTEM has a {seeker_memory} slot — a missing
+        # kwarg would KeyError the bare .format() below and 500 every turn.
+        seeker_memory_block = await build_seeker_memory(user_id)
+
         prompt_tpl  = PROMPTS.get(request.mode, UNIFIED_SYSTEM)
 
         # Override detected language with user's explicit UI preference if provided
@@ -1812,6 +2004,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             language_instruction=combined_directives,
             context=rag_context or "(No indexed passages — answering from deep Puranic knowledge)",
             seeker_context=seeker_ctx,
+            seeker_memory=seeker_memory_block,
             history=history_str,
             personality=GURUJI_PERSONALITY,  # always injected — all modes now resolve to UNIFIED_SYSTEM
         )
@@ -1893,6 +2086,22 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             asyncio.create_task(asyncio.to_thread(
                 increment_usage, user.get("id"), session_id
             ))
+
+        # Seeker memory (axis 2): revise this session's running read of the seeker.
+        # Fire-and-forget beside increment_usage — gated + dark by default, never
+        # blocks the turn, every failure swallowed inside the hook.
+        asyncio.create_task(_maybe_distill_seeker_summary(
+            session_id,
+            [{"role": "user", "content": request.query},
+             {"role": "assistant", "content": full_text}],
+            history_len=len(saved_session["history"]),
+            user_id=user_id, guest_id=guest_id,
+        ))
+
+        # Earned warmth (Phase 1): bump the distinct-return-day counter + lazily
+        # refresh the cross-session arc. Signed-in only, gated + dark by default,
+        # never blocks the turn, every failure swallowed inside the hook.
+        asyncio.create_task(_maybe_update_seeker_warmth(user_id=user_id))
 
         # 7. Done signal with source metadata
         yield {"data": json.dumps({
