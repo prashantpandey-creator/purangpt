@@ -29,7 +29,7 @@ import aiohttp
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, Request, Depends, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
@@ -586,6 +586,43 @@ async def extract_custom_keys(request: Request, call_next):
         "deepseek": request.headers.get("x-deepseek-key"),
     }
     custom_keys_var.set({k: v for k, v in keys.items() if v})
+    return await call_next(request)
+
+
+# ── Per-IP burst limiter (app-layer defense-in-depth) ───────────────────────
+# Rejects floods BEFORE the DB/LLM is touched, keyed on the proxy-appended client
+# IP. This is the second wall behind the Traefik edge limiter (pg-rl); if the edge
+# is bypassed (internal network access) or misconfigured, this still holds.
+#
+# SSE-safe: counts one hit per HTTP request at entry. A long-lived /api/chat SSE
+# stream is a single request, so streaming is never throttled mid-flight.
+#
+# Fail-open: if Redis is down the limiter allows everything (see rate_limiter.py).
+from backend.rate_limiter import check_burst, client_ip_from_scope
+
+# Cheap, high-frequency paths that monitoring/health hit constantly — exempt so a
+# status poller never trips the limit. Everything else is subject to it.
+_BURST_EXEMPT_PREFIXES = ("/api/status", "/api/monitor", "/static", "/favicon")
+_BURST_LIMIT = int(os.getenv("BURST_LIMIT", "8"))
+_BURST_WINDOW = float(os.getenv("BURST_WINDOW", "1"))
+
+
+@app.middleware("http")
+async def burst_rate_limit(request: Request, call_next):
+    path = request.url.path
+    if request.method == "OPTIONS" or path.startswith(_BURST_EXEMPT_PREFIXES):
+        return await call_next(request)
+
+    ip = client_ip_from_scope(dict(request.headers))
+    allowed, remaining = await check_burst(
+        ip, limit=_BURST_LIMIT, window_seconds=_BURST_WINDOW
+    )
+    if not allowed:
+        return JSONResponse(
+            status_code=429,
+            content={"detail": "Too many requests. Please slow down and retry shortly."},
+            headers={"Retry-After": "1"},
+        )
     return await call_next(request)
 
 if FRONTEND_DIR.exists():
