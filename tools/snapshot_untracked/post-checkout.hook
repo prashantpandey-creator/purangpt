@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# post-checkout — snapshot untracked tool trees on every branch change.
+#
+# WHY: untracked files under tools/ (the read_pass moat, growth_engine, the
+# validators) get swept from the working tree when a checkout switches to a branch
+# that tracks them elsewhere. This fires AFTER the switch but BEFORE you'd do more
+# work, tarring the at-risk set to ~/sutradhar-backups so a sweep is recoverable.
+# See tools/snapshot_untracked/ and memory [[moat-branch-fragile]].
+#
+# git passes: $1=prev HEAD  $2=new HEAD  $3=flag (1 = branch checkout, 0 = file checkout)
+# Only snapshot on a BRANCH checkout ($3==1); skip file checkouts (noise).
+#
+# Hard rule: NEVER block or slow a checkout. Backgrounded, output discarded,
+# always exits 0. A backup failure must never become a git failure.
+
+set +e
+BRANCH_FLAG="$3"
+[ "$BRANCH_FLAG" = "1" ] || exit 0
+
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+PY="$REPO_ROOT/venv/bin/python"
+[ -x "$PY" ] || exit 0
+[ -d "$REPO_ROOT/tools/snapshot_untracked" ] || exit 0
+
+DEST="$HOME/sutradhar-backups"
+TS="$(date +%Y%m%d-%H%M%S)"
+
+# Fire-and-forget: snapshot the at-risk untracked trees, keep the last 10.
+(
+  cd "$REPO_ROOT" || exit 0
+  "$PY" -m tools.snapshot_untracked.check \
+    --dest "$DEST" \
+    --path tools/read_pass \
+    --path tools/growth_engine \
+    --path growth_engine \
+    --path narrative_engine \
+    --path tools/campaign_brief_validate \
+    --path tools/connector_envelope \
+    --path tools/content_policy_check \
+    --path tools/post_scheduler \
+    --path tools/quantize_embeddings \
+    --path tools/translation_finish \
+    --path tools/creator_identity \
+    --path tools/snapshot_untracked \
+    --keep 10 \
+    --label "checkout-$TS" >/dev/null 2>&1
+) &
+
+exit 0

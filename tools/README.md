@@ -25,6 +25,8 @@ three functions and the README, tests-first (Rule 0, preconditions A & B in
 | `onnx_export` | Export multilingual-e5-small to ONNX INT8 + embed all 329K corpus chunks into corpus.db | `venv/bin/python -m tools.onnx_export.check --mode model --json` | [README](onnx_export/README.md) |
 | `sqlite_export` | Export all_chunks.jsonl → SQLite DB with FTS5 for offline app use (329K rows, 246MB raw / 70MB gzip) | `venv/bin/python -m tools.sqlite_export.check --json` | [README](sqlite_export/README.md) |
 | `register_router` | Decide Scholar (structured: summary→passage→relevance) vs Guru (flowing) layout per query — deterministic, replaces model-whim register choice | `venv/bin/python -m tools.register_router.check --query "..." --json` | [README](register_router/README.md) |
+| `creator_identity` | Decide if a query asks about the app's creator (Prashant Pandey); if so return an in-character directive (Guruji names him his disciple). Off by default → prompt byte-identical. Wired into `main.py` directives | `venv/bin/python -m tools.creator_identity.check --json --input "who is prashant pandey"` | [README](creator_identity/README.md) |
+| `snapshot_untracked` | Tar untracked tool trees (read_pass moat, growth_engine, validators) to `~/sutradhar-backups` before a branch checkout sweeps them; wired to the `post-checkout` git hook | `venv/bin/python -m tools.snapshot_untracked.check --json --dest ~/sutradhar-backups --path tools/read_pass` | [README](snapshot_untracked/README.md) |
 
 <!-- Add one row per new tool. Keep tool_name = the package dir name. -->
 
