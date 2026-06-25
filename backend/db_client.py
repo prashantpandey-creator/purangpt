@@ -220,6 +220,74 @@ def check_rate_limit(user_id: str, role: str, is_byok: bool = False) -> tuple[bo
     count = profile.get("daily_message_count", 0) or 0
     return count < limit, limit - count
 
+
+def consume_message_unit(user_id: str, role: str, is_byok: bool = False) -> tuple[bool, int]:
+    """Atomically gate AND consume one message unit for a free user, in one SQL
+    statement — the authenticated-user analogue of consume_guest_unit.
+
+    Why this exists: check_rate_limit() is a read-only pre-flight, and the actual
+    increment used to run fire-and-forget AFTER the LLM stream. Under concurrency,
+    N requests at count=9 all read "allowed" before any increment landed → a free
+    user could overrun the 10/day cap N-fold. This function checks-and-consumes in
+    a single guarded UPDATE so the race is impossible.
+
+    Pro/scholar/admin/BYOK are uncapped (return immediately, no DB write).
+    Fails OPEN on a DB error (never blocks a paying flow on infra trouble).
+    Returns (allowed, remaining).
+    """
+    if role in ("pro", "scholar", "admin") or is_byok:
+        return True, 999999
+
+    limit = 10  # Free tier daily limit (mirrors check_rate_limit)
+    conn = get_db_conn()
+    if not conn:
+        return True, limit  # fail-open
+
+    try:
+        with conn.cursor() as cur:
+            # Roll the daily counter over first if we've crossed into a new UTC day.
+            # Done in SQL so it's atomic with the increment that follows.
+            cur.execute(
+                """
+                UPDATE profiles
+                   SET daily_message_count = 0,
+                       deep_research_count = 0,
+                       daily_reset_at = NOW()
+                 WHERE id = %s
+                   AND daily_reset_at::date < (NOW() AT TIME ZONE 'UTC')::date
+                """,
+                (user_id,),
+            )
+            # Guarded increment: only bumps while still under the limit. RETURNING
+            # is NULL when the WHERE guard blocks it → already at the cap.
+            cur.execute(
+                """
+                UPDATE profiles
+                   SET daily_message_count = daily_message_count + 1,
+                       updated_at = NOW()
+                 WHERE id = %s
+                   AND daily_message_count < %s
+                RETURNING daily_message_count
+                """,
+                (user_id, limit),
+            )
+            row = cur.fetchone()
+        conn.commit()
+        if row is None:
+            return False, 0  # at the limit (or no such profile)
+        new_count = row["daily_message_count"]
+        return True, max(0, limit - new_count)
+    except Exception as e:
+        logger.error(f"Error consuming message unit for {user_id}: {e}")
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        return True, limit  # fail-open
+    finally:
+        conn.close()
+
+
 def check_research_limit(user_id: str, role: str, is_byok: bool = False) -> tuple[bool, int]:
     """Check if the user has exceeded their daily deep research limit."""
     if is_byok:
@@ -234,19 +302,25 @@ def check_research_limit(user_id: str, role: str, is_byok: bool = False) -> tupl
     count = profile.get("deep_research_count", 0) or 0
     return count < limit, limit - count
 
-def increment_usage(user_id: str, session_id: str = None, model: str = None):
-    """Increment the user's daily message count and log the usage — atomically.
+def increment_usage(user_id: str, session_id: str = None, model: str = None, log_only: bool = False):
+    """Log a message's usage, and (unless log_only) bump the daily message count.
+
+    When the unit has already been consumed atomically at the gate
+    (consume_message_unit), pass log_only=True so the count is NOT bumped a second
+    time — this writes the analytics row only. Default (log_only=False) preserves
+    the original count-and-log behaviour for any other caller.
+
     The count bump is a single `SET count = count + 1` in SQL (not a Python
-    read-modify-write), so concurrent requests from the same user can't each read
-    the same old value and lose increments / overrun the limit."""
+    read-modify-write), so it never loses concurrent increments."""
     conn = get_db_conn()
     if not conn: return
     try:
         with conn.cursor() as cur:
-            cur.execute(
-                "UPDATE profiles SET daily_message_count = daily_message_count + 1, updated_at = NOW() WHERE id = %s",
-                (user_id,),
-            )
+            if not log_only:
+                cur.execute(
+                    "UPDATE profiles SET daily_message_count = daily_message_count + 1, updated_at = NOW() WHERE id = %s",
+                    (user_id,),
+                )
             cur.execute(
                 "INSERT INTO usage_logs (user_id, session_id, model_used, created_at) VALUES (%s, %s, %s, NOW())",
                 (user_id, session_id, model)

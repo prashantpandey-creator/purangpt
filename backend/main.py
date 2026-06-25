@@ -100,7 +100,7 @@ INTERNAL_SERVICE_KEY = os.getenv("INTERNAL_SERVICE_KEY", "")
 
 
 from backend.auth import get_current_user, require_auth, require_role, get_guest_id, check_guest_rate_limit, consume_guest_unit, increment_guest_usage, validate_query
-from backend.db_client import update_profile, get_admin_stats, get_all_users, encrypt_keys, decrypt_keys, increment_usage, check_rate_limit, check_research_limit, increment_research_usage
+from backend.db_client import update_profile, get_admin_stats, get_all_users, encrypt_keys, decrypt_keys, increment_usage, check_rate_limit, consume_message_unit, check_research_limit, increment_research_usage
 
 from backend.session_manager import SessionManager
 from backend.monitor import run_health_checks
@@ -1557,8 +1557,11 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         if not allowed:
             raise HTTPException(429, "Guest rate limit exceeded. Please sign in.")
     else:
+        # Atomically gate AND consume at the door — concurrent requests can't each
+        # pass a read-only pre-flight and overrun the cap (the old fire-and-forget
+        # increment after the stream left exactly that race open).
         allowed, rem = await asyncio.to_thread(
-            check_rate_limit, user.get("id"), user.get("role", "free"), is_byok
+            consume_message_unit, user.get("id"), user.get("role", "free"), is_byok
         )
         if not allowed:
             raise HTTPException(429, "Daily message limit exceeded. Please upgrade your plan.")
@@ -1924,11 +1927,13 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             {"role": "assistant", "content": full_text}
         ], user_id, guest_id)
 
-        # Guest units are already consumed atomically at the gate above. For
-        # signed-in users, record the message + usage log now (atomic SQL inside).
+        # Both guest units AND free-user message units are now consumed atomically
+        # at the gate (consume_guest_unit / consume_message_unit). Here we only
+        # write the analytics usage_log — log_only=True so the count isn't bumped
+        # a second time.
         if user:
             asyncio.create_task(asyncio.to_thread(
-                increment_usage, user.get("id"), session_id
+                increment_usage, user.get("id"), session_id, None, True
             ))
 
         # 7. Done signal with source metadata
@@ -1944,13 +1949,27 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
     return EventSourceResponse(safe_sse_stream(event_gen()), headers={"X-Accel-Buffering": "no"})
 
 
+async def _gate_unauthed_llm(req: Request):
+    """Daily rate-gate for the unauthenticated, LLM-touching endpoints
+    (sanskrit-search, instances, citation-lookup). They have no auth parameter and
+    no front-end callers, yet reach the LLM — so an open door to burn tokens. Key
+    on the guest identity (IP-based) and atomically consume one unit; 429 when the
+    guest's daily allowance is spent. Fail-open on infra trouble (consume_guest_unit
+    already does). This does NOT require sign-in — it only caps anonymous abuse."""
+    guest_id = get_guest_id(req)
+    allowed, _ = await asyncio.to_thread(consume_guest_unit, guest_id)
+    if not allowed:
+        raise HTTPException(429, "Daily limit reached for anonymous use. Please sign in.")
+
+
 @app.post("/api/sanskrit-search")
-async def sanskrit_search(request: SanskritSearchRequest):
+async def sanskrit_search(request: SanskritSearchRequest, req: Request):
     """Semantic full-text search with LLM query translation and result translation."""
     if not state.gretil_corpus:
         raise HTTPException(503, "GRETIL corpus not loaded. Run python fetch_gretil.py first.")
     if not request.query.strip():
         raise HTTPException(400, "Query cannot be empty")
+    await _gate_unauthed_llm(req)
 
     async def search_gen():
         query = request.query.strip()
@@ -2018,9 +2037,10 @@ async def search(request: SearchRequest):
 
 
 @app.post("/api/instances")
-async def instances(request: InstancesRequest):
+async def instances(request: InstancesRequest, req: Request):
     if not any_llm_configured():
         raise HTTPException(503, "No LLM credentials configured")
+    await _gate_unauthed_llm(req)
 
     expansion = await state.query_processor.expand(request.query)
 
@@ -2076,8 +2096,9 @@ async def instances(request: InstancesRequest):
     }
 
 @app.get("/api/citation-lookup")
-async def citation_lookup(ref: str):
+async def citation_lookup(ref: str, req: Request):
     """Looks up a citation, gets Sanskrit text, and translates it instantly."""
+    await _gate_unauthed_llm(req)
     results = await asyncio.to_thread(search_sanskrit, ref, max_results=1)
     
     if not results:
