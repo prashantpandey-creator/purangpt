@@ -470,6 +470,8 @@ def expand_query_terms(query: str) -> list:
 
 
 
+
+
 async def _validate_llm_providers() -> None:
     """
     Probe configured providers on startup and pick the first that answers.
@@ -1600,7 +1602,42 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         actual_query = request.query
         history_len = len(session_data.get("history", []))
         
-        if history_len > 0 and len(actual_query) < 40:
+        # The history-aware rewrite is an UNCACHEABLE LLM round-trip (~1-3s) — it was
+        # firing on EVERY short follow-up, the single biggest pre-token delay in chat.
+        # It is only truly needed when the fragment is REFERENTIAL (leans on history to
+        # be intelligible: pronouns, "and …?", "why", "more") OR carries Sanskrit that
+        # needs canonicalising. A short follow-up that already names its own subject in
+        # plain English (e.g. "the role of dharma in war") can skip straight to the cheap
+        # passthrough/expand path. This removes the LLM hop from the common case while
+        # preserving it exactly where context-resolution actually matters.
+        ql = actual_query.lower().strip()
+        toks = ql.split()
+        first_tok = toks[0] if toks else ""
+        # Pronouns/connectives that point BACK at the prior turn — referential at any length.
+        _ANAPHORIC = ("it", "its", "this", "that", "these", "those", "they", "them",
+                      "he", "she", "his", "her", "their")
+        # Continuation openers that signal "keep going from before" — only when the query
+        # is genuinely a FRAGMENT (a full clause like "how does karma bind the soul" stands
+        # on its own and must NOT be treated as referential just for starting with "how").
+        _CONTINUATION = ("and", "why", "how", "more", "then", "so", "but", "also",
+                         "explain", "elaborate")
+        _CONTINUATION_PHRASE = ("what about", "tell me more", "how about", "what else",
+                                "go on", "continue")
+        is_referential = (
+            first_tok in _ANAPHORIC
+            or any(ql.startswith(p) for p in _CONTINUATION_PHRASE)
+            or (first_tok in _CONTINUATION and len(toks) <= 4)  # short fragment only (cap fuzzy; favours rewriting borderline "and the role of X?" over missing context)
+            or len(toks) <= 2  # 1-2 word fragments lean on context by nature
+        )
+        # History-rewrite is for REFERENTIAL fragments only — queries that can't be
+        # understood without the prior turn. A short query that contains Sanskrit but
+        # names its own subject ("how does karma bind the soul") does NOT need history;
+        # the cheaper cached expand() canonicalises its terms. Gating on referential-ness
+        # alone (not "contains Sanskrit") keeps the uncacheable LLM hop off the common case.
+        needs_history_rewrite = (
+            history_len > 0 and len(actual_query) < 40 and is_referential
+        )
+        if needs_history_rewrite:
             history_str = "\n".join([f"{m['role']}: {m['content']}" for m in session_data["history"][-2:]])
             expansion = await state.query_processor.expand_with_history(actual_query, history_str)
             actual_query = expansion.original # The processor assigns the rewritten query to 'original'
@@ -1643,28 +1680,32 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
 
                 # Scripture channel — citable sources only (excludes Guruji darshans).
                 # This is what fills the sources panel and [1][2] citations.
-                results = await state.searcher.hybrid_search(
-                    query=expansion.original,
-                    top_k=request.top_k,
-                    filters=request.filters,
-                    sharma_weighting=False,   # scripture channel never score-inflates Guruji
-                    embed_phrase=expansion.embed_phrase,
-                    fts_phrase=expansion.fts_phrase,
-                    semantic_weight=weight,
-                    corpus_type="scripture",  # filter: exclude yogic-discourse/commentary
-                )
-
-                # Guruji channel — darshans/cognition context only. Runs in parallel.
-                # Not surfaced as citations; provides the Guru's own voice/worldview context.
-                guruji_results = await state.searcher.hybrid_search(
-                    query=expansion.original,
-                    top_k=4,
-                    filters=None,
-                    sharma_weighting=False,
-                    embed_phrase=expansion.embed_phrase,
-                    fts_phrase=expansion.fts_phrase,
-                    semantic_weight=weight,
-                    corpus_type="guruji",
+                # Guruji channel — darshans/cognition context, not surfaced as citations.
+                # The two channels are INDEPENDENT, so fire them CONCURRENTLY rather
+                # than awaiting one then the other (the previous code claimed "runs in
+                # parallel" in a comment but actually ran them serially — halving the
+                # pre-token latency was a free win left on the floor).
+                results, guruji_results = await asyncio.gather(
+                    state.searcher.hybrid_search(
+                        query=expansion.original,
+                        top_k=request.top_k,
+                        filters=request.filters,
+                        sharma_weighting=False,   # scripture channel never score-inflates Guruji
+                        embed_phrase=expansion.embed_phrase,
+                        fts_phrase=expansion.fts_phrase,
+                        semantic_weight=weight,
+                        corpus_type="scripture",  # filter: exclude yogic-discourse/commentary
+                    ),
+                    state.searcher.hybrid_search(
+                        query=expansion.original,
+                        top_k=4,
+                        filters=None,
+                        sharma_weighting=False,
+                        embed_phrase=expansion.embed_phrase,
+                        fts_phrase=expansion.fts_phrase,
+                        semantic_weight=weight,
+                        corpus_type="guruji",
+                    ),
                 )
 
                 # Multi-hop comparison
