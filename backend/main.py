@@ -113,6 +113,15 @@ try:
 except Exception:  # pragma: no cover - import-environment guard
     route_register = None
 
+# Creator-identity gate (tools/creator_identity) — fires ONLY on a "who is the
+# app's creator / Prashant Pandey" question, injecting one in-character directive.
+# Same guard + injection pattern as route_register: a missing tools/ dir never
+# breaks chat; off by default leaves the prompt byte-identical to today.
+try:
+    from tools.creator_identity.check import run as creator_identity
+except Exception:  # pragma: no cover - import-environment guard
+    creator_identity = None
+
 # ── Session Memory ─────────────────────────────────────────────────────────
 session_manager = SessionManager(MAX_HISTORY)
 
@@ -180,7 +189,7 @@ You are ONE voice with TWO registers. Read each question and choose what truly s
 
 ## Behavioral Rules & Guardrails
 - **Economy, not brevity for its own sake:** Every sentence must earn its place. Winding, padded explanations are a sign of a mind that has not found the center — never pad, never repeat, never trail off into vagueness. But economy is not the same as terseness: let the answer be exactly as long as the question deserves. A greeting or a simple factual ask is answered in a breath. A real question about the path, the practice, the nature of time or ojas deserves a shaped answer that opens with the essential truth, then expands with precision — an example, a number, an aphorism, a turn that lands. Follow the seeker's chosen depth (the LENGTH directive below). When in doubt, say the true thing fully and then stop — do not stop short of the truth, and do not continue past it.
-- **Practice and Initiation:** You NEVER give specific yogic practice instructions (such as pranayama ratios, mudra positions, kriya sequences, bandhas, or durations) from your own general knowledge. Only a living Guru can prescribe practice. You may ONLY share practice instructions if they are explicitly present in the retrieved passages. Otherwise, tell them: "This practice belongs to the direct relationship between Guru and disciple. It cannot be learned from a screen or a book. The practice finds you when the Guru finds you." Frame this as a safeguard: they are not directly initiated by you, so they cannot practice yet, but leave the path open for future initiation.
+- **Practice and Initiation:** You MAY freely give basic steadying guidance — a simple sitting or standing posture, an open and soft gaze, watching the breath, a quiet place and a fixed hour. These belong to no lineage and need no initiation; offer them naturally, as a teacher would. But you NEVER give *initiation-gated* practice from your own general knowledge: pranayama ratios or breath-retention counts, bandhas, mudras (such as khechari), specific kriya sequences, or kundalini techniques. You may share such practice ONLY if it is explicitly present in the retrieved passages. Otherwise tell them: "This practice belongs to the direct relationship between Guru and disciple. It cannot be learned from a screen or a book. The practice finds you when the Guru finds you." Frame this as a safeguard — they are not yet initiated by you for those practices, but leave the path open. Do not evade this by renaming an initiation-gated practice a "method", a "threshold", or a "preparation": if it prescribes pranayama, a bandha, a mudra, a kriya, or kundalini work and it is not in the retrieved passages, you do not give it.
 - **Seeker Context Subtlety:** NEVER let the seeker know you know their metadata. Do not say "I see you are in Dubai" or "since it is late". Keep your awareness completely invisible. Use it only to adapt your tone behind the scenes.
 
 ## Primary register — direct speech (use for most questions)
@@ -1882,6 +1891,18 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                     )
             except Exception as _e:  # never let routing break a chat turn
                 logger.warning("register_router failed, defaulting to guru: %s", _e)
+
+        # Creator-identity: fires only on a "who is Prashant Pandey / who built
+        # this app" question. Off by default → appends nothing → prompt unchanged.
+        if creator_identity is not None:
+            try:
+                _c = creator_identity(request.query)
+                if _c.get("success") and _c["data"]["directive"]:
+                    directives.append(_c["data"]["directive"])
+                    logger.info("creator_identity -> fired (reason=%s)",
+                                _c.get("metadata", {}).get("reason", "-"))
+            except Exception as _e:  # never let the gate break a chat turn
+                logger.warning("creator_identity failed, skipping: %s", _e)
 
         combined_directives = "\n\n".join(directives)
 
