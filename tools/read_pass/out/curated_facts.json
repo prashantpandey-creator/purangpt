@@ -1,0 +1,54 @@
+{
+  "_doc": "Human-verified ground-truth facts applied AFTER decode/merge, BEFORE isolate-prune, on every rebuild. These OVERRIDE LLM decode errors. Source: daddy + Mossin 'The Awakener' biography, cross-checked. The decode under-extracts Guruji's real lineage and over-extracts the popular Yogananda one — this file is the corrective. See memory sharma-lineage and guru-continuity-babaji-spine.",
+  "entities": [
+    { "id": "satyacharan lahiri", "name": "Satyacharan Lahiri", "kind": "sage",
+      "all_forms": ["Satyacharan Lahiri", "Satyacharan", "Satya Charan Lahiri"],
+      "note": "Lahiri Mahasaya's GRANDSON (son of Tinkori). The 4th Guru. Sharma's DIRECT initiating guru (2nd-level Kriya, 28 Apr 1984). Decode caught him as a floating name (55 source mentions) but missed his guru-edges -> he was pruned as an isolate." },
+    { "id": "tinkori lahiri", "name": "Tinkori Lahiri", "kind": "sage",
+      "all_forms": ["Tinkori Lahiri", "Tinkori", "Tincouri Lahiri"],
+      "note": "Lahiri Mahasaya's eldest son. The 3rd Guru. Father of Satyacharan." },
+    { "id": "shailendra sharma", "name": "Shailendra Sharma", "kind": "sage",
+      "all_forms": ["Shailendra Sharma", "Shri Shailendra Sharma", "Guruji", "Shailendra Sharma (Guruji)"],
+      "note": "The 5th Guru of the Lahiri-family Kriya line. Bharadwaja gotra. Directly initiated by Satyacharan Lahiri." }
+  ],
+  "lineage_edges": [
+    { "src": "mahavatar babaji", "rel": "guru_of", "dst": "lahiri mahasaya",
+      "src_name": "Mahavatar Babaji", "dst_name": "Lahiri Mahasaya",
+      "verse_ranges": [], "evidence": "curated: root of the Kriya parampara" },
+    { "src": "lahiri mahasaya", "rel": "father_of", "dst": "tinkori lahiri",
+      "src_name": "Lahiri Mahasaya", "dst_name": "Tinkori Lahiri",
+      "verse_ranges": [], "evidence": "curated: eldest son, 3rd Guru" },
+    { "src": "lahiri mahasaya", "rel": "guru_of", "dst": "tinkori lahiri",
+      "src_name": "Lahiri Mahasaya", "dst_name": "Tinkori Lahiri",
+      "verse_ranges": [], "evidence": "curated: Kriya transmission to his son" },
+    { "src": "tinkori lahiri", "rel": "father_of", "dst": "satyacharan lahiri",
+      "src_name": "Tinkori Lahiri", "dst_name": "Satyacharan Lahiri",
+      "verse_ranges": [], "evidence": "curated: Satyacharan is Lahiri's grandson" },
+    { "src": "tinkori lahiri", "rel": "guru_of", "dst": "satyacharan lahiri",
+      "src_name": "Tinkori Lahiri", "dst_name": "Satyacharan Lahiri",
+      "verse_ranges": [], "evidence": "curated: Kriya transmission, 4th Guru" },
+    { "src": "satyacharan lahiri", "rel": "guru_of", "dst": "shailendra sharma",
+      "src_name": "Satyacharan Lahiri", "dst_name": "Shailendra Sharma",
+      "verse_ranges": [], "evidence": "curated: DIRECT initiation, 2nd-level Kriya 28 Apr 1984" }
+  ],
+  "remove_edges": [
+    { "src_contains": "lahiri", "rel": "disciple", "dst_contains": "yogananda",
+      "reason": "Yogananda is NOT in Sharma's chain. He is on the parallel Babaji->Lahiri->Yukteshwar->Yogananda (Autobiography-of-a-Yogi) branch, which diverges at Lahiri. Do not present it as Guruji's lineage." },
+    { "src_contains": "babaji", "rel": "disciple", "dst_contains": "lahiri",
+      "reason": "Backwards edge: Babaji is Lahiri's GURU, not disciple. The correct direction is the curated babaji guru_of lahiri above." },
+    { "src_contains": "himmat bahadur", "rel": "son", "dst_contains": "shailendra sharma",
+      "reason": "Backwards: Himmat Bahadur Sharma is Guruji's FATHER, not his son." },
+    { "src_contains": "shailendra sharma", "rel": "successor", "dst_contains": "yogananda",
+      "reason": "WRONG: Sharma does NOT succeed Yogananda. They are on SEPARATE forks of Lahiri's tree (Yogananda via Yukteshwar = Western/Autobiography branch; Sharma via the family branch Tinkori->Satyacharan). This survivor edge slipped past the lahiri/disciple remove-rule because it is keyed shailendra-sharma/successor. Confirmed still present in the 2026-06-24 rebuilt manifest." },
+    { "src_contains": "babaji", "rel": "disciple", "dst_contains": "shankaracharya",
+      "reason": "Backwards: the corpus has Babaji guru_of Shankaracharya (the chandala-initiation legend); the inverse disciple edge is a decode directionality artifact. Same bug family as babaji/disciple/lahiri above." }
+  ],
+  "split_forms": [
+    { "from_id": "rama", "to_id": "balarama",
+      "forms": ["Chalabhṛdrāma", "Halayudha", "Halī", "Revatīśa"],
+      "reason": "The THREE Ramas bug (flagged twice). graph.py's bare-name guard severs 'Balarama' from Rama, but Balarama's distinct EPITHETS slip through one level deeper. Halayudha/Halī = 'plough-armed'; Revatīśa = 'lord of Revati'; Chalabhṛdrāma = Balabhadra-Rama. All Balarama (Krishna's brother), NOT Ramachandra." },
+    { "from_id": "rama", "to_id": "parashurama",
+      "forms": ["Jamadagnyamahadarpadalana"],
+      "reason": "Parashurama epithet ('crusher of Jamadagni's-son's pride') misfused into the Ramachandra node. Parashurama (axe-warrior, Jamadagni's son) is a SEPARATE Vishnu avatar." }
+  ]
+}

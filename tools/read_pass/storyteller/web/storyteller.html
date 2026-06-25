@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>The Storyteller — Traverse the Ramayana</title>
+<style>
+  :root{
+    --bg:#140f0a; --panel:#0f0b07; --ink:#d8c4a6; --dim:#8a7a60; --faint:#6a5a44;
+    --saffron:#ff9933; --gold:#e0c090; --line:#3a2f25; --node:#1c1610; --nodeb:#3a2f25;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+    font-family:Georgia,'Times New Roman',serif;overflow:hidden}
+  .ui{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+  #app{display:flex;flex-direction:column;height:100vh}
+  header{display:flex;align-items:center;justify-content:space-between;
+    padding:12px 22px;border-bottom:.5px solid var(--line);background:var(--panel)}
+  header .t{color:#e8d8c0;font-size:15px;letter-spacing:.04em}
+  header .m{color:var(--faint);font-size:11.5px}
+  /* the stage: graph traversal space */
+  #stage{flex:1;position:relative;overflow:hidden}
+  .slot{position:absolute;text-align:center;transition:opacity .25s}
+  .lbl{color:var(--faint);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase}
+  .nbox{margin-top:5px;background:var(--node);border:.5px solid var(--nodeb);
+    border-radius:10px;padding:7px 11px;color:#a89274;font-size:13px;display:inline-block;
+    max-width:230px;cursor:pointer;transition:all .15s}
+  .nbox:hover{border-color:var(--saffron);color:var(--gold)}
+  #center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    text-align:center;width:300px}
+  #center .card{background:#3a2a18;border:1.5px solid var(--saffron);border-radius:14px;
+    padding:18px 20px;animation:pop .3s ease}
+  @keyframes pop{from{transform:scale(.96);opacity:.5}to{transform:scale(1);opacity:1}}
+  #center .nm{color:var(--saffron);font-size:22px;margin-bottom:7px}
+  #center .dx{color:var(--ink);font-size:14px;line-height:1.6}
+  #edges{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.3}
+  /* narration panel (right beat) */
+  .up{top:16px;left:50%;transform:translateX(-50%);width:230px}
+  .down{bottom:16px;left:50%;transform:translateX(-50%);width:280px}
+  .left{top:50%;left:22px;transform:translateY(-50%);width:150px}
+  .right{top:50%;right:18px;transform:translateY(-50%);width:170px}
+  /* ask bar */
+  footer{border-top:.5px solid var(--line);background:var(--panel);padding:11px 18px}
+  .askrow{display:flex;gap:9px;align-items:center}
+  #ask{flex:1;background:var(--node);border:.5px solid var(--line);border-radius:8px;
+    padding:10px 14px;color:var(--ink);font-size:14px;font-family:inherit}
+  #ask::placeholder{color:var(--dim)}
+  .keyhint{display:flex;gap:14px;justify-content:center;margin-top:9px}
+  .keyhint span{color:var(--dim);font-size:11.5px}
+  kbd{background:#241a10;border:.5px solid var(--line);border-radius:4px;padding:2px 7px;
+    color:var(--ink);font-family:ui-monospace,monospace;font-size:11px}
+  /* answer overlay */
+  #answer{position:absolute;left:50%;bottom:84px;transform:translateX(-50%);
+    width:min(560px,86%);background:#211a13;border:.5px solid var(--nodeb);
+    border-radius:12px;padding:14px 18px;display:none;animation:rise .25s ease}
+  @keyframes rise{from{transform:translate(-50%,8px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+  #answer .who{color:var(--saffron);font-size:12px;margin-bottom:6px}
+  #answer .body{color:#cdb79a;font-size:15px;line-height:1.65}
+  #answer .x{position:absolute;top:8px;right:12px;color:var(--dim);cursor:pointer;font-size:18px}
+  .keyfield{background:var(--node);border:.5px solid var(--line);border-radius:8px;
+    padding:7px 11px;color:var(--ink);font-size:12.5px;width:230px}
+  .crumbs{position:absolute;top:12px;left:18px;color:var(--faint);font-size:11px;max-width:60%}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <span class="t ui"><span style="color:var(--saffron)">✦</span> The Storyteller — Ramayana</span>
+    <span class="m ui" id="meta">336 nodes · 2,221 edges</span>
+  </header>
+
+  <div id="stage">
+    <svg id="edges"></svg>
+    <div class="crumbs ui" id="crumbs"></div>
+    <div class="slot up"    id="s-up"></div>
+    <div class="slot left"  id="s-left"></div>
+    <div class="slot right" id="s-right"></div>
+    <div class="slot down"  id="s-down"></div>
+    <div id="center"></div>
+    <div id="answer"><span class="x ui" onclick="hideAnswer()">×</span>
+      <div class="who ui" id="ans-who"></div><div class="body ui" id="ans-body"></div></div>
+  </div>
+
+  <footer>
+    <div class="askrow">
+      <input id="ask" class="ui" placeholder="ask the teller anything…  (or press / )"/>
+      <input id="key" class="keyfield ui" type="password" placeholder="paste LLM API key (optional)"/>
+    </div>
+    <div class="keyhint ui">
+      <span><kbd>→</kbd> next beat</span>
+      <span><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd> walk the graph</span>
+      <span><kbd>esc</kbd> back to story</span>
+      <span><kbd>/</kbd> ask</span>
+    </div>
+  </footer>
+</div>
+
+<script src="_data.js"></script>
+<script>
+const D = window.STORY_DATA;
+const nodesById = {}; D.nodes.forEach(n=>nodesById[n.id]=n);
+// index edges by source for fast traversal
+const out = {}; // id -> [{rel,dst}]
+D.edges.forEach(e=>{ (out[e.src]=out[e.src]||[]).push({rel:e.rel,dst:e.dst,name:e.dst_name||nodesById[e.dst]?.name});
+                     (out[e.dst]=out[e.dst]||[]).push({rel:'rev:'+e.rel,dst:e.src,name:e.src_name||nodesById[e.src]?.name}); });
+
+// state: we're either IN THE STORY (a beat) or ON A NODE (traversing)
+let mode = 'beat';      // 'beat' | 'node'
+let beatIdx = 0;
+let nodeId = null;
+const trail = [];
+
+// Distribute a node's REAL edges across the three arrows by meaning, but never
+// leave an arrow dead if edges exist. Priority lists are preferences, not gates:
+// whatever's left over still fills empty arrows so every hub is fully walkable.
+const PREF = {
+  up:   ['avatar','is','identical_to','alias','born_from'],          // what it IS
+  left: ['father','mother','rev:son','rev:creates','taught','rev:taught'], // its origin
+  down: ['son','brother','wife','husband','creates','killed','kills'],     // what flows from it
+};
+function nodeEdges(id){
+  // dedupe by destination, keep only edges to nodes we actually have
+  const seen=new Set(), es=[];
+  for(const e of (out[id]||[])){ if(nodesById[e.dst] && !seen.has(e.dst+e.rel)){ seen.add(e.dst+e.rel); es.push(e); } }
+  return es;
+}
+function distribute(id){
+  const es = nodeEdges(id);
+  const used = new Set();
+  const slot = {};
+  // first pass: honor the preferred meaning for each arrow
+  for(const dir of ['up','left','down']){
+    const hit = es.find(e=>PREF[dir].includes(e.rel) && !used.has(e));
+    if(hit){ slot[dir]=hit; used.add(hit); }
+  }
+  // second pass: fill any still-empty arrow with any remaining edge, so no
+  // direction is a silent dead-end on a connected node
+  const leftover = es.filter(e=>!used.has(e));
+  let li=0;
+  for(const dir of ['up','left','down']){
+    if(!slot[dir] && li<leftover.length){ slot[dir]=leftover[li++]; }
+  }
+  return slot;
+}
+
+function render(){
+  const C = document.getElementById('center');
+  const up=document.getElementById('s-up'), lf=document.getElementById('s-left'),
+        rt=document.getElementById('s-right'), dn=document.getElementById('s-down');
+  [up,lf,rt,dn].forEach(s=>s.innerHTML='');
+  document.getElementById('crumbs').textContent = trail.slice(-4).map(t=>t.label).join('  ›  ');
+
+  if(mode==='beat'){
+    const b = D.beats[beatIdx];
+    C.innerHTML = `<div class="card"><div class="nm" style="font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#7a6a54" class="ui">beat ${beatIdx+1} / ${D.beats.length}</div>
+      <div class="dx" style="margin-top:8px;font-size:15px;line-height:1.7">${esc(b.summary||b.title)}</div></div>`;
+    // right = next beat ; down = enter the graph at a character in this beat
+    if(beatIdx < D.beats.length-1)
+      rt.innerHTML = `<div class="lbl ui">next beat <span>→</span></div><div class="nbox ui" onclick="go('next')">${esc(D.beats[beatIdx+1].title||'…')}</div>`;
+    const seed = (b.cast||[]).map(id=>nodesById[id]).filter(Boolean)[0];
+    if(seed) dn.innerHTML = `<div class="nbox ui" onclick="enterNode('${seed.id}')">${esc(seed.name)}</div><div class="lbl ui"><span>↓</span> step into the graph</div>`;
+    if(beatIdx>0) lf.innerHTML = `<div class="lbl ui"><span>←</span> previous</div><div class="nbox ui" onclick="go('prev')">beat ${beatIdx}</div>`;
+  } else {
+    const n = nodesById[nodeId];
+    C.innerHTML = `<div class="card"><div class="nm">${esc(n.name)}</div>
+      <div class="dx" style="font-size:13px;color:#9a8a70;margin-top:2px" class="ui">${esc(n.kind||'')}</div>
+      <div class="dx" style="margin-top:8px;font-size:13px">${esc((n.forms||[]).slice(0,4).join(' · '))}</div></div>`;
+    const sl=distribute(nodeId); const eu=sl.up, el=sl.left, ed=sl.down;
+    if(eu) up.innerHTML = `<div class="lbl ui"><span>↑</span> ${esc(rl(eu.rel))}</div><div class="nbox ui" onclick="enterNode('${eu.dst}')">${esc(eu.name)}</div>`;
+    if(el) lf.innerHTML = `<div class="lbl ui"><span>←</span> ${esc(rl(el.rel))}</div><div class="nbox ui" onclick="enterNode('${el.dst}')">${esc(el.name)}</div>`;
+    if(ed) dn.innerHTML = `<div class="nbox ui" onclick="enterNode('${ed.dst}')">${esc(ed.name)}</div><div class="lbl ui"><span>↓</span> ${esc(rl(ed.rel))}</div>`;
+    rt.innerHTML = `<div class="lbl ui">back to story <span>→</span></div><div class="nbox ui" onclick="toStory()">resume telling</div>`;
+  }
+  drawEdges();
+}
+function rl(r){return r.replace('rev:','').replace(/_/g,' ');}
+function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+
+function drawEdges(){
+  const svg=document.getElementById('edges'); const W=svg.clientWidth,H=svg.clientHeight;
+  const cx=W/2, cy=H/2; const L=(x2,y2,c)=>`<line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="1.2"/>`;
+  let s='';
+  if(document.getElementById('s-up').innerHTML) s+=L(cx,46,'#5a4632');
+  if(document.getElementById('s-down').innerHTML) s+=L(cx,H-46,'#5a4632');
+  if(document.getElementById('s-left').innerHTML) s+=L(98,cy,'#5a4632');
+  if(document.getElementById('s-right').innerHTML) s+=L(W-90,cy,mode==='beat'?'#ff9933':'#5a4632');
+  svg.innerHTML=s;
+}
+
+function enterNode(id){ if(!nodesById[id])return; trail.push({label:nodesById[id].name}); mode='node'; nodeId=id; hideAnswer(); render(); }
+function toStory(){ mode='beat'; render(); }
+function go(dir){
+  if(mode!=='beat'){ if(dir==='right'){toStory();return;} }
+  if(dir==='next'&&beatIdx<D.beats.length-1){beatIdx++;trail.push({label:'beat '+(beatIdx+1)});}
+  if(dir==='prev'&&beatIdx>0)beatIdx--;
+  render();
+}
+
+// keyboard
+document.addEventListener('keydown',e=>{
+  if(document.activeElement.id==='ask'||document.activeElement.id==='key'){
+    if(e.key==='Enter'&&document.activeElement.id==='ask'){doAsk();}
+    if(e.key==='Escape'){document.getElementById('ask').blur();} return;
+  }
+  if(e.key==='/'){e.preventDefault();document.getElementById('ask').focus();return;}
+  if(e.key==='ArrowRight'){ mode==='beat'?go('next'):toStory(); }
+  else if(e.key==='ArrowLeft'){ if(mode==='beat')go('prev'); else{const sl=distribute(nodeId);if(sl.left)enterNode(sl.left.dst);} }
+  else if(e.key==='ArrowUp'){ if(mode==='node'){const sl=distribute(nodeId);if(sl.up)enterNode(sl.up.dst);} }
+  else if(e.key==='ArrowDown'){ if(mode==='beat'){const b=D.beats[beatIdx];const seed=(b.cast||[])[0];if(seed)enterNode(seed);} else {const sl=distribute(nodeId);if(sl.down)enterNode(sl.down.dst);} }
+  else if(e.key==='Escape'){ if(trail.length>1){trail.pop();const prev=trail[trail.length-1];/*best-effort*/} toStory(); }
+});
+
+// ── ask the teller (LLM if key present, else local context) ──────────────────
+async function doAsk(){
+  const q=document.getElementById('ask').value.trim(); if(!q)return;
+  document.getElementById('ask').value='';
+  const key=document.getElementById('key').value.trim();
+  const here = mode==='beat' ? D.beats[beatIdx].summary : (nodesById[nodeId].name+' ('+nodesById[nodeId].kind+')');
+  showAnswer('the teller','…');
+  if(key){
+    try{
+      const r=await fetch('https://api.deepseek.com/chat/completions',{method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+        body:JSON.stringify({model:'deepseek-chat',messages:[
+          {role:'system',content:"You are an oral storyteller of the Ramayana. Answer the listener briefly (2-3 sentences), warmly, in a teller's voice. Context of where we are: "+here},
+          {role:'user',content:q}]})});
+      const j=await r.json();
+      showAnswer('the teller', j.choices?.[0]?.message?.content || '(no reply)');
+    }catch(err){ showAnswer('the teller','(could not reach the model — '+err.message+')'); }
+  } else {
+    showAnswer('the teller',"(no key set) Here, we are at: "+esc(here.slice(0,200))+"  — paste a key above and I'll answer in the teller's voice.");
+  }
+}
+function showAnswer(who,body){const a=document.getElementById('answer');document.getElementById('ans-who').textContent=who;document.getElementById('ans-body').textContent=body;a.style.display='block';}
+function hideAnswer(){document.getElementById('answer').style.display='none';}
+
+document.getElementById('meta').textContent = D.nodes.length+' nodes · '+D.edges.length+' edges · '+D.beats.length+' beats';
+trail.push({label:'beat 1'});
+render();
+window.addEventListener('resize',drawEdges);
+</script>
+</body>
+</html>

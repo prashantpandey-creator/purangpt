@@ -1,0 +1,119 @@
+<svg viewBox="0 0 800 1120" xmlns="http://www.w3.org/2000/svg" font-family="Georgia, 'Times New Roman', serif">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1033"/>
+      <stop offset="100%" stop-color="#2d1b4e"/>
+    </linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#241540"/>
+      <stop offset="100%" stop-color="#3a2363"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#ff9933" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#ff9933" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="witness" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff4dc"/>
+      <stop offset="60%" stop-color="#ffd27a"/>
+      <stop offset="100%" stop-color="#d4af37" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+      .title{font-size:34px;fill:#ffd27a;letter-spacing:2px}
+      .cap{font-size:17px;fill:#ece3ff}
+      .kicker{font-size:13px;fill:#c9a8ff;letter-spacing:3px;text-transform:uppercase}
+      .verse{font-size:13.5px;fill:#fff0cf;font-style:italic}
+      .cite{font-size:11.5px;fill:#ff9933;letter-spacing:1px}
+      .panelnum{font-size:13px;fill:#8a6fb8;letter-spacing:2px}
+    </style>
+  </defs>
+
+  <!-- backdrop -->
+  <rect width="800" height="1120" fill="#0e0820"/>
+
+  <!-- header -->
+  <text x="400" y="52" text-anchor="middle" class="kicker">PuranGPT · The Bhagavata, decoded through Sharma's Kriya lens</text>
+  <text x="400" y="92" text-anchor="middle" class="title">THE WAR WAS ALWAYS INSIDE</text>
+  <line x1="220" y1="108" x2="580" y2="108" stroke="#ff9933" stroke-width="1" opacity="0.5"/>
+
+  <!-- ===== PANEL 1 — PREMISE ===== -->
+  <g>
+    <rect x="40" y="130" width="720" height="190" rx="6" fill="url(#sky)" stroke="#5a3f8c" stroke-width="2"/>
+    <text x="58" y="156" class="panelnum">1 · PREMISE</text>
+    <!-- two armies -->
+    <g opacity="0.92">
+      <!-- left host -->
+      <g fill="#9fd0ff" stroke="#4a7fb5" stroke-width="1.2">
+        <path d="M150 250 l8 -38 l8 38"/><path d="M180 250 l8 -44 l8 44"/>
+        <path d="M210 250 l8 -36 l8 36"/><path d="M240 250 l8 -42 l8 42"/>
+      </g>
+      <!-- right host -->
+      <g fill="#ffb38a" stroke="#b5673a" stroke-width="1.2">
+        <path d="M560 250 l8 -38 l8 38"/><path d="M590 250 l8 -44 l8 44"/>
+        <path d="M620 250 l8 -36 l8 36"/><path d="M650 250 l8 -42 l8 42"/>
+      </g>
+      <!-- the gulf -->
+      <line x1="400" y1="200" x2="400" y2="262" stroke="#ff9933" stroke-width="2" stroke-dasharray="4 6"/>
+    </g>
+    <text x="400" y="300" text-anchor="middle" class="cap">Two armies. The conch sounds. Everyone is sure the enemy is the other side.</text>
+  </g>
+
+  <!-- ===== PANEL 2 — SCENE ===== -->
+  <g>
+    <rect x="40" y="335" width="720" height="215" rx="6" fill="url(#body)" stroke="#5a3f8c" stroke-width="2"/>
+    <text x="58" y="361" class="panelnum">2 · THE FIELD IS YOU</text>
+    <!-- seated body silhouette -->
+    <g transform="translate(400,470)">
+      <ellipse cx="0" cy="-2" rx="150" ry="14" fill="#000" opacity="0.25"/>
+      <path d="M-70 0 Q0 -150 70 0 Z" fill="#3a2363" stroke="#7a59b5" stroke-width="2"/>
+      <circle cx="0" cy="-118" r="26" fill="#3a2363" stroke="#7a59b5" stroke-width="2"/>
+      <!-- the inner battlefield drawn on the torso -->
+      <line x1="0" y1="-95" x2="0" y2="-10" stroke="#ff9933" stroke-width="1.4" stroke-dasharray="3 5"/>
+      <circle cx="0" cy="-118" r="9" fill="#1a1033"/>
+      <circle cx="-9" cy="-120" r="2.4" fill="#888"/><circle cx="9" cy="-120" r="2.4" fill="#888"/>
+    </g>
+    <text x="400" y="528" text-anchor="middle" class="cap">Pull back. The field of Kurukshetra is the body. The blind king watching it —</text>
+    <text x="400" y="546" text-anchor="middle" class="cap" font-style="italic">— Dhritarashtra — is the mind that clings to "I am this flesh."</text>
+  </g>
+
+  <!-- ===== PANEL 3 — KRIYA TWIST ===== -->
+  <g>
+    <rect x="40" y="565" width="720" height="245" rx="6" fill="#160d2e" stroke="#5a3f8c" stroke-width="2"/>
+    <text x="58" y="591" class="panelnum">3 · THE TWO FORCES</text>
+    <rect x="42" y="567" width="716" height="241" rx="6" fill="url(#glow)"/>
+    <!-- spine of the body -->
+    <line x1="400" y1="620" x2="400" y2="780" stroke="#7a59b5" stroke-width="2"/>
+    <!-- upward force -->
+    <g stroke="#ffd27a" stroke-width="3" fill="none">
+      <path d="M400 770 L400 630"/>
+      <path d="M388 648 L400 628 L412 648"/>
+    </g>
+    <text x="430" y="640" class="cap" fill="#ffe7b3">Pandavas — the upward life-force</text>
+    <!-- downward force -->
+    <g stroke="#ff7a59" stroke-width="3" fill="none" opacity="0.85">
+      <path d="M340 660 L340 760"/>
+      <path d="M328 742 L340 762 L352 742"/>
+      <path d="M460 660 L460 760"/>
+      <path d="M448 742 L460 762 L472 742"/>
+    </g>
+    <text x="400" y="794" text-anchor="middle" class="cap" fill="#ffc6a8">Kauravas — the senses pulling down</text>
+    <!-- the witness -->
+    <circle cx="400" cy="612" r="34" fill="url(#witness)"/>
+    <text x="400" y="616" text-anchor="middle" font-size="13" fill="#3a2363" font-style="italic">witness</text>
+  </g>
+
+  <!-- ===== PANEL 4 — VERSE FOOTER ===== -->
+  <g>
+    <rect x="40" y="825" width="720" height="250" rx="6" fill="#1a1033" stroke="#ff9933" stroke-width="2"/>
+    <text x="58" y="851" class="panelnum" fill="#d4af37">4 · WHAT THE WISE KNOW</text>
+    <text x="400" y="895" text-anchor="middle" class="cap" font-size="19" fill="#fff4dc">The Self is never slain.</text>
+    <text x="400" y="922" text-anchor="middle" class="cap">Eternal, unchanged by the body's transformations —</text>
+    <text x="400" y="944" text-anchor="middle" class="cap">so the one who watches does not grieve over what passes.</text>
+
+    <line x1="200" y1="968" x2="600" y2="968" stroke="#ff9933" stroke-width="0.75" opacity="0.5"/>
+    <text x="400" y="998" text-anchor="middle" class="verse">satyaṃ paraṃ dhīmahi — "upon the supreme truth, we meditate"</text>
+    <text x="400" y="1020" text-anchor="middle" class="cite">— bhp_01.01.001 (Sanskrit on disk)</text>
+    <text x="400" y="1046" text-anchor="middle" class="cite">deathless-Atman teaching · bhp_06.16.004 – bhp_06.16.009</text>
+  </g>
+
+  <text x="400" y="1100" text-anchor="middle" class="kicker" opacity="0.7">cluster 63 (frame) + cluster 193 (anchor) · 523 beats on disk</text>
+</svg>

@@ -70,3 +70,10 @@ keys.txt
 secrets/*.dec
 secrets/*.dec.*
 secrets/*.plain.*
+
+# read_pass generated decode artifacts (147MB — regenerable via graph_rebuild/decode).
+# Commit the RECIPE (code + curated_facts.json), not the generated cake.
+tools/read_pass/out/*
+!tools/read_pass/out/curated_facts.json
+undefined/
+The_Awakener_EN.pdf

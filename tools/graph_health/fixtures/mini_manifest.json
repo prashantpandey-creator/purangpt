@@ -1,0 +1,108 @@
+{
+ "n_entities": 4,
+ "n_edges": 4,
+ "entities": [
+  {
+   "id": "vyāsa",
+   "name": "Vyāsa",
+   "kind": "sage",
+   "all_forms": [
+    "Vyāsa",
+    "Kṛṣṇa Dvaipāyana"
+   ],
+   "chapters": [
+    "Chapter 1",
+    "Chapter 2"
+   ]
+  },
+  {
+   "id": "sūta",
+   "name": "Sūta",
+   "kind": "sage",
+   "all_forms": [
+    "Sūta",
+    "Ugraśravas"
+   ],
+   "chapters": [
+    "Chapter 1"
+   ]
+  },
+  {
+   "id": "kṛṣṇa",
+   "name": "Kṛṣṇa",
+   "kind": "deity",
+   "all_forms": [
+    "Kṛṣṇa",
+    "Vāsudeva"
+   ],
+   "chapters": [
+    "Chapter 1"
+   ]
+  },
+  {
+   "id": "lonely",
+   "name": "Lonely",
+   "kind": "place",
+   "all_forms": [
+    "Lonely"
+   ],
+   "chapters": [
+    "Chapter 9"
+   ]
+  }
+ ],
+ "edges": [
+  {
+   "src": "vyāsa",
+   "rel": "disciple",
+   "dst": "sūta",
+   "src_name": "Vyāsa",
+   "dst_name": "Sūta",
+   "chapters": [
+    "Chapter 1"
+   ],
+   "verse_ranges": [
+    "bhp_01.01.007"
+   ]
+  },
+  {
+   "src": "vyāsa",
+   "rel": "father of",
+   "dst": "kṛṣṇa",
+   "src_name": "Vyāsa",
+   "dst_name": "Kṛṣṇa",
+   "chapters": [
+    "Chapter 1"
+   ],
+   "verse_ranges": [
+    "bhp_01.01.055"
+   ]
+  },
+  {
+   "src": "sūta",
+   "rel": "narrates to",
+   "dst": "kṛṣṇa",
+   "src_name": "Sūta",
+   "dst_name": "Kṛṣṇa",
+   "chapters": [
+    "Chapter 2"
+   ],
+   "verse_ranges": [
+    "5"
+   ]
+  },
+  {
+   "src": "kṛṣṇa",
+   "rel": "same as",
+   "dst": "vyāsa",
+   "src_name": "Kṛṣṇa",
+   "dst_name": "Vyāsa",
+   "chapters": [
+    "Chapter 1"
+   ],
+   "verse_ranges": [
+    "bhp_01.01.060"
+   ]
+  }
+ ]
+}
