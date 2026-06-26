@@ -93,7 +93,12 @@ def run(input_path: str, tag: str, api_key: str,
     md = {"input": input_path, "tag": tag, "model": model,
           "provider": provider, "start": start, "limit": limit}
 
-    if not api_key:
+    # inhouse decode needs NO key — the populated cache IS the LLM (the Workflow
+    # already comprehended each chapter and wrote its JSON). Only the live API
+    # providers require a key. (Without this guard the fold pass for a fully
+    # decoded inhouse cache bailed 'no_key' and could never reach the graph —
+    # found by the BORI smoke 2026-06-26, pinned by test_fold_pass_*.)
+    if provider != "inhouse" and not api_key:
         return _envelope(False, None, md,
                          [{"code": "no_key", "message": "No LLM key found (set DEEPSEEK_API_KEY or GEMINI_API_KEY)"}])
 

@@ -121,6 +121,105 @@ def test_dump_prompt_key_matches_comprehend_window_key():
         assert env["data"]["chapter_summary"] == "s"
 
 
+def test_fold_pass_runs_inhouse_without_a_key():
+    """THE FOLD-PATH GAP (found by the BORI smoke 2026-06-26): run.run with
+    provider='inhouse' must NOT require an LLM key — the cache IS the LLM. Before
+    the fix, run.py:96 `if not api_key` bailed with code 'no_key' for inhouse, so a
+    fully-decoded cache could never be folded into the graph. Pin: a real window
+    with a cached decode folds end-to-end, verify-gated, with api_key=''."""
+    from tools.read_pass import comprehend
+    from tools.read_pass import run as RUN
+
+    # a window whose source text literally contains the marker its node will cite,
+    # so the verify-gate KEEPS the node (proves the gate runs and passes on the path)
+    window = {"purana": "Test", "chapter_label": "Chapter 1", "seq_start": 1,
+              "seq_end": 2, "chunk_ids": ["test-1-1"],
+              "text": "mbh_01.001.005 Bhishma vowed celibacy."}
+    grounded = {"chapter_summary": "s",
+                "entities": [{"name": "Bhishma", "kind": "king",
+                              "verse_ranges": ["mbh_01.001.005"]}],
+                "relationships": [], "story": {"title": "t", "arc": "a"},
+                "teachings": []}
+
+    with tempfile.TemporaryDirectory() as d:
+        prompt = inhouse.build_chapter_prompt(window, [])
+        inhouse.write_response(d, prompt, grounded)
+        old = comprehend._CALLERS["inhouse"]
+        comprehend._CALLERS["inhouse"] = inhouse.make_inhouse_caller(d)
+        # group.run reads from disk; stub it to yield exactly our one window so the
+        # test is hermetic (no dependency on a real chunk file shipping).
+        import tools.read_pass.group as group_mod
+        old_group = group_mod.run
+        group_mod.run = lambda _p: {"success": True,
+                                    "data": {"windows": [window]},
+                                    "metadata": {}, "errors": []}
+        try:
+            env = RUN.run("ignored.jsonl", "test_inhouse_fold", api_key="",
+                          provider="inhouse", model="claude", limit=1)
+        finally:
+            comprehend._CALLERS["inhouse"] = old
+            group_mod.run = old_group
+            # clean the per-test output the run appended
+            for suf in (".records.jsonl", ".progress.jsonl"):
+                p = os.path.join(RUN.OUT_DIR, "test_inhouse_fold" + suf)
+                if os.path.exists(p):
+                    os.remove(p)
+
+        assert env["success"] is True, env["errors"]
+        # the key gate must NOT have fired
+        assert not any(e.get("code") == "no_key" for e in env["errors"]), env["errors"]
+        d2 = env["data"]
+        assert d2["comprehended"] == 1, d2
+        # the grounded node survived the gate (cite is in the window)
+        assert d2["nodes_kept"] == 1, d2
+        assert d2["nodes_dropped"] == 0, d2
+        assert d2["grounded_rate"] == 1.0, d2
+
+
+def test_fold_pass_inhouse_gate_prunes_ungrounded():
+    """Companion: on the inhouse fold path, a node whose cite is NOT in the window
+    is pruned by the gate (the whole point — the cache can still narrate)."""
+    from tools.read_pass import comprehend
+    from tools.read_pass import run as RUN
+
+    window = {"purana": "Test", "chapter_label": "Chapter 1", "seq_start": 1,
+              "seq_end": 2, "chunk_ids": ["test-1-1"],
+              "text": "mbh_01.001.005 only this marker is real here."}
+    # node cites mbh_09.099.099 which is NOT in the window → must be pruned → husk
+    narrated = {"chapter_summary": "s",
+                "entities": [{"name": "Phantom", "kind": "concept",
+                              "verse_ranges": ["mbh_09.099.099"]}],
+                "relationships": [], "story": {"title": "t", "arc": "a"},
+                "teachings": []}
+
+    with tempfile.TemporaryDirectory() as d:
+        prompt = inhouse.build_chapter_prompt(window, [])
+        inhouse.write_response(d, prompt, narrated)
+        old = comprehend._CALLERS["inhouse"]
+        comprehend._CALLERS["inhouse"] = inhouse.make_inhouse_caller(d)
+        import tools.read_pass.group as group_mod
+        old_group = group_mod.run
+        group_mod.run = lambda _p: {"success": True,
+                                    "data": {"windows": [window]},
+                                    "metadata": {}, "errors": []}
+        try:
+            env = RUN.run("ignored.jsonl", "test_inhouse_husk", api_key="",
+                          provider="inhouse", model="claude", limit=1)
+        finally:
+            comprehend._CALLERS["inhouse"] = old
+            group_mod.run = old_group
+            for suf in (".records.jsonl", ".progress.jsonl"):
+                p = os.path.join(RUN.OUT_DIR, "test_inhouse_husk" + suf)
+                if os.path.exists(p):
+                    os.remove(p)
+
+        assert env["success"] is True, env["errors"]
+        d2 = env["data"]
+        assert d2["nodes_kept"] == 0, d2
+        assert d2["nodes_dropped"] == 1, d2
+        assert d2["husked"] == 1, d2  # pruned to nothing → not written
+
+
 if __name__ == "__main__":
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     failed = 0
