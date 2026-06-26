@@ -72,7 +72,7 @@ MAX_HISTORY   = 100  # messages kept in session memory
 
 
 from backend.auth import get_current_user, require_auth, require_role, get_guest_id, check_guest_rate_limit, consume_guest_unit, increment_guest_usage, validate_query
-from backend.db_client import update_profile, get_admin_stats, get_all_users, encrypt_keys, decrypt_keys, increment_usage, check_rate_limit, check_research_limit, increment_research_usage
+from backend.db_client import update_profile, get_admin_stats, get_all_users, encrypt_keys, decrypt_keys, increment_usage, check_rate_limit, check_research_limit, increment_research_usage, FREE_DAILY_SECONDS
 
 from backend.session_manager import SessionManager
 from backend.monitor import run_health_checks
@@ -1338,17 +1338,18 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
     # Rate Limiting — atomically consume one unit at the gate so concurrent
     # requests can't each pass a pre-flight read and overrun the limit. The DB
     # ops are sync, so run them in a threadpool to avoid blocking the event loop.
+    current_usage_sec = 0
     if not user:
         guest_id = get_guest_id(req)
         allowed, rem = await asyncio.to_thread(consume_guest_unit, guest_id)
         if not allowed:
-            raise HTTPException(429, "Guest rate limit exceeded. Please sign in.")
+            raise HTTPException(429, "Guest rate limit exceeded. Please sign in to continue.")
     else:
-        allowed, rem = await asyncio.to_thread(
+        allowed, rem, current_usage_sec = await asyncio.to_thread(
             check_rate_limit, user.get("id"), user.get("role", "free"), is_byok
         )
         if not allowed:
-            raise HTTPException(429, "Daily message limit exceeded. Please upgrade your plan.")
+            raise HTTPException(429, "Your 60-minute daily limit has been reached. Upgrade to Pro for unlimited access.")
     if not any_llm_configured():
         raise HTTPException(503, "No LLM credentials configured")
 
@@ -1375,7 +1376,10 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         return EventSourceResponse(deep_gen(), headers={"X-Accel-Buffering": "no"})
 
     # ── Standard Chat ────────────────────────────────────────────────────────
+    user_role = user.get("role", "free") if user else "guest"
+
     async def event_gen() -> AsyncGenerator[dict, None]:
+        stream_start = asyncio.get_event_loop().time()
         # Immediate feedback so the UI shows motion while we translate+search,
         # rather than dead air until the first LLM token.
         yield {"type": "status", "message": "🔍 Searching the sacred texts…"}
@@ -1497,20 +1501,28 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         ], user_id, guest_id)
         
         # Guest units are already consumed atomically at the gate above. For
-        # signed-in users, record the message + usage log now (atomic SQL inside).
+        # signed-in users, record the message + elapsed usage seconds now.
+        elapsed = int(asyncio.get_event_loop().time() - stream_start)
         if user:
             asyncio.create_task(asyncio.to_thread(
-                increment_usage, user.get("id"), session_id
+                increment_usage, user.get("id"), session_id, None, elapsed
             ))
-        
-        # 7. Done signal with source metadata
+
+        # Compute usage totals for the frontend meter (approximate — actual DB
+        # write is async, so we add elapsed locally for immediate feedback).
+        usage_after = (current_usage_sec + elapsed) if user and user_role not in ("pro", "scholar", "admin") else None
+        limit_sec = FREE_DAILY_SECONDS if user and user_role not in ("pro", "scholar", "admin") else None
+
+        # 7. Done signal with source metadata + usage
         yield {"data": json.dumps({
-            "type":         "done",
-            "session_id":   session_id,
-            "history_len":  len(session_data["history"]),
-            "sources_used": [s.get("text_name") or s.get("purana","") for s in all_sources[:4]],
-            "grounding_quality": grounding_quality,
-            "total_sources_found": len(all_sources)
+            "type":               "done",
+            "session_id":         session_id,
+            "history_len":        len(session_data["history"]),
+            "sources_used":       [s.get("text_name") or s.get("purana","") for s in all_sources[:4]],
+            "grounding_quality":  grounding_quality,
+            "total_sources_found": len(all_sources),
+            "usage_seconds":      usage_after,
+            "usage_limit_seconds": limit_sec,
         })}
 
     return EventSourceResponse(event_gen(), headers={"X-Accel-Buffering": "no"})

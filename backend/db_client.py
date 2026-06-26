@@ -189,36 +189,40 @@ def update_profile(user_id: str, data: dict):
     finally:
         conn.close()
 
-def check_rate_limit(user_id: str, role: str, is_byok: bool = False) -> tuple[bool, int]:
-    """Check if the user has exceeded their daily message limit."""
+# Free users get 60 minutes of AI response time per day.
+FREE_DAILY_SECONDS = int(os.getenv("FREE_DAILY_SECONDS", "3600"))
+
+def check_rate_limit(user_id: str, role: str, is_byok: bool = False) -> tuple[bool, int, int]:
+    """Check if the user has exceeded their daily usage limit (time-based for free).
+    Returns (allowed, remaining_seconds, current_usage_seconds).
+    Pro/Scholar/Admin/BYOK users are always allowed with no tracking."""
     if role in ["pro", "scholar", "admin"] or is_byok:
-        return True, 999999
-        
+        return True, 999999, 0
+
     profile = get_profile(user_id)
     if not profile:
-        return False, 0
-        
-    limit = 10 # Free tier limit
-    
-    # Check if we need to reset the daily count
+        return False, 0, FREE_DAILY_SECONDS
+
+    # Reset daily counts if the day has changed
     last_reset = profile.get("daily_reset_at")
     try:
         last_reset_dt = datetime.fromisoformat(last_reset.replace('Z', '+00:00')) if last_reset else datetime.min.replace(tzinfo=timezone.utc)
-    except:
+    except Exception:
         last_reset_dt = datetime.min.replace(tzinfo=timezone.utc)
-        
+
     now = datetime.now(timezone.utc)
     if now.date() > last_reset_dt.date():
-        # Reset count
         update_profile(user_id, {
             "daily_message_count": 0,
+            "daily_usage_seconds": 0,
             "deep_research_count": 0,
             "daily_reset_at": now
         })
-        return True, limit
-        
-    count = profile.get("daily_message_count", 0) or 0
-    return count < limit, limit - count
+        return True, FREE_DAILY_SECONDS, 0
+
+    current_seconds = profile.get("daily_usage_seconds", 0) or 0
+    remaining = max(0, FREE_DAILY_SECONDS - current_seconds)
+    return current_seconds < FREE_DAILY_SECONDS, remaining, current_seconds
 
 def check_research_limit(user_id: str, role: str, is_byok: bool = False) -> tuple[bool, int]:
     """Check if the user has exceeded their daily deep research limit."""
@@ -234,18 +238,22 @@ def check_research_limit(user_id: str, role: str, is_byok: bool = False) -> tupl
     count = profile.get("deep_research_count", 0) or 0
     return count < limit, limit - count
 
-def increment_usage(user_id: str, session_id: str = None, model: str = None):
-    """Increment the user's daily message count and log the usage — atomically.
-    The count bump is a single `SET count = count + 1` in SQL (not a Python
-    read-modify-write), so concurrent requests from the same user can't each read
-    the same old value and lose increments / overrun the limit."""
+def increment_usage(user_id: str, session_id: str = None, model: str = None, elapsed_seconds: int = 0):
+    """Increment the user's daily usage — atomically.
+    Bumps message count (analytics) and accumulated response seconds (rate limit).
+    elapsed_seconds is the wall-clock duration of the response stream."""
     conn = get_db_conn()
     if not conn: return
+    elapsed_seconds = max(0, int(elapsed_seconds))
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "UPDATE profiles SET daily_message_count = daily_message_count + 1, updated_at = NOW() WHERE id = %s",
-                (user_id,),
+                """UPDATE profiles
+                   SET daily_message_count = daily_message_count + 1,
+                       daily_usage_seconds = daily_usage_seconds + %s,
+                       updated_at = NOW()
+                   WHERE id = %s""",
+                (elapsed_seconds, user_id),
             )
             cur.execute(
                 "INSERT INTO usage_logs (user_id, session_id, model_used, created_at) VALUES (%s, %s, %s, NOW())",
