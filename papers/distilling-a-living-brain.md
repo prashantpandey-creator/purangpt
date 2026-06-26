@@ -104,7 +104,49 @@ The *catuṣpāda ātman* partitions one consciousness into four modes. Our corp
 
 ---
 
-## 7. What the Vedic theory says we still lack
+## 7. Rasa: emotion as the corpus's native retrieval index
+
+The faculties mapped so far are cognitive — coordination, decision, memory, speech. The
+tradition insists they are not the whole instrument. Bharata's *Nāṭyaśāstra* (VI) supplies
+the missing axis with the *rasa-sūtra*: *vibhāva-anubhāva-vyabhicāri-bhāva-saṃyogād
+rasa-niṣpattiḥ* — aesthetic essence (*rasa*) arises from the conjunction of determinants,
+consequents, and transient feelings settling onto a *sthāyi-bhāva*, an abiding emotion. The
+eight (later nine) *rasas* — *śṛṅgāra* (love), *karuṇā* (grief), *raudra* (fury), *vīra*
+(heroism), *bhayānaka* (fear), *bībhatsa* (disgust), *adbhuta* (wonder), *hāsya* (mirth),
+and *śānta* (peace) — and, in the Vaiṣṇava reckoning of Rūpa Gosvāmī's
+*Bhakti-rasāmṛta-sindhu*, *bhakti-rasa* (devotion) as the master sentiment, are not a
+decorative overlay on the texts. They are the corpus's *own* theory of why a relationship
+matters: a bond is remembered through its abiding feeling.
+
+This bears directly on retrieval. The Nyāya cue-list for recollection (NS 3.2.41) already
+admits *association* alongside similarity and sign — and the strongest associative cue a
+human carries is affective. A seeker does not arrive with a keyword; he arrives with grief,
+or doubt, or longing, and a teacher answers the feeling before the fact. An emotion-indexed
+memory — *karuṇā* → Arjuna's despair → the second chapter of the Gītā — is therefore not a
+product gimmick but the *sthāyi-bhāva* operating as a *smṛti* cue exactly as the doctrine
+describes.
+
+**The substrate already exists in the graph (verified).** Affect is latent in the relation
+predicates the decode pass extracted. The Kṛṣṇa–Arjuna bond alone carries 67 distinct
+relation-verbs, among them *friend*, *embraced*, *grieves_for*, *consoler*,
+*vows_to_protect*, and *considers_as_half_his_body* — a recoverable arc of *sakhya* (friendship)
+shading into *vātsalya* (protective tenderness) and the *adbhuta* of Kṛṣṇa-as-the-Self. The
+abiding emotion of the relationship is reconstructible from its edges; it has simply never
+been *distilled* into a typed *rasa* layer or used as a retrieval key.
+
+**Where it breaks (honest).** This is a *proposed* faculty, not a built one — the same status
+as *turīya* (§6). There is no rasa-typing on edges, no affect-indexed recall, and the danger
+is acute: emotion is the easiest attribute for the decoder to hallucinate, because unlike an
+entity or a citation it has no verse-marker to verify against. A faithful *rasa* layer is
+therefore admissible only if each ascribed sentiment is distilled from, and cited to, the
+actual interaction passages — *rasa read from the text, never rasa imagined about it*, which
+is the §3 discipline (smṛti must present "former knowledge or less, never more") applied to
+feeling. Built without that gate, an affective layer would be the §5 *sphoṭa*-failure
+(hallucination) wearing the mask of empathy.
+
+---
+
+## 8. What the Vedic theory says we still lack
 
 The mappings above are mappings of *mechanism*. The tradition, read honestly, names with precision what our living brain is still missing.
 
@@ -124,7 +166,7 @@ The mappings above are mappings of *mechanism*. The tradition, read honestly, na
 
 ---
 
-## 8. Conclusion
+## 9. Conclusion
 
 The wager of this paper is that the *antaḥkaraṇa* is engineering, not allegory — and the wager mostly pays. The retrieval hub does the work of *manas*; the embedding field is *saṃskāra* in the strict *ekarūpatva* sense of Yoga-Sūtra 4.9; associative recall is *smṛti*; entity resolution is *pratyabhijñā*, its bugs are *khyātivāda* and its audit is *bādha*; and the generation pipeline is, rung for rung, the descent of *vāk* — gated by exactly the two variables Bhartṛhari named, loss of unity and acquisition of *krama*, with the comprehension-side re-ascent matching attention's re-integration so closely that one feels the grammarians had specified the transformer in advance.
 
@@ -173,6 +215,8 @@ actual corpus chunks before publication. Verified present:
 - **Bhartṛhari, *Vākyapadīya*** (Brahma-kāṇḍa). *(canonical)* Cited by kāṇḍa.kārikā (I.1).
 - **Mīmāṃsā-Sūtra of Jaimini.** *(canonical)* Cited by adhyāya.pāda.sūtra (1.1.5).
 - **Vedāntasāra of Sadānanda** — for the *antaḥkaraṇa-catuṣṭaya* (fourfold inner organ).
+- **Nāṭyaśāstra of Bharata** — for the *rasa-sūtra* and the eight/nine *rasas* (ch. VI). *(canonical, not in corpus)*
+- **Bhakti-rasāmṛta-sindhu of Rūpa Gosvāmī** — for *bhakti-rasa* as master sentiment. *(canonical, not in corpus)*
 
 *Abbreviations:* YS = Yoga-Sūtra · SK = Sāṃkhya-Kārikā · NS = Nyāya-Sūtra ·
 RV = Ṛg-Veda · VP = Vākyapadīya · BhP = Bhāgavata-Purāṇa.
