@@ -49,6 +49,14 @@ Every agent MUST:
 
 ## Ledger (newest first)
 
+### 2026-06-26 — Suggestions: context-aware engine (history · region · moment) · `claude/chat-tier-modes-naming-48z104` · agent(opus)
+- What & why: user wanted the chips driven by **logic, not hard-coded positions** — connected to the seeker's history, region/country, and the current moment; the empty-state set should still be as context-aware as possible even with no objective.
+- Changed: `purangpt-next` —
+  · `app/api/guru-suggestions/route.ts`: replaced static `generateSuggestions()` with **`generateContextual(ctx)`**. Composes ONE LLM prompt from the live `Ctx` { themes, language, timezone, localHour, localDate, accept-language }: weaves today's date + part-of-day, infers region/country from tz+locale (tints an angle naturally, never stated), considers season + any Hindu festival within ~7 days (anchors 1 chip), deepens/branches from recent themes when present, rotates 3-of-6 distinct lenses, bans worn clichés. **Everyone** (not just Pro) gets contextual chips now; the 30-entry evergreen pool + history synthesis is a **failsafe only**, padded to always return 3. New context-keyed cache (date·region·language·history, 6h TTL). GET (header-only) + POST (full body) both route through it. Removed dead `cache`/`personalCache`/`generatePersonal`.
+  · `chat/ChatInterface.tsx`: `fetchGuruSuggestions` now POSTs the full context payload for **all** users (themes via `recentThemes()`, language, `Intl` timezone, localHour, localDate, refresh).
+- New state / gotchas: in dev (no DEEPSEEK/GEMINI key) the route serves the failsafe (evergreen shuffle for new users, history-synthesis padded to 3 for returners) — verified via curl. Prod has keys → full contextual LLM path runs. tsc clean. The API `color` field is still ignored by the UI (pastel cycle by index, unchanged).
+- Follow-ups / risks: in-conversation follow-up chips (`/api/followup-suggestions`) could be made equally moment-aware. "New way to access" suggestions + the minor "Ask the Eternal" spacing tuck are still open.
+
 ### 2026-06-24 — Empty-state suggestions: pastel cards + richer, varied content · `claude/chat-tier-modes-naming-48z104` · agent(opus)
 - What & why: the chat front-page "trending" suggestion chips looked flat and, more importantly, the CONTENT was repetitive (always inner-peace / dharma / suffering). Reworked look + content.
 - Changed: `purangpt-next` —
