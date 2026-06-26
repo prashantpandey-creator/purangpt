@@ -257,7 +257,57 @@ class HybridSearcher:
                         res.score *= 1.6
                     elif res.id.startswith("darshan-") or res.purana == "Shailendra Sharma Darshans":
                         res.score *= 0.6
-                        
+
+            # ── SCRIPTURE FLOOR ──────────────────────────────────────────────
+            # English natural-language queries embed near the English darshan
+            # transcripts and never surface Sanskrit scripture (cross-lingual gap
+            # in e5-small), so the answer quotes Guruji's voice but can't synthesize
+            # across the texts. Guarantee a scripture quota by retrieving per-category
+            # scripture pools at the DB level — where ranking happens WITHIN scripture
+            # — then let MMR source-diversity interleave them ("all angles"). Validated
+            # live: lifts a 0-scripture English query to ~20 results across ~14 texts.
+            # Skipped when the caller explicitly wants guruji-only.
+            if corpus_type != "guruji":
+                def _is_scripture(r):
+                    return ((r.chunk.get("category") or "").lower() not in GURUJI_CATEGORIES
+                            and not str(r.id).startswith("darshan-"))
+                floor = max(3, top_k // 2)
+                if sum(1 for r in results if _is_scripture(r)) < floor:
+                    SCRIPTURE_CATS = ["mahapurana", "vaishnava", "vedic", "shaiva",
+                                      "dharma", "shakta", "vedanta", "mixed", "other"]
+                    per = max(2, top_k // 2)
+
+                    async def _scrip_pool(cat):
+                        async with self._pool.acquire() as c:
+                            return await c.fetch(
+                                'SELECT id, content, metadata, similarity '
+                                'FROM hybrid_search($1, $2::vector, $3, $4::jsonb)',
+                                fts_query, emb_str, per, json.dumps({"category": cat}))
+                    try:
+                        pools = await asyncio.gather(
+                            *[_scrip_pool(c) for c in SCRIPTURE_CATS],
+                            return_exceptions=True)
+                        seen = {r.id for r in results}
+                        top_score = max((r.score for r in results), default=1.0)
+                        for pool in pools:
+                            if isinstance(pool, Exception):
+                                continue
+                            for row in pool:
+                                if row["id"] in seen:
+                                    continue
+                                seen.add(row["id"])
+                                m = (json.loads(row["metadata"])
+                                     if isinstance(row["metadata"], str) else row["metadata"])
+                                if (m.get("category") or "").lower() in GURUJI_CATEGORIES:
+                                    continue
+                                chunk = {**m, "id": row["id"], "text": row["content"]}
+                                # parity score so scripture competes in MMR; diversity
+                                # penalty on the repeated darshan source lets it surface
+                                results.append(SearchResult(chunk=chunk, score=top_score,
+                                                            rank=len(results)))
+                    except Exception as e:
+                        logger.warning("scripture floor failed, skipping: %s", e)
+
             # Sort by updated scores
             results.sort(key=lambda x: x.score, reverse=True)
 
