@@ -175,6 +175,10 @@ class HybridSearcher:
             "sharma_weighting": sharma_weighting,
             "embed_phrase": embed_phrase,
             "fts_phrase": fts_phrase,
+            # corpus_type changes the result set (scripture-only / guruji-only / floored)
+            # but was absent from the key — a guruji-only query collided with the default
+            # mixed result for the same text. Part of the cache identity.
+            "corpus_type": corpus_type,
         }, sort_keys=True)
         cache_hash = hashlib.sha256(cache_params.encode()).hexdigest()
         cache_key = f"hybrid_search:{cache_hash}"
@@ -193,7 +197,9 @@ class HybridSearcher:
 
         # Guruji material categories — chunks with these categories are from Shailendra
         # Sharma's darshans/commentaries (voice/cognition), NOT citable scripture.
-        GURUJI_CATEGORIES = {"yogic-commentary", "yogic-discourse"}
+        # "yoga_commentary" is Yogeshwari, Sharma's own Bhagavad Gita commentary — his
+        # voice, not independent scripture, so it must not count toward the scripture floor.
+        GURUJI_CATEGORIES = {"yogic-commentary", "yogic-discourse", "yoga_commentary"}
 
         try:
             # 3. Generate query embedding — use enriched phrase if provided
@@ -272,9 +278,21 @@ class HybridSearcher:
                     return ((r.chunk.get("category") or "").lower() not in GURUJI_CATEGORIES
                             and not str(r.id).startswith("darshan-"))
                 floor = max(3, top_k // 2)
-                if sum(1 for r in results if _is_scripture(r)) < floor:
+                # Count scripture in the OUTPUT window (top_k by score), NOT the full
+                # fetch_k candidate pool. fetch_k = top_k*4 drags deep-tail scripture into
+                # `results` that can never survive MMR against the ×1.6-boosted darshan, so
+                # counting the whole pool reports the floor as already met and it never
+                # fires — the bug that left English/conceptual queries 100% darshan. Measure
+                # what will actually be returned.
+                _window = sorted(results, key=lambda r: r.score, reverse=True)[:top_k]
+                if sum(1 for r in _window if _is_scripture(r)) < floor:
+                    # Every non-Guruji category (mirror of the corpus minus GURUJI_CATEGORIES).
+                    # A missing category silently starves the floor of that whole tradition —
+                    # shaiva-vaishnava (4k), nath-sampradaya (Guruji's own Nath lineage), and
+                    # kosha were absent before and never surfaced.
                     SCRIPTURE_CATS = ["mahapurana", "vaishnava", "vedic", "shaiva",
-                                      "dharma", "shakta", "vedanta", "mixed", "other"]
+                                      "shaiva-vaishnava", "shakta", "dharma", "vedanta",
+                                      "kosha", "nath-sampradaya", "mixed", "other"]
                     per = max(2, top_k // 2)
 
                     async def _scrip_pool(cat):
@@ -342,6 +360,29 @@ class HybridSearcher:
                 chosen = candidates.pop(best_idx)
                 final_results.append(SearchResult(chunk=chosen.chunk, score=chosen.score, rank=len(final_results)))
                 selected_sources.append(chosen.purana)
+
+            # ── SCRIPTURE FLOOR GUARANTEE (post-MMR, deterministic) ──────────
+            # MMR is heuristic. Guarantee the scripture quota actually landed in the
+            # output by swapping the lowest-scored darshan for the best scripture
+            # candidates MMR left behind. No-op in the common case (the floor append
+            # already wins MMR); this is the belt-and-braces that makes "all angles"
+            # a guarantee, not a hope. _is_scripture/floor are in scope from the floor
+            # block above (same `corpus_type != "guruji"` guard).
+            if corpus_type != "guruji":
+                _scrip_in_final = [r for r in final_results if _is_scripture(r)]
+                if len(_scrip_in_final) < floor:
+                    _chosen_ids = {r.id for r in final_results}
+                    _spare = sorted(
+                        (r for r in results if _is_scripture(r) and r.id not in _chosen_ids),
+                        key=lambda r: r.score, reverse=True)
+                    _darshan = sorted(
+                        (r for r in final_results if not _is_scripture(r)),
+                        key=lambda r: r.score)  # lowest score first
+                    _need = floor - len(_scrip_in_final)
+                    for i in range(min(_need, len(_spare), len(_darshan))):
+                        final_results.remove(_darshan[i])
+                        final_results.append(_spare[i])
+                    final_results.sort(key=lambda x: x.score, reverse=True)
 
             # Save to Redis
             if redis_client:
