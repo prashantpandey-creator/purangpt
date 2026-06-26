@@ -434,8 +434,18 @@ class HybridSearcher:
         meta = json.loads(row['metadata']) if isinstance(row['metadata'], str) else row['metadata']
         return {**meta, "id": row['id'], "text": row['content']}
 
-    async def find_similar_verses(self, chunk_id: str, top_k: int = 10) -> list[SearchResult]:
-        """Find the top_k most semantically similar verses to the given chunk."""
+    async def find_similar_verses(self, chunk_id: str, top_k: int = 10,
+                                  requesting_user: str | None = None) -> list[SearchResult]:
+        """Find the top_k most semantically similar verses to the given chunk.
+
+        Privacy scope (Sangama): a workspace (user-uploaded) chunk is only ever
+        returned to the seeker who uploaded it. The public corpus — chunks with no
+        'workspace' flag in metadata — is visible to everyone; another seeker's
+        private upload is NEVER surfaced. A guest (requesting_user=None) sees only the
+        public corpus. The `(workspace IS NULL OR user_id = $3)` clause is the whole
+        guard: public rows pass the first branch, the owner's own uploads pass the
+        second, everyone else's uploads pass neither.
+        """
         if not self._pool:
             return []
         async with self._pool.acquire() as conn:
@@ -448,9 +458,11 @@ class HybridSearcher:
                 FROM purana_verses pv, source s
                 WHERE pv.id != $1
                   AND pv.embedding IS NOT NULL
+                  AND (pv.metadata->>'workspace' IS NULL
+                       OR pv.metadata->>'user_id' = $3)
                 ORDER BY pv.embedding <=> s.embedding
                 LIMIT $2
-            ''', chunk_id, top_k)
+            ''', chunk_id, top_k, requesting_user)
         results = []
         for rank, row in enumerate(rows):
             meta = json.loads(row['metadata']) if isinstance(row['metadata'], str) else row['metadata']

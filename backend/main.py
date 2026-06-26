@@ -2228,22 +2228,33 @@ Be specific and concrete. Avoid generic spiritual platitudes. Name actual storie
         raise HTTPException(500, f"Failed to generate intro: {e}")
 
 @app.get("/api/verses/{chunk_id}")
-async def get_verse(chunk_id: str):
-    """Fetch a single verse/chunk by ID."""
+async def get_verse(chunk_id: str, user: Optional[dict] = Depends(get_current_user)):
+    """Fetch a single verse/chunk by ID.
+
+    A workspace (user-uploaded) chunk is visible only to its owner; to anyone else it
+    is reported as not found, so private uploads never leak via a guessed/known id.
+    """
     if not state.searcher or not state.searcher.is_ready:
         raise HTTPException(503, "Search not ready")
     chunk = await state.searcher.get_chunk_by_id(chunk_id)
     if not chunk:
         raise HTTPException(404, f"Chunk {chunk_id} not found")
+    if chunk.get("workspace"):
+        user_id = user.get("id") if user else None
+        if chunk.get("user_id") != user_id:
+            raise HTTPException(404, f"Chunk {chunk_id} not found")
     return chunk
 
 @app.get("/api/verses/{chunk_id}/similar")
-async def get_similar_verses(chunk_id: str, top_k: int = 10):
-    """Find semantically similar verses across the entire corpus."""
+async def get_similar_verses(chunk_id: str, top_k: int = 10,
+                             user: Optional[dict] = Depends(get_current_user)):
+    """Find semantically similar verses across the public corpus + the caller's own
+    workspace docs. Another seeker's private upload is never surfaced (Sangama scope)."""
     if not state.searcher or not state.searcher.is_ready:
         raise HTTPException(503, "Search not ready")
     top_k = min(top_k, 50)
-    results = await state.searcher.find_similar_verses(chunk_id, top_k)
+    user_id = user.get("id") if user else None
+    results = await state.searcher.find_similar_verses(chunk_id, top_k, requesting_user=user_id)
     return {
         "source_id": chunk_id,
         "count": len(results),
