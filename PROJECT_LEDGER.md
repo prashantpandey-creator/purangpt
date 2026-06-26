@@ -49,6 +49,14 @@ Every agent MUST:
 
 ## Ledger (newest first)
 
+### 2026-06-24 — Empty-state suggestions: pastel cards + richer, varied content · `claude/chat-tier-modes-naming-48z104` · agent(opus)
+- What & why: the chat front-page "trending" suggestion chips looked flat and, more importantly, the CONTENT was repetitive (always inner-peace / dharma / suffering). Reworked look + content.
+- Changed: `purangpt-next` —
+  · `chat/ChatInterface.tsx`: suggestion cards reworked to premium gem cards then recoloured to a **pastel cycle** (apricot-orange → lavender → rose → mint → champagne; gem dot + left accent bar + hover lift/glow + reveal "→"). Kept at the BOTTOM (below input) — user prefers it there for thumb-accessibility (briefly tried above-input via flex `order`, reverted).
+  · `app/api/guru-suggestions/route.ts`: **content overhaul.** Old prompt forced a "global conflict / mass anxiety" angle → clichés. Now: curated `EVERGREEN_POOL` expanded 12 → 30 spanning stories/characters, cosmology (yugas, pralaya, 14 lokas, churning, time-dilation), Upanishadic insight, yoga/practice, raw dilemmas, curiosities (astras, after-death journey). LLM `generateSuggestions` now draws **3 random distinct "lenses"** per call, demands concrete named stories/ideas + curiosity hooks, and **BANS** the generic phrasings. Verified output is varied + reshuffles.
+- New state / gotchas: the suggestion `color` field from the API is now **ignored** by the UI (it cycles its own pastel set by index). `/api/guru-suggestions` GET caches 24h in-memory per Node process; `?refresh=1` regenerates. In dev (no DEEPSEEK/GEMINI key) it serves the curated pool shuffle — good for testing. tsc clean.
+- Follow-ups / risks: a "new way to access" the suggestions is still open (proposed: compact pastel chip-ticker, or a tap-to-reveal "✦ Explore" tray that also persists mid-conversation) — user to pick. Hero "Ask the Eternal" still tucks slightly behind the input on the empty state — minor spacing fix pending.
+
 ### 2026-06-24 — Brand polish: 'Ask the Eternal' hero · metallic gold · peacock-teal second accent · `claude/chat-tier-modes-naming-48z104` · agent(opus)
 - What & why: tightening the brand. (1) Chat front-page hero copy was soft. (2) Gold read "cheap" (flat). (3) Gold-on-dark was monotonous — needed a second color.
 - Changed: `purangpt-next` —
