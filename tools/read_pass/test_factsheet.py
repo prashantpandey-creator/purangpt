@@ -50,9 +50,9 @@ def test_empty_symbol_is_clean_failure_not_raise():
 
 # ── resolution (the cross-text identity win) ──────────────────────────────
 def test_resolves_via_shared_normalizer_and_aliases():
-    """'Gāṇḍīva' (diacritics) and 'gandiva bow' both resolve to the one node —
-    the cross-text-identity capability the graph has and RAG can't."""
-    for cue in ["Gandiva", "Gāṇḍīva", "gandiva bow", "  GANDIVA  "]:
+    """'Gandiva', 'Gāṇḍīva' (diacritics), 'gāṇḍīvam' and case/whitespace noise all
+    resolve to the one node — the cross-text-identity capability RAG can't match."""
+    for cue in ["Gandiva", "Gāṇḍīva", "gāṇḍīvam", "  GANDIVA  "]:
         env = factsheet.factsheet(cue, _memory())
         assert env["success"] is True, f"failed to resolve {cue!r}"
         assert env["data"]["found"] is True
@@ -73,8 +73,8 @@ def test_identity_carries_forms_and_kind():
     idy = d["identity"]
     assert idy["kind"]  # concept
     forms = " ".join(idy.get("forms", [])).lower()
-    assert "arjuna" in forms or "dhanur" in forms, \
-        "Gandiva identity must carry its literal forms (Arjuna's bow / dhanur)"
+    assert "gāṇḍīv" in forms, \
+        "Gandiva identity must carry its literal Sanskrit forms (Gāṇḍīva / gāṇḍīvam)"
 
 
 def test_named_relationships_are_resolved_not_ids():
@@ -101,8 +101,10 @@ def test_cites_are_canonical_markers_only_no_bare_number_garbage():
     for c in d["identity"].get("cites", []):
         assert verify._MARKER_RE.fullmatch(c) or verify._MARKER_RE.match(c), \
             f"non-canonical cite leaked into factsheet: {c!r}"
-    # and at least one REAL bhp marker survives the filter (we know they exist)
-    assert any(c.startswith("bhp_") for c in d["identity"].get("cites", [])), \
+    # and at least one REAL canonical marker survives the filter — Gandiva is a
+    # Mahabharata weapon, so its markers are mbh_*, never bhp_ (Bhagavata).
+    cites = d["identity"].get("cites", [])
+    assert cites and any(verify._MARKER_RE.match(c) for c in cites), \
         "all real Gandiva markers were wrongly filtered out"
 
 
@@ -119,9 +121,11 @@ def test_literal_brief_is_nonempty_human_prose_with_a_cite():
     """decode() injects data['brief'] into its prompt. It must be a short factual
     sentence naming what the symbol literally IS, anchored to a real marker."""
     d = factsheet.factsheet("Gandiva", _memory())["data"]
+    from tools.read_pass import verify
     brief = d["brief"]
     assert isinstance(brief, str) and len(brief) > 20
-    assert "bhp_" in brief, "brief must anchor its claim to a real verse marker"
+    assert verify._MARKER_RE.search(brief), \
+        "brief must anchor its claim to a real verse marker"
 
 
 if __name__ == "__main__":
