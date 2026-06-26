@@ -142,6 +142,48 @@ def test_kin_direction(mem: Memory):
            not contradictory, f"contradictory: {contradictory}")
 
 
+def test_guru_direction(mem: Memory):
+    """Guru edges: label by per-predicate seniority, filter non-being 'gurus'."""
+    print("\n--- character guru directionality ---")
+
+    def gurus_of(name):
+        cs = character.character_sheet(name, mem)
+        return cs["data"]["gurus"] if cs["success"] else []
+
+    def lbl(entries, *names):
+        out = []
+        for e in entries:
+            en = (e.get("name") or "").lower()
+            if any(nm.lower() in en for nm in names):
+                out.append((e.get("relationship") or "").lower())
+        return out
+
+    lg = gurus_of("Lahiri Mahasaya")
+    _check("Babaji is Lahiri's guru", "guru" in lbl(lg, "Babaji"),
+           f"got {lbl(lg, 'Babaji')}")
+    _check("Yukteshwar is Lahiri's disciple", "disciple" in lbl(lg, "Yukteshwar"),
+           f"got {lbl(lg, 'Yukteshwar')}")
+
+    bg = gurus_of("Babaji")
+    bl = lbl(bg, "Lahiri")
+    _check("those Babaji is guru-OF are his disciples, not gurus",
+           "disciple" in bl and "guru" not in bl, f"got {bl}")
+    _check("Narrator artifact filtered from Babaji's gurus",
+           not lbl(bg, "Narrator"), f"got {lbl(bg, 'Narrator')}")
+
+    sg = gurus_of("Shailendra Sharma")
+    _check("Satyacharan is Sharma's guru", "guru" in lbl(sg, "Satyacharan"),
+           f"got {lbl(sg, 'Satyacharan')}")
+    _check("the practice 'Kriya Yoga' is not listed as Sharma's guru",
+           not lbl(sg, "Kriya"),
+           f"got {[(e['name'], e['relationship']) for e in sg]}")
+
+    vg = gurus_of("Vyasa")
+    vs = lbl(vg, "Shuka", "Sumantu", "Romaharshana")
+    _check("Vyasa's students are labeled disciple (he is the guru)",
+           vs and all(r == "disciple" for r in vs), f"got {vs}")
+
+
 def test_character_abilities(mem: Memory):
     print("\n--- character.character_abilities ---")
     for char_name in ["Arjuna", "Krishna", "Rama"]:
@@ -642,6 +684,7 @@ def main():
     # character
     test_character_sheet(mem)
     test_kin_direction(mem)
+    test_guru_direction(mem)
     test_character_abilities(mem)
     test_character_not_found(mem)
     test_character_relationships(mem)

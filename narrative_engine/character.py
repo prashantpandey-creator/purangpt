@@ -141,6 +141,69 @@ def _dedupe_kin(entries: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return [best[k] for k in order]
 
 
+# --- guru/disciple directionality + noise filtering -------------------------
+# Like kin, position encodes seniority — but the PREDICATE decides which end is
+# the guru (some are guru-first: {A,teaches,B}; some disciple-first:
+# {A,taught_by,B}). Bare 'disciple'/'student' empirically put the guru in src
+# (Vyasa->Shuka, Sandipani->Krishna; verified against known gurus).
+_GURU_SRC_PREDS = {  # src is the guru/teacher, dst the student
+    "guru", "teacher", "teaches", "instructs", "has_disciple", "initiates",
+    "the_initiator", "guru_of", "master", "disciple", "student", "will_teach",
+    "gives_students_to", "teach", "trains", "initiated",
+}
+_DISCIPLE_SRC_PREDS = {  # src is the student, dst the guru
+    "disciple_of", "student_of", "taught_by", "receives_teaching_from",
+    "becomes_disciple", "asks_for_teaching_from", "trained_by", "considers_guru",
+    "adopt_teaching", "follower", "receives_teaching", "learns_from",
+    "initiated_by", "taught",
+}
+
+# narratological artifacts the decoder mis-mints as 'sage' entities
+_ARTIFACT_NAMES = {
+    "narrator", "speaker", "the speaker", "listener", "the listener",
+    "silent companion", "interlocutor", "questioner", "audience", "reciter",
+    "speaker (i)", "speaker (vyasa)", "the narrator",
+}
+# kinds that are not beings (cannot stand in a guru/family relation)
+_NON_BEING_KINDS = {
+    "concept", "practice", "text", "place", "plant", "object",
+    "substance", "mountain", "clan",
+}
+
+
+def _is_guru_rel(rel: str) -> bool:
+    r = (rel or "").lower()
+    if r in _GURU_SRC_PREDS or r in _DISCIPLE_SRC_PREDS:
+        return True
+    return any(k in r for k in ("guru", "disciple", "teach", "student",
+                                "initiat", "preceptor"))
+
+
+def _guru_label(rel: str, queried_is_src: bool) -> str:
+    """'guru' or 'disciple' for the OTHER end, from the queried entity's POV."""
+    r = (rel or "").lower()
+    if (r in _DISCIPLE_SRC_PREDS or "taught_by" in r or "disciple_of" in r
+            or "student_of" in r or "receives_teaching" in r
+            or "learns_from" in r or "initiated_by" in r):
+        guru_is_src = False
+    else:
+        guru_is_src = True
+    queried_is_guru = (queried_is_src == guru_is_src)
+    return "disciple" if queried_is_guru else "guru"
+
+
+def _is_being(entity: Optional[Dict[str, Any]]) -> bool:
+    """False for non-character nodes (practices/concepts) and narratological
+    artifacts ('Narrator', 'Speaker') the decoder mis-types as sages."""
+    if not entity:
+        return True  # unknown id — keep, never silently drop a real being
+    if (entity.get("kind") or "").lower() in _NON_BEING_KINDS:
+        return False
+    if (entity.get("name") or "").strip().lower() in _ARTIFACT_NAMES:
+        return False
+    return True
+
+
 def character_sheet(name: str, memory: Memory,
                     operator: Optional[Operator] = None) -> Dict[str, Any]:
     """Full character profile: identity, relationships, abilities, decode meaning.
@@ -209,8 +272,12 @@ def character_sheet(name: str, memory: Memory,
             if lbl:
                 entry["relationship"] = lbl
             family.append(entry)
-        elif rel in _GURU_PREDS:
-            gurus.append(entry)
+        elif _is_guru_rel(rel):
+            if _is_being(other):                 # drop practice/artifact "gurus"
+                entry["relationship"] = _guru_label(rel, src == eid)
+                gurus.append(entry)
+            else:
+                other_rels.append(entry)         # keep as a generic association
         else:
             other_rels.append(entry)
 
@@ -243,7 +310,7 @@ def character_sheet(name: str, memory: Memory,
         "literal_brief": literal_brief,
         "decode_meaning": decode_meaning,
         "family": _dedupe_kin(family),
-        "gurus": gurus,
+        "gurus": _dedupe_kin(gurus),
         "weapons": weapons,
         "boons": boons,
         "curses": curses,
