@@ -72,7 +72,7 @@ MAX_HISTORY   = 100  # messages kept in session memory
 
 
 from backend.auth import get_current_user, require_auth, require_role, get_guest_id, check_guest_rate_limit, consume_guest_unit, increment_guest_usage, validate_query
-from backend.db_client import update_profile, get_admin_stats, get_all_users, encrypt_keys, decrypt_keys, increment_usage, check_rate_limit, check_research_limit, increment_research_usage, FREE_DAILY_SECONDS
+from backend.db_client import update_profile, get_admin_stats, get_all_users, encrypt_keys, decrypt_keys, increment_usage, check_rate_limit, check_research_limit, increment_research_usage, FREE_DAILY_TOKENS
 
 from backend.session_manager import SessionManager
 from backend.monitor import run_health_checks
@@ -1349,7 +1349,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             check_rate_limit, user.get("id"), user.get("role", "free"), is_byok
         )
         if not allowed:
-            raise HTTPException(429, "Your 60-minute daily limit has been reached. Upgrade to Pro for unlimited access.")
+            raise HTTPException(429, "You've used all your free tokens for today. Upgrade to Pro for unlimited access.")
     if not any_llm_configured():
         raise HTTPException(503, "No LLM credentials configured")
 
@@ -1379,7 +1379,6 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
     user_role = user.get("role", "free") if user else "guest"
 
     async def event_gen() -> AsyncGenerator[dict, None]:
-        stream_start = asyncio.get_event_loop().time()
         # Immediate feedback so the UI shows motion while we translate+search,
         # rather than dead air until the first LLM token.
         yield {"type": "status", "message": "🔍 Searching the sacred texts…"}
@@ -1500,20 +1499,25 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             {"role": "assistant", "content": full_text}
         ], user_id, guest_id)
         
+        # Estimate token usage: (prompt chars + completion chars) / 4.
+        # This is the industry-standard approximation and avoids per-provider
+        # streaming API changes. Prompt includes the user query + system context.
+        tokens_used = (len(request.query) + len(full_text)) // 4
+
         # Guest units are already consumed atomically at the gate above. For
-        # signed-in users, record the message + elapsed usage seconds now.
-        elapsed = int(asyncio.get_event_loop().time() - stream_start)
+        # signed-in users, record the message + token consumption now.
         if user:
             asyncio.create_task(asyncio.to_thread(
-                increment_usage, user.get("id"), session_id, None, elapsed
+                increment_usage, user.get("id"), session_id, None, tokens_used
             ))
 
-        # Compute usage totals for the frontend meter (approximate — actual DB
-        # write is async, so we add elapsed locally for immediate feedback).
-        usage_after = (current_usage_sec + elapsed) if user and user_role not in ("pro", "scholar", "admin") else None
-        limit_sec = FREE_DAILY_SECONDS if user and user_role not in ("pro", "scholar", "admin") else None
+        # Compute token totals for the frontend meter. The DB write is async so
+        # we add locally for immediate feedback without an extra round-trip.
+        is_free = user and user_role not in ("pro", "scholar", "admin")
+        usage_after = (current_usage_sec + tokens_used) if is_free else None
+        token_limit = FREE_DAILY_TOKENS if is_free else None
 
-        # 7. Done signal with source metadata + usage
+        # 7. Done signal with source metadata + token usage
         yield {"data": json.dumps({
             "type":               "done",
             "session_id":         session_id,
@@ -1521,8 +1525,8 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             "sources_used":       [s.get("text_name") or s.get("purana","") for s in all_sources[:4]],
             "grounding_quality":  grounding_quality,
             "total_sources_found": len(all_sources),
-            "usage_seconds":      usage_after,
-            "usage_limit_seconds": limit_sec,
+            "usage_tokens":       usage_after,
+            "usage_token_limit":  token_limit,
         })}
 
     return EventSourceResponse(event_gen(), headers={"X-Accel-Buffering": "no"})

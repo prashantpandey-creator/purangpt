@@ -38,14 +38,14 @@ class SessionManager:
                     subscription_plan TEXT,
                     subscription_expires_at TIMESTAMPTZ,
                     daily_message_count INT DEFAULT 0,
-                    daily_usage_seconds INT DEFAULT 0,
+                    daily_tokens_used INT DEFAULT 0,
                     deep_research_count INT DEFAULT 0,
                     daily_reset_at TIMESTAMPTZ DEFAULT NOW(),
                     stripe_customer_id TEXT,
                     created_at TIMESTAMPTZ DEFAULT NOW(),
                     updated_at TIMESTAMPTZ DEFAULT NOW()
                 );
-                ALTER TABLE profiles ADD COLUMN IF NOT EXISTS daily_usage_seconds INT DEFAULT 0;
+                ALTER TABLE profiles ADD COLUMN IF NOT EXISTS daily_tokens_used INT DEFAULT 0;
                 CREATE INDEX IF NOT EXISTS idx_profiles_role ON profiles(role);
 
                 CREATE TABLE IF NOT EXISTS chat_sessions (
