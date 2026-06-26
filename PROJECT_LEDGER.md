@@ -49,6 +49,15 @@ Every agent MUST:
 
 ## Ledger (newest first)
 
+### 2026-06-24 — Brand polish: 'Ask the Eternal' hero · metallic gold · peacock-teal second accent · `claude/chat-tier-modes-naming-48z104` · agent(opus)
+- What & why: tightening the brand. (1) Chat front-page hero copy was soft. (2) Gold read "cheap" (flat). (3) Gold-on-dark was monotonous — needed a second color.
+- Changed: `purangpt-next` —
+  · `lib/i18n.ts`: `ui.begin_inquiry` "Your Intention Matters" → **"Ask the Eternal"** (en/hi `शाश्वत से पूछें`/ru `Спросите Вечное`). NOTE: `landing.hero.*` keys (incl. "Your Intentions Matter" CTA) are **dead/unused** — rendered nowhere; the real /about hero uses `about.*` keys.
+  · `app/globals.css`: **metallic gold** — `.text-gradient` now a vertical champagne→gold→antique-brass sheen (gilt look); `.btn-primary` a struck-metal pill (inset top-light + bottom-shade). Added `--gold-champagne`/`--gold-antique` (gradient ends, not new accents).
+  · **Peacock teal = second accent** (`--teal #2bb3a3`, `--teal-bright`, `--teal-deep`): `.btn-secondary` is now TEAL (primary=gold, secondary=teal hierarchy). `Pricing.tsx` toggle + "Save" → teal. Demonstrated gold/teal balance on /pricing.
+- New state / gotchas: base gold accent hue **unchanged** (only depth + the new teal). CLAUDE.md still says "slate is the ONLY cool accent" — that's now superseded: **peacock teal is an intentional second accent** (update that guidance when convenient). Teal is a one-token swap if a different second color (violet/sapphire/crimson) is chosen. tsc clean; CSS/copy only.
+- Follow-ups / risks: roll teal to more surfaces if approved (links, sidebar accents, chat "thinking"/cool cues, secondary highlights); a few inline gold buttons (/about CTA, Upgrade modal) still flat-gold — convert to metallic. 4D void-orb still awaiting promote-to-emblem decision.
+
 ### 2026-06-24 — Brand logo: flame + approved Prāṇa Shakti aura (unified mark) · `claude/chat-tier-modes-naming-48z104` · agent(opus)
 - What & why: user asked whether the approved aura was in the logo (it wasn't — logo had only the Guruji flame). Chose "flame + aura together." Wrapped the logo's fire heart in the approved Prāṇa-aura so the mark matches the main chat emblem's identity.
 - Changed: `purangpt-next/src/components/ui/ConcentricBindu.tsx` — added `auraWisp()` to the logo's WebGL shader: 5 orbiting flame-energy wisps (condense→orbit→dissolve, drift blue→pink→gold), composited (premultiplied, additive) around the central Guruji flame, inside the SVG concentric rings. Aura brightness gated by `lv` (`alive`) — calm at rest, brighter when thinking. Verified at 240/120/64/32px (aura clearly visible to ~64px).
