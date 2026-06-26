@@ -37,6 +37,7 @@ Every agent MUST:
 - Homepage has a **Guruji/Gita section** (Sanskrit verse → Yogeshwari translation → citation).
 - `glass-panel` / `saffron-glow` are global utilities in `globals.css`.
 - **Chat layout (2026-06-22): Bindu gravity-center.** ONE persistent Bindu pinned top-center (no more per-message Bindus); messages scroll beneath it. **(2026-06-23) The emblem is now `ShaktiBindu` (Prāṇa Breath void, lab E2) — golden ring + bindu core with three flame-breaths orbiting as a balanced trinity; `GurujiBindu` flame is orphaned but kept for rollback.** A full-viewport `VoidField` + `CosmicHum` Nāda sit behind the whole chat, all driven by one shared `binduPulse` intelligence signal. Sent query plays a "consume" entrance toward the Bindu; older exchanges collapse to their ghost-echo question (tap to expand), latest always expanded. Stream engine untouched. Empty-state hero Bindu unchanged. NOT yet visually verified on prod.
+- **Shell** (2026-06-26): **NO top toolbar** — all controls (Nāda toggle, account menu, sign-in, nav) live in the left sidebar drawer. Desktop: collapses to a 72px icon rail (chevron toggle). Mobile: slides away, floating hamburger to reopen. `DashboardShell` is pure VoidField + sidebar + content.
 - **Theme** (2026-06-21): candlelit gold accent `#cba455` (token `--gold` / Tailwind `saffron`), highlight `#e7cd84`, slate `#7e92b8`, ivory text `#e2d4b2`. **Chat page = true-black OLED** (`#000` base/topbar/thread, neutral-dark surfaces `#0e0e11`/`#141416`) — the earlier indigo base was dropped per user request. Landing/marketing still use the warmer dark from globals. Restrained glow only on focal points. Side panel uses warm Quicksand (`--font-sidebar`). Do NOT reintroduce neon `#ff9933`. See CLAUDE.md UI guidelines.
 
 ### Known issues / open risks
@@ -48,6 +49,16 @@ Every agent MUST:
 ---
 
 ## Ledger (newest first)
+
+### 2026-06-26 — Remove top toolbar; collapsible sidebar drawer · `claude/chat-tier-modes-naming-48z104` · agent(opus)
+- What & why: the top toolbar was redundant once the sidebar exists. Every control (Nāda toggle, account menu, sign-in, navigation) now lives in the sidebar. On desktop, the sidebar collapses to a 72px icon rail; on mobile it slides away entirely.
+- Changed: `purangpt-next` —
+  · `DashboardShell.tsx`: removed entire top toolbar (~250 lines including HumToggle, user menu dropdown, sign-in). Now just VoidField + CosmicHum + sidebar + main content + mobile hamburger button.
+  · `Sidebar.tsx`: gained HumToggle in footer, account popover (bottom-up from avatar), sign-in button, collapse/expand chevron. `sidebar-collapsed` CSS class controls the 72px rail on `lg:` breakpoint. Labels and history zone hidden when collapsed.
+  · `UIPreferencesContext.tsx`: added `sidebarCollapsed` boolean + `setSidebarCollapsed` / `toggleSidebarCollapsed`, persisted to localStorage.
+  · `globals.css`: `.sidebar-collapsed { width: 72px }` at `@media (min-width: 1024px)`.
+- New state / gotchas: Tailwind arbitrary `lg:w-[72px]` didn't JIT-compile; fixed with a plain CSS class instead. tsc clean, verified via Playwright screenshots (both collapsed=72px and expanded=256px).
+- Follow-ups / risks: front-page redesign still pending per user request.
 
 ### 2026-06-26 — Follow-ups context-aware + Suggestion Quality Bar codified · `claude/chat-tier-modes-naming-48z104` · agent(opus)
 - What & why: bring the in-conversation follow-up pills up to the SAME context-aware standard as the empty-state chips, and write the bar into the docs so it holds.
