@@ -50,6 +50,12 @@ Every agent MUST:
 
 ## Ledger (newest first)
 
+### 2026-06-26 — Language toggle visible in collapsed sidebar rail · `claude/chat-tier-modes-naming-48z104` PR #38 · agent(opus)
+- What & why: the `LanguageSelector` (EN/HI/RU) was hidden (`lg:hidden`) when the sidebar collapsed to its 72px icon rail. Added a `compact` prop to render a globe-only icon button (matching HumToggle style) in the rail; full selector shown in expanded state.
+- Changed: `purangpt-next` — `LanguageSelector.tsx` (new `compact` prop), `Sidebar.tsx` (responsive render of both compact/full variants via CSS breakpoint classes).
+- New state / gotchas: i18n fully operational — title, placeholder, sidebar labels, hints all translate to EN/HI/RU. Verified via Playwright screenshots in all 3 languages.
+- Follow-ups / risks: none.
+
 ### 2026-06-26 — Remove top toolbar; collapsible sidebar drawer · `claude/chat-tier-modes-naming-48z104` · agent(opus)
 - What & why: the top toolbar was redundant once the sidebar exists. Every control (Nāda toggle, account menu, sign-in, navigation) now lives in the sidebar. On desktop, the sidebar collapses to a 72px icon rail; on mobile it slides away entirely.
 - Changed: `purangpt-next` —
