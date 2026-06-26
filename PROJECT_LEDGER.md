@@ -49,6 +49,15 @@ Every agent MUST:
 
 ## Ledger (newest first)
 
+### 2026-06-26 — Follow-ups context-aware + Suggestion Quality Bar codified · `claude/chat-tier-modes-naming-48z104` · agent(opus)
+- What & why: bring the in-conversation follow-up pills up to the SAME context-aware standard as the empty-state chips, and write the bar into the docs so it holds.
+- Changed: `purangpt-next` —
+  · `app/api/followup-suggestions/route.ts`: now also takes the conversation **arc** (prior user turns in this thread) + the **moment** (timezone, localHour, localDate, accept-language). Prompt carries the journey FORWARD (never re-suggests already-covered ground), tints by season/nearby festival/time-of-day only when it fits, demands concrete named stories/verses, and **bans filler clichés** ("tell me more", "inner peace", "letting go"…). Added `partOfDay()`.
+  · `chat/ChatInterface.tsx`: `fetchFollowups` gathers `priorTurns` from the active `conversation` (last 5 user turns minus the current Q) + `Intl` timezone/localHour/localDate and POSTs them. (dep array now includes `conversation`.)
+  · `CLAUDE.md`: new **"Suggestion Engine — Quality Bar (CRITICAL)"** section — both chip endpoints must be context-aware (history/arc · region · moment · variety), always concrete, cliché-banned, **LLM-primary with pools as a FAILSAFE only**; documents the ignored-`color` gotcha and the context-keyed cache.
+- New state / gotchas: dev (no LLM key) still serves the evergreen failsafe for follow-ups — verified via curl (returns 3). Prod runs the contextual LLM path. tsc clean.
+- Follow-ups / risks: "New way to access" suggestions + the minor "Ask the Eternal" spacing tuck still open.
+
 ### 2026-06-26 — Suggestions: context-aware engine (history · region · moment) · `claude/chat-tier-modes-naming-48z104` · agent(opus)
 - What & why: user wanted the chips driven by **logic, not hard-coded positions** — connected to the seeker's history, region/country, and the current moment; the empty-state set should still be as context-aware as possible even with no objective.
 - Changed: `purangpt-next` —
