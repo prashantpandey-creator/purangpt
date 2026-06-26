@@ -113,6 +113,15 @@ try:
 except Exception:  # pragma: no cover - import-environment guard
     route_register = None
 
+# Graph memory (backend/graph_memory) — the WISDOM layer RAG can't reach: relational
+# truth, multi-hop chains, cross-text identity (proven graph_only 4/5 vs RAG-floor 0/5,
+# tools/rag_vs_graph_bench). Flag-gated OFF (GRAPH_MEMORY_ENABLED=1) and fail-graceful:
+# its block degrades to "" on any error, so chat is byte-identical to today when off.
+try:
+    from backend.graph_memory import build_graph_context
+except Exception:  # pragma: no cover - import-environment guard
+    build_graph_context = None
+
 # ── Session Memory ─────────────────────────────────────────────────────────
 session_manager = SessionManager(MAX_HISTORY)
 
@@ -1846,6 +1855,20 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                 logger.warning("register_router failed, defaulting to guru: %s", _e)
 
         combined_directives = "\n\n".join(directives)
+
+        # Graph memory (wisdom layer) — prepend the relational truth RAG cannot reach
+        # (who relates to whom, multi-hop chains, cross-text identity) into the SAME
+        # {context} slot as the verses: facts and relational truth side by side. Flag-
+        # gated OFF (GRAPH_MEMORY_ENABLED=1) and fail-graceful: an empty "" block (flag
+        # off / no entity match / any error) leaves rag_context untouched, so chat is
+        # byte-identical to today when disabled. No new template slot → no KeyError-500.
+        if build_graph_context is not None:
+            try:
+                graph_block = build_graph_context(request.query)
+                if graph_block:
+                    rag_context = (graph_block + "\n\n" + rag_context) if rag_context else graph_block
+            except Exception as _e:  # never let graph memory break a chat turn
+                logger.warning("graph_memory injection skipped: %s", _e)
 
         system_text = prompt_tpl.format(
             interpolations=KNOWN_INTERPOLATIONS,

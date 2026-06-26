@@ -1,0 +1,3161 @@
+{
+  "success": true,
+  "data": {
+    "framework": {
+      "decryption_keys": [
+        {
+          "symbol": "Brahma",
+          "meaning": "Root consciousness of conscious matter; symbol of immensity of matter"
+        },
+        {
+          "symbol": "Vishnu",
+          "meaning": "Consciousness of the conscious void; the void that contains matter"
+        },
+        {
+          "symbol": "Shiva",
+          "meaning": "Time (Kal); the element immanent in both matter and void, cause of annihilation; beyond both"
+        },
+        {
+          "symbol": "Ardhanarishwar",
+          "meaning": "Time causing conception to itself, giving birth to creation"
+        },
+        {
+          "symbol": "Bhagwan Shri Krishna",
+          "meaning": "Extremely brilliant epitome of the Time"
+        },
+        {
+          "symbol": "Body",
+          "meaning": "Womb for developing and delivering consciousness; envelope of ignorance"
+        },
+        {
+          "symbol": "Death",
+          "meaning": "Medium through which fully developed consciousness is delivered"
+        },
+        {
+          "symbol": "Mind",
+          "meaning": "Seeds consciousness; takes on a body"
+        },
+        {
+          "symbol": "Consciousness",
+          "meaning": "That which is developed in the womb of the body and delivered; daughter of mind"
+        },
+        {
+          "symbol": "Time",
+          "meaning": "The manifesting principle; the origin of creation; the soul of all"
+        },
+        {
+          "symbol": "Imagination",
+          "meaning": "The most powerful force; when controlled becomes will power"
+        },
+        {
+          "symbol": "Body as womb",
+          "meaning": "Used to plant the seed of consciousness and develop it"
+        },
+        {
+          "symbol": "Five elements (Earth, Water, Fire, Air, Sky)",
+          "meaning": "Constituents of the corporal body of the world"
+        },
+        {
+          "symbol": "Senses",
+          "meaning": "Witnesses of the play of time"
+        },
+        {
+          "symbol": "Mahakal",
+          "meaning": "Supreme Time, Shiva; the source that manifests, supports, and destroys all creation"
+        },
+        {
+          "symbol": "consciousness (daughter of mind)",
+          "meaning": "The awakened inner awareness, developed through yogic practice"
+        },
+        {
+          "symbol": "Prana",
+          "meaning": "Shiva; the life force; one of the mutually opposite activities in the body"
+        },
+        {
+          "symbol": "Apana",
+          "meaning": "The mutually opposite activity to Prana"
+        },
+        {
+          "symbol": "Sushumna",
+          "meaning": "The central channel; the quiescent state of Prana where union is experienced"
+        },
+        {
+          "symbol": "Khechari mudra",
+          "meaning": "A yogic technique: tongue placed in the nasal cavity inside the skull"
+        },
+        {
+          "symbol": "inside end of the nostril / skull cavity",
+          "meaning": "The meeting point where nasal holes terminate inside the skull; site for Khechari mudra and Sanyam"
+        },
+        {
+          "symbol": "void (inside skull cavity)",
+          "meaning": "The conscious void where Shiva is realized as essence of life"
+        },
+        {
+          "symbol": "amrita",
+          "meaning": "a special hormone formed with heavy, prolonged, successful practice; nectar of immortality"
+        },
+        {
+          "symbol": "moon (between eyebrows)",
+          "meaning": "area where amrita forms; sign of crescent moon; associated with moonlight (jyotsna)"
+        },
+        {
+          "symbol": "four parts of the brain",
+          "meaning": "biological description: north = top of head, east = front, west = back, south = muladhara (extension of brain via spinal cord)"
+        },
+        {
+          "symbol": "Paramashiva",
+          "meaning": "superconsciousness; the supreme; dark corner of the brain where he resides"
+        },
+        {
+          "symbol": "muladhara",
+          "meaning": "connection with earth element; abode of kundalini; real power lies in earth element"
+        },
+        {
+          "symbol": "kundalini",
+          "meaning": "consciousness; main power; sleeps in muladhara (earth element)"
+        },
+        {
+          "symbol": "kha",
+          "meaning": "empty space; inner space behind the nose; void where prana and apana meet"
+        },
+        {
+          "symbol": "khechari",
+          "meaning": "tongue moving into the inner space behind nose; activates inner brain parts; protects from explosions"
+        },
+        {
+          "symbol": "jyotsna",
+          "meaning": "moonlight; property of the moon; awareness of the moon"
+        },
+        {
+          "symbol": "earth element",
+          "meaning": "seat of kundalini; contains real power"
+        },
+        {
+          "symbol": "five elements",
+          "meaning": "pierced by kundalini; brought to 20% each harmony"
+        },
+        {
+          "symbol": "khecharatva",
+          "meaning": "ability to fly; lightness of body; state of being a khechari"
+        },
+        {
+          "symbol": "prana and apana",
+          "meaning": "their friction occurs in the void (kha); meeting point behind nose"
+        },
+        {
+          "symbol": "suspended animation",
+          "meaning": "state where the process of khecharatva continues"
+        },
+        {
+          "symbol": "Mercury",
+          "meaning": "Semen of Shiva; also mind when stable"
+        },
+        {
+          "symbol": "Sulfur",
+          "meaning": "Shakti, earth element, apana"
+        },
+        {
+          "symbol": "Shakti",
+          "meaning": "Sulfur principle"
+        },
+        {
+          "symbol": "Muladhar",
+          "meaning": "Location of earth element, Shakti, Kundalini sleep"
+        },
+        {
+          "symbol": "Void",
+          "meaning": "Consciousness flowing, ocean of consciousness; 99.9% of body"
+        },
+        {
+          "symbol": "Spirit/Soul",
+          "meaning": "A drop of time; infinite but needs body to feel time"
+        },
+        {
+          "symbol": "Physical body",
+          "meaning": "A sentence of time; a short space to feel time"
+        },
+        {
+          "symbol": "Brahman varna of mercury",
+          "meaning": "Highest quality mercury; single drop gives 10000+ years life"
+        },
+        {
+          "symbol": "Kshatriya varna of mercury",
+          "meaning": "Second quality mercury"
+        },
+        {
+          "symbol": "Vaishya varna of mercury",
+          "meaning": "Third quality mercury"
+        },
+        {
+          "symbol": "Shudra varna of mercury",
+          "meaning": "Lowest quality; commonly available today"
+        },
+        {
+          "symbol": "Mahamudra",
+          "meaning": "Furnace for alchemical processes; makes mercury heat-resistant"
+        },
+        {
+          "symbol": "18 processes of mercury",
+          "meaning": "Alchemical purification steps; only yogis can do safely"
+        },
+        {
+          "symbol": "7 processes of purification of mercury",
+          "meaning": "Smaller purification set; changes quality to extremely bright, eats gold"
+        },
+        {
+          "symbol": "Gorakhbodh",
+          "meaning": "Experience after fourth chapter of Hatha Yoga Pradipika; nada sounds"
+        },
+        {
+          "symbol": "Hatha Yoga Pradipika",
+          "meaning": "Training manual; fourth chapter deals with nada"
+        },
+        {
+          "symbol": "Sahasrara",
+          "meaning": "Target of Kundalini; if reached fully, body incinerated"
+        },
+        {
+          "symbol": "52 syllables",
+          "meaning": "Sound vibrations hitting elements; reveal chakra locations"
+        },
+        {
+          "symbol": "Chakras",
+          "meaning": "Places where sound hits elements; revealed after first Kundalini awakening"
+        },
+        {
+          "symbol": "Three worlds",
+          "meaning": "Realms achievable by stable mercury/mind"
+        },
+        {
+          "symbol": "ojas",
+          "meaning": "concentrated life force; prelude to amrita; a substance formed in the heart through celibacy and yoga practice; 8 drops lead to amrita formation; each drop adds ~12 years of life."
+        },
+        {
+          "symbol": "heart",
+          "meaning": "seat of ojas; supports the brain; part of the physical body's mystery."
+        },
+        {
+          "symbol": "brain",
+          "meaning": "98% sleeping; capable of producing amrita; central to awakening and wisdom."
+        },
+        {
+          "symbol": "tejas",
+          "meaning": "life force; flame at the soft palate (tallu) while alive; gives valor, brightness, strength."
+        },
+        {
+          "symbol": "celibacy",
+          "meaning": "retaining and assimilating life force (sexual energy) inside the body; main condition for ojas formation."
+        },
+        {
+          "symbol": "samadhi",
+          "meaning": "possible without ojas; can trigger ojas formation; necessary for the process to click."
+        },
+        {
+          "symbol": "new cells",
+          "meaning": "formed after 12 years; require new programming (through practice) to support ojas; old cells retain old memories."
+        },
+        {
+          "symbol": "Amaraugh Prabodh",
+          "meaning": "text that uniquely describes tejas at the tallu; by Matsyendranath."
+        },
+        {
+          "symbol": "Matsyendranath",
+          "meaning": "greatest of yogis; author of Amaraugh Prabodh."
+        },
+        {
+          "symbol": "tallu",
+          "meaning": "soft palate; location of tejas flame."
+        },
+        {
+          "symbol": "Narayana",
+          "meaning": "sleeping in the brain; immortal spirit."
+        },
+        {
+          "symbol": "life force",
+          "meaning": "sexual energy; if digested becomes ojas."
+        },
+        {
+          "symbol": "Kurukshetra",
+          "meaning": "Not mentioned in this text; no direct decryption given."
+        },
+        {
+          "symbol": "Krishna",
+          "meaning": "Not mentioned in this text; no direct decryption given."
+        },
+        {
+          "symbol": "Conch",
+          "meaning": "Not mentioned in this text; no direct decryption given."
+        },
+        {
+          "symbol": "Hans (Swan)",
+          "meaning": "Swan-breath; the breath that flies in and out with the sounds 'Ham' and 'Sah'."
+        },
+        {
+          "symbol": "Muladhara (Mula)",
+          "meaning": "Earth element; supports the body; location for Mulabandh."
+        },
+        {
+          "symbol": "Guda chakra",
+          "meaning": "Location for 'unseen bandh' (Agochar Bandh)."
+        },
+        {
+          "symbol": "Mani chakra (Manipura)",
+          "meaning": "Controls Swan-breath; through bank naal, intake and distribution of life force."
+        },
+        {
+          "symbol": "Anahata chakra",
+          "meaning": "Domain of unstruck sound (Anahat Naad); mind and soul are delighted."
+        },
+        {
+          "symbol": "Vishuddha chakra",
+          "meaning": "Junction for flow of vital energy from brain; Time achieves Samadhi; suspending sense of time."
+        },
+        {
+          "symbol": "Chandra chakra (Agya)",
+          "meaning": "Samadhi of the mind begins; state of knowing."
+        },
+        {
+          "symbol": "Shankhini nadi",
+          "meaning": "Sushumna; the channel through which Kundalini rises."
+        },
+        {
+          "symbol": "Bank naal",
+          "meaning": "Navel center through which life force is reined."
+        },
+        {
+          "symbol": "Hriday",
+          "meaning": "Where Prana Shakti comes from into Muladhara."
+        },
+        {
+          "symbol": "Param Shiva",
+          "meaning": "Great Ether manifested at Sahasrara."
+        },
+        {
+          "symbol": "Unmuni",
+          "meaning": "State beyond consciousness; reached at Sahasrara."
+        },
+        {
+          "symbol": "Unmani",
+          "meaning": "State of self-transcendence; merging with true 'I'."
+        },
+        {
+          "symbol": "Sahaj",
+          "meaning": "Spontaneity; natural state of true spontaneity."
+        },
+        {
+          "symbol": "Sahaj Samadhi",
+          "meaning": "State where thought becomes absorbed in bliss."
+        },
+        {
+          "symbol": "conscious void",
+          "meaning": "element beyond visible world; supports all; pervaded by great sound; source of pure thought"
+        },
+        {
+          "symbol": "great sound",
+          "meaning": "pervades conscious void; originates from time; secret sound"
+        },
+        {
+          "symbol": "pure thought",
+          "meaning": "elicited from conscious void; mediates between conscious world and corporeal matter"
+        },
+        {
+          "symbol": "Sakticakra",
+          "meaning": "the energy centers (chakras) whose seeking/disintegration awakens consciousness"
+        },
+        {
+          "symbol": "Pranayam",
+          "meaning": "practice that disintegrates consciousness within the body and awakens it"
+        },
+        {
+          "symbol": "visible world",
+          "meaning": "body of the One who manifests all; formed of five elements"
+        },
+        {
+          "symbol": "fourth state (turiya)",
+          "meaning": "completely awakened immense consciousness; beyond waking, dream, deep sleep"
+        },
+        {
+          "symbol": "will power",
+          "meaning": "most beautiful virgin; mother of awakened consciousness"
+        },
+        {
+          "symbol": "Arjuna",
+          "meaning": "the individual soul / jiva"
+        },
+        {
+          "symbol": "Bhishma, Drona, etc.",
+          "meaning": "sensory faculties or ego tendencies"
+        },
+        {
+          "symbol": "conscious mind",
+          "meaning": "a small fraction of the entire consciousness that an average person can use"
+        },
+        {
+          "symbol": "unconscious",
+          "meaning": "the vast dormant consciousness that remains unused"
+        },
+        {
+          "symbol": "Asat (unreal)",
+          "meaning": "dormant consciousness"
+        },
+        {
+          "symbol": "Sat (real)",
+          "meaning": "awakened consciousness"
+        },
+        {
+          "symbol": "Dhritarashtra",
+          "meaning": "the blind mind"
+        },
+        {
+          "symbol": "Duryodhana",
+          "meaning": "the ego"
+        },
+        {
+          "symbol": "Bhishma",
+          "meaning": "the intellect (buddhi) conditioned by worldly attachments"
+        },
+        {
+          "symbol": "Drona",
+          "meaning": "the ego's teacher (conditioned intellect)"
+        },
+        {
+          "symbol": "Pancajanya (Krishna's conch)",
+          "meaning": "the five pranas (pancha prana) unified into one"
+        },
+        {
+          "symbol": "Devadatta (Arjuna's conch)",
+          "meaning": "the prana that moves upward (udana) for awakening"
+        },
+        {
+          "symbol": "Paundra (Bhima's conch)",
+          "meaning": "the forceful prana that clears blockages"
+        },
+        {
+          "symbol": "Anantavijaya (Yudhisthira's conch)",
+          "meaning": "the inner peace state beyond victory/defeat"
+        },
+        {
+          "symbol": "Sughosha and Manipushpaka (Nakula and Sahadeva's conches)",
+          "meaning": "the duality of right and left nostrils (ida and pingala)"
+        },
+        {
+          "symbol": "Gandiva bow",
+          "meaning": "the spine / the subtle channel through which prana moves"
+        },
+        {
+          "symbol": "white horses",
+          "meaning": "the pure, controlled senses/activities"
+        },
+        {
+          "symbol": "chariot",
+          "meaning": "the body-vehicle"
+        },
+        {
+          "symbol": "Krishna as charioteer",
+          "meaning": "inner Self guiding the individual soul"
+        },
+        {
+          "symbol": "battlefield",
+          "meaning": "the field of inner yoga (body and mind)"
+        },
+        {
+          "symbol": "armies of Kauravas and Pandavas",
+          "meaning": "the forces of ego/desires vs. forces of consciousness/divinities within"
+        },
+        {
+          "symbol": "Bheema",
+          "meaning": "the vital force (prana vayu) with powerful action"
+        },
+        {
+          "symbol": "deha (corporal body)",
+          "meaning": "The support for the manifestation of immense consciousness; a sensor of the immense mind; perishable."
+        },
+        {
+          "symbol": "shariri (embodied self)",
+          "meaning": "The unending, unlimited, imperishable consciousness manifested through the body."
+        },
+        {
+          "symbol": "time (kala)",
+          "meaning": "The unmanifest ultra-brilliant source that manifests everything, including the mind and body; creator of the mind itself."
+        },
+        {
+          "symbol": "mind (chitta/consciousness)",
+          "meaning": "Immense consciousness that is the trans-physical manifestation of time; eternal, unlimited, indestructible."
+        },
+        {
+          "symbol": "birth and death",
+          "meaning": "Separate manifestations of one singular presence, experienced due to confinement of consciousness within physical limits."
+        },
+        {
+          "symbol": "yuddha (war/fight)",
+          "meaning": "The inner fight against physical limitations; the practice of yoga."
+        },
+        {
+          "symbol": "svarga (heaven)",
+          "meaning": "A state of self-fulfillment achieved through war (yogic practice)."
+        },
+        {
+          "symbol": "kshatriya (warrior)",
+          "meaning": "One who is to fight the inner war; his natural duty is yoga."
+        },
+        {
+          "symbol": "dharma",
+          "meaning": "The natural duty of a warrior, i.e., to engage in the inner yogic struggle."
+        },
+        {
+          "symbol": "weapons",
+          "meaning": "External objects that cannot cut the immense consciousness."
+        },
+        {
+          "symbol": "fire, water, wind",
+          "meaning": "Elements that cannot affect the immense consciousness."
+        },
+        {
+          "symbol": "sky",
+          "meaning": "Analogous to the immense consciousness – can be experienced but not touched."
+        },
+        {
+          "symbol": "old clothes / new clothes",
+          "meaning": "Old bodies / new bodies; the immense mind is manifested through different bodies."
+        },
+        {
+          "symbol": "Yajna",
+          "meaning": "Yogic karma (practice of yoga awakening immense consciousness of the mind) through the medium of the body."
+        },
+        {
+          "symbol": "Prajapati",
+          "meaning": "Lord of creatures; the unmanifest Time that manifests the entire creation, present in the body."
+        },
+        {
+          "symbol": "Gods (Devas)",
+          "meaning": "The senses and organs of action, which are forms of the gods, instrumental to the mind."
+        },
+        {
+          "symbol": "Jivanmukata",
+          "meaning": "Liberated while living; one who has awakened entire consciousness and is free from physical limitations and attraction."
+        },
+        {
+          "symbol": "Purna karma",
+          "meaning": "Accomplishing all desires; state of being fulfilled by yogic practice."
+        },
+        {
+          "symbol": "Brahmi sthitih",
+          "meaning": "State of Omnipotence, knowing the entire immensity of one's mind by awakening dormant consciousness."
+        },
+        {
+          "symbol": "Brahmanirvan",
+          "meaning": "Concentrating the entire immense consciousness into the unmanifest Time and becoming one with It at death."
+        },
+        {
+          "symbol": "Jnani",
+          "meaning": "Knower who has realized the correlation of mind and senses by awakening dormant immense consciousness."
+        },
+        {
+          "symbol": "Yogi",
+          "meaning": "One who is still in the process of awakening infinite competencies."
+        },
+        {
+          "symbol": "Nishkarma",
+          "meaning": "Devoid of desire to act; established in the results of kriyayoga."
+        },
+        {
+          "symbol": "Akarma",
+          "meaning": "Devoid of desire to act; state beyond karma."
+        },
+        {
+          "symbol": "war",
+          "meaning": "inner yogic war, the struggle to awaken consciousness"
+        },
+        {
+          "symbol": "heaven of self-exaltation",
+          "meaning": "state of self-realization or higher consciousness"
+        },
+        {
+          "symbol": "victory",
+          "meaning": "success in yogic practice"
+        },
+        {
+          "symbol": "defeat",
+          "meaning": "failure in yogic practice (non-issue if equanimous)"
+        },
+        {
+          "symbol": "gain",
+          "meaning": "attainment in yoga (treated with equanimity)"
+        },
+        {
+          "symbol": "loss",
+          "meaning": "lack of attainment in yoga (treated with equanimity)"
+        },
+        {
+          "symbol": "happiness",
+          "meaning": "mental state (treated evenly)"
+        },
+        {
+          "symbol": "sorrow",
+          "meaning": "mental state (treated evenly)"
+        },
+        {
+          "symbol": "bondage of karma",
+          "meaning": "limitation due to desire for fruits"
+        },
+        {
+          "symbol": "practice of yoga",
+          "meaning": "awakening dormant immense consciousness"
+        },
+        {
+          "symbol": "three gunas",
+          "meaning": "grades of consciousness (satva, raja, tama) that limit the mind"
+        },
+        {
+          "symbol": "Vedas",
+          "meaning": "scriptures dealing with three gunas; to be transcended"
+        },
+        {
+          "symbol": "Brahman (knower)",
+          "meaning": "one who has realized the ocean of consciousness"
+        },
+        {
+          "symbol": "small ponds",
+          "meaning": "limited consciousness bound by senses"
+        },
+        {
+          "symbol": "ocean",
+          "meaning": "immense awakened consciousness"
+        },
+        {
+          "symbol": "desire for fruit",
+          "meaning": "reason for inception of karma; to be transcended in yoga"
+        },
+        {
+          "symbol": "yogic karma",
+          "meaning": "karma done with desire for Samadhi"
+        },
+        {
+          "symbol": "result (fruit)",
+          "meaning": "outcome of karma; to be renounced"
+        },
+        {
+          "symbol": "equanimity (samatvam)",
+          "meaning": "yoga itself"
+        },
+        {
+          "symbol": "life and death",
+          "meaning": "relative; become equal in perception"
+        },
+        {
+          "symbol": "sin and piety",
+          "meaning": "good and bad karma; both transcended"
+        },
+        {
+          "symbol": "immutable Supreme Being",
+          "meaning": "brilliance of all brilliance, ultra-brilliant"
+        },
+        {
+          "symbol": "unmanifest immense consciousness",
+          "meaning": "that which manifests the body"
+        },
+        {
+          "symbol": "instruments of Supreme Consciousness",
+          "meaning": "all manifestations"
+        },
+        {
+          "symbol": "rebirth",
+          "meaning": "obligation; freed from by union with unmanifest"
+        },
+        {
+          "symbol": "organs/senses",
+          "meaning": "attracted to objects; to be understood and detached from"
+        },
+        {
+          "symbol": "Vairagya",
+          "meaning": "detachment from sense attraction"
+        },
+        {
+          "symbol": "Sthitaprajna",
+          "meaning": "one with steady intellect, established in Samadhi"
+        },
+        {
+          "symbol": "Partha",
+          "meaning": "Arjuna"
+        },
+        {
+          "symbol": "Kurunandana",
+          "meaning": "epithet of Arjuna"
+        },
+        {
+          "symbol": "Dhananjaya",
+          "meaning": "epithet of Arjuna"
+        },
+        {
+          "symbol": "Kesava",
+          "meaning": "Krishna"
+        },
+        {
+          "symbol": "food",
+          "meaning": "support for the body, which is created by rains (association of earth and sun)"
+        },
+        {
+          "symbol": "rains",
+          "meaning": "result from the association of the earth and the sun"
+        },
+        {
+          "symbol": "karma",
+          "meaning": "caused by the body; actions performed through the medium of the body"
+        },
+        {
+          "symbol": "Akshar (Imperishable)",
+          "meaning": "the immutable Time that never passes away"
+        },
+        {
+          "symbol": "cycle (pravartitam cakram)",
+          "meaning": "cycle of manifestation of the Supreme Presence through awakening dormant consciousness"
+        },
+        {
+          "symbol": "Self (Atman)",
+          "meaning": "the ultimate imperishable Supreme Being, Time, realized through awakening immense consciousness"
+        },
+        {
+          "symbol": "body and sense organs",
+          "meaning": "limitations that confine consciousness if taken as paramount"
+        },
+        {
+          "symbol": "unmanifest conscious presence / Time",
+          "meaning": "the ultimate element that manifests through creation; central to creation; if unmanifest, could be named destroyer"
+        },
+        {
+          "symbol": "war (yudhyasva)",
+          "meaning": "the inner battle of yoga; fighting without rage, beyond hope and meum"
+        },
+        {
+          "symbol": "navadvāra pur",
+          "meaning": "body with nine openings"
+        },
+        {
+          "symbol": "Prabhu",
+          "meaning": "the unmanifest Time (Kāla-Brahma)"
+        },
+        {
+          "symbol": "Vibhu",
+          "meaning": "the omnipresent imperishable Supreme Being, the Time"
+        },
+        {
+          "symbol": "Kāla-Brahma",
+          "meaning": "the Time that has infinite spread, brilliant as the sun"
+        },
+        {
+          "symbol": "fires of yoga",
+          "meaning": "inner yogic processes that awaken consciousness"
+        },
+        {
+          "symbol": "sin of ignorance",
+          "meaning": "limited consciousness, narrowness"
+        },
+        {
+          "symbol": "Vikarma",
+          "meaning": "Gross karma that detains one from yogic karma; opposite of subtle yoga karma"
+        },
+        {
+          "symbol": "Brahma-granthi-bheda",
+          "meaning": "First course of yoga: mastering khechari and special pranayama to balance prana and apana"
+        },
+        {
+          "symbol": "Hridaya-granthi-bheda",
+          "meaning": "Second course: two extraordinary pranayamas involving heart and head-neck; leads to vision of Vasudev"
+        },
+        {
+          "symbol": "Rudra-granthi-bheda",
+          "meaning": "Final course: perception of unmanifest Time through Omkar kriya; involves prana oblated in prana"
+        },
+        {
+          "symbol": "Omkar kriya",
+          "meaning": "Pranayama in yonimudra; direct darshan of Time; enables voluntary death"
+        },
+        {
+          "symbol": "Yonimudra",
+          "meaning": "Posture for final course of yoga"
+        },
+        {
+          "symbol": "Vasudev",
+          "meaning": "Lord who resides in the heart of all creatures; contains the entire corporeal world"
+        },
+        {
+          "symbol": "sense organs",
+          "meaning": "media through which the mind experiences; instrumental, not the experiencer"
+        },
+        {
+          "symbol": "svadharma",
+          "meaning": "awakening dormant competencies of the mind to know death/Time"
+        },
+        {
+          "symbol": "rajoguna",
+          "meaning": "giving excessive emphasis to senses over mind; cause of desire and anger"
+        },
+        {
+          "symbol": "desire (kama)",
+          "meaning": "born from rajoguna; impels senses towards objects; an impediment in awakening dormant competencies"
+        },
+        {
+          "symbol": "anger (krodha)",
+          "meaning": "desire when hindered; same as desire in essence"
+        },
+        {
+          "symbol": "organs, mind, reason",
+          "meaning": "resorts of desire/passion; through these it envelops wisdom"
+        },
+        {
+          "symbol": "Sthitaprajña",
+          "meaning": "a yogi established in Samadhi who has experienced his immense consciousness by awakening dormant competencies"
+        },
+        {
+          "symbol": "yoga",
+          "meaning": "developing dormant mental faculties to know the Time that manifests the human; expedient practice from beginning"
+        },
+        {
+          "symbol": "Vivasvat",
+          "meaning": "ancient teacher in the yoga tradition; not a literal person but a symbol of the Sun or inner light? (explicit decryption not given; assumed as lineage symbol)"
+        },
+        {
+          "symbol": "Manu",
+          "meaning": "ancient teacher; symbol of the progenitor of humanity? (explicit decryption not given)"
+        },
+        {
+          "symbol": "Ikshvaku",
+          "meaning": "ancient king; symbol of solar dynasty? (explicit decryption not given)"
+        },
+        {
+          "symbol": "Parameshwar / the Time",
+          "meaning": "the unmanifest conscious presence that manifests all; advents as super-human being when yoga declines"
+        },
+        {
+          "symbol": "human being",
+          "meaning": "the best manifestation of the consciousness of Time"
+        },
+        {
+          "symbol": "unrighteousness (adharma)",
+          "meaning": "failure to undertake yoga to know the unmanifest conscious presence; immuring in physical limitations"
+        },
+        {
+          "symbol": "Paramatma",
+          "meaning": "The epitome of the Time; the ultimate conscious Time"
+        },
+        {
+          "symbol": "Sadhu",
+          "meaning": "A Sthitaprajna person who directly perceives the Paramatma through yoga"
+        },
+        {
+          "symbol": "human body",
+          "meaning": "Field of yoga; manifestation of the ultimate truth; best manifestation of the Time"
+        },
+        {
+          "symbol": "four varnas",
+          "meaning": "Four principal modes of manifestation of the Immense Element; stages of evolution of consciousness: Shudra (carnal), Vaishya (nurturing body), Kshatriya (threshold to transcendence), Brahmin (final emancipation)"
+        },
+        {
+          "symbol": "Shudra",
+          "meaning": "First stage of development; consciousness experiences carnal feelings; symbolizes the black race (feet of Virat Purush)"
+        },
+        {
+          "symbol": "Vaishya",
+          "meaning": "Second stage; consciousness involved in sustaining body (agriculture, commerce); yellow Mongol race (stomach of Virat Purush)"
+        },
+        {
+          "symbol": "Kshatriya",
+          "meaning": "Third stage; threshold of rising above physical limits; bravery, sacrifice; white race (arms of Virat Purush)"
+        },
+        {
+          "symbol": "Brahmin",
+          "meaning": "Fourth stage; final emancipation; inclined to quietude, knowledge, experiencing Paramatma; race from India to Israel, Caucasian but not white (mouth of Virat Purush)"
+        },
+        {
+          "symbol": "Virat Purush",
+          "meaning": "The Vast Person, Almighty; its limbs correspond to varnas"
+        },
+        {
+          "symbol": "gods",
+          "meaning": "Objects of worship for those desiring fruits of karma; limited beings within creation"
+        },
+        {
+          "symbol": "Maya",
+          "meaning": "Mentioned as a concept that scholars prate about without real experience"
+        },
+        {
+          "symbol": "Prakruti, Purusha, Brahma, Atma",
+          "meaning": "Concepts that are merely hints; true understanding requires awakening consciousness through yoga"
+        },
+        {
+          "symbol": "human mind",
+          "meaning": "The support of all knowledge; can know the truth of the Time by awakening immense consciousness through yoga"
+        },
+        {
+          "symbol": "amrit (ambrosia/nectar of immortality)",
+          "meaning": "the produce of yajna; resulting consciousness expansion"
+        },
+        {
+          "symbol": "Brahma (Eternal)",
+          "meaning": "the unmanifest, timeless reality; the absolute"
+        },
+        {
+          "symbol": "Kurukshetra (implied by Kurushreshtha)",
+          "meaning": "the field of body/consciousness"
+        },
+        {
+          "symbol": "mouth of Brahma",
+          "meaning": "the source of yogic knowledge"
+        },
+        {
+          "symbol": "wisdom (jñana)",
+          "meaning": "knowledge of Time (the unmanifest); liberating insight"
+        },
+        {
+          "symbol": "fire (agni)",
+          "meaning": "the ignited inner yogic fire that burns karma"
+        },
+        {
+          "symbol": "the physical body",
+          "meaning": "field of yoga; limited boundary of consciousness"
+        },
+        {
+          "symbol": "the senses",
+          "meaning": "instruments of physical limitation and bewilderment"
+        },
+        {
+          "symbol": "yogic kriya",
+          "meaning": "the ancient discipline of awakening consciousness"
+        },
+        {
+          "symbol": "the Unmanifest Element",
+          "meaning": "the singular truth underlying all creation"
+        },
+        {
+          "symbol": "self-attraction",
+          "meaning": "egoic binding to body and mind"
+        },
+        {
+          "symbol": "the sword of wisdom",
+          "meaning": "the discernment that cuts doubt"
+        },
+        {
+          "symbol": "death (as samadhi)",
+          "meaning": "voluntary exit from body through yogic strength"
+        },
+        {
+          "symbol": "sanyas (renunciation)",
+          "meaning": "knowledge of death; state of akarma"
+        },
+        {
+          "symbol": "Brahma-Nirvana",
+          "meaning": "Union with the imperishable Supreme Being; realization of the timbre of Time"
+        },
+        {
+          "symbol": "Unmanifest Element",
+          "meaning": "The unmanifest Time, Parameshwar, perceived in all creation"
+        },
+        {
+          "symbol": "bhrumadhya",
+          "meaning": "The point between the eyebrows, a focal point in yoga practice"
+        },
+        {
+          "symbol": "Samnyas",
+          "meaning": "Not renunciation of family, but the state of knowing death through yoga"
+        },
+        {
+          "symbol": "unmanifest Time",
+          "meaning": "The ultimate Parameshwar, embodiment of infinite consciousness"
+        },
+        {
+          "symbol": "Brahma-granthi-bhedan",
+          "meaning": "First stage of yoga: crossing physical limitations"
+        },
+        {
+          "symbol": "hridaya-granthi-bheda / Vishnu-granthi-bheda",
+          "meaning": "Second stage of yoga: knowing Vasudev in the heart"
+        },
+        {
+          "symbol": "grass, deer skin, silk cloth",
+          "meaning": "Materials for the yogi's seat in a specific practice"
+        },
+        {
+          "symbol": "Nirvicar",
+          "meaning": "being established in pure thought, rising above word and visual"
+        },
+        {
+          "symbol": "Brahman",
+          "meaning": "the Conscious Void"
+        },
+        {
+          "symbol": "Lord Vishnu",
+          "meaning": "The name for the Conscious Void, the fosterer of the entire world."
+        },
+        {
+          "symbol": "Urdhvaretā",
+          "meaning": "Perpetual celibacy achieved by restraining orgasmic discharge."
+        },
+        {
+          "symbol": "Jivanmukta",
+          "meaning": "One who is liberated from the attraction of life by ascending the ladder of knowledge."
+        },
+        {
+          "symbol": "Me (Krishna)",
+          "meaning": "Time Itself; consciousness of Time; Kala-Brahma; the unmanifest consciousness that is replete in the Conscious Void"
+        },
+        {
+          "symbol": "surrender to Me",
+          "meaning": "taking refuge in Time Itself; determined practice of yoga to know the truth of the immensity of Time"
+        },
+        {
+          "symbol": "consciousness of the Void",
+          "meaning": "the unmanifest consciousness that manifests the immensity; the Conscious Void"
+        },
+        {
+          "symbol": "consciousness of the Time",
+          "meaning": "the consciousness replete in the Void; the ultimate goal"
+        },
+        {
+          "symbol": "sin",
+          "meaning": "ignorance about latent immensity; being confined to physical limitations"
+        },
+        {
+          "symbol": "sacred acts",
+          "meaning": "observances to awaken the immensity of the mind and rise above physical limits"
+        },
+        {
+          "symbol": "deities",
+          "meaning": "extremely minute parts of the unmanifest Kala-Brahma; also senses considered godly by mediocre men"
+        },
+        {
+          "symbol": "adhyatma",
+          "meaning": "the immensity of the mind that is the manifestation of the Time-Consciousness"
+        },
+        {
+          "symbol": "aging and death",
+          "meaning": "the great bondage from which yoga seeks liberation; the body's decay"
+        },
+        {
+          "symbol": "Brahma (the corporal matter)",
+          "meaning": "The conscious matter that is the support of the entire creation; its day and night are 4.32 billion solar years."
+        },
+        {
+          "symbol": "Anahad Nada",
+          "meaning": "The unstruck sound reverberating from the center of the Conscious Void, like thousands of clouds thundering."
+        },
+        {
+          "symbol": "Unmanifest (Avyakta)",
+          "meaning": "The Time, the unmanifest imperishable Brahma beyond the Conscious Void."
+        },
+        {
+          "symbol": "Time (Mahakal)",
+          "meaning": "The ultimate brilliance, the source of all; also referred to as the 'brilliance of all brilliance' and the 'ultimate Soul'."
+        },
+        {
+          "symbol": "Fire, Light, Day, Bright Half, Uttarayana",
+          "meaning": "The route of knowledge and direct perception of the Unmanifest Time, leading to liberation."
+        },
+        {
+          "symbol": "Smoke, Night, Dark Half, Dakshinayana",
+          "meaning": "The route of ignorance and partial realization, leading to rebirth."
+        },
+        {
+          "symbol": "Sun",
+          "meaning": "The brilliance of the Unmanifest Time seen fully."
+        },
+        {
+          "symbol": "Moon",
+          "meaning": "A partial glimpse of the light of the Time."
+        },
+        {
+          "symbol": "soma",
+          "meaning": "the juice of yogic practice"
+        },
+        {
+          "symbol": "Indra",
+          "meaning": "the individual consciousness"
+        },
+        {
+          "symbol": "heaven",
+          "meaning": "subtle worlds; blissful states after death"
+        },
+        {
+          "symbol": "rituals",
+          "meaning": "limited actions yielding limited fruits"
+        },
+        {
+          "symbol": "manes",
+          "meaning": "ancestors; subtle world forms"
+        },
+        {
+          "symbol": "spirits",
+          "meaning": "tamasik tendencies; ghosts"
+        },
+        {
+          "symbol": "leaves, flowers, fruits, water",
+          "meaning": "offerings symbolizing self-surrender; the devotee worships himself through himself"
+        },
+        {
+          "symbol": "women",
+          "meaning": "those who manifest unmanifest consciousness through the body"
+        },
+        {
+          "symbol": "Sudras",
+          "meaning": "those with no reach beyond physical boundaries"
+        },
+        {
+          "symbol": "Vaisyas",
+          "meaning": "specialists of nourishing the body"
+        },
+        {
+          "symbol": "Ksatriyas",
+          "meaning": "those who rise above physical limits by giving up the body"
+        },
+        {
+          "symbol": "Brahmins",
+          "meaning": "those who naturally ponder upon the unmanifest trans-physical"
+        },
+        {
+          "symbol": "Mahabaho",
+          "meaning": "one with great arms (referring to Arjuna as a yogic symbol)"
+        },
+        {
+          "symbol": "Stithaprajna",
+          "meaning": "a person established in steady wisdom"
+        },
+        {
+          "symbol": "Adhibhuta",
+          "meaning": "the body, which is transient and mortal but supports immense consciousness"
+        },
+        {
+          "symbol": "Adhidaiva",
+          "meaning": "Purusa, the conscious mind (a fraction of immense mind) ruling the organs like Indra"
+        },
+        {
+          "symbol": "Adhiyajna",
+          "meaning": "Vasudev, the Paramatma (Time) manifesting body, mind, intellect, and consciousness; the supreme yajna in the body is Me (Krishna)"
+        },
+        {
+          "symbol": "death of common person",
+          "meaning": "rebirth due to lifelong physical attachment and narrow mentality"
+        },
+        {
+          "symbol": "death of Sthitaprajna",
+          "meaning": "union with the Ultimate Consciousness after awakening immense consciousness and knowing the time consciousness replete in Conscious Void"
+        },
+        {
+          "symbol": "Purusa (divine)",
+          "meaning": "the ultimate divine Purusa, the shining form of unmanifest Time directly perceived by yogi"
+        },
+        {
+          "symbol": "Om (Omkar kriya)",
+          "meaning": "distinguished kriya: repeating Om 20736 times in one breath to rupture Brahma-randhra and unite with Immense Brilliance"
+        },
+        {
+          "symbol": "between eyebrows (bhruvor madhye)",
+          "meaning": "stationing prana at bhrumadhya (middle of eyebrows) to forsake body and unite with great brilliance"
+        },
+        {
+          "symbol": "heat of the heart (hridaya-granthi-bheda)",
+          "meaning": "a practice that makes the heart become sushumna and stops heart-beats"
+        },
+        {
+          "symbol": "unbearable brilliance of Time",
+          "meaning": "the flame of all flames, color of the sun, directly perceived by the yogi"
+        },
+        {
+          "symbol": "nine exits of the body",
+          "meaning": "closed by yonimudra during practice"
+        },
+        {
+          "symbol": "20736 Omkar kriyas in one breath",
+          "meaning": "the specific count for rupturing Brahma-randhra and uniting with Immense Brilliance"
+        },
+        {
+          "symbol": "Gudakesha",
+          "meaning": "Conqueror of sleep"
+        },
+        {
+          "symbol": "the seven sages",
+          "meaning": "Created from a single thought of the Time"
+        },
+        {
+          "symbol": "Sanat Kumar and others",
+          "meaning": "Even earlier sages, also from that thought"
+        },
+        {
+          "symbol": "the Void",
+          "meaning": "Consciousness of the Void, a stage in yoga"
+        },
+        {
+          "symbol": "Meru",
+          "meaning": "Aurora Borealis (the shining aura of the earth near the North Pole)"
+        },
+        {
+          "symbol": "gods' day and night",
+          "meaning": "Six months day and six months night at the north polar region"
+        },
+        {
+          "symbol": "Srikrishna",
+          "meaning": "The Time explaining itself"
+        },
+        {
+          "symbol": "the letter 'A'",
+          "meaning": "The foundation of the word"
+        },
+        {
+          "symbol": "Bhrigu",
+          "meaning": "among the great sages, I am Bhrigu"
+        },
+        {
+          "symbol": "Himalaya",
+          "meaning": "among the immovable, I am Himalaya"
+        },
+        {
+          "symbol": "Sabda-Brahma",
+          "meaning": "Conscious Void characterized by sound"
+        },
+        {
+          "symbol": "Anahada Nada",
+          "meaning": "Unbeaten sound pervading the consciousness of the Void"
+        },
+        {
+          "symbol": "Muladhar-granthi-bheda",
+          "meaning": "Third and final yoga stage; perfecting knowledge of the Time, the support of all supports"
+        },
+        {
+          "symbol": "Time (consciousness of Time)",
+          "meaning": "The ultimate Supreme Being, the unmanifest, the brilliance beyond light, the seed of all, the thread that strings jewels"
+        },
+        {
+          "symbol": "Bhagavan",
+          "meaning": "The ultimate Supreme Being, the unmanifest Time"
+        },
+        {
+          "symbol": "Earth, water, fire, air, sky",
+          "meaning": "Five elements forming the body; gross manifestation of the Time"
+        },
+        {
+          "symbol": "Mind, intellect, ego",
+          "meaning": "Aspects of the eightfold nature (apara prakriti); part of the manifest self"
+        },
+        {
+          "symbol": "Apara prakriti",
+          "meaning": "The eightfold lower nature (earth, water, fire, air, sky, mind, intellect, ego)"
+        },
+        {
+          "symbol": "Para prakriti",
+          "meaning": "The higher nature; the consciousness of the Time that holds the entire world"
+        },
+        {
+          "symbol": "Om (Pranava)",
+          "meaning": "The great sound experienced when established in the immense Void"
+        },
+        {
+          "symbol": "Fluid in water",
+          "meaning": "The unmanifest Element manifested through water; the ultimate light"
+        },
+        {
+          "symbol": "Brightness of moon and sun",
+          "meaning": "The ultimate light beyond gross light"
+        },
+        {
+          "symbol": "Sound in the sky",
+          "meaning": "The consciousness of the Void expressing as sound"
+        },
+        {
+          "symbol": "Vitality in men",
+          "meaning": "The Time Itself manifesting as manhood"
+        },
+        {
+          "symbol": "Sacred smell in earth",
+          "meaning": "The body is earth-like; sense organs are like smell; the Time is the basis"
+        },
+        {
+          "symbol": "Brilliance of fire",
+          "meaning": "The brilliance of yogic fires ignited to know the unmanifest Time"
+        },
+        {
+          "symbol": "Life of all creatures",
+          "meaning": "The Time Itself is the support of all life"
+        },
+        {
+          "symbol": "Penance of sages",
+          "meaning": "The Time is the power behind penance"
+        },
+        {
+          "symbol": "Eternal seed",
+          "meaning": "The Time as the seed that manifests the entire world, present before, during, and after creation"
+        },
+        {
+          "symbol": "Intellect of intellectuals",
+          "meaning": "Time as distinguished intellect that grows in the course of time"
+        },
+        {
+          "symbol": "Brilliance of brilliant",
+          "meaning": "Time as the brilliance that grows in the course of time"
+        },
+        {
+          "symbol": "Might of the mighty",
+          "meaning": "The yogic power of yogis practicing the final stage, concentrated on the Time"
+        },
+        {
+          "symbol": "Desireless might",
+          "meaning": "The power free from desire and attachment"
+        },
+        {
+          "symbol": "Lust pertinent to Dharma",
+          "meaning": "The conscious Time motivating self-realization"
+        },
+        {
+          "symbol": "Sattva, Rajas, Tamas",
+          "meaning": "Three gunas that originate from the Time; minute parts; Sattva is inspiration to know the Time, Rajas is correlation of mind and senses, Tamas is confinement to sensuous objects"
+        },
+        {
+          "symbol": "Three gunas bewilder the world",
+          "meaning": "They captivate creatures, preventing them from practicing yoga to know the Time"
+        },
+        {
+          "symbol": "Maya (divine illusory energy)",
+          "meaning": "The guna-maya nature of the world that misleads; crossing it requires surrender to the Time"
+        },
+        {
+          "symbol": "Time (Kāla)",
+          "meaning": "The ultimate unmanifest consciousness that manifests the creation and remains beyond it"
+        },
+        {
+          "symbol": "manifested creation",
+          "meaning": "Established in unmanifest consciousness of the Time"
+        },
+        {
+          "symbol": "Sthitaprajna Time-Conscious great yogi",
+          "meaning": "One who understands the unmanifest Time and remains desireless in Samadhi"
+        },
+        {
+          "symbol": "Lord Maheśwara",
+          "meaning": "The Time, Supreme Lord of all creatures"
+        },
+        {
+          "symbol": "demonical/evil traits",
+          "meaning": "Ignorance, sensuous enjoyments, no reach beyond physical limits"
+        },
+        {
+          "symbol": "divine self presence",
+          "meaning": "Divine immensity of the mind that gives strength to the organs"
+        },
+        {
+          "symbol": "Jñana-yajña",
+          "meaning": "Worship by knowing the unmanifest Time; achieving union with Time-consciousness"
+        },
+        {
+          "symbol": "medicaments",
+          "meaning": "Time"
+        },
+        {
+          "symbol": "mantra",
+          "meaning": "Time (practice that liberates from ignorance)"
+        },
+        {
+          "symbol": "fire",
+          "meaning": "Time"
+        },
+        {
+          "symbol": "purified butter",
+          "meaning": "Time"
+        },
+        {
+          "symbol": "oblation",
+          "meaning": "Time"
+        },
+        {
+          "symbol": "killed",
+          "meaning": "Time"
+        },
+        {
+          "symbol": "killer",
+          "meaning": "Time"
+        },
+        {
+          "symbol": "father",
+          "meaning": "Brilliant Time"
+        },
+        {
+          "symbol": "mother",
+          "meaning": "Time"
+        },
+        {
+          "symbol": "fosterer",
+          "meaning": "Time"
+        },
+        {
+          "symbol": "grandfather",
+          "meaning": "Time"
+        },
+        {
+          "symbol": "Omkar",
+          "meaning": "The sacred support of words; is the Time itself"
+        },
+        {
+          "symbol": "Vedas (Rig, Sama, Yajur)",
+          "meaning": "Memorabilia preserved by ancient sages; everything is the Time itself"
+        },
+        {
+          "symbol": "destination (gati)",
+          "meaning": "Time"
+        },
+        {
+          "symbol": "overseeing Lord (bhartā)",
+          "meaning": "Time"
+        },
+        {
+          "symbol": "abode (nivāsa)",
+          "meaning": "Time"
+        },
+        {
+          "symbol": "friend worthy to submit (śaraṇa suhṛt)",
+          "meaning": "Time"
+        },
+        {
+          "symbol": "creation (prabhava)",
+          "meaning": "Time"
+        },
+        {
+          "symbol": "universal destruction (pralaya)",
+          "meaning": "Time"
+        },
+        {
+          "symbol": "support (sthāna)",
+          "meaning": "Time"
+        },
+        {
+          "symbol": "imperishable seed (bīja avyayam)",
+          "meaning": "Time"
+        },
+        {
+          "symbol": "woman (form of Time)",
+          "meaning": "Time attracting Time in form of man"
+        },
+        {
+          "symbol": "man (form of Time)",
+          "meaning": "Time attracted by woman form"
+        },
+        {
+          "symbol": "semen and menses",
+          "meaning": "Time drops itself in these forms"
+        },
+        {
+          "symbol": "progeny",
+          "meaning": "Time born"
+        },
+        {
+          "symbol": "immortal, real, unreal",
+          "meaning": "All are Time itself"
+        },
+        {
+          "symbol": "Dhritarashtra's sons",
+          "meaning": "the evil tendencies and vices"
+        },
+        {
+          "symbol": "Pandavas",
+          "meaning": "the divine qualities or virtuous forces"
+        },
+        {
+          "symbol": "horses",
+          "meaning": "the senses"
+        },
+        {
+          "symbol": "thousands of suns",
+          "meaning": "the immense brilliance of the Supreme Self in samadhi"
+        },
+        {
+          "symbol": "Mahatma",
+          "meaning": "the Supreme Self, the great soul"
+        },
+        {
+          "symbol": "Deva-deva, Mahadeva",
+          "meaning": "the Supreme Lord, identified with Time (Kala) and the ultimate reality"
+        },
+        {
+          "symbol": "body of the God",
+          "meaning": "the universal form (Virat) or the unmanifest substratum of existence"
+        },
+        {
+          "symbol": "Brahma on lotus",
+          "meaning": "the creative aspect of consciousness, the cosmic mind"
+        },
+        {
+          "symbol": "sages and serpents",
+          "meaning": "various cosmic forces and energies"
+        },
+        {
+          "symbol": "crown, mace, disc",
+          "meaning": "aspects of the Supreme: crown = infinite brilliance; mace = unmanifest power; disc = the wheel of time"
+        },
+        {
+          "symbol": "Rudra, Aditya, Vasu, etc.",
+          "meaning": "different manifestations of the one Divine in various cosmic functions"
+        },
+        {
+          "symbol": "mouths and teeth",
+          "meaning": "the destructive aspect of Time, the process of death and dissolution"
+        },
+        {
+          "symbol": "four-armed form",
+          "meaning": "the auspicious human embodiment of the Time perceived after hridaya-granthi-bheda"
+        },
+        {
+          "symbol": "frightful brilliant form",
+          "meaning": "the unbearable, brilliant immense form of Time, imbued in the consciousness of the Void"
+        },
+        {
+          "symbol": "Void (Shunya)",
+          "meaning": "the conscious void where the Time's form is perceived"
+        },
+        {
+          "symbol": "Kutastha",
+          "meaning": "the unchangeable, immovable, omnipresent consciousness in the Void; the brilliant immense form"
+        },
+        {
+          "symbol": "idols/deities (Vishnu, Shiva, etc.)",
+          "meaning": "symbolic hints of the unmanifest Time, established by self-realized persons for common people"
+        },
+        {
+          "symbol": "devatas (gods)",
+          "meaning": "they long to see the form of Time; not mere mythological beings but yogic symbols"
+        },
+        {
+          "symbol": "Prakṛti",
+          "meaning": "The innate character of Time that manifests the entire creation; also called Swabhāva."
+        },
+        {
+          "symbol": "Puruṣa",
+          "meaning": "The kṣetrajña mind that knows its entire competencies through the body; the immense mind confined to the body."
+        },
+        {
+          "symbol": "Kṣetra",
+          "meaning": "The field of the body."
+        },
+        {
+          "symbol": "Kṣetrajña",
+          "meaning": "The mind that resides in the kṣetra (body) and knows the field."
+        },
+        {
+          "symbol": "Kāla (Time)",
+          "meaning": "The ultimate unmanifest truth; the brilliant truth that is immanent in the Void; the imperishable Brahma; the luminance of all luminance; the Kutastha; the creator, fosterer, and destroyer of the world."
+        },
+        {
+          "symbol": "Vāsudev",
+          "meaning": "The divine four-armed embodiment of the Time; the truth realized by concentrating the entire immensity of the mind."
+        },
+        {
+          "symbol": "Hṛdaya-granthi-bheda",
+          "meaning": "The piercing of the knot of the heart, leading to direct vision of the divine."
+        },
+        {
+          "symbol": "Nirguna",
+          "meaning": "The state of being beyond the three gunas; the accomplished yogi who has overstepped all gunas."
+        },
+        {
+          "symbol": "Samādhi",
+          "meaning": "For the accomplished yogi, no difference between worldly pleasures and Samadhi; union with the Time."
+        },
+        {
+          "symbol": "Krishna/Keśava/Śrī Bhagavan",
+          "meaning": "Time (Kāla), Death, the destroyer, Mahakal, the Time Infinite, the ultimate imperishable"
+        },
+        {
+          "symbol": "Arjuna (Kirīṭī/Savyasācin)",
+          "meaning": "Time-conscious great person, Yogi, the one who surrenders to Time"
+        },
+        {
+          "symbol": "Samjaya",
+          "meaning": "(No explicit decoding given; contextually the narrator/teller of events)"
+        },
+        {
+          "symbol": "Bhīsma, Drọna, Jayadrath, Karṇa",
+          "meaning": "Warriors who stand already killed by Time; represent those slain by Time from birth"
+        },
+        {
+          "symbol": "Warriors in adversarial armies",
+          "meaning": "All creatures stand killed by Time from birth"
+        },
+        {
+          "symbol": "Four-armed form (Vāsudev)",
+          "meaning": "The charming, four-armed form of Time that yogis perceive after hṛdaya-granthi-bheda (heart-knot piercing) and establishment in the Conscious Void"
+        },
+        {
+          "symbol": "Terrible universal form (Viśvarūpa)",
+          "meaning": "The frightful, brilliant form of Time, immensely shining, unbearable, devouring all worlds"
+        },
+        {
+          "symbol": "Hṛdaya-granthi-bheda (heart-knot piercing)",
+          "meaning": "A stage in yoga where the yogi achieves direct perception of the four-armed form"
+        },
+        {
+          "symbol": "Puruṣa (Eternal Purusha)",
+          "meaning": "Time, the beginning of the beginning, the fosterer of the world"
+        },
+        {
+          "symbol": "Father, Guru, friend, lover",
+          "meaning": "Metaphors for the relationship Mahakal has with the yogi; the yogi seeks love like father to son, friend to friend, lover to beloved"
+        },
+        {
+          "symbol": "Bow/prostration (pranamya)",
+          "meaning": "Igniting the fires of yoga, placing one's life upon Time"
+        },
+        {
+          "symbol": "Saving the world / reward",
+          "meaning": "The yogi asks for bestowal of time's love, not worldly boons"
+        },
+        {
+          "symbol": "Brahma (Brahman)",
+          "meaning": "Manifestation of Time; Time is the prime Creator even of Brahma"
+        },
+        {
+          "symbol": "Vāyu, Yama, Agni, Varuṇa, Moon, Prajapati",
+          "meaning": "Manifestations of Kāla (Time) in various forms"
+        },
+        {
+          "symbol": "Prapitāmaha (great-grandfather)",
+          "meaning": "Time as the father of the grandfather, the supreme source"
+        },
+        {
+          "symbol": "Yoga (practice of ancient yoga)",
+          "meaning": "The method to perceive Time's forms; only by sedulous practice through all stages can the yogi see the terrible or charming forms"
+        },
+        {
+          "symbol": "dhyana",
+          "meaning": "focusing consciousness upon the consciousness of the Time"
+        },
+        {
+          "symbol": "yoga-karma",
+          "meaning": "the plough of yoga (the practice)"
+        },
+        {
+          "symbol": "Parameswar",
+          "meaning": "the absolute reality of the Time"
+        },
+        {
+          "symbol": "Prakrti",
+          "meaning": "the unmanifest from which all natural activities appear; the mind or conscious matter?"
+        },
+        {
+          "symbol": "gunas (sattva, raja, tama)",
+          "meaning": "attributes that bind the imperishable life (the mind) to the body; sattva = spiritual wisdom, raja = passion, tama = ignorance"
+        },
+        {
+          "symbol": "Brahma (as yoni)",
+          "meaning": "the Womb of the Time, the source of all embodiments"
+        },
+        {
+          "symbol": "Bhagavan (Krishna)",
+          "meaning": "the Time Consciousness speaking"
+        },
+        {
+          "symbol": "body (sharir)",
+          "meaning": "kshetra (field), instrument of the mind for experiences and self-knowledge"
+        },
+        {
+          "symbol": "knower of the body (kshetrajna)",
+          "meaning": "awakened human mind, manifestation of imperishable Brahma"
+        },
+        {
+          "symbol": "Vasudev / four-armed figure",
+          "meaning": "object of darshan after hridaya-granthi-bheda"
+        },
+        {
+          "symbol": "the immense unmanifest Time",
+          "meaning": "the supreme reality all creatures manifest"
+        },
+        {
+          "symbol": "consciousness of the mind",
+          "meaning": "awakened through yoga practice, leads to knowledge of Truth"
+        },
+        {
+          "symbol": "desirelessness",
+          "meaning": "result of yogic practice, rising above karmaphala"
+        },
+        {
+          "symbol": "kshetra (field)",
+          "meaning": "physical embodiment as a field for yogic practice"
+        },
+        {
+          "symbol": "kshetrajna",
+          "meaning": "knower of the field, the awakened mind, manifestation of Brahma"
+        },
+        {
+          "symbol": "five great elements (earth, water, fire, air, sky)",
+          "meaning": "five principal ingredients of conscious matter, support of creation manifestation"
+        },
+        {
+          "symbol": "ten organs of action",
+          "meaning": "instruments of the mind for grasping experiences"
+        },
+        {
+          "symbol": "five organs of senses",
+          "meaning": "grasp five experiences: touch, form, taste, smell, hearing"
+        },
+        {
+          "symbol": "intellect",
+          "meaning": "controls the mind"
+        },
+        {
+          "symbol": "ego",
+          "meaning": "of mediocre: confined to physical limitations; of yogis: vast, united with creation"
+        },
+        {
+          "symbol": "desire, envy, happiness, sorrow, union of body and senses, consciousness, dhriti",
+          "meaning": "properties of the field (kshetra)"
+        },
+        {
+          "symbol": "opposite pairs (honor/dishonor, etc.)",
+          "meaning": "relative, to be transcended by realizing self in all creation"
+        },
+        {
+          "symbol": "Brahma Sutra",
+          "meaning": "symbolic expression of the imperishable Brahma (Time) for seekers"
+        },
+        {
+          "symbol": "Vedas (hymns and verses of rishis)",
+          "meaning": "expressions of the immense mind and its creator"
+        },
+        {
+          "symbol": "Viśvātmā",
+          "meaning": "one who realizes self as universal aggregate"
+        },
+        {
+          "symbol": "unmanifest immensity",
+          "meaning": "that beyond creation where great soul remains established"
+        },
+        {
+          "symbol": "Ashvattha (Ficus religiosa)",
+          "meaning": "The holy fig tree; represents the yogic body or the world tree of internal energies."
+        },
+        {
+          "symbol": "Nārada",
+          "meaning": "Among the sages of gods, represents the inner guide or the cosmic mind."
+        },
+        {
+          "symbol": "Chitraratha",
+          "meaning": "Among celestial musicians, represents the harmonious flow of prana."
+        },
+        {
+          "symbol": "Kapila",
+          "meaning": "Among the Siddhas, represents the enlightened yogi."
+        },
+        {
+          "symbol": "Uccaiśrava",
+          "meaning": "The horse born from ambrosia; represents the ascending vital energy (prana) or the mind."
+        },
+        {
+          "symbol": "Airavata",
+          "meaning": "The great elephant; represents the ego or the individual consciousness."
+        },
+        {
+          "symbol": "Vajra",
+          "meaning": "The thunderbolt weapon; represents the indestructible spiritual power or the spine."
+        },
+        {
+          "symbol": "Kamadhenu",
+          "meaning": "The wish-fulfilling cow; represents the inner power of desire fulfillment."
+        },
+        {
+          "symbol": "Kamadeva",
+          "meaning": "God of love; represents the reproductive force or creative energy."
+        },
+        {
+          "symbol": "Vāsuki",
+          "meaning": "King of serpents; represents the kundalini energy."
+        },
+        {
+          "symbol": "Ananta (Sesanaga)",
+          "meaning": "The cosmic serpent; represents the infinite support of the universe or the coiled kundalini."
+        },
+        {
+          "symbol": "Varuna",
+          "meaning": "God of water; represents the fluid consciousness or the subconscious."
+        },
+        {
+          "symbol": "Aryamā",
+          "meaning": "Among the manes (ancestors); represents the lineage of yogic transmission."
+        },
+        {
+          "symbol": "Yamaraj",
+          "meaning": "God of death; represents the controller of time or the inner death of ego."
+        },
+        {
+          "symbol": "Prahlāda",
+          "meaning": "Among the demons; represents the devotee within the demonic tendencies."
+        },
+        {
+          "symbol": "Mṛgendra (lion)",
+          "meaning": "King of animals; represents the ruling consciousness or the spinal energy."
+        },
+        {
+          "symbol": "Vainateya (Garuda)",
+          "meaning": "The eagle; represents the soaring spirit or the breath."
+        },
+        {
+          "symbol": "Pavana (wind)",
+          "meaning": "The vital air; represents prana that sanctifies the body."
+        },
+        {
+          "symbol": "Rāma",
+          "meaning": "Among warriors; represents the inner warrior who conquers the senses."
+        },
+        {
+          "symbol": "Makara (alligator)",
+          "meaning": "Among fish; represents the mind's grasping nature or the kundalini."
+        },
+        {
+          "symbol": "Jāhnavī (Ganges)",
+          "meaning": "Among rivers; represents the flow of spiritual energy or the nectar of immortality."
+        },
+        {
+          "symbol": "A-kāra (letter 'A')",
+          "meaning": "The first letter; represents the unmanifest sound (OM) or the beginning of creation."
+        },
+        {
+          "symbol": "Dvandva (duel)",
+          "meaning": "Among compounds; represents the polarity in nature that merges in yoga."
+        },
+        {
+          "symbol": "Akṣaya Kāla (imperishable time)",
+          "meaning": "The eternal Now; represents the timeless consciousness."
+        },
+        {
+          "symbol": "Dhātā (Creator)",
+          "meaning": "The sustainer; represents the inner creative principle."
+        },
+        {
+          "symbol": "Mṛtyu (Death)",
+          "meaning": "The all-claiming; represents the death of the ego in yoga."
+        },
+        {
+          "symbol": "Kīrti, Śrī, Vāk, Smṛti, Medhā, Dhṛti, Kṣamā (fame, prosperity, speech, memory, intellect, courage, compassion)",
+          "meaning": "Among women; represent the divine feminine qualities that are aspects of the Self."
+        },
+        {
+          "symbol": "Bṛhatsāma",
+          "meaning": "Among musical chants; represents the cosmic sound or the inner resonance."
+        },
+        {
+          "symbol": "Gāyatrī",
+          "meaning": "Among metres; represents the mother of the Vedas or the inner illumination."
+        },
+        {
+          "symbol": "Mārgaśīrṣa",
+          "meaning": "Among months; represents the pivotal time in the yogic year."
+        },
+        {
+          "symbol": "Vasanta (spring)",
+          "meaning": "Among seasons; represents the renewal of spiritual energy."
+        },
+        {
+          "symbol": "Dyūta (gamble)",
+          "meaning": "Of the deceitful; represents the risk of spiritual practice or the play of consciousness."
+        },
+        {
+          "symbol": "Tejas (brilliance)",
+          "meaning": "Of the brilliant; represents the inner light of awareness."
+        },
+        {
+          "symbol": "Jaya (victory)",
+          "meaning": "Of the victors; represents the triumph over lower nature."
+        },
+        {
+          "symbol": "Vyavasāya (trade)",
+          "meaning": "Of the traders; represents the inner exchange of energy."
+        },
+        {
+          "symbol": "Sattva (reality)",
+          "meaning": "Of the real; represents the pure essence of being."
+        },
+        {
+          "symbol": "Vāsudeva",
+          "meaning": "In Vṛṣṇi lineage; represents the universal consciousness."
+        },
+        {
+          "symbol": "Vyāsa",
+          "meaning": "Among sages; represents the compiler of inner wisdom."
+        },
+        {
+          "symbol": "Uśanā (Śukra)",
+          "meaning": "Among poets; represents the wise teacher of the inner senses."
+        },
+        {
+          "symbol": "Daṇḍa (scepter)",
+          "meaning": "Of the conquerors; represents the rod of discipline in yoga."
+        },
+        {
+          "symbol": "Nīti (strategy)",
+          "meaning": "Of desirers of victory; represents the inner strategy for liberation."
+        },
+        {
+          "symbol": "Mauna (silence)",
+          "meaning": "Of secret feelings; represents the deep inner silence of meditation."
+        },
+        {
+          "symbol": "Jñāna (wisdom)",
+          "meaning": "Of the wise; represents the ultimate knowledge of the Self."
+        },
+        {
+          "symbol": "Bīja (seed)",
+          "meaning": "Of all creatures; represents the source of all manifestation."
+        },
+        {
+          "symbol": "Splendor, brilliance, vigor",
+          "meaning": "Manifestations of the divine; signs of the Supreme Time."
+        },
+        {
+          "symbol": "Arjuna's delusion destroyed",
+          "meaning": "The destruction of ignorance through divine grace."
+        },
+        {
+          "symbol": "Kauravas",
+          "meaning": "The inner demonic tendencies."
+        },
+        {
+          "symbol": "The body",
+          "meaning": "The field where yoga is performed."
+        },
+        {
+          "symbol": "Divine vision (divya chakshu)",
+          "meaning": "The inner vision attained through yoga."
+        },
+        {
+          "symbol": "Weapons, ornaments, etc.",
+          "meaning": "Spiritual tools and qualities."
+        },
+        {
+          "symbol": "Time-Conscious great persons",
+          "meaning": "sages who have realized the unmanifest Time and left scriptural records of their experience"
+        },
+        {
+          "symbol": "scriptural precepts",
+          "meaning": "the recorded personal experiences of ancient sages who had direct experience of the Void"
+        },
+        {
+          "symbol": "Nāma yajna",
+          "meaning": "continuous muttering of praise (mistakenly used by the demonic)"
+        },
+        {
+          "symbol": "Golden aura",
+          "meaning": "The brilliant Time appearing as an aura around the heads of Time Conscious persons"
+        },
+        {
+          "symbol": "Earth",
+          "meaning": "The foundation of cycles of planets and constellations, sustained by Time's brilliance"
+        },
+        {
+          "symbol": "Vaisvanara (digestive fire)",
+          "meaning": "The unmanifest Time residing in the heart, receiving dharma, artha, kama, moksha through prana and apana"
+        },
+        {
+          "symbol": "Perishable Purusa",
+          "meaning": "The body that supports the mind, limited and perishable"
+        },
+        {
+          "symbol": "Imperishable Purusa (Kutastha)",
+          "meaning": "Vasudev, the imperishable witness residing in the heart"
+        },
+        {
+          "symbol": "Purusottam (Supreme Purusa)",
+          "meaning": "The unmanifest Time beyond both perishable and imperishable"
+        },
+        {
+          "symbol": "Divine abundance",
+          "meaning": "The state of knowing the divine presence within, leading to liberation"
+        },
+        {
+          "symbol": "Devilish exuberance",
+          "meaning": "Ignorance of divinity, leading to bondage"
+        },
+        {
+          "symbol": "Ashwattha tree (aśvattha)",
+          "meaning": "Human mind, manifestation of imperishable Brahma Time; root upwards in head, trunk is Suṣumnā, branches are nerves, leaves are desires."
+        },
+        {
+          "symbol": "ūrdhvamūlam (roots upwards)",
+          "meaning": "Mind situated at the top in the head."
+        },
+        {
+          "symbol": "adhahśākham (branches downwards)",
+          "meaning": "Suṣumnā extending downwards as trunk; nerves as branches."
+        },
+        {
+          "symbol": "chandāṃsi (Vedas/Knowledge)",
+          "meaning": "Leaves of the tree (desires)."
+        },
+        {
+          "symbol": "viṣayapravālāḥ (buds of passion)",
+          "meaning": "Buds of desire for sensuous objects and attachment."
+        },
+        {
+          "symbol": "adhaś ca mūlāni (roots below)",
+          "meaning": "Roots that fasten to karma, spread in mortal world."
+        },
+        {
+          "symbol": "asangaśastra (weapon of non-attachment)",
+          "meaning": "Strong practice of yoga to cut the tree of embodiment."
+        },
+        {
+          "symbol": "Adi Puruṣa (First Being)",
+          "meaning": "The unmanifest Time, shelter from which ancient practice flowed."
+        },
+        {
+          "symbol": "padam avyayam (immutable state)",
+          "meaning": "Union with the Time, beyond physical limitations."
+        },
+        {
+          "symbol": "na tad bhāsayate sūryaḥ...",
+          "meaning": "Time is the brilliance that illuminates sun, moon, fire."
+        },
+        {
+          "symbol": "mamaiva aṃśaḥ (My eternal quotient)",
+          "meaning": "The immense mind, eternal manifestation of Time."
+        },
+        {
+          "symbol": "īśvaraḥ (Lord of the body)",
+          "meaning": "The immense mind (Ātmān) that assumes limitedness."
+        },
+        {
+          "symbol": "vāyur gandhān (air and smell)",
+          "meaning": "Analogy: as air carries smell, immense mind is felt through limited body."
+        },
+        {
+          "symbol": "jīvaloke (mortal world)",
+          "meaning": "The field of embodiment where mind attracts senses."
+        },
+        {
+          "symbol": "prakṛtisthāni (stationed in Prakriti)",
+          "meaning": "The mind and senses rooted in nature (body)."
+        },
+        {
+          "symbol": "śrotram, cakṣuḥ, sparśanam, rasana, ghrāṇa",
+          "meaning": "The five sense organs through which the immense mind experiences objects."
+        },
+        {
+          "symbol": "jñānacakṣuṣaḥ (eyes of wisdom)",
+          "meaning": "Those who have awakened consciousness and perceive the trans-physical mind."
+        },
+        {
+          "symbol": "ātmany avasthitam (established in self)",
+          "meaning": "The unmanifest Truth known by yogis through self-knowledge."
+        },
+        {
+          "symbol": "niśkām",
+          "meaning": "desireless state established in samadhi"
+        },
+        {
+          "symbol": "sātvik sacrifice",
+          "meaning": "renouncement of narrowness and surrender of fruit of karma with desirelessness"
+        },
+        {
+          "symbol": "heaven and hell",
+          "meaning": "experiences in subtle worlds after death due to good and bad acts"
+        },
+        {
+          "symbol": "five principal causes",
+          "meaning": "the body and mind, sense organs, separate efforts, and Vasudev (the inner witness) residing in everybody's mind"
+        },
+        {
+          "symbol": "doer",
+          "meaning": "the individual who presumes themselves as the doer due to contracted intellect"
+        },
+        {
+          "symbol": "knowledge (sātvik)",
+          "meaning": "perceiving a single Imperishable Presence integral in all creatures"
+        },
+        {
+          "symbol": "knowledge (rājasik)",
+          "meaning": "perceiving discrete separate identities in creation"
+        },
+        {
+          "symbol": "knowledge (tāmasik)",
+          "meaning": "obsessed with one act, thoughtless, trivial"
+        },
+        {
+          "symbol": "karma (sātvik)",
+          "meaning": "self-assigned karma performed without desire, attachment, affection or envy"
+        },
+        {
+          "symbol": "karma (rājasik)",
+          "meaning": "karma performed with craving for enjoyment or pride"
+        },
+        {
+          "symbol": "karma (tāmasik)",
+          "meaning": "karma done in delusion leading to loss and violence"
+        },
+        {
+          "symbol": "doer (sātvik)",
+          "meaning": "one free from propinquity, not uttering vain words, full of dharana and enthusiasm, unaffected in success and failure"
+        },
+        {
+          "symbol": "doer (rājasik)",
+          "meaning": "passionate, desiring fruit, greedy, violent, impure, affected by joy and sorrow"
+        },
+        {
+          "symbol": "Samyasa",
+          "meaning": "renunciation; sannyasis are those who have given up desire for fruit of karma"
+        },
+        {
+          "symbol": "Samkhya",
+          "meaning": "the enumeration of principles that annul karma"
+        },
+        {
+          "symbol": "providence",
+          "meaning": "Vasudev, the inner witness"
+        },
+        {
+          "symbol": "yakshas and rakshasas",
+          "meaning": "demonic tendencies focused on body preservation and sensory gratification"
+        },
+        {
+          "symbol": "ghosts and fiends",
+          "meaning": "dormant states of consciousness, minimal awareness"
+        },
+        {
+          "symbol": "food (āhāra)",
+          "meaning": "substances or impressions that affect the body and mind, also symbolic of mental dispositions"
+        },
+        {
+          "symbol": "penance (tapas)",
+          "meaning": "yogic practices aimed at awakening consciousness"
+        },
+        {
+          "symbol": "charity (dāna)",
+          "meaning": "selfless action or giving up attachments"
+        },
+        {
+          "symbol": "scripture (śāstra)",
+          "meaning": "hints from ancient sages, encoded methods of yoga"
+        },
+        {
+          "symbol": "Time-conscious ancient sages",
+          "meaning": "those who had vision of timeless reality"
+        },
+        {
+          "symbol": "body (śarīra)",
+          "meaning": "the field of yoga, containing the group of spirits (earth, water, fire, air, sky)"
+        },
+        {
+          "symbol": "group of spirits (bhūtagrāma)",
+          "meaning": "the five elements (earth, water, fire, air, sky) present in the body"
+        },
+        {
+          "symbol": "mind (manas)",
+          "meaning": "the seat of immense consciousness, yet limited by body identification"
+        },
+        {
+          "symbol": "faith (śraddhā)",
+          "meaning": "the motivation derived from one's level of consciousness"
+        },
+        {
+          "symbol": "sātvik faith",
+          "meaning": "desire to awaken immense consciousness beyond physical limits"
+        },
+        {
+          "symbol": "rājasik faith",
+          "meaning": "obsession with body and senses, self-gratification"
+        },
+        {
+          "symbol": "tāmasik faith",
+          "meaning": "dormant consciousness, acting without purpose, minimal awareness"
+        },
+        {
+          "symbol": "sthita-prajña",
+          "meaning": "one established in samādhi, desireless"
+        },
+        {
+          "symbol": "Brahmajña guru",
+          "meaning": "a realized master who knows the immense (Brahman)"
+        },
+        {
+          "symbol": "virile fluid (ojas/retas)",
+          "meaning": "vital energy, preservation is key for awakening"
+        },
+        {
+          "symbol": "Time (unbearable ultra-brilliant Time)",
+          "meaning": "The ultimate Supreme Lord; the unmanifest great eternal Time; object of meditation"
+        },
+        {
+          "symbol": "mind (immense consciousness of the mind)",
+          "meaning": "The consciousness that must be concentrated on the Time; awakened by breaking physical barriers"
+        },
+        {
+          "symbol": "body and senses (limitations of the body and the senses)",
+          "meaning": "That which withhold the mind and cause sin of ignorance; the limitations to be given up"
+        },
+        {
+          "symbol": "the four duties of life",
+          "meaning": "Duties performed by the body; to be placed upon the Time"
+        },
+        {
+          "symbol": "devotion (offering devotion to the Time)",
+          "meaning": "Consigning devotion to the Time Itself"
+        },
+        {
+          "symbol": "bow before the Time",
+          "meaning": "Bow with the combined consciousness of past, present, and future"
+        },
+        {
+          "symbol": "ancient yoga",
+          "meaning": "The medium through which one becomes dear to the Time"
+        },
+        {
+          "symbol": "secret (extremely secret discipline of yoga)",
+          "meaning": "The practice of awakening the immense consciousness and focusing on the Time"
+        },
+        {
+          "symbol": "austere (one who is not austere)",
+          "meaning": "One who has no mind for the Truth, averse to the Time due to indolence"
+        },
+        {
+          "symbol": "devotee (one who is a devotee of the Time)",
+          "meaning": "One who is eager to know the truth of the Time"
+        },
+        {
+          "symbol": "compliant (who is not compliant)",
+          "meaning": "One who does not even have a gleam of his latent immensity and is unwilling to know it"
+        },
+        {
+          "symbol": "the great soul (Time Conscious person)",
+          "meaning": "One who gives advice of the secret discipline to individuals eager for the truth"
+        },
+        {
+          "symbol": "beholding the truth of the Time in every embodiment",
+          "meaning": "Perceiving the Time in all forms; leads to becoming one with the Time"
+        },
+        {
+          "symbol": "varnas",
+          "meaning": "physical limitations of body and mind"
+        },
+        {
+          "symbol": "unmanifest mind",
+          "meaning": "immense consciousness / dormant consciousness"
+        },
+        {
+          "symbol": "Karma (svadharma)",
+          "meaning": "yoga practice to awaken immense consciousness"
+        },
+        {
+          "symbol": "sin (kilbisham)",
+          "meaning": "ignorance, desire for senses, hypocrisy, pride"
+        },
+        {
+          "symbol": "smoke covering fire",
+          "meaning": "initial flaws of yoga practice before realization"
+        },
+        {
+          "symbol": "Nishkarmya siddhi",
+          "meaning": "state of no karma, realization of unmanifest Truth"
+        },
+        {
+          "symbol": "Brahmabhuta",
+          "meaning": "placed in ultimate immensity, knowing Time"
+        },
+        {
+          "symbol": "devotion (bhakti)",
+          "meaning": "direct observation of Time and realization of its sovereignty"
+        },
+        {
+          "symbol": "entering Me",
+          "meaning": "becoming one with Time"
+        },
+        {
+          "symbol": "Time (Parameshwar)",
+          "meaning": "the luminous, brilliant, unmanifest Governor"
+        },
+        {
+          "symbol": "Buddhi Yoga",
+          "meaning": "yoga practice surrendered to Time"
+        },
+        {
+          "symbol": "obstacles (durgas)",
+          "meaning": "physical limits, death fortress"
+        },
+        {
+          "symbol": "egoism (ahamkar)",
+          "meaning": "limited intellect, preference for sense pleasures"
+        },
+        {
+          "symbol": "fight (yuddha)",
+          "meaning": "resolve to know death and awaken consciousness"
+        },
+        {
+          "symbol": "God (Ishvara)",
+          "meaning": "unmanifest Governor, brilliance in heart"
+        },
+        {
+          "symbol": "heart (hrdaya)",
+          "meaning": "seat of Ishvara in every creature"
+        },
+        {
+          "symbol": "Vasu deva",
+          "meaning": "the unmanifest Time"
+        },
+        {
+          "symbol": "fortress of death",
+          "meaning": "physical limitations and ignorance"
+        },
+        {
+          "symbol": "nectar of immortality",
+          "meaning": "realization beyond death"
+        },
+        {
+          "symbol": "brahmana",
+          "meaning": "class of humanity that resides between Israel and India who are Caucasian but not the white; those with sattvic qualities"
+        },
+        {
+          "symbol": "ksatriya",
+          "meaning": "the white race; those with rajasic qualities like bravery, lordship"
+        },
+        {
+          "symbol": "vaisya",
+          "meaning": "the Mongol race; those with tendencies for agriculture, trade"
+        },
+        {
+          "symbol": "sudra",
+          "meaning": "the black race; those with service as natural duty"
+        },
+        {
+          "symbol": "sattva guna",
+          "meaning": "the quality that leads to awakening of consciousness, knowledge of Time"
+        },
+        {
+          "symbol": "raja guna",
+          "meaning": "the quality of attachment to senses and physical limitations"
+        },
+        {
+          "symbol": "tama guna",
+          "meaning": "the quality of dormant consciousness and ignorance"
+        },
+        {
+          "symbol": "sattvik joy",
+          "meaning": "joy from yoga practice that initially feels like poison but leads to immortality"
+        },
+        {
+          "symbol": "rajasik joy",
+          "meaning": "joy from sense gratification that initially seems nectar but becomes poison"
+        },
+        {
+          "symbol": "tamasik joy",
+          "meaning": "joy from slumber, laziness, delusion"
+        },
+        {
+          "symbol": "sattvik intellect",
+          "meaning": "intellect that knows initiative and resignation, appropriate and inappropriate, fear and fearlessness, bondage and freedom, and motivates to awaken dormant consciousness"
+        },
+        {
+          "symbol": "rajasik intellect",
+          "meaning": "narrow intellect that cannot know the correlation of body and senses, does not comprehend death, cannot discern right action"
+        },
+        {
+          "symbol": "tamasik intellect",
+          "meaning": "intellect enveloped by ignorance, confuses dharma and adharma, afraid of death, grasps opposite meanings of wise teachings"
+        },
+        {
+          "symbol": "sattvik dharana (holding)",
+          "meaning": "resolute intellect from yoga that holds unmanifest immensity, stimulates knowledge of Time through union of mind and prana"
+        },
+        {
+          "symbol": "rajasik dharana",
+          "meaning": "holding limited to body, desires for sense satisfaction, unable to give up attachment"
+        },
+        {
+          "symbol": "tamasik dharana",
+          "meaning": "holding of slumber, fear, sorrow, depression, life like a dream"
+        },
+        {
+          "symbol": "unmanifest Being",
+          "meaning": "the source from which creation is manifested"
+        },
+        {
+          "symbol": "Kutastha Chaitanya",
+          "meaning": "witnessing consciousness (implied as Krishna in other texts)"
+        },
+        {
+          "symbol": "Om",
+          "meaning": "The omnipresent unmanifest Brahma that yogis can know through successful practice of the three stages of ancient yoga; signifying symbol of the unmanifest truth of Time."
+        },
+        {
+          "symbol": "Tat",
+          "meaning": "The consciousness of the Void in which is instilled the consciousness of Time, connoted by the word 'Tat'; it pervades everywhere."
+        },
+        {
+          "symbol": "Sat",
+          "meaning": "Symbolic word used by great men to denote the unmanifest Time immanent in the Void; the one and only truth is unmanifest Time."
+        },
+        {
+          "symbol": "Asat",
+          "meaning": "All karma that strengthens physical limitations, performed with desire for sense satisfaction by those with limited consciousness who presume the dormant immense consciousness as fictitious."
+        },
+        {
+          "symbol": "Dana (charity)",
+          "meaning": "Bestowal of the advice of yoga to deserving seekers; also giving up fruits of karma."
+        },
+        {
+          "symbol": "Tapas (penance)",
+          "meaning": "The practice of yoga disciplines; continuing to inspire new seekers through penance of giving yoga advice."
+        },
+        {
+          "symbol": "Death (samnyasa)",
+          "meaning": "The state of having risen above physical limitations, awakening dormant consciousness; knowing true nature of death means knowing the unmanifest, imperishable Brahma, the Time beyond mind."
+        },
+        {
+          "symbol": "Sacrifice (tyaga)",
+          "meaning": "Giving up the fruit of all karma; becoming desireless by banishing limitedness through yoga-karma."
+        },
+        {
+          "symbol": "Samnyas (renunciation)",
+          "meaning": "Establishment in the knowledge that all desires originate from mind, causing desires to sink in mind; knowing the creator of all, the unmanifest Time."
+        },
+        {
+          "symbol": "Brahmanas (Brahmins)",
+          "meaning": "Great yogis who realized the truth of Time and achieved oneness with It; those who are Time Conscious."
+        },
+        {
+          "symbol": "Yajna (as ritual)",
+          "meaning": "The procedures of yoga leading to knowledge of unmanifest Truth, manifested from the unmanifest truth of Time."
+        },
+        {
+          "symbol": "Body and senses",
+          "meaning": "Correlated with mind; desires originate from mind, and the body and senses are instruments."
+        },
+        {
+          "symbol": "Sattvic charity",
+          "meaning": "Bestowal of yoga advice to deserving seekers, by those who have become Time Conscious."
+        },
+        {
+          "symbol": "Rajasic charity",
+          "meaning": "Charity done with expectation of reciprocal favors or gains, in a hurtful manner; give-and-take mentality."
+        },
+        {
+          "symbol": "Tamasic charity",
+          "meaning": "Charity to undeserving, at inappropriate time/place, without courtesy; harming self and others."
+        },
+        {
+          "symbol": "Sattvic renunciation",
+          "meaning": "Performing karma as duty without attachment and fruit; equanimity."
+        },
+        {
+          "symbol": "Rajasic renunciation",
+          "meaning": "Giving up yoga-karma due to fear of physical discomfort, even knowing its importance."
+        },
+        {
+          "symbol": "Tamasic renunciation",
+          "meaning": "Giving up yoga lessons out of delusion due to attachment to physical pleasures."
+        },
+        {
+          "symbol": "Time (unmanifest)",
+          "meaning": "The ultimate imperishable Brahma, creator of all; the one and only truth; beyond the mind."
+        },
+        {
+          "symbol": "Four-armed embodiment",
+          "meaning": "The direct darshan of the unmanifest Time by great men established in the Void."
+        },
+        {
+          "symbol": "Shraddha (faith)",
+          "meaning": "Not explicitly defined but implied as faith in the dormant immense consciousness; without faith acts become Asat."
+        }
+      ],
+      "core_principles": [
+        "The root consciousness of matter is Brahma",
+        "The void contains and fosters matter; its consciousness is Vishnu",
+        "Pure thought (consciousness of matter) is born from conscious void and links matter and void",
+        "Time (Shiva) is immanent in both matter and void, and annihilates both",
+        "Time existed before creation and will remain after dissolution",
+        "Time itself caused conception to Time, giving birth to creation",
+        "The body is an envelope of ignorance that serves to develop consciousness to its totality.",
+        "Consciousness is delivered through physical death after full development.",
+        "Time (Mahakal) is the creator, supporter, and annihilator of the world.",
+        "The one Self appears as the many through the play of time.",
+        "Imagination is the most powerful force; controlled imagination is will power.",
+        "The body is the field of yoga and a womb for consciousness.",
+        "Time is the origin of everything and appears dreamlike initially.",
+        "Practice begins with imagination and builds confidence.",
+        "The conscious void gives rise to creation and absorbs it back.",
+        "The body's capacity follows the state of realization.",
+        "A yogi becomes like Shiva by knowing Shiva through mind and body.",
+        "Supreme Time (Mahakal) manifests all and is the essence of life.",
+        "Prana (Shiva) is naturally related to all entities.",
+        "The activities of Prana and Apana are mutually opposite; their quiescence leads to realization of Mahakal.",
+        "All doubts originate from Time and are absorbed back into Time when one is united with Time.",
+        "The body is biological and the brain has four directional parts corresponding to physical locations.",
+        "Kundalini is consciousness and resides in the earth element (muladhara).",
+        "Physical development impacts the mind; internal yogic processes require physical prerequisites.",
+        "Khechari protects the practitioner from external dangers (e.g., explosions).",
+        "Holding purified prana for 48 minutes enables flying.",
+        "Amrita is a hormone produced by prolonged successful practice.",
+        "Prana is mercury, apana is sulfur; alchemical union purifies prana.",
+        "The physical body is a sentence of time for the spirit to feel time.",
+        "The spirit is a drop of time, infinite but needing contraction to feel time.",
+        "Observation power leads from gross to void to consciousness to time to Self.",
+        "Void is not empty but ocean of consciousness; within that flows time.",
+        "Mercury is the semen of Shiva, carrying divine DNA/memories.",
+        "Earth element is real Shakti; Kundalini sleeps in muladhar as earth.",
+        "Awakening Kundalini yields a yogic/divine/superbody by harmonizing five elements.",
+        "Mahamudra is a furnace that makes mercury heat-resistant; essential for 18 processes.",
+        "After first Kundalini awakening, one becomes aware of elements and 52 syllables; chakras are revealed.",
+        "Second Kundalini awakening makes one immortal and beyond chakras.",
+        "Body is 99.9% void; merging void with time allows absorbing time.",
+        "Physical body is a great mystery carrying immortal spirit; not to be discarded.",
+        "The One Self (Narayana) sleeps in the brain; 98% of brain is dormant but awakening is possible.",
+        "Time is not linear for ojas formation; it is individual and can extend lifespan.",
+        "Life force (sexual) can be transformed into ojas through celibacy and yoga practice (assimilation, not mere retention).",
+        "The body's cells are replaced every 12 years; new cells with new program are needed for ojas.",
+        "Ojas is formed in the heart, amrita in the brain; both are physical substances.",
+        "The One Self appears as the many (implied by the unity of consciousness and its energy).",
+        "The body is the field of yoga; earth element must be recognized in the body.",
+        "Time is standstill but appears divided; can be stopped by suspending the sense of time.",
+        "Immortality is transformation of future into past is life, absolute transformation is death, unlimited future is immortality.",
+        "Kundalini energy rises through Sushumna, piercing chakras, to achieve liberation.",
+        "Prana Shakti comes down from Hriday into Muladhara, connects with earth element, awakens Kundalini.",
+        "The goal of yoga is to establish connectivity with Mother Earth and merge all elements.",
+        "Consciousness is soul; consciousness of the mind is soul.",
+        "Knowledge is bondage; the mind limits itself to a body to know itself.",
+        "Body is a small bit of power of the creator.",
+        "The origin (time) is the basis of knowledge.",
+        "Effort to awaken dormant consciousness is terrible (extremely difficult).",
+        "Disintegrating consciousness by Pranayam awakens it; one can then create or annihilate worlds.",
+        "Direct perception of the fourth state is possible by separating the three states.",
+        "Only awakening is knowledge; indecision about dream is ignorance.",
+        "Astonishment is the basis for yoga.",
+        "Will power is the ultimately beautiful virgin.",
+        "The entire visible world is the body of Him who manifests all.",
+        "By concentrating into the core, mind knows its invisible form and is established beyond the visible.",
+        "Investigation of sublime element causes knowledge of one's abilities.",
+        "Deliberation causes self-realization.",
+        "There is no difference between worldly pleasures and samadhi – both are awakened consciousness.",
+        "Concentration on the void gives knowledge of creation of body.",
+        "Concentrating on created things gives knowledge of the five elements and their combinations.",
+        "Knowing creation and existence in pure form masters the cycle.",
+        "Exploring the great sound reveals the power of time, the origin of all.",
+        "Mind is most mysterious; effort is the achiever.",
+        "Existence of the present body is a hidden secret.",
+        "Dream is realized when growth of consciousness in the womb is distinctive.",
+        "When existence in unsupported state becomes natural, status becomes Shiva-like.",
+        "Mind taking body, planting seed, developing, and delivering consciousness through death is the Great Way.",
+        "When consciousness is born completely, mind no longer needs a body – cycle of birth ends.",
+        "Body is an offering; knowledge is food.",
+        "When existence is annihilated, it comes forth and experiences the dream.",
+        "Mind is soul.",
+        "Knowledge is bondage.",
+        "Indiscretion about real truth by degrees is illusion.",
+        "Merger of degrees within body leads to complete consciousness.",
+        "The One Self appears as the many through the medium of the body.",
+        "The body is the field of yoga.",
+        "Time is standstill but appears divided into phases (childhood, youth, old age).",
+        "The unmanifest consciousness (Atman/feeling of beingness) is manifested through the body.",
+        "Consciousness always exists, whether manifested or unmanifest.",
+        "The same situation appears grievous or pleasant depending on outlook.",
+        "Life and death are experienced when consciousness changes its medium of embodiment.",
+        "Realizing the relativity of happiness and sorrow leads to immortality.",
+        "The conscious mind is a small fraction of total mind; the unconscious is vast dormant consciousness.",
+        "Asat (unreal) and Sat (real) are interdependent; yoga awakens the dormant.",
+        "The indestructible ultra-brilliant unmanifest Time pervades the entire visible world.",
+        "The body is the field of yoga – all battles, events, and places are within the human body.",
+        "The one Self (Kutastha Chaitanya) appears as the many (the individual souls and manifest world).",
+        "Time is standstill in the inner Self but appears divided due to the mind's activity.",
+        "Arjuna's despondency represents the spiritual aspirant's confusion when observing the inner forces of good and evil.",
+        "The entire creation is manifested by the unmanifest ultra-brilliant time.",
+        "The corporal body is a support for the manifestation of immense consciousness; it is perishable, but the consciousness manifested through embodiment is eternal.",
+        "The immense consciousness of the mind is the trans-physical manifestation of time.",
+        "Life and death are separate manifestations of one singular presence, experienced due to confinement of consciousness within physical limits.",
+        "For those whose consciousness has awakened in its immensity, there is no difference between life and death.",
+        "The immense consciousness is eternal, all-pervading, immovable, absolute, and primeval.",
+        "One can know the true character of time by awakening dormant consciousness through the body (yoga).",
+        "The unmanifest consciousness remains unmanifest for those confined in physical limitations.",
+        "The immense consciousness is indivisible, cannot be burnt, wetted, or dried.",
+        "The body is a manifestation of unmanifest Time and stores all elements of creation; it can be the medium to know the immense unmanifest consciousness.",
+        "The mind itself is like the Supreme Being due to its immensity; senses and organs are its instruments.",
+        "No one can remain without performing karma; being born is a consequence of karma, and all are governed by properties inherited from nature.",
+        "Suppressing organs without understanding the mind leads to hypocrisy; true control is by regulating the mind.",
+        "Yogic practice (sedulous practice of yoga) awakens the immense dormant consciousness of the mind.",
+        "The body is both a medium for liberation (via yogic karma) and a cause of bondage (via sensuous pleasures).",
+        "The One Self appears as the many through the mind and senses.",
+        "The body is the field of yoga; yoga is awakening the dormant immense consciousness.",
+        "Time is the unmanifest, brilliant Supreme, yet appears divided in perception.",
+        "Yoga is equanimity (samatvam); it is expertise in action (karmasu kaushalam).",
+        "Desire for fruits binds one to karma; yoga begins with desire for Samadhi.",
+        "Death is a medium to transcend physical limitations and awaken consciousness.",
+        "The mind is primary; body and senses are its instruments.",
+        "The three gunas limit consciousness; yoga takes one beyond them.",
+        "All manifestations are instruments of the Supreme Consciousness for manifesting itself.",
+        "The body is the field of yoga; offering the body as oblation in the fires of yoga awakens immense consciousness.",
+        "All karma is caused by the body and induced by the mind.",
+        "The immense consciousness of the mind is a manifestation of the omnipresent imperishable Supreme Being, which is Time — immutable yet manifested.",
+        "The mind sports with itself through itself.",
+        "Yogis who have awakened consciousness are above loss and gain, hope and meum.",
+        "Those who are not awake cannot understand the advice of the great without first awakening themselves.",
+        "By knowing the basic character of death, one unites with the unmanifest consciousness of Time through death.",
+        "The vision of Time Conscious persons perceives the play of Time in all creation.",
+        "The unmanifest Time (Kāla-Brahma) manifests the entire creation through the medium of the mind.",
+        "The immense mind itself envisions all karma and its fruit naturally.",
+        "The Time remains beyond karma and its fruit while being the source of all.",
+        "The yogi, by awakening dormant consciousness, directly perceives the brilliant Time within.",
+        "The one who knows the Time becomes one with the Time and becomes the soul of the world.",
+        "Yogic karma emancipates consciousness from physical boundaries.",
+        "The result of yogic karma is akarma/Samadhi, a state beyond karma.",
+        "The mind is a manifestation of Brahma.",
+        "The body is the medium for the yajna of yoga.",
+        "Time is the ultimate Supreme Being, imperishable and unmanifest.",
+        "All conditions (delight/grief, success/failure) are expressions of one singular consciousness.",
+        "Karma is absorbed within the mind itself through yogic practice.",
+        "The course of yoga involves systematic granthi-bheda (knot-piercing) stages.",
+        "Life and death are different manifestations of one singular presence.",
+        "The sustaining power of life is death (Time).",
+        "Dharm is the sustaining element; knowledge of death is Dharma.",
+        "Desire and anger are born from rajoguna (excessive sense emphasis) and are enemies of awakening dormant mental competencies.",
+        "The mind is a manifestation of the imperishable Supreme Being; it is itself a form of the Supreme Being.",
+        "The immense consciousness of mind is covered by prominence of body and organs when competencies are dormant.",
+        "The unmanifest Parmeshwar (Time) advents as a super-human being to revive yoga in times of decline.",
+        "The ultimate truth is Time, which manifests as the visible world and appears in human form.",
+        "The human body is the best manifestation of the Time and the field for yoga.",
+        "Karma yields quick results in the mortal world, especially yogic karma for awakening consciousness.",
+        "The four varnas are stages of evolution of consciousness, not social classes.",
+        "Death is liberation for the yogi who knows the true character of Time; for the ignorant, it is destruction and rebirth.",
+        "The Time is unaffected by karma and remains beyond bondage.",
+        "True knowledge comes from direct perception through yoga, not from reading scriptures.",
+        "The body and senses impose physical limitations on consciousness; yoga transcends these limits.",
+        "The One Self (unmanifest truth) appears as the many (all creatures).",
+        "Time is the Paramatma, the unmanifest truth; knowing its true character liberates.",
+        "All karma ends in wisdom; wisdom burns all karma like fire.",
+        "Yoga and knowledge (samkhya) are not separate; their fruit is the same.",
+        "Samadhi and death are analogous; both yield immensity.",
+        "The guru is a medium for the perpetual expression of knowledge, not an individual.",
+        "The phenomenal world is a manifestation of the one unmanifest Time (Parameshwar).",
+        "True Samnyas is not renunciation of action but knowing death through yoga.",
+        "The body is a field that, when cultivated by yoga, yields the crop of immensity (infinite consciousness).",
+        "Reality is ultimately the unmanifest Time, which is both the ground and goal of yoga.",
+        "All opposites (honor/dishonor, joy/grief, etc.) are manifestations of one singular consciousness.",
+        "The True Self is the unmanifest presence beyond the body and mind.",
+        "Imagination is the most powerful flow; controlling it by yoga unlocks immense mind capacity.",
+        "The mind has immense dormant consciousness beyond the small waking portion.",
+        "Yoga awakens the dormant immense consciousness, leading to experience of the Conscious Void.",
+        "Practice of yoga yields Vairagya (desirelessness) as a natural result.",
+        "A yogi who dies before full awakening crosses physical limitations and is reborn in favorable circumstances.",
+        "Consciousness of Time is immanent in the consciousness of the Void.",
+        "The One Self appears as the many? Not stated; but 'Void' is the support of all matter and motion.",
+        "The body is the field of yoga; the practitioner poises the body and performs special kriyas of head and neck.",
+        "Time is standstill but appears divided? Not stated; however 'Vasudev' is the embodiment of Time in the Void.",
+        "All desires are fulfilled when the yogi knows the true character of the consciousness of the Void and then knows the consciousness of Time replete in the Void.",
+        "Knowledge alone liberates; a yogi is liberated from the attraction of everything he knows.",
+        "Continence (Brahmacharya) is a great power; it is attained by restraining the fall of vital fluid (orgasmic discharge) through knowledge of the root cause of attraction between man and woman.",
+        "The passion of love is the basis of perpetuation of life; divinity of love was recognized by ancient sages.",
+        "Motherhood and fatherhood emerge from love; a woman's body is created for motherhood, and without the cooperation of a man, a woman cannot become a mother.",
+        "The one Self appears as the many through the illusion of time and space.",
+        "The body is the field of yoga: it supports the mind's consciousness.",
+        "Time is standstill but appears divided into past, present, future due to shifting focus of consciousness.",
+        "The unmanifest consciousness manifests the immensity of the mind.",
+        "The consciousness of the Time is replete in the Conscious Void.",
+        "Physical limitations are an illusion (maya) that can be surmounted by surrender to Time (i.e., yoga).",
+        "All deities are minute parts of the unmanifest Kala-Brahma.",
+        "The conscious matter (Brahma) is the support of the entire creation and has its own day/night cycle of 4.32 billion solar years.",
+        "All manifestations originate from the Unmanifest (Time) and merge back into the Conscious Void.",
+        "The Conscious Void is a brilliant light with a deep blue center, from which the Anahad Nada emanates.",
+        "Beyond the Conscious Void is the Eternal Unmanifest (Time), which does not perish even when all creatures are wiped out.",
+        "The ultimate Purusa contains all creatures and manifests the world; reached by undivided faith and valorous yoga practice.",
+        "Death can be overcome by realizing one's true form as the brilliance of the Time during the death experience.",
+        "The Time (Paramatma) is the ultimate brilliant consciousness that manifests all worlds—gross and subtle.",
+        "The one Self (Time) appears as the many (gods, manes, spirits, etc.).",
+        "All worship ultimately goes to the Time, whether directly or indirectly.",
+        "Yoga is the process of overcoming physical limitations and directly perceiving the Time.",
+        "Karma (actions) binds one to cycles of birth and death unless offered to the Time.",
+        "The body is the field of yoga; physical limitations are to be transcended.",
+        "The Time is uniform in all beings, with no likes or dislikes.",
+        "The imperishable unmanifest Time (Brahman) is never spent.",
+        "The conscious human mind is the best manifestation of Brahma (self-beingness).",
+        "Kriya yoga is the karma that awakens immense consciousness.",
+        "The body is mortal and transient but supports immense consciousness.",
+        "The conscious mind (Purusa) is a fraction of the immense mind and rules the organs.",
+        "Time (Paramatma) manifests the body, mind, intellect, and consciousness.",
+        "One attains after death the abstraction (bhava) that dominated the mind at death, which is shaped by lifelong mental habits.",
+        "The yogi who directly perceives the unbearable brilliance of Time becomes omniscient.",
+        "Repeated practice of Omkar kriya (20736 times per breath) ruptures Brahma-randhra and leads to union with the Immense Brilliance.",
+        "Great souls established in the immense brilliance of Time are never reborn.",
+        "Time (Mahakala) is unmanifest, without beginning or end, and is the Supreme Lord.",
+        "The unmanifest Time manifests all gross and subtle worlds or dimensions.",
+        "Time is the support of all supports, the brilliance of all brilliance.",
+        "Everything originates from and is sustained by the Time.",
+        "The body is an oblation offered in the fires of yoga.",
+        "The yogi becomes Time-Conscious through union with the unmanifest Time.",
+        "Time bestows knowledge of itself to those who offer their life into the fires of yoga.",
+        "The One Self (Time) appears as the many through the conscious Void.",
+        "The body is the field of yoga, like earth, with sense organs as its properties.",
+        "Time is the ultimate reality, immanent and transcendent, before, during, and after creation.",
+        "Creation and dissolution originate from the Time.",
+        "The conscious Time motivates self-realization and is the power behind all practices.",
+        "The three gunas originate from Time but are only a minute part; Time remains beyond them.",
+        "The world is bewildered by the three gunas and cannot know the imperishable Time without yoga.",
+        "Yoga stages involve progressively piercing knots: hridaya (heart), rudra (throat?), muladhar (base).",
+        "The consciousness of the Void is the intermediate stage; beyond it is the consciousness of Time.",
+        "The ultimate goal is to know the true character of the Time and become one with It.",
+        "The One Self (Time) appears as the many; the unmanifest manifests creation yet remains aloof.",
+        "The body is the field of yoga; the human body is the support for the manifestation of Time.",
+        "Time is standstill but appears moving; it is both the doer, action, and consequence.",
+        "Time is both creation and destruction; it does nothing yet creates and destroys repeatedly.",
+        "The entire creation is contained in the Conscious Void, which is replete in the consciousness of Time.",
+        "All spiritual practices (yoga, jñana, mantra, sacrifice) ultimately reveal the same Time consciousness.",
+        "Ignorance is equated with sensuous attachment and lack of yogic awakening; knowledge is realization of Time.",
+        "The One Supreme Self (Kutastha Chaitanya) appears as the many through the power of Maya.",
+        "The body is the field of yoga, and all external events are allegories for inner processes.",
+        "Time (Kala) is the ultimate reality, both transcendent and immanent, creator and destroyer.",
+        "All beings, from gods to insects, are absorbed into Time, which is the Self.",
+        "The gross body is consumed by Time; the subtle essence remains.",
+        "The vision of the universal form (Virat) is a direct experience of the unity behind diversity.",
+        "The inner brilliance of the Self is beyond comparison with any external light.",
+        "The One Self (Time) appears as the many but is ultimately the same consciousness.",
+        "The body is the field of yoga, and the mind is the instrument.",
+        "Time is the ultimate reality, both frightful and beautiful, immanent in the Void.",
+        "Yogic practice leads through stages: hridaya-granthi-bheda, consciousness of the Void, darshan of Vasudev, then direct perception of Time.",
+        "Bhakti (undivided dedication) is the means to know, see, and enter the Time.",
+        "The idols and deities are not imagination but eidetic hints of the unmanifest Time.",
+        "The unmanifest is hard to attain for embodied souls; it requires extra hard work.",
+        "All creatures are manifestations of the Time; a Time-Conscious person sees no difference.",
+        "The three gunas (sattva, raja, tama) confine the immense consciousness of the mind to the body.",
+        "Sattva guna provides an afflatus to raise consciousness above physical limitations and know the true character of Time.",
+        "Rajoguna causes intellect to have predilection for senses, entrapping it in greed and confining consciousness to body and organs.",
+        "Tamoguna bewilders immense consciousness by enveloping it with ignorance, causing most mental competencies to become dormant.",
+        "The Sthitaprajña recognizes the entire creation as a manifestation of the unmanifest imperishable Brahma.",
+        "The three gunas have originated from the imperishable Brahma itself.",
+        "A person who goes beyond the three gunas attains immortality, becoming free from birth, death, old age, and sorrow.",
+        "The true character of death is known through yoga, and one can enjoy immortality by overstepping death.",
+        "The body is the field (kṣetra) for yoga, and the mind (kṣetrajña) is the knower of the field.",
+        "The One Self (Time/Brahman) appears as the many through the manifestation of Prakṛti.",
+        "Time is standstill but appears progressional due to differential levels of consciousness.",
+        "The mind is the prime support of all senses; it is eternal because Time is eternal.",
+        "Liberation is achieved by awakening dormant consciousness and focusing it on Time.",
+        "The accomplished yogi becomes one with the Time, omniscient and omnipresent.",
+        "Time (Kāla) is the supreme reality, the destroyer and creator of worlds.",
+        "Time creates and destroys everything; destruction is certain from the moment of birth.",
+        "All beings are already killed by Time from birth; any killer is just an instrument of Time.",
+        "Time is past, present, future; it is beyond them.",
+        "Time manifests as all deities and elements (Vāyu, Yama, etc.).",
+        "The charming four-armed form of Time is accessible only through yoga after heart-knot piercing.",
+        "The terrible universal form of Time is frightening and can only be seen by yogis who have passed all stages of yoga.",
+        "Time is the knower, the knowable, and the goal of knowledge.",
+        "The world is imbued by Time; Time is the ultimate support and destiny.",
+        "The yogi surrenders to Time, igniting the fires of yoga, and seeks Time's love like a father's, friend's, or lover's.",
+        "The entire creation is a manifestation of the absolute reality of the Time.",
+        "The Time is the creator and destroyer of all; it does everything while doing nothing.",
+        "The body (kṣetra) and mind (kṣetrajña) combine to produce the experience of creation.",
+        "The unmanifest Time manifests all gunas but remains beyond them.",
+        "The Conscious Void contains all conscious matter and yet remains unaffected.",
+        "The Time is immanent everywhere; knowing it leads to oneness with it.",
+        "Death is to be known and overcome; the Time Conscious are free from the fear of death and rebirth.",
+        "The human mind is a manifestation of the imperishable Supreme Being, the Time.",
+        "The body is a field (kshetra) for the mind to take experiences and know itself.",
+        "The knower of the field (kshetrajna) is the awakened mind, which is the Supreme Being manifested.",
+        "All creatures are manifestations of the immense unmanifest Time.",
+        "Time is the unmanifest, imperishable Brahma, luminance of all luminance.",
+        "By realizing the true character of Time, one becomes immortal beyond death.",
+        "The world and all dualities are relative; the enlightened one sees the self in all.",
+        "Yogic practice awakens dormant consciousness and leads to knowledge of the Truth.",
+        "The entire creation is a manifestation of the Supreme Time (Kāla).",
+        "The Supreme Time is the essence behind all names and forms.",
+        "All beings and objects are expressions of the One Supreme Self.",
+        "The body is the field of yoga and sacrifice.",
+        "Time is both the destroyer and the source of all.",
+        "The inner yogic process decodes external symbols.",
+        "There is no existence without the Supreme Self.",
+        "The Supreme Self is both immanent and transcendent.",
+        "Divine vision is required to perceive the ultimate form.",
+        "The yoga of concentration leads to direct realization.",
+        "The unmanifest Time manifests this creation.",
+        "The body is limited; dormant consciousness confines one to sense objects.",
+        "Lust, anger, and avarice are the three doorways to hell that hide divine immensity.",
+        "The scriptures are the experiential records of past sages, preserved for future seekers.",
+        "The ultimate destiny is to know the Time and become one with It through yoga.",
+        "The unmanifest, ultimate imperishable Truth (Time) is the foundation of all cycles, planets, and constellations.",
+        "The brilliance of Time is the source of all brilliance (sun, moon, fire).",
+        "Time itself is the juice of all juices (Soma) and manifests all medicaments.",
+        "The unmanifest Time (Vasudev) resides in the heart of all beings.",
+        "There are two Purusas: the perishable (body/mind) and the imperishable (Kutastha/Vasudev).",
+        "The excellent Purusa (Purusottam) is beyond both, the unmanifest Time.",
+        "Only Time Conscious persons, through yoga, directly perceive the Time.",
+        "The human mind is a manifestation of the imperishable Brahma (Time).",
+        "The body is like a tree with roots upward (mind) and branches downward (nerves).",
+        "Time is the brilliance that illuminates all luminaries (sun, moon, fire).",
+        "The mind's consciousness is eternal and a quotient of the Ultimate Truth.",
+        "Ordinary persons are confined to the leaves (desires) and cannot see the whole tree.",
+        "By cutting the tree with the weapon of non-attachment (yoga), one reaches the immutable state.",
+        "Those who have awakened their consciousness become Time-conscious and never return to embodiment.",
+        "The gunas nourish the branches; beyond them lies the neutral Time.",
+        "The One Self appears as the many through the manifestation of Time.",
+        "The body is the field of yoga; consciousness is confined in physical limitations.",
+        "Time is the imperishable Brahma that manifests the entire creation.",
+        "Knowledge of the single Imperishable Presence integral in all creatures is sātvik.",
+        "Desirelessness and awakening of immense consciousness lead to realization of the Truth.",
+        "The five expedients (body-mind, senses, efforts, doer, Vasudev) cause karma and deliverance.",
+        "The doer is not the true agent; the five causes together initiate action.",
+        "Sātvik knowledge perceives unity, rājasik perceives diversity, tāmasik is trivial and obsessed.",
+        "The body is the field of yoga, containing the five elements and the latent Vāsudev (immense consciousness).",
+        "Faith (śraddhā) varies according to the level of consciousness; one's actions correspond to that level.",
+        "The mind, along with its immense consciousness, is set up on the support of the body.",
+        "Scriptures are encoded manuals preserving the wisdom of Time-conscious ancient sages, providing hints for yoga.",
+        "The goal is to awaken the immense consciousness that is latent within, transcending physical limitations.",
+        "The One Self (Vāsudev) appears as the many due to differing levels of consciousness.",
+        "Yoga-karma leads to desirelessness and ultimately to samādhi.",
+        "Purity, continence, nonviolence, truthfulness, self-study, and mental calmness are penances (yogic practices).",
+        "The Truth is explained symbolically in the scriptures for the benefit of mankind.",
+        "The Time is the ultimate Supreme Lord, unmanifest, great, eternal, and unbearable ultra-brilliant.",
+        "Awakening the immense consciousness of the mind leads to direct perception of the Time.",
+        "The body and senses limit the mind; giving up these limitations allows focus on the Time.",
+        "The four duties of life are performed by the body and should be dedicated to the Time.",
+        "Bowing before the Time involves uniting past, present, and future consciousness.",
+        "The ancient yoga is the means to become dear to the Time.",
+        "Ignorance is a sin caused by limited consciousness; the Time releases one from it.",
+        "The secret discipline of yoga should not be taught to those who are indolent or opposed.",
+        "Spreading this secret knowledge to devotees leads to becoming one with the Time.",
+        "The unmanifest Brahma manifests the visible world and is omnipresent as its Creator.",
+        "The body is a machine-like embodiment governed by the unmanifest Mind/Time.",
+        "The immense consciousness (unmanifest mind) is latent in every human and can be awakened through yoga.",
+        "All karma is enveloped by blemish, like fire by smoke, but yoga practice leads beyond it.",
+        "True accomplishment is knowing the unmanifest Time and becoming one with It.",
+        "The mind impels even a deluded person to practice yoga eventually.",
+        "The Time (Parameshwar) governs all beings from the heart by Maya.",
+        "The one Self appears as the many through the three gunas.",
+        "The body is the field of yoga and the starting point for awakening.",
+        "Time is the unmanifest consciousness that stands still but appears divided.",
+        "There is nobody on earth or heaven free from the three gunas.",
+        "The four varnas correspond to human races and their innate qualities.",
+        "Yoga is the process of uniting mind and prana to transcend physical limitations and know death.",
+        "True knowledge is knowing the correlation of body, mind, and Time.",
+        "The intellect has three levels based on gunas: sattvik (discerning), rajasik (confused), tamasik (deluded).",
+        "Holding (dharana) also has three types: sattvik (yogic), rajasik (attached), tamasik (slothful).",
+        "Joy has three types: sattvik (poison-then-nectar), rajasik (nectar-then-poison), tamasik (always deluding).",
+        "The Puranas, Gita, and Vedas are encrypted manuals of inner yogic process; their symbols, names, places, and events decode into inner yogic meanings.",
+        "The one and only truth is the unmanifest Time (Brahma), which is imperishable and beyond mind.",
+        "The ultimate unmanifest Brahma, Time, manifests this creation; all three stages of yoga, their practice, and advice are manifestations of the unmanifest Time.",
+        "'Om', 'Tat', 'Sat' are directives (indicators) towards the ultimate Truth, preserving the teachings of great yogis who realized the truth of Time.",
+        "All desires originate from the mind; knowing this causes desires to sink in the mind.",
+        "Death (samnyasa) is rising above physical limitations and awakening the dormant consciousness of the mind.",
+        "The body is the field of yoga; the fires of yoga are ignited in the body.",
+        "Karma (action) that strengthens physical limitations, performed with desire for sense satisfaction, is Asat.",
+        "Sattvic acts (charity, yajna, tapas) purify the learned ones and lead to knowledge of Time."
+      ],
+      "identity_doctrine": "Names and forms (e.g., Krishna, Arjuna, yajna, charity, penance) are not merely historical or literal entities but are symbols for inner yogic processes and states of consciousness. The One unmanifest Time appears as the many through manifestation, yet all manifestations (yoga stages, practices, advice) are essentially the same unmanifest Time. The identity of a thing is determined by its relationship to the inner yogic path: it is either a state of limited consciousness (Asat) or a state of Time-consciousness (Sat). The ultimate identity is the unmanifest Time itself, which is both immanent in the Void and transcendent.",
+      "cosmology": "Time (unmanifest Brahma) is the ultimate creator, imperishable, beyond the mind. It is the one and only truth. The creation is manifested by this imperishable Brahma. Time is immanent in the Void (the consciousness of the Void). The three stages of yoga, their practice, and advice are manifestations of the unmanifest Time. There is no detailed creation or dissolution cycle described beyond this; the focus is on the inner realization of Time as the ultimate truth, and the process of awakening dormant consciousness by rising above physical limitations. Death is seen as a transition to a greater fear if one is established in Asat, but for the realized, death leads to knowledge of Time.",
+      "practice_axes": [
+        "Development of consciousness in the womb of the body",
+        "Controlled imagination / will power",
+        "Union of mind and body",
+        "Delivering consciousness through death",
+        "Concentration into the origin of creation",
+        "Absorption into the Supreme Time",
+        "Knowledge of the five elements",
+        "Mastery over senses as witnesses",
+        "Practice of yoga using the body",
+        "Contemplation of the origin (time)",
+        "Khechari mudra (placing tongue in nasal cavity inside skull)",
+        "Sanyam (intense meditation at inside end of nostril)",
+        "Awakening dormant consciousness (daughter of mind)",
+        "Balancing Prana and Apana (admitting Prana into Sushumna)",
+        "Concentration of total consciousness in Shiva (the void inside skull cavity)",
+        "Leaving body yogically by mere wish",
+        "Union (yoga) with Shiva/Maheshwar",
+        "Khechari mudra (tongue movement into nasal void)",
+        "Kundalini awakening (piercing five elements)",
+        "Pranayama and purification of prana",
+        "Amrita production (hormonal secretion in brain)",
+        "Suspended animation",
+        "Mercury solidification and control",
+        "Balancing five elements to equal proportion",
+        "ojas",
+        "amrita",
+        "tejas",
+        "celibacy",
+        "pranayama (implicit in heavy yoga practice)",
+        "khechari mudra",
+        "samadhi",
+        "heart (seat of ojas)",
+        "brain (seat of amrita)",
+        "tallu (soft palate, seat of tejas)",
+        "new cell formation (12-year cycle)",
+        "pranayama (breath control)",
+        "kundalini (coiled energy)",
+        "samadhi (absorption)",
+        "chakras (six chakras: Muladhara, Guda, Mani/Manipura, Anahata, Vishuddha, Chandra/Agya)",
+        "nadis (Sushumna/Shankhini)",
+        "bandhas (Mulabandh, Agochar Bandh)",
+        "naad (unstruck sound)",
+        "sahaj samadhi",
+        "unmani (self-transcendence)",
+        "khechari (not explicit but implied through state of immortality)",
+        "Pranayam (disintegrating consciousness to awaken it)",
+        "Concentration on the void (conscious void)",
+        "Concentration on the great sound",
+        "Concentration on the visible world (five elements)",
+        "Meditation on the core of the mind",
+        "Exploration of Sakticakra (chakras)",
+        "Practice of separating waking, dream, and deep sleep states to experience the fourth state",
+        "Yogic effort (will power) to awaken dormant consciousness",
+        "Practice of delivering consciousness through death (khechari? not explicit)",
+        "Samadhi (enjoying awakened consciousness)",
+        "awakening the immense dormant consciousness",
+        "rising above limitations of the body",
+        "realizing the relativity of happiness and sorrow",
+        "practicing yoga to awaken dormant consciousness",
+        "surpassing death through realization of unmanifest Time",
+        "kriya (kriya yoga)",
+        "dhyana (deep meditation)",
+        "Kriya yoga (sedulous practice of yoga)",
+        "Yogic karma (practice of yoga as a yajna through the body)",
+        "Karma yoga (discipline of action for yogis)",
+        "Jnana yoga (discipline of knowledge for knowers)",
+        "Controlling senses by the mind",
+        "Understanding the mind and its correlation with senses",
+        "Awakening dormant immense consciousness",
+        "Concentrating consciousness into unmanifest Time at death",
+        "equanimity (samatvam)",
+        "desireless karma",
+        "transcending three gunas",
+        "detachment (Vairagya)",
+        "Buddhi-yoga (sagacity)",
+        "yogic karma",
+        "union with unmanifest Supreme",
+        "awakening dormant consciousness",
+        "practicing yogic kriyas",
+        "offering body as oblation in fires of yoga",
+        "samadhi (being established in equanimity)",
+        "transcending hope, meum, and rage",
+        "knowing the basic character of death",
+        "inspiring others through continued practice even after attainment",
+        "igniting fires of yoga in the body",
+        "concentrating consciousness in the unmanifest Time",
+        "surrender to Time",
+        "purification in the fires of knowledge",
+        "meditation on the inner flame",
+        "Pranayama",
+        "Khechari",
+        "Kundalini (implied via granthi-bheda)",
+        "Chakras (implied via granthi-bheda: Brahma, Vishnu, Rudra)",
+        "Yonimudra",
+        "Omkar kriya",
+        "Self-restraint (samyama)",
+        "Detachment (nishkam)",
+        "Self-study (svadhyaya)",
+        "Awakening dormant competencies of the mind",
+        "Controlling senses and mind to go beyond them",
+        "Experiencing the immensity of mind beyond organs",
+        "Transcending intellect to reach the Unmanifest (the Time)",
+        "Knowledge of death/Time as the sustenance of life",
+        "Practice of yoga as developing mental faculties to know the Time",
+        "Being established in Samadhi (Sthitaprajña)",
+        "rising above physical limits",
+        "gyana-tapa (knowledge-penance)",
+        "direct perception of Paramatma through yoga",
+        "meditation on the Time as the ultimate element",
+        "understanding hints provided by the human body and scriptures",
+        "igniting the fires of yoga in the body",
+        "pouring desires as oblation",
+        "concentrating awakened consciousness on the truth of Time",
+        "pranayama (implied by kriya yoga)",
+        "kundalini (implied by awakening dormant consciousness)",
+        "ending life at will by yogic strength",
+        "Vairagya (detachment)",
+        "Hridaya-granthi-bheda (heart-knot piercing)",
+        "Brahma-granthi-bheda (first stage of yoga)",
+        "Nirvicar (pure thought beyond word and visual)",
+        "Practice and Vairagya (taming the mind)",
+        "Stage-wise practice",
+        "Darshan of Vasudev (vision of the conscious sky)",
+        "Hridaya-granthi-bheda (heart knot piercing) – second stage practice leading to establishment in Void consciousness.",
+        "Brahma-granthi-bheda – first stage practice leading to awakening of mind's capabilities.",
+        "Restraint of vital fluid (orgasmic discharge) to attain Urdhvaretā (perpetual celibacy).",
+        "Control of mind and body through correlation of mind and body.",
+        "Fixation of eyes on the blank straight in front of the nose (nasikagram).",
+        "Practice of breathlessness/ceasing of breath in samadhi.",
+        "Quietening of mind and establishment in the consciousness of the Void.",
+        "Knowledge of the root cause of attraction between man and woman.",
+        "Determined practice of yoga",
+        "Concentration on the consciousness of the Time",
+        "Protection of the body from aging and death through medicinal procedures and life extension",
+        "Overstepping stages of yoga",
+        "Union with the consciousness of the Time",
+        "Knowing the true character of Time",
+        "Direct perception of the Conscious Void (darshan of the golden circle with blue center)",
+        "Hearing the Anahad Nada",
+        "Remaining fearless during the death experience",
+        "Awakening the immensity of the mind",
+        "Undivided faith (bhakti) in the consciousness of the Time",
+        "Valorous practice of yoga to become Time-Conscious",
+        "Quitting the body at an auspicious time (Uttarayana) for liberation",
+        "kundalini",
+        "yogic fires (inner sacrifice)",
+        "hridaya-granthi-bheda",
+        "focusing the mind into the Conscious Void",
+        "overcoming physical limitations",
+        "direct darshan of the Time",
+        "kriya yoga (the karma that awakens immense consciousness)",
+        "pranayama (mentioned indirectly via Omkar kriya and control of prana)",
+        "kundalini / granthi-bheda (Rudra-, Brahma-, hridaya-granthi-bheda)",
+        "chakras / sushumna (raising soul via sushumna to head)",
+        "khechari / yonimudra (closing nine exits)",
+        "Omkar kriya (20736 repetitions per breath)",
+        "samadhi / direct perception of the unbearable brilliance of Time",
+        "bhakti (devotion with undivided mind)",
+        "conscious void meditation",
+        "last-moment concentration on the brilliance between eyebrows",
+        "Pranayama (implied via Omkar kriya and placing pran)",
+        "Kundalini (implied via yonimudra and stages of yoga)",
+        "Samadhi (Time-Consciousness, union with Time)",
+        "Chakras (implied via hridaya-granthi-bheda and stages)",
+        "Ojas (implied via 'fires of yoga' and oblations)",
+        "Khechari (implied via yonimudra)",
+        "Japa (japayajna mentioned)",
+        "Omkar kriya (specific technique)",
+        "Yonimudra (posture for focusing on Time)",
+        "Hridaya-granthi-bheda (piercing the heart knot)",
+        "Rudra-granthi-bheda (piercing the rudra knot, also called muladhar-granthi-bheda preliminary)",
+        "Muladhar-granthi-bheda (final stage, knowing the Time)",
+        "Sedulous practice (prayatna) of yoga",
+        "Past practice (pūruābhyāsa) across many births",
+        "Concentration on the conscious Void and then on the consciousness of Time",
+        "Awakening immense consciousness of the mind",
+        "Surpassing physical limitations and fear of death",
+        "Establishing in the conscious Void",
+        "Knowing the true character of the Time beyond the Void",
+        "Pranayama (oblation of prana into prana via Omkar kriya)",
+        "Yonimudra (practice for oblation in Omkar kriya)",
+        "Anahada Nada (hearing the unstruck sound from Time's brilliance)",
+        "Samadhi (desireless state established in Time consciousness)",
+        "Kundalini (implied in yonimudra and prana oblation)",
+        "Omkar (mantra practice as support of words)",
+        "Time consciousness (becoming Time-Conscious through practice)",
+        "witnessing consciousness (Kutastha Chaitanya)",
+        "meditation on the universal form (Virat)",
+        "khechari mudra (tongue lock)",
+        "kundalini awakening",
+        "samadhi (absorption in the Self)",
+        "chakras (subtle energy centers)",
+        "ojas (vital energy)",
+        "the inner yogic process of decoding scriptures",
+        "consciousness of the Void (Shunya)",
+        "darshan of Vasudev (inner vision of the four-armed form)",
+        "darshan of the Time's frightful brilliant form",
+        "samadhi (absorption in Time consciousness)",
+        "concentration of mind (dhyana) on Time",
+        "karma yoga (acting for the cause of Time)",
+        "abhyasa yoga (repeated practice)",
+        "bhakti (undivided devotion)",
+        "control of senses and equanimity",
+        "Awakening dormant consciousness (the immense consciousness of the mind)",
+        "Valorous practice of yoga to know the unmanifest Time",
+        "Samadhi (attained by those with predominant sattva)",
+        "Overstepping the three gunas (sattva, raja, tama)",
+        "Knowing the true character of death",
+        "Concentration of the entire mind on Time",
+        "Crossing physical limitations",
+        "Hṛdaya-granthi-bheda (piercing the knot of the heart)",
+        "Direct vision (darshan) of the divine four-armed embodiment",
+        "Realizing the Void (immense consciousness)",
+        "Achieving union with Time",
+        "Overstepping the three gunas",
+        "Attaining Sthitaprajna (steady wisdom)",
+        "Developing uniform feeling towards all creatures",
+        "Hṛdaya-granthi-bheda (heart-knot piercing)",
+        "Conscious Void (state of consciousness after heart-knot piercing)",
+        "Igniting the fires of yoga (pranayama/agni)",
+        "Sedulous practice of ancient yoga through all stages",
+        "concentrating consciousness upon the consciousness of the Time",
+        "achieving hridaya-granthi-bheda (consciousness of the Void)",
+        "valorous practice of yoga",
+        "rising above physical limitations",
+        "knowing the true character of Time through the Conscious Void",
+        "hridaya-granthi-bheda (cutting the knot of the heart)",
+        "establishing consciousness of the Void",
+        "darshan of four-armed Vasudev",
+        "valorous practice of yoga (kriya)",
+        "awakening dormant consciousness (immense mind)",
+        "desirelessness, renunciation of karmaphala",
+        "dhyana (meditation) on Vasudev or Time",
+        "union with the unmanifest Time",
+        "realizing self as Viśvātmā (universal self)",
+        "transcending dualities (honor/dishonor, etc.)",
+        "dispassion towards praise/blame",
+        "chakras",
+        "meditation",
+        "concentration of mind",
+        "sensory withdrawal",
+        "inner sacrifice",
+        "divine vision",
+        "yogic fire",
+        "awakening the dormant immensity of mind",
+        "concentrating the mind into the unmanifest imperishable",
+        "giving up lust, anger, and avarice",
+        "Yoga-karma",
+        "Awakening the entire consciousness of the mind",
+        "Concentration on the unmanifest truth of Time",
+        "Prana and apana (as mediums for receiving dharma, artha, kama, moksha)",
+        "Penance (bestowal of knowledge)",
+        "Self-study",
+        "Steadiness in knowledge and yoga",
+        "Sthitaprajna (steady wisdom state)",
+        "Jivan mukta (liberated while alive)",
+        "awakening the dormant consciousness of the mind",
+        "surpassing the physical limitations",
+        "knowing the correlation of body and mind",
+        "cutting the tree with the weapon of non-attachment through strong yoga practice",
+        "receiving advice from a Brahmajña guru",
+        "focusing awakened consciousness into the truth of Time",
+        "becoming Time-conscious",
+        "transcending the three gunas (sattva, raja, tama)",
+        "yoga-karma: prescribed actions to awaken immense consciousness",
+        "samadhi: state of desirelessness and established consciousness",
+        "awakening of immense consciousness",
+        "dharana: retention, holding",
+        "regular practice of yoga",
+        "focusing immense consciousness in the unmanifest Truth",
+        "overstepping death through the medium of death",
+        "awakening of immense consciousness through yoga-karma",
+        "pranayama (breath control, implied in virile fluid preservation)",
+        "continence (brahmacharya) to preserve vital energy (ojas)",
+        "kundalini (implied in awakening of consciousness)",
+        "samadhi (state of established desirelessness and unity)",
+        "chakras (implied in the five elements and the group of spirits in the body)",
+        "khechari (implied in 'silence' and internalized practice)",
+        "three stages of yogakarma (sātvik, rājasik, tāmasik as stages of practice)",
+        "self-study (svādhyāya) — study of oneself",
+        "Concentration of the mind's immense consciousness on the Time",
+        "Devotion to the Time",
+        "Dedicating the four duties of life to the Time",
+        "Bowing with combined consciousness of past, present, and future",
+        "Awakening the immense consciousness by breaking physical barriers",
+        "Direct perception of the Time through ancient yoga",
+        "Teaching the secret discipline to those eager for the truth",
+        "awakening the immense consciousness of the mind",
+        "valorous regular practice of ancient yoga",
+        "concentration upon the Time",
+        "overstepping physical limitations",
+        "self-governance of mind, speech, body",
+        "solitude and sattvic diet",
+        "meditation (dhyana) and vairagya",
+        "surrender to Time (madvyapashraya)",
+        "catching a glimpse of Ishvara in the heart",
+        "knowledge of death",
+        "union of mind and prana",
+        "awakening of dormant consciousness",
+        "knowledge of true nature of death",
+        "yoga-karma (ancient yoga practice)",
+        "transformation of consciousness into immensity",
+        "Practice of the three stages of ancient yoga",
+        "Fires of yoga in the body (yogic agni)",
+        "Pouring oblation of limitations into the fire (self-restraint)",
+        "Focusing awakened immensity into the imperishable Brahma/Time",
+        "Knowing the true character of Time through knowing death",
+        "Giving up attachment to fruits of karma",
+        "Becoming desireless (desirelessness)",
+        "Equanimity (sthitaprajna/sthitaprajnya)",
+        "Bestowal of yoga advice (as sattvic charity)",
+        "Purification through yajna, dana, tapas"
+      ]
+    },
+    "n_sources": 7,
+    "n_windows": 47,
+    "n_decryption_keys": 613,
+    "n_core_principles": 374
+  },
+  "metadata": {
+    "model": "deepseek-chat"
+  },
+  "errors": []
+}
