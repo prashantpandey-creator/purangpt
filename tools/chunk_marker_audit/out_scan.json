@@ -1,0 +1,604 @@
+{
+  "success": true,
+  "data": {
+    "files": [
+      {
+        "file": "data/chunks/agni.jsonl",
+        "status": "decodable",
+        "windows_total": 388,
+        "windows_sampled": 3,
+        "markers_found": 3,
+        "sample_markers": [
+          "ap_1",
+          "ap_2",
+          "ap_2.0"
+        ]
+      },
+      {
+        "file": "data/chunks/aitareya.jsonl",
+        "status": "decodable",
+        "windows_total": 2,
+        "windows_sampled": 2,
+        "markers_found": 1,
+        "sample_markers": [
+          "aitup_1"
+        ]
+      },
+      {
+        "file": "data/chunks/all_chunks.jsonl",
+        "status": "decodable",
+        "windows_total": 179404,
+        "windows_sampled": 3,
+        "markers_found": 17,
+        "sample_markers": [
+          "BrP_1.1",
+          "BrP_1.2",
+          "GhS_1.0",
+          "KB_1",
+          "LiP_1"
+        ]
+      },
+      {
+        "file": "data/chunks/amarakosha.jsonl",
+        "status": "needs_normalization",
+        "windows_total": 9,
+        "windows_sampled": 3,
+        "markers_found": 0,
+        "sample_markers": []
+      },
+      {
+        "file": "data/chunks/apastamba.jsonl",
+        "status": "needs_normalization",
+        "windows_total": 1,
+        "windows_sampled": 1,
+        "markers_found": 0,
+        "sample_markers": []
+      },
+      {
+        "file": "data/chunks/ashtadhyayi.jsonl",
+        "status": "decodable",
+        "windows_total": 1,
+        "windows_sampled": 1,
+        "markers_found": 1,
+        "sample_markers": [
+          "ps_1"
+        ]
+      },
+      {
+        "file": "data/chunks/atharvaveda.jsonl",
+        "status": "decodable",
+        "windows_total": 137,
+        "windows_sampled": 3,
+        "markers_found": 1,
+        "sample_markers": [
+          "PS_1"
+        ]
+      },
+      {
+        "file": "data/chunks/awakener_chunks.jsonl",
+        "status": "decodable",
+        "windows_total": 22,
+        "windows_sampled": 3,
+        "markers_found": 126,
+        "sample_markers": [
+          "awk_0.1",
+          "awk_0.10",
+          "awk_0.100",
+          "awk_0.101",
+          "awk_0.102"
+        ]
+      },
+      {
+        "file": "data/chunks/bhagavata.jsonl",
+        "status": "decodable",
+        "windows_total": 421,
+        "windows_sampled": 3,
+        "markers_found": 101,
+        "sample_markers": [
+          "bhp_01.01.001",
+          "bhp_01.01.002",
+          "bhp_01.01.003",
+          "bhp_01.01.004",
+          "bhp_01.01.005"
+        ]
+      },
+      {
+        "file": "data/chunks/bhavishya.jsonl",
+        "status": "needs_normalization",
+        "windows_total": 114,
+        "windows_sampled": 3,
+        "markers_found": 0,
+        "sample_markers": []
+      },
+      {
+        "file": "data/chunks/brahma.jsonl",
+        "status": "decodable",
+        "windows_total": 117,
+        "windows_sampled": 3,
+        "markers_found": 73,
+        "sample_markers": [
+          "BrP_1.1",
+          "BrP_1.10",
+          "BrP_1.11",
+          "BrP_1.12",
+          "BrP_1.13"
+        ]
+      },
+      {
+        "file": "data/chunks/brahma_vaivarta.jsonl",
+        "status": "needs_normalization",
+        "windows_total": 463,
+        "windows_sampled": 3,
+        "markers_found": 0,
+        "sample_markers": []
+      },
+      {
+        "file": "data/chunks/brahmanda.jsonl",
+        "status": "decodable",
+        "windows_total": 119,
+        "windows_sampled": 3,
+        "markers_found": 1,
+        "sample_markers": [
+          "bndp_1"
+        ]
+      },
+      {
+        "file": "data/chunks/brahmasutras.jsonl",
+        "status": "needs_normalization",
+        "windows_total": 1,
+        "windows_sampled": 1,
+        "markers_found": 0,
+        "sample_markers": []
+      },
+      {
+        "file": "data/chunks/garuda.jsonl",
+        "status": "decodable",
+        "windows_total": 419,
+        "windows_sampled": 3,
+        "markers_found": 1,
+        "sample_markers": [
+          "garp_1"
+        ]
+      },
+      {
+        "file": "data/chunks/gheranda_samhita.jsonl",
+        "status": "decodable",
+        "windows_total": 4,
+        "windows_sampled": 3,
+        "markers_found": 67,
+        "sample_markers": [
+          "GhS_1.0",
+          "GhS_1.1",
+          "GhS_1.10",
+          "GhS_1.11",
+          "GhS_1.12"
+        ]
+      },
+      {
+        "file": "data/chunks/gita.jsonl",
+        "status": "decodable",
+        "windows_total": 14,
+        "windows_sampled": 3,
+        "markers_found": 57,
+        "sample_markers": [
+          "bhg_1.1",
+          "bhg_1.10",
+          "bhg_1.11",
+          "bhg_1.12",
+          "bhg_1.13"
+        ]
+      },
+      {
+        "file": "data/chunks/gopatha.jsonl",
+        "status": "decodable",
+        "windows_total": 5,
+        "windows_sampled": 3,
+        "markers_found": 2,
+        "sample_markers": [
+          "gbr_0.0",
+          "gbr_1"
+        ]
+      },
+      {
+        "file": "data/chunks/goraksha_shataka.jsonl",
+        "status": "needs_normalization",
+        "windows_total": 1,
+        "windows_sampled": 1,
+        "markers_found": 0,
+        "sample_markers": []
+      },
+      {
+        "file": "data/chunks/hatha_yoga_pradipika.jsonl",
+        "status": "needs_normalization",
+        "windows_total": 1,
+        "windows_sampled": 1,
+        "markers_found": 0,
+        "sample_markers": []
+      },
+      {
+        "file": "data/chunks/isha.jsonl",
+        "status": "decodable",
+        "windows_total": 1,
+        "windows_sampled": 1,
+        "markers_found": 35,
+        "sample_markers": [
+          "isup_1",
+          "isup_10",
+          "isup_11",
+          "isup_12",
+          "isup_13"
+        ]
+      },
+      {
+        "file": "data/chunks/katha.jsonl",
+        "status": "needs_normalization",
+        "windows_total": 1,
+        "windows_sampled": 1,
+        "markers_found": 0,
+        "sample_markers": []
+      },
+      {
+        "file": "data/chunks/kaushitaki.jsonl",
+        "status": "decodable",
+        "windows_total": 29,
+        "windows_sampled": 3,
+        "markers_found": 2,
+        "sample_markers": [
+          "KB_1",
+          "KB_2"
+        ]
+      },
+      {
+        "file": "data/chunks/kurma.jsonl",
+        "status": "needs_normalization",
+        "windows_total": 53,
+        "windows_sampled": 3,
+        "markers_found": 0,
+        "sample_markers": []
+      },
+      {
+        "file": "data/chunks/linga_1.jsonl",
+        "status": "decodable",
+        "windows_total": 58,
+        "windows_sampled": 3,
+        "markers_found": 1,
+        "sample_markers": [
+          "LiP_1"
+        ]
+      },
+      {
+        "file": "data/chunks/mahabharata.jsonl",
+        "status": "needs_normalization",
+        "windows_total": 2035,
+        "windows_sampled": 3,
+        "markers_found": 0,
+        "sample_markers": []
+      },
+      {
+        "file": "data/chunks/mahabharata_bori_chunks.jsonl",
+        "status": "decodable",
+        "windows_total": 1995,
+        "windows_sampled": 3,
+        "markers_found": 649,
+        "sample_markers": [
+          "mbh_01.001.000",
+          "mbh_01.001.001",
+          "mbh_01.001.002",
+          "mbh_01.001.003",
+          "mbh_01.001.004"
+        ]
+      },
+      {
+        "file": "data/chunks/mandukya.jsonl",
+        "status": "decodable",
+        "windows_total": 7,
+        "windows_sampled": 3,
+        "markers_found": 6,
+        "sample_markers": [
+          "mandup_1",
+          "mandup_2",
+          "mandup_3",
+          "mandup_4",
+          "mandup_5"
+        ]
+      },
+      {
+        "file": "data/chunks/manusmriti.jsonl",
+        "status": "decodable",
+        "windows_total": 23,
+        "windows_sampled": 3,
+        "markers_found": 73,
+        "sample_markers": [
+          "Manu_1.1",
+          "Manu_1.10",
+          "Manu_1.11",
+          "Manu_1.12",
+          "Manu_1.13"
+        ]
+      },
+      {
+        "file": "data/chunks/markandeya.jsonl",
+        "status": "decodable",
+        "windows_total": 42,
+        "windows_sampled": 3,
+        "markers_found": 62,
+        "sample_markers": [
+          "markp_1.1",
+          "markp_1.10",
+          "markp_1.11",
+          "markp_1.12",
+          "markp_1.13"
+        ]
+      },
+      {
+        "file": "data/chunks/matsya.jsonl",
+        "status": "decodable",
+        "windows_total": 75,
+        "windows_sampled": 3,
+        "markers_found": 69,
+        "sample_markers": [
+          "MatsP_1.1",
+          "MatsP_1.10",
+          "MatsP_1.11",
+          "MatsP_1.12",
+          "MatsP_1.13"
+        ]
+      },
+      {
+        "file": "data/chunks/mimamsa_sutras.jsonl",
+        "status": "decodable",
+        "windows_total": 25,
+        "windows_sampled": 3,
+        "markers_found": 1,
+        "sample_markers": [
+          "Msv_5"
+        ]
+      },
+      {
+        "file": "data/chunks/narada.jsonl",
+        "status": "decodable",
+        "windows_total": 133,
+        "windows_sampled": 3,
+        "markers_found": 1,
+        "sample_markers": [
+          "narp_1"
+        ]
+      },
+      {
+        "file": "data/chunks/nyayasutras.jsonl",
+        "status": "needs_normalization",
+        "windows_total": 6,
+        "windows_sampled": 3,
+        "markers_found": 0,
+        "sample_markers": []
+      },
+      {
+        "file": "data/chunks/padma.jsonl",
+        "status": "needs_normalization",
+        "windows_total": 469,
+        "windows_sampled": 3,
+        "markers_found": 0,
+        "sample_markers": []
+      },
+      {
+        "file": "data/chunks/prasna.jsonl",
+        "status": "decodable",
+        "windows_total": 3,
+        "windows_sampled": 3,
+        "markers_found": 40,
+        "sample_markers": [
+          "prup_1.1",
+          "prup_1.10",
+          "prup_1.11",
+          "prup_1.12",
+          "prup_1.13"
+        ]
+      },
+      {
+        "file": "data/chunks/ramayana.jsonl",
+        "status": "decodable",
+        "windows_total": 159,
+        "windows_sampled": 3,
+        "markers_found": 1,
+        "sample_markers": [
+          "R_1"
+        ]
+      },
+      {
+        "file": "data/chunks/rigveda.jsonl",
+        "status": "decodable",
+        "windows_total": 88,
+        "windows_sampled": 3,
+        "markers_found": 1,
+        "sample_markers": [
+          "RV_1"
+        ]
+      },
+      {
+        "file": "data/chunks/samaveda.jsonl",
+        "status": "needs_normalization",
+        "windows_total": 2,
+        "windows_sampled": 2,
+        "markers_found": 0,
+        "sample_markers": []
+      },
+      {
+        "file": "data/chunks/samkhya_karika.jsonl",
+        "status": "needs_normalization",
+        "windows_total": 1,
+        "windows_sampled": 1,
+        "markers_found": 0,
+        "sample_markers": []
+      },
+      {
+        "file": "data/chunks/sharma_texts.jsonl",
+        "status": "group_failed",
+        "windows_total": 0,
+        "windows_sampled": 0,
+        "markers_found": 0,
+        "sample_markers": [],
+        "error": "IndexError: list index out of range"
+      },
+      {
+        "file": "data/chunks/shiva_1_7.jsonl",
+        "status": "needs_normalization",
+        "windows_total": 77,
+        "windows_sampled": 3,
+        "markers_found": 0,
+        "sample_markers": []
+      },
+      {
+        "file": "data/chunks/skanda.jsonl",
+        "status": "needs_normalization",
+        "windows_total": 698,
+        "windows_sampled": 3,
+        "markers_found": 0,
+        "sample_markers": []
+      },
+      {
+        "file": "data/chunks/svetasvatara.jsonl",
+        "status": "decodable",
+        "windows_total": 1,
+        "windows_sampled": 1,
+        "markers_found": 113,
+        "sample_markers": [
+          "SvetUp_1.1",
+          "SvetUp_1.10",
+          "SvetUp_1.11",
+          "SvetUp_1.12",
+          "SvetUp_1.13"
+        ]
+      },
+      {
+        "file": "data/chunks/taittiriya.jsonl",
+        "status": "decodable",
+        "windows_total": 1,
+        "windows_sampled": 1,
+        "markers_found": 4,
+        "sample_markers": [
+          "TaittU_1",
+          "TaittU_2",
+          "TaittU_3",
+          "taittu_2"
+        ]
+      },
+      {
+        "file": "data/chunks/vaisheshika.jsonl",
+        "status": "decodable",
+        "windows_total": 2,
+        "windows_sampled": 2,
+        "markers_found": 1,
+        "sample_markers": [
+          "KVs_1"
+        ]
+      },
+      {
+        "file": "data/chunks/vamana.jsonl",
+        "status": "needs_normalization",
+        "windows_total": 122,
+        "windows_sampled": 3,
+        "markers_found": 0,
+        "sample_markers": []
+      },
+      {
+        "file": "data/chunks/varaha.jsonl",
+        "status": "needs_normalization",
+        "windows_total": 27,
+        "windows_sampled": 3,
+        "markers_found": 0,
+        "sample_markers": []
+      },
+      {
+        "file": "data/chunks/vishnu_critical.jsonl",
+        "status": "decodable",
+        "windows_total": 49,
+        "windows_sampled": 3,
+        "markers_found": 1,
+        "sample_markers": [
+          "ViP_1"
+        ]
+      },
+      {
+        "file": "data/chunks/yoga_sutras.jsonl",
+        "status": "needs_normalization",
+        "windows_total": 2,
+        "windows_sampled": 2,
+        "markers_found": 0,
+        "sample_markers": []
+      },
+      {
+        "file": "data/chunks/yoga_vasistha.jsonl",
+        "status": "needs_normalization",
+        "windows_total": 15,
+        "windows_sampled": 3,
+        "markers_found": 0,
+        "sample_markers": []
+      }
+    ],
+    "decodable": [
+      "data/chunks/agni.jsonl",
+      "data/chunks/aitareya.jsonl",
+      "data/chunks/all_chunks.jsonl",
+      "data/chunks/ashtadhyayi.jsonl",
+      "data/chunks/atharvaveda.jsonl",
+      "data/chunks/awakener_chunks.jsonl",
+      "data/chunks/bhagavata.jsonl",
+      "data/chunks/brahma.jsonl",
+      "data/chunks/brahmanda.jsonl",
+      "data/chunks/garuda.jsonl",
+      "data/chunks/gheranda_samhita.jsonl",
+      "data/chunks/gita.jsonl",
+      "data/chunks/gopatha.jsonl",
+      "data/chunks/isha.jsonl",
+      "data/chunks/kaushitaki.jsonl",
+      "data/chunks/linga_1.jsonl",
+      "data/chunks/mahabharata_bori_chunks.jsonl",
+      "data/chunks/mandukya.jsonl",
+      "data/chunks/manusmriti.jsonl",
+      "data/chunks/markandeya.jsonl",
+      "data/chunks/matsya.jsonl",
+      "data/chunks/mimamsa_sutras.jsonl",
+      "data/chunks/narada.jsonl",
+      "data/chunks/prasna.jsonl",
+      "data/chunks/ramayana.jsonl",
+      "data/chunks/rigveda.jsonl",
+      "data/chunks/svetasvatara.jsonl",
+      "data/chunks/taittiriya.jsonl",
+      "data/chunks/vaisheshika.jsonl",
+      "data/chunks/vishnu_critical.jsonl"
+    ],
+    "needs_normalization": [
+      "data/chunks/amarakosha.jsonl",
+      "data/chunks/apastamba.jsonl",
+      "data/chunks/bhavishya.jsonl",
+      "data/chunks/brahma_vaivarta.jsonl",
+      "data/chunks/brahmasutras.jsonl",
+      "data/chunks/goraksha_shataka.jsonl",
+      "data/chunks/hatha_yoga_pradipika.jsonl",
+      "data/chunks/katha.jsonl",
+      "data/chunks/kurma.jsonl",
+      "data/chunks/mahabharata.jsonl",
+      "data/chunks/nyayasutras.jsonl",
+      "data/chunks/padma.jsonl",
+      "data/chunks/samaveda.jsonl",
+      "data/chunks/samkhya_karika.jsonl",
+      "data/chunks/shiva_1_7.jsonl",
+      "data/chunks/skanda.jsonl",
+      "data/chunks/vamana.jsonl",
+      "data/chunks/varaha.jsonl",
+      "data/chunks/yoga_sutras.jsonl",
+      "data/chunks/yoga_vasistha.jsonl"
+    ],
+    "n_files": 51,
+    "n_decodable": 30,
+    "n_needs_normalization": 20,
+    "n_missing": 0,
+    "n_empty": 1
+  },
+  "metadata": {
+    "sample_windows": 3,
+    "n_files": 51,
+    "chunk_dir": "data/chunks"
+  },
+  "errors": []
+}
