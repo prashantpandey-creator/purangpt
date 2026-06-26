@@ -1,0 +1,353 @@
+{
+  "record": {
+    "chapter_summary": "The first chapter of the Bhagavata Purana begins with an invocation to the Supreme Truth, establishing the Srimad Bhagavatam as the highest spiritual text. It then sets the scene in the forest of Naimisharanya, where the sage Shaunaka and other rishis perform a thousand-year sacrifice. Recognizing the onset of the dark age of Kali, the sages respectfully question Suta Gosvami about the ultimate good for humanity, the purpose of Lord Krishna's descent, His various avatars and pastimes, and where Dharma has taken shelter after His departure.",
+    "entities": [
+      {
+        "name": "Krishna",
+        "kind": "deity",
+        "verse_ranges": [
+          "bhp_01.01.001",
+          "bhp_01.01.012",
+          "bhp_01.01.013",
+          "bhp_01.01.014",
+          "bhp_01.01.015",
+          "bhp_01.01.016",
+          "bhp_01.01.017",
+          "bhp_01.01.018",
+          "bhp_01.01.019",
+          "bhp_01.01.020",
+          "bhp_01.01.023"
+        ],
+        "aliases": [
+          "Satyam Param",
+          "Hari",
+          "Keshava",
+          "Sātvatāṃ Pati",
+          "Uttamaśloka"
+        ]
+      },
+      {
+        "name": "Brahma",
+        "kind": "deity",
+        "verse_ranges": [
+          "bhp_01.01.001"
+        ],
+        "aliases": [
+          "Ādikavi"
+        ]
+      },
+      {
+        "name": "Srimad Bhagavatam",
+        "kind": "text",
+        "verse_ranges": [
+          "bhp_01.01.002",
+          "bhp_01.01.003"
+        ],
+        "aliases": [
+          "Bhāgavataṃ"
+        ]
+      },
+      {
+        "name": "Shuka",
+        "kind": "sage",
+        "verse_ranges": [
+          "bhp_01.01.003"
+        ],
+        "aliases": [
+          "Śuka"
+        ]
+      },
+      {
+        "name": "Shaunaka",
+        "kind": "sage",
+        "verse_ranges": [
+          "bhp_01.01.004"
+        ],
+        "aliases": [
+          "Śaunaka"
+        ]
+      },
+      {
+        "name": "Suta Gosvami",
+        "kind": "sage",
+        "verse_ranges": [
+          "bhp_01.01.005",
+          "bhp_01.01.006",
+          "bhp_01.01.007",
+          "bhp_01.01.008",
+          "bhp_01.01.009",
+          "bhp_01.01.011",
+          "bhp_01.01.012",
+          "bhp_01.01.015",
+          "bhp_01.01.022"
+        ],
+        "aliases": [
+          "Sūta"
+        ]
+      },
+      {
+        "name": "Badarayana",
+        "kind": "sage",
+        "verse_ranges": [
+          "bhp_01.01.002",
+          "bhp_01.01.007"
+        ],
+        "aliases": [
+          "Bādarāyaṇa",
+          "Vyāsa",
+          "Mahāmuni"
+        ]
+      },
+      {
+        "name": "Devaki",
+        "kind": "deity",
+        "verse_ranges": [
+          "bhp_01.01.012"
+        ],
+        "aliases": [
+          "Devakī"
+        ]
+      },
+      {
+        "name": "Vasudeva",
+        "kind": "deity",
+        "verse_ranges": [
+          "bhp_01.01.012"
+        ],
+        "aliases": [
+          "Vasudeva"
+        ]
+      },
+      {
+        "name": "Balarama",
+        "kind": "deity",
+        "verse_ranges": [
+          "bhp_01.01.020"
+        ],
+        "aliases": [
+          "Rāma"
+        ]
+      },
+      {
+        "name": "Naimisharanya",
+        "kind": "place",
+        "verse_ranges": [
+          "bhp_01.01.004",
+          "bhp_01.01.021"
+        ],
+        "aliases": [
+          "Naimiṣa",
+          "Animiṣakṣetra",
+          "Vaiṣṇava Kṣetra"
+        ]
+      },
+      {
+        "name": "Kali Yuga",
+        "kind": "concept",
+        "verse_ranges": [
+          "bhp_01.01.010",
+          "bhp_01.01.021",
+          "bhp_01.01.022"
+        ],
+        "aliases": [
+          "Kali"
+        ]
+      },
+      {
+        "name": "Ganges",
+        "kind": "place",
+        "verse_ranges": [
+          "bhp_01.01.015"
+        ],
+        "aliases": [
+          "Svardhuni"
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "src": "Krishna",
+        "rel": "son of",
+        "dst": "Devaki",
+        "verse_ranges": [
+          "bhp_01.01.012"
+        ]
+      },
+      {
+        "src": "Krishna",
+        "rel": "son of",
+        "dst": "Vasudeva",
+        "verse_ranges": [
+          "bhp_01.01.012"
+        ]
+      },
+      {
+        "src": "Krishna",
+        "rel": "brother of",
+        "dst": "Balarama",
+        "verse_ranges": [
+          "bhp_01.01.020"
+        ]
+      },
+      {
+        "src": "Suta Gosvami",
+        "rel": "disciple of",
+        "dst": "Badarayana",
+        "verse_ranges": [
+          "bhp_01.01.007",
+          "bhp_01.01.008"
+        ]
+      },
+      {
+        "src": "Brahma",
+        "rel": "received knowledge from",
+        "dst": "Krishna",
+        "verse_ranges": [
+          "bhp_01.01.001"
+        ]
+      },
+      {
+        "src": "Shaunaka",
+        "rel": "questioned",
+        "dst": "Suta Gosvami",
+        "verse_ranges": [
+          "bhp_01.01.005",
+          "bhp_01.01.006"
+        ]
+      }
+    ],
+    "story": {
+      "title": "The Inquiry of the Sages",
+      "arc": "The prologue of the Bhagavata Purana, setting the scene where Shaunaka and other sages ask Suta Gosvami six key questions about the ultimate good, the avatars of the Lord, and where Dharma has gone after Krishna's departure.",
+      "characters": [
+        "Sūta Gosvāmī",
+        "Śaunaka"
+      ],
+      "comic_potential": "None, highly solemn and philosophical.",
+      "timeline_note": "Set at the beginning of Kali Yuga, during a thousand-year sacrifice."
+    },
+    "teachings": [
+      {
+        "teaching": "The Srimad Bhagavatam is the mature, nectar-filled fruit of the desire-tree of Vedic literatures, and should be relished repeatedly by thoughtful souls.",
+        "verse_ranges": [
+          "bhp_01.01.002",
+          "bhp_01.01.003"
+        ],
+        "lens_note": "Plainly highlights the supreme status of the text itself."
+      },
+      {
+        "teaching": "In the age of Kali, people are generally short-lived, lazy, misguided, unlucky, and constantly disturbed. Therefore, the essence of all scriptures must be extracted for their welfare.",
+        "verse_ranges": [
+          "bhp_01.01.009",
+          "bhp_01.01.010",
+          "bhp_01.01.011"
+        ],
+        "lens_note": "A realistic assessment of human frailty in the current cosmic age."
+      },
+      {
+        "teaching": "The holy name of the Lord is so powerful that even a person helplessly caught in the terrible cycle of birth and death can be immediately freed by chanting it.",
+        "verse_ranges": [
+          "bhp_01.01.014"
+        ],
+        "lens_note": "Emphasizes the absolute potency of the divine name."
+      },
+      {
+        "teaching": "The lotus feet of the Lord purify those who take shelter of them immediately, whereas the sacred waters of the Ganges purify only after prolonged association.",
+        "verse_ranges": [
+          "bhp_01.01.015"
+        ],
+        "lens_note": "Contrasts the immediate purification of devotion with ritual bathing."
+      },
+      {
+        "teaching": "When Krishna, the protector of Dharma, departed to His own abode, Dharma took shelter in the Srimad Bhagavatam.",
+        "verse_ranges": [
+          "bhp_01.01.023"
+        ],
+        "lens_note": "Establishes the Purana as the living representative of the Lord on Earth."
+      }
+    ],
+    "_provenance": {
+      "purana": "Bhagavata Purana",
+      "chapter_label": "Chapter 1",
+      "seq_start": 1,
+      "seq_end": 34,
+      "chunk_ids": [
+        "bhagavata-1-1",
+        "bhagavata-1-2",
+        "bhagavata-1-3",
+        "bhagavata-1-4",
+        "bhagavata-1-5",
+        "bhagavata-1-6",
+        "bhagavata-1-7",
+        "bhagavata-1-8",
+        "bhagavata-1-9",
+        "bhagavata-1-10",
+        "bhagavata-1-11",
+        "bhagavata-1-12",
+        "bhagavata-1-13",
+        "bhagavata-1-14",
+        "bhagavata-1-15",
+        "bhagavata-1-16",
+        "bhagavata-1-17",
+        "bhagavata-1-18",
+        "bhagavata-1-19",
+        "bhagavata-1-20",
+        "bhagavata-1-21",
+        "bhagavata-1-22",
+        "bhagavata-1-23",
+        "bhagavata-1-24",
+        "bhagavata-1-25",
+        "bhagavata-1-26",
+        "bhagavata-1-27",
+        "bhagavata-1-28",
+        "bhagavata-1-29",
+        "bhagavata-1-30",
+        "bhagavata-1-31",
+        "bhagavata-1-32",
+        "bhagavata-1-33",
+        "bhagavata-1-34"
+      ]
+    }
+  },
+  "window_full": "All markers present: bhp_01.01.001  bhp_01.01.002  bhp_01.01.003  bhp_01.01.004  bhp_01.01.005  bhp_01.01.006  bhp_01.01.007  bhp_01.01.008  bhp_01.01.009  bhp_01.01.010  bhp_01.01.011  bhp_01.01.012  bhp_01.01.013  bhp_01.01.014  bhp_01.01.015  bhp_01.01.016  bhp_01.01.017  bhp_01.01.018  bhp_01.01.019  bhp_01.01.020  bhp_01.01.021  bhp_01.01.022  bhp_01.01.023 . end.",
+  "window_partial": "Test window. Present markers: bhp_01.01.001  bhp_01.01.002  bhp_01.01.003  bhp_01.01.004  bhp_01.01.005  bhp_01.01.006  bhp_01.01.007  bhp_01.01.008  bhp_01.01.009  bhp_01.01.010  bhp_01.01.011 . end.",
+  "window_empty": "No markers here at all, only prose about Krishna and Vyasa.",
+  "all_cites": [
+    "bhp_01.01.001",
+    "bhp_01.01.002",
+    "bhp_01.01.003",
+    "bhp_01.01.004",
+    "bhp_01.01.005",
+    "bhp_01.01.006",
+    "bhp_01.01.007",
+    "bhp_01.01.008",
+    "bhp_01.01.009",
+    "bhp_01.01.010",
+    "bhp_01.01.011",
+    "bhp_01.01.012",
+    "bhp_01.01.013",
+    "bhp_01.01.014",
+    "bhp_01.01.015",
+    "bhp_01.01.016",
+    "bhp_01.01.017",
+    "bhp_01.01.018",
+    "bhp_01.01.019",
+    "bhp_01.01.020",
+    "bhp_01.01.021",
+    "bhp_01.01.022",
+    "bhp_01.01.023"
+  ],
+  "present_in_partial": [
+    "bhp_01.01.001",
+    "bhp_01.01.002",
+    "bhp_01.01.003",
+    "bhp_01.01.004",
+    "bhp_01.01.005",
+    "bhp_01.01.006",
+    "bhp_01.01.007",
+    "bhp_01.01.008",
+    "bhp_01.01.009",
+    "bhp_01.01.010",
+    "bhp_01.01.011"
+  ]
+}

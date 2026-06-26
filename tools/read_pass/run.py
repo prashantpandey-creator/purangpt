@@ -23,13 +23,46 @@ import os
 import sys
 from typing import Any, Dict, List
 
-from tools.read_pass import comprehend, group
+from tools.read_pass import comprehend, group, verify
 
 OUT_DIR = "tools/read_pass/out"
 
 
 def _envelope(success, data, metadata, errors):
     return {"success": success, "data": data, "metadata": metadata, "errors": errors}
+
+
+def _count_nodes(record: Dict[str, Any]) -> int:
+    return sum(len(record.get(fld, []) or []) for fld in verify._NODE_FIELDS)
+
+
+def gate_record(record: Dict[str, Any], window_text: str) -> Dict[str, Any]:
+    """The verify GATE on the write path (the scar cure — memory
+    verify-was-bhagavata-only / graph-audit-16-fabricated).
+
+    The decoder narrates: it emits fluent nodes whose cites name real-looking
+    markers that are NOT actually in the source window. `comprehend_window`
+    returning success only means the JSON parsed — it does not mean the facts are
+    grounded. So before a record is persisted we PRUNE every node whose cite does
+    not literally appear in `window_text` (verify.prune → verify.check_node →
+    _MARKER_RE). Only verse-defensible facts reach the graph.
+
+    Returns the standard envelope; data = {record, kept_nodes, dropped_nodes,
+    worth_writing}. `worth_writing` is False when prune emptied the record of all
+    node-bearing facts — the caller should skip writing an all-empty husk (it
+    would add nothing to the graph and only inflate counts).
+    """
+    before = _count_nodes(record or {})
+    pruned = verify.prune(record or {}, window_text or "")
+    kept = _count_nodes(pruned)
+    dropped = before - kept
+    return _envelope(
+        True,
+        {"record": pruned, "kept_nodes": kept, "dropped_nodes": dropped,
+         "worth_writing": kept > 0},
+        {"nodes_before": before},
+        [],
+    )
 
 
 def _done_seqs(progress_path: str) -> set:
@@ -83,8 +116,9 @@ def run(input_path: str, tag: str, api_key: str,
     lens = comprehend.load_lens()
     md["lens_chunks_loaded"] = len(lens)
 
-    n_ok = n_fail = n_skip = 0
+    n_ok = n_fail = n_skip = n_husk = 0
     lens_hits = 0
+    nodes_kept = nodes_dropped = 0
     errors: List[Dict[str, str]] = []
 
     for w in windows:
@@ -98,8 +132,23 @@ def run(input_path: str, tag: str, api_key: str,
             n_ok += 1
             if env["metadata"].get("lens_applied"):
                 lens_hits += 1
-            with open(records_path, "a") as f:
-                f.write(json.dumps(env["data"], ensure_ascii=False) + "\n")
+            # THE VERIFY GATE (memory verify-was-bhagavata-only): the decoder
+            # narrates — drop every node whose cite isn't literally in the source
+            # window BEFORE it can fold into the graph. Only verse-grounded facts
+            # are persisted. A record pruned to nothing (all cites hallucinated)
+            # is NOT written (no empty husk), but is still marked done for resume
+            # (we attempted it; re-decoding would only re-hallucinate).
+            gate = gate_record(env["data"], w["text"])["data"]
+            nodes_kept += gate["kept_nodes"]
+            nodes_dropped += gate["dropped_nodes"]
+            prog["kept"] = gate["kept_nodes"]
+            prog["dropped"] = gate["dropped_nodes"]
+            if gate["worth_writing"]:
+                with open(records_path, "a") as f:
+                    f.write(json.dumps(gate["record"], ensure_ascii=False) + "\n")
+            else:
+                n_husk += 1
+                prog["husked"] = True
         else:
             n_fail += 1
             prog["error"] = env["errors"][0] if env["errors"] else None
@@ -110,8 +159,13 @@ def run(input_path: str, tag: str, api_key: str,
         with open(progress_path, "a") as f:
             f.write(json.dumps(prog, ensure_ascii=False) + "\n")
 
+    total_nodes = nodes_kept + nodes_dropped
+    grounded_rate = round(nodes_kept / total_nodes, 3) if total_nodes else 0.0
     data = {"windows_in_scope": len(windows),
             "comprehended": n_ok, "failed": n_fail, "skipped_resume": n_skip,
+            "husked": n_husk,  # comprehended but pruned to zero grounded facts
+            "nodes_kept": nodes_kept, "nodes_dropped": nodes_dropped,
+            "grounded_rate": grounded_rate,
             "lens_applied_count": lens_hits,
             "records_file": records_path, "progress_file": progress_path}
     # success unless we attempted work and everything failed
