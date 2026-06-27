@@ -150,9 +150,9 @@ def test_fold_pass_runs_inhouse_without_a_key():
         # test is hermetic (no dependency on a real chunk file shipping).
         import tools.read_pass.group as group_mod
         old_group = group_mod.run
-        group_mod.run = lambda _p: {"success": True,
-                                    "data": {"windows": [window]},
-                                    "metadata": {}, "errors": []}
+        group_mod.run = lambda _p, **_kw: {"success": True,
+                                           "data": {"windows": [window]},
+                                           "metadata": {}, "errors": []}
         try:
             env = RUN.run("ignored.jsonl", "test_inhouse_fold", api_key="",
                           provider="inhouse", model="claude", limit=1)
@@ -199,9 +199,9 @@ def test_fold_pass_inhouse_gate_prunes_ungrounded():
         comprehend._CALLERS["inhouse"] = inhouse.make_inhouse_caller(d)
         import tools.read_pass.group as group_mod
         old_group = group_mod.run
-        group_mod.run = lambda _p: {"success": True,
-                                    "data": {"windows": [window]},
-                                    "metadata": {}, "errors": []}
+        group_mod.run = lambda _p, **_kw: {"success": True,
+                                           "data": {"windows": [window]},
+                                           "metadata": {}, "errors": []}
         try:
             env = RUN.run("ignored.jsonl", "test_inhouse_husk", api_key="",
                           provider="inhouse", model="claude", limit=1)
