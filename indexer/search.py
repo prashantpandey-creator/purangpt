@@ -8,14 +8,38 @@ This gives us the best of both worlds:
 - BM25: "Narada" finds exact name matches that embeddings might rank lower
 """
 
+from __future__ import annotations
 import json
 import logging
 import math
 import os
+import hashlib
 import asyncpg
 from typing import Any, Optional
 
+try:
+    import redis as redis_sync
+    import redis.asyncio as redis
+    REDIS_URL = os.getenv("REDIS_URL", "")
+    if REDIS_URL:
+        # Probe synchronously at startup; if Redis is unreachable or auth fails,
+        # disable caching entirely so no per-request warnings flood the logs.
+        try:
+            _probe = redis_sync.from_url(REDIS_URL, socket_connect_timeout=2)
+            _probe.ping()
+            _probe.close()
+            redis_client = redis.from_url(REDIS_URL)
+        except Exception as _e:
+            logging.getLogger(__name__).warning("Redis unavailable (%s) — search cache disabled", _e)
+            redis_client = None
+    else:
+        redis_client = None
+except ImportError:
+    redis_client = None
+
 logger = logging.getLogger(__name__)
+
+CACHE_TTL = 86400 * 7  # Cache search results for 7 days
 
 
 # ── Data Structures ────────────────────────────────────────────────────────
@@ -83,11 +107,11 @@ class HybridSearcher:
     @classmethod
     def preload_model(cls):
         """Load the embedding model into the class once. Safe to call in the
-        gunicorn master before forking — the loaded weights are then shared with
-        every worker via copy-on-write. Idempotent."""
+        master process before gunicorn forks workers."""
         if cls._shared_model is None:
             from sentence_transformers import SentenceTransformer
-            logger.info("Preloading SentenceTransformer (intfloat/multilingual-e5-small) in master…")
+            import logging
+            logger = logging.getLogger("purangpt.search")
             cls._shared_model = SentenceTransformer("intfloat/multilingual-e5-small")
             logger.info("Embedding model preloaded ✓ (shared across workers)")
         return cls._shared_model
@@ -125,20 +149,64 @@ class HybridSearcher:
         semantic_weight: float = 0.5,
         mmr_lambda: float = 0.7,
         sharma_weighting: bool = True,
+        embed_phrase: str | None = None,
+        fts_phrase: str | None = None,
+        corpus_type: str | None = None,
     ) -> list[SearchResult]:
         """
-        Executes the hybrid_search RPC on Postgres, which performs pgvector distance 
+        Executes the hybrid_search RPC on Postgres, which performs pgvector distance
         and FTS websearch natively, fusing them with RRF.
+
+        Args:
+            query:        Original user query (used for FTS if fts_phrase not given).
+            embed_phrase: Enriched phrase for embedding, e.g. from SanskritQueryProcessor.
+                          Falls back to "query: {query}" if None.
+            fts_phrase:   Multi-term OR phrase for Postgres FTS, e.g. "maheśvara | shiva | rudra".
+                          Falls back to raw query if None.
         """
         if not self.is_ready:
             return []
 
+        # 1. Build cache key
+        cache_params = json.dumps({
+            "query": query,
+            "top_k": top_k,
+            "filters": filters or {},
+            "sharma_weighting": sharma_weighting,
+            "embed_phrase": embed_phrase,
+            "fts_phrase": fts_phrase,
+            # corpus_type changes the result set (scripture-only / guruji-only / floored)
+            # but was absent from the key — a guruji-only query collided with the default
+            # mixed result for the same text. Part of the cache identity.
+            "corpus_type": corpus_type,
+        }, sort_keys=True)
+        cache_hash = hashlib.sha256(cache_params.encode()).hexdigest()
+        cache_key = f"hybrid_search:{cache_hash}"
+
+        # 2. Check Redis cache
+        if redis_client:
+            try:
+                cached = await redis_client.get(cache_key)
+                if cached:
+                    data = json.loads(cached)
+                    logger.debug("Cache hit for hybrid_search: %r", query)
+                    # Reconstruct SearchResult objects (which take the chunk and score)
+                    return [SearchResult(chunk=r, score=r["score"], rank=r.get("rank", i)) for i, r in enumerate(data)]
+            except Exception as e:
+                logger.warning("Redis cache read failed for hybrid_search %r: %s", query, e)
+
+        # Guruji material categories — chunks with these categories are from Shailendra
+        # Sharma's darshans/commentaries (voice/cognition), NOT citable scripture.
+        # "yoga_commentary" is Yogeshwari, Sharma's own Bhagavad Gita commentary — his
+        # voice, not independent scripture, so it must not count toward the scripture floor.
+        GURUJI_CATEGORIES = {"yogic-commentary", "yogic-discourse", "yoga_commentary"}
+
         try:
-            # 1. Generate query embedding locally (offload to thread)
+            # 3. Generate query embedding — use enriched phrase if provided
             import asyncio
             loop = asyncio.get_running_loop()
-            e5_query = f"query: {query}"
-            query_emb = await loop.run_in_executor(None, self._embed_model.encode, e5_query)
+            phrase_to_embed = embed_phrase if embed_phrase else f"query: {query}"
+            query_emb = await loop.run_in_executor(None, self._embed_model.encode, phrase_to_embed)
             if hasattr(query_emb, "tolist"):
                 query_emb = query_emb.tolist()
             emb_str = "[" + ",".join(map(str, query_emb)) + "]"
@@ -151,16 +219,19 @@ class HybridSearcher:
                         pg_filter[k] = v["$eq"]
                     else:
                         pg_filter[k] = v
-            
+
             filter_json = json.dumps(pg_filter)
 
             # 3. Execute Postgres hybrid_search function
-            fetch_k = top_k * 4
+            # Use fts_phrase for FTS if given (OR-joined synonyms), else raw query.
+            fts_query = fts_phrase if fts_phrase else query
+            # Fetch more candidates when we'll be filtering by corpus_type post-query.
+            fetch_k = top_k * 6 if corpus_type else top_k * 4
             async with self._pool.acquire() as conn:
                 rows = await conn.fetch('''
-                    SELECT id, content, metadata, similarity 
+                    SELECT id, content, metadata, similarity
                     FROM hybrid_search($1, $2::vector, $3, $4::jsonb)
-                ''', query, emb_str, fetch_k, filter_json)
+                ''', fts_query, emb_str, fetch_k, filter_json)
 
             if not rows:
                 return []
@@ -172,17 +243,89 @@ class HybridSearcher:
                 score = float(row['similarity'])
                 chunk = {**meta, "id": row['id'], "text": row['content']}
                 results.append(SearchResult(chunk=chunk, score=score, rank=rank))
-                
+
+            # corpus_type filter: "scripture" excludes Guruji chunks; "guruji" keeps only them.
+            # This runs BEFORE sharma_weighting so score inflation doesn't fight the filter.
+            if corpus_type == "scripture":
+                results = [r for r in results
+                           if (r.chunk.get("category") or "").lower() not in GURUJI_CATEGORIES
+                           and not r.id.startswith("darshan-")]
+            elif corpus_type == "guruji":
+                results = [r for r in results
+                           if (r.chunk.get("category") or "").lower() in GURUJI_CATEGORIES
+                           or r.id.startswith("darshan-")]
+
             # Apply source weighting
-            COMMENTARY_CATEGORIES = {"yogic-commentary", "yogic-discourse"}
             if sharma_weighting:
                 for res in results:
                     cat = (res.chunk.get("category") or "").lower()
-                    if cat in COMMENTARY_CATEGORIES:
+                    if cat in GURUJI_CATEGORIES:
                         res.score *= 1.6
                     elif res.id.startswith("darshan-") or res.purana == "Shailendra Sharma Darshans":
                         res.score *= 0.6
-                        
+
+            # ── SCRIPTURE FLOOR ──────────────────────────────────────────────
+            # English natural-language queries embed near the English darshan
+            # transcripts and never surface Sanskrit scripture (cross-lingual gap
+            # in e5-small), so the answer quotes Guruji's voice but can't synthesize
+            # across the texts. Guarantee a scripture quota by retrieving per-category
+            # scripture pools at the DB level — where ranking happens WITHIN scripture
+            # — then let MMR source-diversity interleave them ("all angles"). Validated
+            # live: lifts a 0-scripture English query to ~20 results across ~14 texts.
+            # Skipped when the caller explicitly wants guruji-only.
+            if corpus_type != "guruji":
+                def _is_scripture(r):
+                    return ((r.chunk.get("category") or "").lower() not in GURUJI_CATEGORIES
+                            and not str(r.id).startswith("darshan-"))
+                floor = max(3, top_k // 2)
+                # Count scripture in the OUTPUT window (top_k by score), NOT the full
+                # fetch_k candidate pool. fetch_k = top_k*4 drags deep-tail scripture into
+                # `results` that can never survive MMR against the ×1.6-boosted darshan, so
+                # counting the whole pool reports the floor as already met and it never
+                # fires — the bug that left English/conceptual queries 100% darshan. Measure
+                # what will actually be returned.
+                _window = sorted(results, key=lambda r: r.score, reverse=True)[:top_k]
+                if sum(1 for r in _window if _is_scripture(r)) < floor:
+                    # Every non-Guruji category (mirror of the corpus minus GURUJI_CATEGORIES).
+                    # A missing category silently starves the floor of that whole tradition —
+                    # shaiva-vaishnava (4k), nath-sampradaya (Guruji's own Nath lineage), and
+                    # kosha were absent before and never surfaced.
+                    SCRIPTURE_CATS = ["mahapurana", "vaishnava", "vedic", "shaiva",
+                                      "shaiva-vaishnava", "shakta", "dharma", "vedanta",
+                                      "kosha", "nath-sampradaya", "mixed", "other"]
+                    per = max(2, top_k // 2)
+
+                    async def _scrip_pool(cat):
+                        async with self._pool.acquire() as c:
+                            return await c.fetch(
+                                'SELECT id, content, metadata, similarity '
+                                'FROM hybrid_search($1, $2::vector, $3, $4::jsonb)',
+                                fts_query, emb_str, per, json.dumps({"category": cat}))
+                    try:
+                        pools = await asyncio.gather(
+                            *[_scrip_pool(c) for c in SCRIPTURE_CATS],
+                            return_exceptions=True)
+                        seen = {r.id for r in results}
+                        top_score = max((r.score for r in results), default=1.0)
+                        for pool in pools:
+                            if isinstance(pool, Exception):
+                                continue
+                            for row in pool:
+                                if row["id"] in seen:
+                                    continue
+                                seen.add(row["id"])
+                                m = (json.loads(row["metadata"])
+                                     if isinstance(row["metadata"], str) else row["metadata"])
+                                if (m.get("category") or "").lower() in GURUJI_CATEGORIES:
+                                    continue
+                                chunk = {**m, "id": row["id"], "text": row["content"]}
+                                # parity score so scripture competes in MMR; diversity
+                                # penalty on the repeated darshan source lets it surface
+                                results.append(SearchResult(chunk=chunk, score=top_score,
+                                                            rank=len(results)))
+                    except Exception as e:
+                        logger.warning("scripture floor failed, skipping: %s", e)
+
             # Sort by updated scores
             results.sort(key=lambda x: x.score, reverse=True)
 
@@ -218,6 +361,38 @@ class HybridSearcher:
                 final_results.append(SearchResult(chunk=chosen.chunk, score=chosen.score, rank=len(final_results)))
                 selected_sources.append(chosen.purana)
 
+            # ── SCRIPTURE FLOOR GUARANTEE (post-MMR, deterministic) ──────────
+            # MMR is heuristic. Guarantee the scripture quota actually landed in the
+            # output by swapping the lowest-scored darshan for the best scripture
+            # candidates MMR left behind. No-op in the common case (the floor append
+            # already wins MMR); this is the belt-and-braces that makes "all angles"
+            # a guarantee, not a hope. _is_scripture/floor are in scope from the floor
+            # block above (same `corpus_type != "guruji"` guard).
+            if corpus_type != "guruji":
+                _scrip_in_final = [r for r in final_results if _is_scripture(r)]
+                if len(_scrip_in_final) < floor:
+                    _chosen_ids = {r.id for r in final_results}
+                    _spare = sorted(
+                        (r for r in results if _is_scripture(r) and r.id not in _chosen_ids),
+                        key=lambda r: r.score, reverse=True)
+                    _darshan = sorted(
+                        (r for r in final_results if not _is_scripture(r)),
+                        key=lambda r: r.score)  # lowest score first
+                    _need = floor - len(_scrip_in_final)
+                    for i in range(min(_need, len(_spare), len(_darshan))):
+                        final_results.remove(_darshan[i])
+                        final_results.append(_spare[i])
+                    final_results.sort(key=lambda x: x.score, reverse=True)
+
+            # Save to Redis
+            if redis_client:
+                try:
+                    # We store the raw dictionaries
+                    cache_data = json.dumps([res.to_dict() for res in final_results])
+                    await redis_client.setex(cache_key, CACHE_TTL, cache_data)
+                except Exception as e:
+                    logger.warning("Redis cache write failed for hybrid_search %r: %s", query, e)
+
             return final_results
 
         except Exception as e:
@@ -232,13 +407,116 @@ class HybridSearcher:
         min_score: float = 0.3,
         category: str | None = None,
         max_results: int = 200,
+        embed_phrase: str | None = None,
+        fts_phrase: str | None = None,
     ) -> list[SearchResult]:
         filters = {"category": category} if category else None
         results = await self.hybrid_search(
             query, top_k=max_results, filters=filters, 
-            semantic_weight=0.5, mmr_lambda=1.0, sharma_weighting=False
+            semantic_weight=0.5, mmr_lambda=1.0, sharma_weighting=False,
+            embed_phrase=embed_phrase, fts_phrase=fts_phrase
         )
         return [r for r in results if r.score >= min_score]
+
+    # ── Content Explorer Data Layer ──────────────────────────────────
+
+    async def get_chunk_by_id(self, chunk_id: str) -> dict[str, Any] | None:
+        """Fetch a single verse/chunk by its primary key."""
+        if not self._pool:
+            return None
+        async with self._pool.acquire() as conn:
+            row = await conn.fetchrow(
+                'SELECT id, content, metadata FROM purana_verses WHERE id = $1',
+                chunk_id
+            )
+        if not row:
+            return None
+        meta = json.loads(row['metadata']) if isinstance(row['metadata'], str) else row['metadata']
+        return {**meta, "id": row['id'], "text": row['content']}
+
+    async def find_similar_verses(self, chunk_id: str, top_k: int = 10,
+                                  requesting_user: str | None = None) -> list[SearchResult]:
+        """Find the top_k most semantically similar verses to the given chunk.
+
+        Privacy scope (Sangama): a workspace (user-uploaded) chunk is only ever
+        returned to the seeker who uploaded it. The public corpus — chunks with no
+        'workspace' flag in metadata — is visible to everyone; another seeker's
+        private upload is NEVER surfaced. A guest (requesting_user=None) sees only the
+        public corpus. The `(workspace IS NULL OR user_id = $3)` clause is the whole
+        guard: public rows pass the first branch, the owner's own uploads pass the
+        second, everyone else's uploads pass neither.
+        """
+        if not self._pool:
+            return []
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch('''
+                WITH source AS (
+                    SELECT embedding FROM purana_verses WHERE id = $1
+                )
+                SELECT pv.id, pv.content, pv.metadata,
+                       1 - (pv.embedding <=> s.embedding) AS similarity
+                FROM purana_verses pv, source s
+                WHERE pv.id != $1
+                  AND pv.embedding IS NOT NULL
+                  AND (pv.metadata->>'workspace' IS NULL
+                       OR pv.metadata->>'user_id' = $3)
+                ORDER BY pv.embedding <=> s.embedding
+                LIMIT $2
+            ''', chunk_id, top_k, requesting_user)
+        results = []
+        for rank, row in enumerate(rows):
+            meta = json.loads(row['metadata']) if isinstance(row['metadata'], str) else row['metadata']
+            chunk = {**meta, "id": row['id'], "text": row['content']}
+            results.append(SearchResult(chunk=chunk, score=float(row['similarity']), rank=rank))
+        return results
+
+    async def get_chapter_verses(
+        self, text_id: str, chapter: int, limit: int = 500
+    ) -> list[dict[str, Any]]:
+        """Fetch all verses for a given text + chapter, ordered by verse_range."""
+        if not self._pool:
+            return []
+        filter_meta = json.dumps({"purana": text_id, "chapter": chapter})
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch('''
+                SELECT id, content, metadata
+                FROM purana_verses
+                WHERE metadata @> $1::jsonb
+                ORDER BY id
+                LIMIT $2
+            ''', filter_meta, limit)
+        results = []
+        for row in rows:
+            meta = json.loads(row['metadata']) if isinstance(row['metadata'], str) else row['metadata']
+            results.append({**meta, "id": row['id'], "text": row['content']})
+        return results
+
+    async def get_doc_chunks(
+        self, doc_id: str, user_id: str, limit: int = 80
+    ) -> list[dict[str, Any]]:
+        """Fetch a workspace document's own chunks, in order — scoped to its owner.
+
+        The `metadata @> {doc_id, user_id}` containment is the whole guard: a chunk is
+        returned only when BOTH its doc_id and user_id match, so one seeker can never
+        read another seeker's uploaded document. Used by the paper-review endpoint to
+        assemble the text the Guru reviews.
+        """
+        if not self._pool:
+            return []
+        filter_meta = json.dumps({"doc_id": doc_id, "user_id": user_id})
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch('''
+                SELECT id, content, metadata
+                FROM purana_verses
+                WHERE metadata @> $1::jsonb
+                ORDER BY id
+                LIMIT $2
+            ''', filter_meta, limit)
+        results = []
+        for row in rows:
+            meta = json.loads(row['metadata']) if isinstance(row['metadata'], str) else row['metadata']
+            results.append({**meta, "id": row['id'], "text": row['content']})
+        return results
 
     # ── Purana Statistics ──────────────────────────────────────────────
 

@@ -14,26 +14,14 @@ logger = logging.getLogger(__name__)
 from backend.db_client import get_db_conn
 
 async def ping_llm(provider: str, api_key: str) -> dict:
-    """Send a tiny test request to an LLM provider to measure latency and status."""
+    """Send a tiny test request to DeepSeek (the sole provider) to measure latency."""
     if not api_key:
         return {"status": "unconfigured", "latency_ms": 0, "message": "Missing API Key"}
-        
+
     start_time = time.time()
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
-            if provider == "groq":
-                r = await client.post(
-                    "https://api.groq.com/openai/v1/chat/completions",
-                    headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-                    json={"model": "llama3-8b-8192", "messages": [{"role": "user", "content": "ping"}], "max_tokens": 1}
-                )
-            elif provider == "together":
-                r = await client.post(
-                    "https://api.together.xyz/v1/chat/completions",
-                    headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-                    json={"model": "meta-llama/Meta-Llama-3-8B-Instruct", "messages": [{"role": "user", "content": "ping"}], "max_tokens": 1}
-                )
-            elif provider == "deepseek":
+            if provider == "deepseek":
                 r = await client.post(
                     "https://api.deepseek.com/chat/completions",
                     headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
@@ -125,13 +113,8 @@ async def run_health_checks(active_sessions: int = 0) -> dict:
             "error": str(e)
         }
 
-    # 4. LLMs
-    groq_key = os.getenv("GROQ_API_KEY")
-    together_key = os.getenv("TOGETHER_API_KEY")
+    # 4. LLM (DeepSeek — sole provider)
     deepseek_key = os.getenv("DEEPSEEK_API_KEY")
-
-    results["llms"]["groq"] = await ping_llm("groq", groq_key)
-    results["llms"]["together"] = await ping_llm("together", together_key)
     results["llms"]["deepseek"] = await ping_llm("deepseek", deepseek_key)
 
     results["sessions"] = {

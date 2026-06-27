@@ -26,8 +26,6 @@ RUN mkdir -p data/raw_pdfs data/extracted data/chunks data/chroma_db data/indexe
 # Create __init__.py files
 RUN touch data_pipeline/__init__.py indexer/__init__.py engine/__init__.py backend/__init__.py
 
-# Copy env example if .env doesn't exist
-RUN cp .env.example .env 2>/dev/null || true
 
 EXPOSE 8000
 

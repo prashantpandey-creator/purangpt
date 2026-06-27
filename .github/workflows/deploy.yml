@@ -1,8 +1,10 @@
 name: Deploy Backend to Hetzner VPS
 
-# Requires repo secret VPS_SSH_KEY (same private key as the purangpt-next repo,
-# the one matching ~/.ssh/purangpt_hetzner). Set it under
-# Settings → Secrets and variables → Actions before the first run.
+# Backend deploy. Secrets come from GitHub Repository Secrets (Settings → Secrets
+# and variables → Actions); the script renders /root/purangpt/.env from them.
+# Required secrets: VPS_SSH_KEY, VECTOR_DB_URL, DEEPSEEK_API_KEY, FERNET_KEY.
+# (DeepSeek is the sole LLM — no Gemini/Groq/Together/Zhipu keys needed.)
+# (An encrypted backup-of-record of all values lives in secrets/prod.env.)
 
 on:
   push:
@@ -14,10 +16,16 @@ on:
       - "engine/**"
       - "indexer/**"
       - "data_pipeline/**"
+      # The graph moat + decode lens are COPYed into the image and loaded by
+      # graph_memory at startup, but live under tools/ — without these a graph
+      # update (e.g. merging the Awakener) never reached prod despite a green push.
+      - "tools/read_pass/out/graph_manifest.json"
+      - "tools/read_pass/out/guruji_ram.json"
       - "requirements.txt"
       - "Dockerfile"
       - "run.py"
       - ".github/workflows/deploy.yml"
+      - "secrets/prod.env"  # rotating secrets triggers a redeploy to land the new .env
   workflow_dispatch: {} # allow manual redeploy from the Actions tab
 
 jobs:
@@ -30,10 +38,16 @@ jobs:
 
     - name: SSH and Deploy
       uses: appleboy/ssh-action@v1.0.3
+      env:
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        VECTOR_DB_URL: ${{ secrets.VECTOR_DB_URL }}
+        FERNET_KEY: ${{ secrets.FERNET_KEY }}
+        INTERNAL_SERVICE_KEY: ${{ secrets.INTERNAL_SERVICE_KEY }}
       with:
         host: 204.168.176.229
         username: root
         key: ${{ secrets.VPS_SSH_KEY }}
+        envs: DEEPSEEK_API_KEY,VECTOR_DB_URL,FERNET_KEY,INTERNAL_SERVICE_KEY
         command_timeout: 30m # backend build is heavy (torch + ML model warmup)
         script: |
           set -e
@@ -46,11 +60,38 @@ jobs:
           git checkout -B main origin/main
           git reset --hard origin/main
           git clean -fd
+
+          # ── Render the FULL backend .env from GitHub Secrets + static config ──
+          # DeepSeek is the SOLE LLM provider — no Gemini/Groq/Together/Zhipu keys.
+          # A partial .env silently breaks prod (e.g. omitting DEEPSEEK/FERNET, or a
+          # wrong VECTOR_DB_URL pointing at logto-db instead of pgvector → total_verses=0).
+          umask 077
+          cat <<EOF > .env
+          LLM_PROVIDER=deepseek
+          DEEPSEEK_API_KEY=$DEEPSEEK_API_KEY
+          VECTOR_DB_URL=$VECTOR_DB_URL
+          FERNET_KEY=$FERNET_KEY
+          INTERNAL_SERVICE_KEY=$INTERNAL_SERVICE_KEY
+          EMBED_MODEL=intfloat/multilingual-e5-small
+          DATA_DIR=./data
+          HOST=0.0.0.0
+          PORT=8000
+          GRAPH_MEMORY_ENABLED=1
+          EOF
+          chmod 600 .env
+          # Guard: never deploy an .env missing the critical keys.
+          for k in VECTOR_DB_URL DEEPSEEK_API_KEY FERNET_KEY; do
+            grep -q "^$k=." .env || { echo "FATAL: $k missing from rendered .env"; exit 1; }
+          done
+          echo "✓ Rendered /root/purangpt/.env ($(grep -cE '^[A-Z_]+=' .env) keys)"
+
           cd /root
           # Rebuild the backend. We do NOT use --no-cache here: the costly
           # pip-install and sentence-transformers model-download layers key only
           # off requirements.txt, so they stay cached, while the `COPY . .` source
           # layer naturally busts after the hard reset above.
           docker compose build backend
-          docker compose up -d backend
+          # --force-recreate so the container reloads the freshly-rendered .env
+          # (plain `up -d` / `restart` keeps the old in-memory env).
+          docker compose up -d --force-recreate backend
           docker image prune -f

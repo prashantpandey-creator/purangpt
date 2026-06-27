@@ -225,6 +225,74 @@ def check_rate_limit(user_id: str, role: str, is_byok: bool = False) -> tuple[bo
     remaining = max(0, FREE_DAILY_TOKENS - current_tokens)
     return current_tokens < FREE_DAILY_TOKENS, remaining, current_tokens
 
+
+def consume_message_unit(user_id: str, role: str, is_byok: bool = False) -> tuple[bool, int]:
+    """Atomically gate AND consume one message unit for a free user, in one SQL
+    statement — the authenticated-user analogue of consume_guest_unit.
+
+    Why this exists: check_rate_limit() is a read-only pre-flight, and the actual
+    increment used to run fire-and-forget AFTER the LLM stream. Under concurrency,
+    N requests at count=9 all read "allowed" before any increment landed → a free
+    user could overrun the 10/day cap N-fold. This function checks-and-consumes in
+    a single guarded UPDATE so the race is impossible.
+
+    Pro/scholar/admin/BYOK are uncapped (return immediately, no DB write).
+    Fails OPEN on a DB error (never blocks a paying flow on infra trouble).
+    Returns (allowed, remaining).
+    """
+    if role in ("pro", "scholar", "admin") or is_byok:
+        return True, 999999
+
+    limit = 10  # Free tier daily limit (mirrors check_rate_limit)
+    conn = get_db_conn()
+    if not conn:
+        return True, limit  # fail-open
+
+    try:
+        with conn.cursor() as cur:
+            # Roll the daily counter over first if we've crossed into a new UTC day.
+            # Done in SQL so it's atomic with the increment that follows.
+            cur.execute(
+                """
+                UPDATE profiles
+                   SET daily_message_count = 0,
+                       deep_research_count = 0,
+                       daily_reset_at = NOW()
+                 WHERE id = %s
+                   AND daily_reset_at::date < (NOW() AT TIME ZONE 'UTC')::date
+                """,
+                (user_id,),
+            )
+            # Guarded increment: only bumps while still under the limit. RETURNING
+            # is NULL when the WHERE guard blocks it → already at the cap.
+            cur.execute(
+                """
+                UPDATE profiles
+                   SET daily_message_count = daily_message_count + 1,
+                       updated_at = NOW()
+                 WHERE id = %s
+                   AND daily_message_count < %s
+                RETURNING daily_message_count
+                """,
+                (user_id, limit),
+            )
+            row = cur.fetchone()
+        conn.commit()
+        if row is None:
+            return False, 0  # at the limit (or no such profile)
+        new_count = row["daily_message_count"]
+        return True, max(0, limit - new_count)
+    except Exception as e:
+        logger.error(f"Error consuming message unit for {user_id}: {e}")
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        return True, limit  # fail-open
+    finally:
+        conn.close()
+
+
 def check_research_limit(user_id: str, role: str, is_byok: bool = False) -> tuple[bool, int]:
     """Check if the user has exceeded their daily deep research limit."""
     if is_byok:
@@ -240,9 +308,15 @@ def check_research_limit(user_id: str, role: str, is_byok: bool = False) -> tupl
     return count < limit, limit - count
 
 def increment_usage(user_id: str, session_id: str = None, model: str = None, tokens_used: int = 0):
-    """Increment the user's daily usage — atomically.
-    Bumps message count and token budget consumed.
-    tokens_used is estimated as (prompt_chars + completion_chars) // 4."""
+    """Record a message's usage after the stream completes — atomically.
+    Bumps the daily message count AND the daily token budget consumed, and writes
+    the analytics usage_log row. tokens_used is estimated as
+    (prompt_chars + completion_chars) // 4. Both bumps are single SQL UPDATEs
+    (not Python read-modify-write), so concurrent requests never lose increments.
+
+    Note: free-user token budgets are gated read-only at the door (check_rate_limit)
+    rather than atomically consumed, because token cost isn't known until the
+    stream finishes — so this is where the daily counters actually advance."""
     conn = get_db_conn()
     if not conn: return
     tokens_used = max(0, int(tokens_used))

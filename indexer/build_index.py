@@ -30,9 +30,8 @@ console = Console()
 
 # ── Config ─────────────────────────────────────────────────────────────────
 
-# multilingual-e5-large: highest quality but ~2GB model
-# multilingual-e5-small: fast and small, still multilingual — good for dev/test
-DEFAULT_EMBED_MODEL  = "intfloat/multilingual-e5-large"
+# nomic-embed-text-v1.5: optimized for retrieval, supports prefixes
+DEFAULT_EMBED_MODEL  = "nomic-ai/nomic-embed-text-v1.5"
 COLLECTION_NAME      = "purana_verses"
 EMBED_BATCH_SIZE     = 32   # Reduce if running out of RAM
 MAX_TEXT_LENGTH      = 1000 # Truncate very long chunks for embedding
@@ -74,7 +73,7 @@ class EmbeddingIndexer:
         if self._model is None:
             console.print(f"[cyan]Loading embedding model:[/cyan] {self.embed_model}")
             console.print("  (First run downloads ~1-2 GB — subsequent runs use cache)")
-            self._model = SentenceTransformer(self.embed_model)
+            self._model = SentenceTransformer(self.embed_model, trust_remote_code=True)
             console.print(f"[green]✓[/green] Model loaded")
         return self._model
 

@@ -91,6 +91,35 @@ class SessionManager:
                     PRIMARY KEY (guest_id, usage_date)
                 );
                 CREATE INDEX IF NOT EXISTS idx_guest_usage_date ON guest_usage(usage_date);
+
+                -- Workspace: uploaded document tracking
+                CREATE TABLE IF NOT EXISTS workspace_documents (
+                    doc_id        TEXT PRIMARY KEY,
+                    user_id       TEXT NOT NULL,
+                    filename      TEXT NOT NULL,
+                    doc_type      TEXT NOT NULL,
+                    source_url    TEXT,
+                    status        TEXT NOT NULL DEFAULT 'pending',
+                    error_msg     TEXT,
+                    chunk_count   INT DEFAULT 0,
+                    section_count INT DEFAULT 0,
+                    title         TEXT,
+                    thread_map    JSONB,
+                    created_at    TIMESTAMPTZ DEFAULT NOW(),
+                    updated_at    TIMESTAMPTZ DEFAULT NOW()
+                );
+                CREATE INDEX IF NOT EXISTS idx_workspace_user ON workspace_documents(user_id);
+
+                -- Workspace: per-user reading progress (semantic coverage tracking)
+                CREATE TABLE IF NOT EXISTS reading_progress (
+                    user_id     TEXT NOT NULL,
+                    doc_id      TEXT NOT NULL,
+                    chunk_id    TEXT NOT NULL,
+                    read_at     TIMESTAMPTZ DEFAULT NOW(),
+                    time_spent  INT,
+                    PRIMARY KEY (user_id, doc_id, chunk_id)
+                );
+                CREATE INDEX IF NOT EXISTS idx_progress_user_doc ON reading_progress(user_id, doc_id);
                 """)
             conn.commit()
         except Exception as e:
@@ -182,7 +211,32 @@ class SessionManager:
             for msg in messages:
                 if msg.get("role") == "user":
                     content = msg.get("content", "").strip()
-                    title = content[:40] + ("..." if len(content) > 40 else "")
+                    # Deterministic title from first query
+                    _GURUJI_KEY_TERMS = {
+                        "ojas", "amrita", "prana", "kundalini", "samadhi", "khechari",
+                        "mudra", "bandha", "kriya", "shiva", "shakti", "mercury",
+                        "parada", "time", "immortality", "nada", "bindu", "chakra",
+                        "dhyana", "dharana", "yama", "niyama", "asana", "pranayama",
+                        "guru", "shishya", "parampara", "veda", "purana", "upanishad",
+                        "gita", "yoga", "yogi", "akasha", "tattva", "karma", "bhakti",
+                        "jnana", "tantra"
+                    }
+                    import re
+                    words = [w for w in re.findall(r'\b\w+\b', content) if len(w) > 3]
+                    skt_terms = [w.title() for w in words if w.lower() in _GURUJI_KEY_TERMS]
+                    
+                    if skt_terms:
+                        # "Ojas and Time" or just "Ojas"
+                        title = " and ".join(list(dict.fromkeys(skt_terms))[:2])
+                    else:
+                        # fallback: first 4 meaningful words
+                        stop_words = {"what", "how", "why", "who", "when", "where", "is", "are", "do", "does", "can", "could", "would", "the", "this", "that", "please", "tell", "know", "about", "with"}
+                        meaningful = [w.title() for w in words if w.lower() not in stop_words][:4]
+                        if meaningful:
+                            title = " ".join(meaningful)
+                        else:
+                            title = content[:30].title() + ("..." if len(content) > 30 else "")
+                    
                     session["title"] = title
                     break
                     
@@ -245,5 +299,44 @@ class SessionManager:
         except Exception as e:
             logger.error(f"Error fetching all sessions: {e}")
             return []
+        finally:
+            conn.close()
+
+    async def generate_user_profile(self, user_id: str) -> str:
+        """Reads the journey_summary of all of a user's sessions and generates
+        a 1-paragraph summary of their spiritual/philosophical level."""
+        conn = self._get_conn()
+        if not conn:
+            return ""
+            
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT journey_summary FROM chat_sessions WHERE logto_user_id = %s AND journey_summary IS NOT NULL AND journey_summary != ''", (user_id,))
+                rows = cur.fetchall()
+                
+            summaries = [row["journey_summary"] for row in rows]
+            if not summaries:
+                return "New seeker. No established philosophical baseline yet."
+                
+            # We defer the LLM import locally to avoid circular dependencies
+            from backend.main import call_llm_once
+            
+            prompt = (
+                "You are profiling a spiritual seeker's philosophical baseline based on their past session summaries.\n"
+                "Synthesize the following session summaries into a SINGLE paragraph (max 100 words) describing "
+                "their core spiritual inquiries, their level of scriptural understanding, and any recurring themes.\n\n"
+                "Session summaries:\n" + "\n".join(f"- {s}" for s in summaries)
+            )
+            
+            profile = await call_llm_once([
+                {"role": "system", "content": "You are an analytical profiling assistant. Be clinical and precise."},
+                {"role": "user", "content": prompt}
+            ], temperature=0.1)
+            
+            return profile.strip()
+            
+        except Exception as e:
+            logger.error(f"Error generating user profile for {user_id}: {e}")
+            return ""
         finally:
             conn.close()

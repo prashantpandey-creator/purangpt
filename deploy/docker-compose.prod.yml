@@ -43,6 +43,7 @@ services:
     environment:
       - TOKENIZERS_PARALLELISM=false
       - HUGGINGFACE_HUB_CACHE=/app/data/.cache
+      - REDIS_URL=redis://redis:6379/0
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/status"]
       interval: 30s
@@ -55,27 +56,46 @@ services:
     restart: unless-stopped
     volumes:
       - /data/purangpt/data:/app/data
+    depends_on:
+      - redis
+
+  static-files:
+    image: nginx:alpine
+    container_name: purangpt_static
+    volumes:
+      - /data/purangpt/static:/usr/share/nginx/html/static:ro
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=coolify
+      - traefik.http.routers.purangpt-static.rule=Host(`purangpt.com`) && PathPrefix(`/static/`)
+      - traefik.http.routers.purangpt-static.entrypoints=https
+      - traefik.http.routers.purangpt-static.tls=true
+      - traefik.http.routers.purangpt-static.tls.certresolver=letsencrypt
+      - traefik.http.routers.purangpt-static.priority=100
+      - traefik.http.services.purangpt-static.loadbalancer.server.port=80
+    networks:
+      - default
+      - coolify
+    restart: unless-stopped
 
   frontend:
     build:
       context: ./purangpt-next
       args:
         NEXT_PUBLIC_API_URL: ""
+        NEXT_PUBLIC_CORPUS_URL: "https://purangpt.com/static/corpus.db.gz"
+        NEXT_PUBLIC_REVENUECAT_APPLE_KEY: ${NEXT_PUBLIC_REVENUECAT_APPLE_KEY}
+        NEXT_PUBLIC_RAZORPAY_KEY_ID: ${NEXT_PUBLIC_RAZORPAY_KEY_ID}
         NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
-        NEXT_PUBLIC_REVENUECAT_APPLE_KEY: ${NEXT_PUBLIC_REVENUECAT_APPLE_KEY}
     container_name: purangpt_frontend
     depends_on:
       backend:
         condition: service_healthy
     env_file:
-      - /root/frontend-secrets.env  # LOGTO_*, GOOGLE_*, cookie secret (gitignored)
+      - /root/frontend-secrets.env  # all runtime secrets — rendered by secrets/sync-to-server.sh
     environment:
-      - GROQ_API_KEY=${GROQ_API_KEY}
-      - DATABASE_URL=${DATABASE_URL}
       - NEXTAUTH_URL=https://purangpt.com
-      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
-      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
       - GITHUB_PAT=${GITHUB_PAT}
     labels:
       - traefik.enable=true
@@ -149,3 +169,10 @@ services:
       - default
     volumes:
       - /data/logto/db:/var/lib/postgresql/data
+
+  redis:
+    image: redis:alpine
+    container_name: purangpt_redis
+    networks:
+      - default
+    restart: unless-stopped
