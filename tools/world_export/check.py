@@ -121,13 +121,17 @@ def _is_character(name: str, memory: Memory) -> bool:
     and the ~1600 empty-kind entities still pass (the gate only removes provable
     non-characters). Reuses character._ARTIFACT_NAMES as the single source.
     """
+    if (name or "").strip().lower() in character._ARTIFACT_NAMES:
+        return False  # 'Narrator'/'Speaker' — never a character, hard exclude
+    ent = character._resolve_entity(_norm(name), memory)
     key = (id(memory), _norm(name))
     if key not in _KIND_CACHE:
-        ent = character._resolve_entity(_norm(name), memory)
         _KIND_CACHE[key] = ((ent.get("kind") or "").lower() if ent else "")
     if _KIND_CACHE[key] in _NON_CHARACTER_KINDS:
-        return False
-    if (name or "").strip().lower() in character._ARTIFACT_NAMES:
+        # a denylisted kind is overridden when the entity has kin edges: concepts
+        # don't have mothers, so it's a mis-typed being / personified abstraction.
+        if ent and ent.get("id") in character._kin_participant_ids(memory):
+            return True
         return False
     return True
 

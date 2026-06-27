@@ -192,14 +192,41 @@ def _guru_label(rel: str, queried_is_src: bool) -> str:
     return "disciple" if queried_is_guru else "guru"
 
 
-def _is_being(entity: Optional[Dict[str, Any]]) -> bool:
+_KIN_PARTICIPANTS_CACHE: Dict[int, frozenset] = {}
+
+
+def _kin_participant_ids(memory: Memory) -> frozenset:
+    """Entity ids that appear in ANY kin edge. A non-being-kinded entity here is a
+    provable character — either a being mis-typed as 'concept' (Devaki) or a
+    personified abstraction the corpus marries off (Adharma) — never a stray
+    practice/text. Cached per Memory instance."""
+    key = id(memory)
+    if key not in _KIN_PARTICIPANTS_CACHE:
+        ids = set()
+        for ed in memory.edges:
+            if (ed.get("rel") or "").lower() in _FAMILY_PREDS:
+                ids.add(ed.get("src"))
+                ids.add(ed.get("dst"))
+        _KIN_PARTICIPANTS_CACHE[key] = frozenset(ids)
+    return _KIN_PARTICIPANTS_CACHE[key]
+
+
+def _is_being(entity: Optional[Dict[str, Any]],
+              memory: Optional[Memory] = None) -> bool:
     """False for non-character nodes (practices/concepts) and narratological
-    artifacts ('Narrator', 'Speaker') the decoder mis-types as sages."""
+    artifacts ('Narrator', 'Speaker') the decoder mis-types as sages.
+
+    A denylisted KIND is overridden when the entity participates in kin edges —
+    concepts don't have mothers, so kin participation proves it's a character
+    (the ~380 'concept' beings the decoder mis-typed). Artifact NAMES stay a hard
+    exclude regardless (a 'Narrator' is never a character)."""
     if not entity:
         return True  # unknown id — keep, never silently drop a real being
-    if (entity.get("kind") or "").lower() in _NON_BEING_KINDS:
-        return False
     if (entity.get("name") or "").strip().lower() in _ARTIFACT_NAMES:
+        return False
+    if (entity.get("kind") or "").lower() in _NON_BEING_KINDS:
+        if memory is not None and entity.get("id") in _kin_participant_ids(memory):
+            return True  # mis-typed being / personified abstraction
         return False
     return True
 
@@ -273,7 +300,7 @@ def character_sheet(name: str, memory: Memory,
                 entry["relationship"] = lbl
             family.append(entry)
         elif _is_guru_rel(rel):
-            if _is_being(other):                 # drop practice/artifact "gurus"
+            if _is_being(other, memory):         # drop practice/artifact "gurus"
                 entry["relationship"] = _guru_label(rel, src == eid)
                 gurus.append(entry)
             else:

@@ -145,8 +145,12 @@ def test_non_character_entities_excluded_from_cast():
 def test_no_npc_has_a_non_character_kind():
     # The strong invariant across both a Puranic court, the tangential-resident
     # place that used to surface "Ramayana" (a text), and a seeded biography level:
-    # EVERY emitted NPC carries a character kind, never one of the denylisted
-    # non-being kinds (text/concept/practice/place/...). (Locked — FINDINGS.md Bug 3.)
+    # every emitted NPC carries a character kind, EXCEPT a mis-typed being that the
+    # graph wrongly types 'concept' but proves itself a character via kin edges
+    # (Devaki, personified Adharma). A denylisted kind is allowed ONLY then.
+    # (FINDINGS.md Bug 3 + the graph_clean_audit re-type finding.)
+    from narrative_engine import character as _char
+    kin_ids = _char._kin_participant_ids(_MEM)
     builds = [
         run("Ayodhya", memory=_MEM),
         run("Govardhana", memory=_MEM),
@@ -155,12 +159,14 @@ def test_no_npc_has_a_non_character_kind():
     for env in builds:
         assert env["success"] is True, env
         for npc in env["data"]["npcs"]:
-            assert npc["kind"] not in _NON_CHARACTER_KINDS, \
-                f"non-character NPC emitted: {npc['name']} (kind={npc['kind']})"
-    # the specific logged residual: "Ramayana" (a text) no longer an Ayodhya/Govardhana NPC
+            if npc["kind"] in _NON_CHARACTER_KINDS:
+                ent = _char._resolve_entity(npc["name"], _MEM)
+                assert ent and ent.get("id") in kin_ids, \
+                    f"non-character NPC with no kin: {npc['name']} (kind={npc['kind']})"
+    # the specific logged residual: "Ramayana" (a text, no kin) is not an NPC
     gov_names = [n["name"] for n in builds[1]["data"]["npcs"]]
     assert "Ramayana" not in gov_names, f"the text 'Ramayana' is still an NPC: {gov_names}"
-    print("ok: no_npc_has_a_non_character_kind (Ramayana gone from Govardhana)")
+    print("ok: no_npc_has_a_non_character_kind (texts gone; mis-typed beings allowed)")
 
 
 def test_narratological_artifacts_excluded_from_cast():
@@ -171,6 +177,17 @@ def test_narratological_artifacts_excluded_from_cast():
     # a real being with the same kind must still pass
     assert _is_character("Vyasa", _MEM) is True, "real sage 'Vyasa' wrongly excluded"
     print("ok: narratological_artifacts_excluded_from_cast")
+
+
+def test_mistyped_beings_pass_via_kin_participation():
+    # Devaki (Krishna's mother) is mis-typed kind='concept'; the kind denylist
+    # alone would drop her from a Krishna cast. Kin participation overrides it.
+    assert _is_character("Devaki", _MEM) is True, "mis-typed being 'Devaki' dropped"
+    # a true non-being with no kin (the practice) stays excluded
+    assert _is_character("Kriya Yoga", _MEM) is False, "practice wrongly kept"
+    # the artifact stays a hard exclude even though kind passes
+    assert _is_character("Narrator", _MEM) is False, "artifact 'Narrator' leaked"
+    print("ok: mistyped_beings_pass_via_kin_participation")
 
 
 def test_npc_enrichment_is_graph_true():
