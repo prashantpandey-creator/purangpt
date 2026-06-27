@@ -511,6 +511,19 @@ class HybridSearcher:
                 ORDER BY id
                 LIMIT $3
             ''', id_like, filter_meta, limit)
+            # Chaptered texts (Mahabharata is the only one — real parvas, no chapter 0)
+            # have nothing at the reader's default chapter 0. Fall back to the text's
+            # lowest actual chapter so "open the text" still lands on its beginning.
+            # ORDER BY id puts chapter 1 first. Flat texts never reach here (their
+            # chapter-0 query already matched), so this only rescues the chaptered case.
+            if not rows:
+                rows = await conn.fetch('''
+                    SELECT id, content, metadata
+                    FROM purana_verses
+                    WHERE id LIKE $1
+                    ORDER BY id
+                    LIMIT $2
+                ''', f"{esc}-%", limit)
         results = []
         for row in rows:
             meta = json.loads(row['metadata']) if isinstance(row['metadata'], str) else row['metadata']
