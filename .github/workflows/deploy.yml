@@ -71,6 +71,7 @@ jobs:
           DATA_DIR=./data
           HOST=0.0.0.0
           PORT=8000
+          GRAPH_MEMORY_ENABLED=1
           EOF
           chmod 600 .env
           # Guard: never deploy an .env missing the critical keys.
