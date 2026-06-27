@@ -16,6 +16,11 @@ on:
       - "engine/**"
       - "indexer/**"
       - "data_pipeline/**"
+      # The graph moat + decode lens are COPYed into the image and loaded by
+      # graph_memory at startup, but live under tools/ — without these a graph
+      # update (e.g. merging the Awakener) never reached prod despite a green push.
+      - "tools/read_pass/out/graph_manifest.json"
+      - "tools/read_pass/out/guruji_ram.json"
       - "requirements.txt"
       - "Dockerfile"
       - "run.py"
