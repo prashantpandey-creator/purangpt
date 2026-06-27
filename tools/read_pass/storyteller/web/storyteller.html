@@ -90,6 +90,9 @@
   <footer>
     <div class="askrow">
       <input id="ask" class="ui" placeholder="ask the teller anything…  (or press / )"/>
+      <button id="voicebtn" class="ui" onclick="toggleVoice()" title="read the story aloud (V)"
+        style="background:#241a10;border:.5px solid var(--line);border-radius:8px;padding:9px 13px;
+        color:var(--ink);font-size:13px;cursor:pointer;white-space:nowrap">🔈 voice</button>
       <input id="key" class="keyfield ui" type="password" placeholder="paste LLM API key (optional)"/>
     </div>
     <div class="keyhint ui">
@@ -226,13 +229,14 @@ function drawEdges(){
   svg.innerHTML=s;
 }
 
-function enterNode(id){ if(!nodesById[id])return; trail.push({label:nodesById[id].name}); mode='node'; nodeId=id; hideAnswer(); render(); }
-function toStory(){ mode='beat'; render(); }
+function enterNode(id){ if(!nodesById[id])return; stopSpeaking(); trail.push({label:nodesById[id].name}); mode='node'; nodeId=id; hideAnswer(); render(); }
+function toStory(){ mode='beat'; render(); if(voiceOn) speakBeat(); }
 function go(dir){
   if(mode!=='beat'){ if(dir==='right'){toStory();return;} }
   if(dir==='next'&&beatIdx<D.beats.length-1){beatIdx++;trail.push({label:'beat '+(beatIdx+1)});}
   if(dir==='prev'&&beatIdx>0)beatIdx--;
   render();
+  if(voiceOn && mode==='beat') speakBeat();
 }
 
 // keyboard
@@ -242,6 +246,7 @@ document.addEventListener('keydown',e=>{
     if(e.key==='Escape'){document.getElementById('ask').blur();} return;
   }
   if(e.key==='/'){e.preventDefault();document.getElementById('ask').focus();return;}
+  if(e.key==='v'||e.key==='V'){ toggleVoice(); return; }
   if(e.key==='ArrowRight'){ mode==='beat'?go('next'):toStory(); }
   else if(e.key==='ArrowLeft'){ if(mode==='beat')go('prev'); else{const sl=distribute(nodeId);if(sl.left)enterNode(sl.left.dst);} }
   else if(e.key==='ArrowUp'){ if(mode==='node'){const sl=distribute(nodeId);if(sl.up)enterNode(sl.up.dst);} }
@@ -270,8 +275,38 @@ async function doAsk(){
     showAnswer('the teller',"(no key set) Here, we are at: "+esc(here.slice(0,200))+"  — paste a key above and I'll answer in the teller's voice.");
   }
 }
-function showAnswer(who,body){const a=document.getElementById('answer');document.getElementById('ans-who').textContent=who;document.getElementById('ans-body').textContent=body;a.style.display='block';}
+function showAnswer(who,body){const a=document.getElementById('answer');document.getElementById('ans-who').textContent=who;document.getElementById('ans-body').textContent=body;a.style.display='block';
+  if(body && body!=='…') speak(body);}   // the teller speaks its answer too
 function hideAnswer(){document.getElementById('answer').style.display='none';}
+
+// ── voice: the teller reads aloud (browser SpeechSynthesis — free, offline) ───
+let voiceOn = false;
+let _voice = null;
+function pickVoice(){
+  const vs = (window.speechSynthesis ? speechSynthesis.getVoices() : []) || [];
+  // prefer a calm English voice; fall back to whatever exists
+  _voice = vs.find(v=>/en-GB/i.test(v.lang) && /female|samantha|kate|serena/i.test(v.name))
+        || vs.find(v=>/en-GB/i.test(v.lang)) || vs.find(v=>/^en/i.test(v.lang)) || vs[0] || null;
+}
+if(window.speechSynthesis){ speechSynthesis.onvoiceschanged = pickVoice; pickVoice(); }
+function speak(text){
+  if(!voiceOn || !text || !window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(String(text));
+  if(_voice) u.voice = _voice;
+  u.rate = 0.9; u.pitch = 1.0;   // unhurried, a teller's cadence
+  speechSynthesis.speak(u);
+}
+function stopSpeaking(){ try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} }
+function speakBeat(){ const b=D.beats[beatIdx]; if(b) speak(b.summary||b.title); }
+function toggleVoice(){
+  voiceOn = !voiceOn;
+  const btn=document.getElementById('voicebtn');
+  if(btn){ btn.textContent = voiceOn ? '🔊 voice on' : '🔈 voice';
+           btn.style.borderColor = voiceOn ? 'var(--saffron)' : 'var(--line)';
+           btn.style.color = voiceOn ? 'var(--gold)' : 'var(--ink)'; }
+  if(voiceOn){ if(mode==='beat') speakBeat(); } else stopSpeaking();
+}
 
 // ── corpus loading (lazy, per selection) ─────────────────────────────────────
 async function loadCorpus(id){
@@ -289,10 +324,12 @@ async function loadCorpus(id){
     return;
   }
   // reset position to the start of the new story
+  stopSpeaking();
   mode='beat'; beatIdx=0; nodeId=null; trail.length=0; trail.push({label:'beat 1'}); hideAnswer();
   document.getElementById('meta').textContent =
     D.beats.length+' beats · '+D.nodes.length+' nodes · '+D.edges.length+' edges';
   render();
+  if(voiceOn) speakBeat();
 }
 
 async function init(){
