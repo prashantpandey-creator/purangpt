@@ -147,6 +147,15 @@ SOURCE_META: Dict[str, dict] = {
     "bhagavad_gita":  {"lang": "Sanskrit", "edition": "BORI Critical (1966-73)",   "tradition": "mixed",   "bias": "✅ most critical edition"},
 }
 
+
+def _source_meta_for(purana: str) -> dict:
+    """Edition/tradition/bias for a text, from the static SOURCE_META catalog
+    (keyed by the text_id, which is what SearchResult stores as `.purana`).
+    Returns {} for unknown / Guruji texts. Used to populate source-transparency
+    fields, which are NOT carried on SearchResult objects (only `.purana`)."""
+    return SOURCE_META.get(purana or "", {})
+
+
 # ── Prompts ────────────────────────────────────────────────────────────────
 KNOWN_INTERPOLATIONS = """
 ⚠️ KNOWN CONTESTED PASSAGES (always flag these explicitly):
@@ -1213,14 +1222,16 @@ def build_rag_context(results: list) -> str:
             ref  = r.get("reference", "")
             text = r.get("text", "") or r.get("excerpt", "")
             lang = r.get("language", "") or r.get("lang", "")
-            edition = r.get("edition", "")
-            bias    = r.get("bias", "")
+            meta = _source_meta_for(r.get("purana", "") or r.get("text_id", ""))
+            edition = r.get("edition", "") or meta.get("edition", "")
+            bias    = r.get("bias", "")    or meta.get("bias", "")
         else:
             ref     = getattr(r, "reference", "")
             text    = getattr(r, "text", "")
             lang    = getattr(r, "language", "")
-            edition = getattr(r, "edition", "")
-            bias    = getattr(r, "bias", "")
+            meta    = _source_meta_for(getattr(r, "purana", ""))
+            edition = meta.get("edition", "")
+            bias    = meta.get("bias", "")
         text = _decode_corpus_text(text)
         meta_parts = [p for p in [lang, edition, bias] if p]
         meta_str   = f" [{', '.join(meta_parts)}]" if meta_parts else ""
@@ -1242,6 +1253,7 @@ def build_source_list(results: list) -> List[dict]:
             continue
             
         if isinstance(r, dict):
+            meta = _source_meta_for(r.get("purana", "") or r.get("text_id", ""))
             sm = SourceModel(
                 text_id    = r.get("text_id", ""),
                 chunk_id   = r.get("id", "") or r.get("chunk_id", ""),
@@ -1253,13 +1265,14 @@ def build_source_list(results: list) -> List[dict]:
                 text       = _decode_corpus_text(r.get("text", "")),
                 excerpt    = _decode_corpus_text(r.get("excerpt", "")),
                 language   = r.get("language", "Sanskrit"),
-                edition    = r.get("edition", ""),
-                tradition  = r.get("tradition", ""),
-                bias       = r.get("bias", ""),
+                edition    = r.get("edition", "")   or meta.get("edition", ""),
+                tradition  = r.get("tradition", "") or meta.get("tradition", ""),
+                bias       = r.get("bias", "")      or meta.get("bias", ""),
                 score      = float(r.get("score", 0)),
                 line_num   = int(r.get("line_num", 0)),
             )
         else:
+            meta = _source_meta_for(getattr(r, "purana", ""))
             sm = SourceModel(
                 text_id    = getattr(r, "id", ""),
                 chunk_id   = getattr(r, "id", ""),
@@ -1270,9 +1283,9 @@ def build_source_list(results: list) -> List[dict]:
                 verse_range= getattr(r, "verse_range", ""),
                 text       = _decode_corpus_text(getattr(r, "text", "")),
                 language   = getattr(r, "language", "Sanskrit"),
-                edition    = getattr(r, "edition", ""),
-                tradition  = getattr(r, "tradition", ""),
-                bias       = getattr(r, "bias", ""),
+                edition    = meta.get("edition", ""),
+                tradition  = meta.get("tradition", ""),
+                bias       = meta.get("bias", ""),
                 score      = float(getattr(r, "score", 0)),
             )
         sources.append(sm.to_frontend_dict())
