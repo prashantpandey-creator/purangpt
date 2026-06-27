@@ -37,8 +37,13 @@ def _seq_of(chunk: Dict[str, Any]) -> int:
         return -1
 
 
-def run(jsonl_path: str) -> Dict[str, Any]:
-    metadata: Dict[str, Any] = {"path": jsonl_path}
+def run(jsonl_path: str, max_chunks: int = MAX_WINDOW_CHUNKS) -> Dict[str, Any]:
+    """Group verse-chunks into chapter windows. `max_chunks` caps a window's size:
+    the default (80) suits narrative Purana chapters, but DENSE philosophical texts
+    (Upanishads, sūtras — every verse a distinct concept) decode far richer at a
+    smaller value (~15-20), because the LLM attends per-section instead of skimming
+    a whole text in one pass. Default preserves the calibrated Purana behavior."""
+    metadata: Dict[str, Any] = {"path": jsonl_path, "max_chunks": max_chunks}
 
     if not os.path.isfile(jsonl_path):
         return _envelope(False, None, metadata,
@@ -95,11 +100,11 @@ def run(jsonl_path: str) -> Dict[str, Any]:
         win["_texts"].append(ch.get("text", ""))
     _flush()
 
-    # Sub-window any mega-windows that exceed MAX_WINDOW_CHUNKS.
+    # Sub-window any mega-windows that exceed max_chunks.
     # Preserves narrative order; labels sub-windows "Chapter X (part N)".
     final: List[Dict[str, Any]] = []
     for w in windows:
-        if w["n_chunks"] <= MAX_WINDOW_CHUNKS:
+        if w["n_chunks"] <= max_chunks:
             final.append(w)
             continue
         # split into stride-sized pieces
@@ -109,9 +114,9 @@ def run(jsonl_path: str) -> Dict[str, Any]:
         purana = w["purana"]
         label = w["chapter_label"]
         part = 0
-        for i in range(0, len(cids), MAX_WINDOW_CHUNKS):
+        for i in range(0, len(cids), max_chunks):
             part += 1
-            slc = slice(i, i + MAX_WINDOW_CHUNKS)
+            slc = slice(i, i + max_chunks)
             sub_cids = cids[slc]
             sub_vrs = vrs[slc] if len(vrs) > i else []
             sub_texts = texts[slc]

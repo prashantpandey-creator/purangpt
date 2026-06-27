@@ -116,6 +116,32 @@ def test_mega_windows_get_subwindowed():
         os.unlink(fpath)
 
 
+def test_max_chunks_param_makes_finer_windows():
+    # Dense texts (Upanishads/sutras) decode richer at a smaller window. A small
+    # max_chunks must split a mono-chapter run into more, smaller windows than the
+    # default — without losing or reordering chunks.
+    import tempfile
+    mono = [{"id": f"t-0-{i}", "purana": "T", "chapter": 0,
+             "text": f"v{i} " * 5, "verse_range": f"v{i}"} for i in range(1, 61)]  # 60 chunks
+    with tempfile.NamedTemporaryFile("w", suffix=".jsonl", delete=False) as f:
+        for c in mono: f.write(json.dumps(c) + "\n")
+        fp = f.name
+    try:
+        big = group.run(fp)                     # default 80 -> 1 window (60 < 80)
+        small = group.run(fp, max_chunks=15)    # 15 -> 4 windows
+        assert len(big["data"]["windows"]) == 1, len(big["data"]["windows"])
+        assert len(small["data"]["windows"]) >= 4, len(small["data"]["windows"])
+        assert all(w["n_chunks"] <= 15 for w in small["data"]["windows"])
+        assert sum(w["n_chunks"] for w in small["data"]["windows"]) == 60, "lost chunks"
+        assert small["metadata"]["max_chunks"] == 15
+        # order preserved
+        ws = small["data"]["windows"]
+        for i in range(len(ws) - 1):
+            assert ws[i]["seq_end"] < ws[i + 1]["seq_start"]
+    finally:
+        os.unlink(fp)
+
+
 if __name__ == "__main__":
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     failed = 0

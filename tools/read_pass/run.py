@@ -81,7 +81,8 @@ def _done_seqs(progress_path: str) -> set:
 
 def run(input_path: str, tag: str, api_key: str,
         start: int = 0, limit: int = 0,
-        model: str = "", provider: str = "") -> Dict[str, Any]:
+        model: str = "", provider: str = "",
+        window_chunks: int = group.MAX_WINDOW_CHUNKS) -> Dict[str, Any]:
     # auto-detect provider if not explicit
     if not provider or not api_key:
         p, k, m = comprehend.resolve_provider()
@@ -102,7 +103,8 @@ def run(input_path: str, tag: str, api_key: str,
         return _envelope(False, None, md,
                          [{"code": "no_key", "message": "No LLM key found (set DEEPSEEK_API_KEY or GEMINI_API_KEY)"}])
 
-    g = group.run(input_path)
+    md["window_chunks"] = window_chunks
+    g = group.run(input_path, max_chunks=window_chunks)
     if not g["success"]:
         return _envelope(False, None, md, g["errors"])
 
@@ -189,12 +191,13 @@ def main(argv: List[str]) -> int:
     limit = int(arg("--limit", "0"))
     provider = arg("--provider", "")
     model = arg("--model", "")
+    window_chunks = int(arg("--window-chunks", str(group.MAX_WINDOW_CHUNKS)))
     # auto-detect key from env (deepseek first)
     p, k, m = comprehend.resolve_provider()
     api_key = k
 
     env = run(input_path, tag, api_key, start=start, limit=limit,
-              model=model, provider=provider or p)
+              model=model, provider=provider or p, window_chunks=window_chunks)
 
     if "--json" in argv:
         print(json.dumps(env, indent=2, ensure_ascii=False))
