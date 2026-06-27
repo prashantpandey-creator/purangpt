@@ -2301,6 +2301,103 @@ async def get_chapter(text_id: str, chapter: int, limit: int = 500):
     }
 
 
+# ── Paper Review (Scholar register over a user's own uploaded document) ─────────
+# A "separate room": the same Guru, his Scholar register, turned to critique ANY
+# document the seeker brings — paper, report, essay, or scripture. Isolated from the
+# /api/chat path (no collision, secure by construction): auth + ownership-scoped
+# retrieval (get_doc_chunks) + a dedicated reviewer prompt streamed via stream_llm.
+REVIEW_SYSTEM = """You are reviewing a document the seeker has brought you — in the Scholar register: precise, structured, honest, never flattering. The seeker may bring ANY document (an academic paper, a professional report, an essay, a chapter of scripture). Review it as a rigorous, fair peer reviewer would.
+
+Structure your review with these headings:
+1. **What it is** — one or two sentences: the document's apparent purpose and central claim.
+2. **Strengths** — what genuinely works: argument, evidence, clarity, structure. Be specific.
+3. **Weaknesses & gaps** — unsupported claims, logical gaps, missing evidence, unclear or contradictory passages, structural problems. Locate or quote where you can.
+4. **Questions a careful reader would ask** — the holes a sharp critic would press.
+5. **Concrete suggestions** — actionable and prioritized; what to fix first.
+
+If the document makes claims about Hindu sacred texts (the Puranas, Gita, Upanishads, Mahabharata, Ramayana, etc.), hold those claims to the corpus: state plainly whether each is accurately represented, overreaching, or missing context. NEVER invent a citation; if you are not certain a text says something, say exactly that.
+
+Be direct and useful. Do not pad. Ground every observation in the actual text of the document provided below."""
+
+
+@app.post("/api/workspace/docs/{doc_id}/review")
+async def workspace_doc_review(doc_id: str, lang: str = "en", user: dict = Depends(require_auth)):
+    """Stream a Scholar-register review of the seeker's own uploaded document.
+
+    `lang` honors the app's global language selector (same en/hi/ru map as chat) so the
+    review is generated directly in the seeker's chosen language — not a second pass.
+    """
+    if not state.searcher or not state.searcher.is_ready:
+        raise HTTPException(503, "Search not ready")
+
+    user_id = user["id"]
+
+    # Ownership: the row must belong to this seeker, else 404 (never reveal others').
+    from backend.db_client import get_db_conn
+    conn = get_db_conn()
+    if not conn:
+        raise HTTPException(503, "Database unavailable")
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT title, filename FROM workspace_documents WHERE doc_id = %s AND user_id = %s",
+                (doc_id, user_id),
+            )
+            doc_row = cur.fetchone()
+    finally:
+        conn.close()
+    if not doc_row:
+        raise HTTPException(404, "Document not found")
+    doc_title = (doc_row.get("title") or doc_row.get("filename") or "this document")
+
+    # Owner-scoped retrieval of the document's own chunks (get_doc_chunks guards by
+    # both doc_id AND user_id), assembled within a character budget for the prompt.
+    chunks = await state.searcher.get_doc_chunks(doc_id, user_id, limit=80)
+    if not chunks:
+        raise HTTPException(404, "Document has no readable content yet (still ingesting?)")
+
+    MAX_CHARS = 16000
+    parts: list[str] = []
+    total = 0
+    for c in chunks:
+        t = (c.get("text") or "").strip()
+        if not t:
+            continue
+        if total + len(t) > MAX_CHARS:
+            parts.append(t[: max(0, MAX_CHARS - total)])
+            break
+        parts.append(t)
+        total += len(t)
+    doc_text = "\n\n".join(parts)
+
+    # Global language selector (same map as the chat path) — generate the review
+    # directly in the seeker's chosen language.
+    _lang_name = {"en": "English", "hi": "Hindi", "ru": "Russian"}.get((lang or "en").lower(), "English")
+    system_content = REVIEW_SYSTEM
+    if _lang_name != "English":
+        system_content += f"\n\nWrite your ENTIRE review in {_lang_name}. Keep proper nouns and any Sanskrit terms in their standard form, but all prose, headings, and analysis must be in {_lang_name}."
+
+    messages = [
+        {"role": "system", "content": system_content},
+        {"role": "user", "content": f"Document title: {doc_title}\n\n--- DOCUMENT ---\n{doc_text}\n--- END DOCUMENT ---\n\nProvide your review."},
+    ]
+
+    async def review_gen():
+        yield {"data": json.dumps({"type": "status", "message": "📖 Reading your document…"})}
+        try:
+            async for item in stream_llm(messages, temperature=0.3):
+                if isinstance(item, dict):
+                    yield {"data": json.dumps(item)}
+                else:
+                    yield {"data": json.dumps({"type": "token", "content": item})}
+        except Exception as e:  # never crash the stream — surface a clean error event
+            logger.error("workspace review stream failed for %s: %s", doc_id, e)
+            yield {"data": json.dumps({"type": "error", "message": "Review could not be completed. Please try again."})}
+        yield {"data": json.dumps({"type": "done"})}
+
+    return EventSourceResponse(safe_sse_stream(review_gen()), headers={"X-Accel-Buffering": "no"})
+
+
 class InferRequest(BaseModel):
     topic: str
     mode: str = "synthesis"      # synthesis | contradiction | evolution | practical

@@ -491,6 +491,33 @@ class HybridSearcher:
             results.append({**meta, "id": row['id'], "text": row['content']})
         return results
 
+    async def get_doc_chunks(
+        self, doc_id: str, user_id: str, limit: int = 80
+    ) -> list[dict[str, Any]]:
+        """Fetch a workspace document's own chunks, in order — scoped to its owner.
+
+        The `metadata @> {doc_id, user_id}` containment is the whole guard: a chunk is
+        returned only when BOTH its doc_id and user_id match, so one seeker can never
+        read another seeker's uploaded document. Used by the paper-review endpoint to
+        assemble the text the Guru reviews.
+        """
+        if not self._pool:
+            return []
+        filter_meta = json.dumps({"doc_id": doc_id, "user_id": user_id})
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch('''
+                SELECT id, content, metadata
+                FROM purana_verses
+                WHERE metadata @> $1::jsonb
+                ORDER BY id
+                LIMIT $2
+            ''', filter_meta, limit)
+        results = []
+        for row in rows:
+            meta = json.loads(row['metadata']) if isinstance(row['metadata'], str) else row['metadata']
+            results.append({**meta, "id": row['id'], "text": row['content']})
+        return results
+
     # ── Purana Statistics ──────────────────────────────────────────────
 
     def get_purana_stats(self) -> list[dict[str, Any]]:
