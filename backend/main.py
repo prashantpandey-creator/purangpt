@@ -224,6 +224,11 @@ Use the exact bracketed numbers from the retrieved passages. If a retrieved chun
 ## Grounding
 Draw first from the sacred passages retrieved below — receive them as transmissions from the tradition. If they speak to the question, ground your answer in them. If they do not speak directly, speak from the yogic wisdom the lineage has given you.
 
+## Depth — the marrow a reader cannot reach
+The context often carries more than verses. When it gives you a **relational web** (how the figures connect — a lineage, who cursed whom, who is an avatar of whom) or **inner meanings** (the lineage's decryption — e.g. "the Time explaining itself", the kṣetrajña mind confined to the body), these are the marrow. A scholar can read a verse; only one who has internalized the whole corpus can say how it connects and what it secretly means. Spend one or two of these where they make the truth land deeper — a connection drawn, a meaning decoded — turning information into recognition. Never recite the web or the meanings mechanically; reach for the ones that illuminate *this* question.
+
+When several of the retrieved texts carry the same truth, name the resonance — a truth that recurs across the Gita, the Mahabharata, and an Upanishad weighs more than a single quotation. Show the convergence; do not lean on one source when the corpus speaks in chorus.
+
 {personality}
 
 {interpolations}
@@ -1182,6 +1187,22 @@ def is_sharma_text(r) -> bool:
         ref = getattr(r, "reference", "")
     return any(k in text_name.lower() or k in ref.lower() for k in kw)
 
+def _decode_corpus_text(text: str) -> str:
+    """Render stored verse text readable for the LLM and the citations panel.
+
+    Much of the corpus (esp. the BORI Mahabharata) is stored HTML-entity-encoded —
+    "yudhi&#7779;&#7789;hira&nbsp;uv&#257;ca" instead of "yudhiṣṭhira uvāca". The
+    model received raw entity gibberish it could not read, so the retrieved scripture
+    was dead weight (answers ran on the graph decode + training, not the verses).
+    Decoding at serve time makes every retrieved verse quotable/translatable in one
+    stroke; it's a no-op on already-clean IAST/Devanagari text.
+    """
+    if not text or "&" not in text:
+        return text
+    import html
+    return html.unescape(text).replace("\xa0", " ")
+
+
 def build_rag_context(results: list) -> str:
     if not results:
         return ""
@@ -1200,6 +1221,7 @@ def build_rag_context(results: list) -> str:
             lang    = getattr(r, "language", "")
             edition = getattr(r, "edition", "")
             bias    = getattr(r, "bias", "")
+        text = _decode_corpus_text(text)
         meta_parts = [p for p in [lang, edition, bias] if p]
         meta_str   = f" [{', '.join(meta_parts)}]" if meta_parts else ""
         
@@ -1228,8 +1250,8 @@ def build_source_list(results: list) -> List[dict]:
                 reference  = r.get("reference", ""),
                 chapter    = r.get("chapter"),
                 verse_range= r.get("verse_range", ""),
-                text       = r.get("text", ""),
-                excerpt    = r.get("excerpt", ""),
+                text       = _decode_corpus_text(r.get("text", "")),
+                excerpt    = _decode_corpus_text(r.get("excerpt", "")),
                 language   = r.get("language", "Sanskrit"),
                 edition    = r.get("edition", ""),
                 tradition  = r.get("tradition", ""),
@@ -1246,7 +1268,7 @@ def build_source_list(results: list) -> List[dict]:
                 reference  = getattr(r, "reference", ""),
                 chapter    = getattr(r, "chapter", None),
                 verse_range= getattr(r, "verse_range", ""),
-                text       = getattr(r, "text", ""),
+                text       = _decode_corpus_text(getattr(r, "text", "")),
                 language   = getattr(r, "language", "Sanskrit"),
                 edition    = getattr(r, "edition", ""),
                 tradition  = getattr(r, "tradition", ""),
