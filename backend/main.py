@@ -100,7 +100,7 @@ INTERNAL_SERVICE_KEY = os.getenv("INTERNAL_SERVICE_KEY", "")
 
 
 from backend.auth import get_current_user, require_auth, require_role, get_guest_id, check_guest_rate_limit, consume_guest_unit, increment_guest_usage, validate_query
-from backend.db_client import update_profile, get_admin_stats, get_all_users, encrypt_keys, decrypt_keys, increment_usage, check_rate_limit, consume_message_unit, check_research_limit, increment_research_usage
+from backend.db_client import update_profile, get_admin_stats, get_all_users, encrypt_keys, decrypt_keys, increment_usage, check_rate_limit, consume_message_unit, check_research_limit, increment_research_usage, FREE_DAILY_TOKENS
 
 from backend.session_manager import SessionManager
 from backend.monitor import run_health_checks
@@ -1522,7 +1522,7 @@ async def get_user_limits(req: Request, user: Optional[dict] = Depends(get_curre
         }
     else:
         role = user.get("role", "free")
-        allowed, rem = check_rate_limit(user.get("id"), role, is_byok=is_byok)
+        allowed, rem, _used = check_rate_limit(user.get("id"), role, is_byok=is_byok)
         r_allowed, r_rem = check_research_limit(user.get("id"), role, is_byok=is_byok)
         
         max_msgs = 999999 if role in ["pro", "scholar", "admin"] or is_byok else 10
@@ -1579,23 +1579,24 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
     # Check BYOK
     is_byok = bool(custom_keys_var.get())
 
-    # Rate Limiting — atomically consume one unit at the gate so concurrent
-    # requests can't each pass a pre-flight read and overrun the limit. The DB
-    # ops are sync, so run them in a threadpool to avoid blocking the event loop.
+    # Rate Limiting. Guests use the atomic per-message gate (consume_guest_unit).
+    # Signed-in free users are on a TOKEN budget: token cost isn't known until the
+    # stream finishes, so the gate is a read-only pre-flight check and the actual
+    # tokens are added after the stream. A small concurrent overshoot is acceptable
+    # for a soft token budget (unlike message counts, where a race gave N× the cap).
+    # The DB ops are sync, so run them in a threadpool to avoid blocking the loop.
+    current_usage_tokens = 0
     if not user:
         guest_id = get_guest_id(req)
         allowed, rem = await asyncio.to_thread(consume_guest_unit, guest_id)
         if not allowed:
-            raise HTTPException(429, "Guest rate limit exceeded. Please sign in.")
+            raise HTTPException(429, "Guest rate limit exceeded. Please sign in to continue.")
     else:
-        # Atomically gate AND consume at the door — concurrent requests can't each
-        # pass a read-only pre-flight and overrun the cap (the old fire-and-forget
-        # increment after the stream left exactly that race open).
-        allowed, rem = await asyncio.to_thread(
-            consume_message_unit, user.get("id"), user.get("role", "free"), is_byok
+        allowed, rem, current_usage_tokens = await asyncio.to_thread(
+            check_rate_limit, user.get("id"), user.get("role", "free"), is_byok
         )
         if not allowed:
-            raise HTTPException(429, "Daily message limit exceeded. Please upgrade your plan.")
+            raise HTTPException(429, "You've used all your free tokens for today. Upgrade to Pro for unlimited access.")
     if not any_llm_configured():
         raise HTTPException(503, "No LLM credentials configured")
 
@@ -1622,6 +1623,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         return EventSourceResponse(safe_sse_stream(deep_gen()), headers={"X-Accel-Buffering": "no"})
 
     # ── Standard Chat ────────────────────────────────────────────────────────
+    user_role = user.get("role", "free") if user else "guest"
     # Fetch session early so event_gen can read history_len before its own get_session call.
     session_data = session_manager.get_session(session_id, user_id, guest_id)
 
@@ -1972,23 +1974,33 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             {"role": "assistant", "content": full_text}
         ], user_id, guest_id)
 
-        # Both guest units AND free-user message units are now consumed atomically
-        # at the gate (consume_guest_unit / consume_message_unit). Here we only
-        # write the analytics usage_log — log_only=True so the count isn't bumped
-        # a second time.
+        # Estimate token usage: (prompt chars + completion chars) / 4 — the standard
+        # approximation, avoiding per-provider streaming API changes.
+        tokens_used = (len(request.query) + len(full_text)) // 4
+
+        # The gate is read-only for token budgets (cost isn't known upfront), so we
+        # record the message + token consumption here, after the stream completes.
         if user:
             asyncio.create_task(asyncio.to_thread(
-                increment_usage, user.get("id"), session_id, None, True
+                increment_usage, user.get("id"), session_id, None, tokens_used
             ))
 
-        # 7. Done signal with source metadata
+        # Compute token totals for the frontend meter. The DB write is async so
+        # we add locally for immediate feedback without an extra round-trip.
+        is_free = user and user_role not in ("pro", "scholar", "admin")
+        usage_after = (current_usage_tokens + tokens_used) if is_free else None
+        token_limit = FREE_DAILY_TOKENS if is_free else None
+
+        # 7. Done signal with source metadata + token usage
         yield {"data": json.dumps({
-            "type":         "done",
-            "session_id":   session_id,
-            "history_len":  len(saved_session["history"]),
-            "sources_used": [s.get("text_name") or s.get("purana","") for s in all_sources[:4]],
-            "grounding_quality": grounding_quality,
-            "total_sources_found": len(all_sources)
+            "type":               "done",
+            "session_id":         session_id,
+            "history_len":        len(saved_session["history"]),
+            "sources_used":       [s.get("text_name") or s.get("purana","") for s in all_sources[:4]],
+            "grounding_quality":  grounding_quality,
+            "total_sources_found": len(all_sources),
+            "usage_tokens":       usage_after,
+            "usage_token_limit":  token_limit,
         })}
 
     return EventSourceResponse(safe_sse_stream(event_gen()), headers={"X-Accel-Buffering": "no"})
@@ -3000,7 +3012,7 @@ async def get_user_usage(user: dict = Depends(require_auth)):
     is_byok = bool(custom_keys_var.get())
     profile = get_profile(user["id"]) or {}
     
-    msg_allowed, msg_rem = check_rate_limit(user["id"], user.get("role", "free"), is_byok=is_byok)
+    msg_allowed, msg_rem, _used = check_rate_limit(user["id"], user.get("role", "free"), is_byok=is_byok)
     res_allowed, res_rem = check_research_limit(user["id"], user.get("role", "free"), is_byok=is_byok)
     
     return {

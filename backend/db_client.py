@@ -189,36 +189,41 @@ def update_profile(user_id: str, data: dict):
     finally:
         conn.close()
 
-def check_rate_limit(user_id: str, role: str, is_byok: bool = False) -> tuple[bool, int]:
-    """Check if the user has exceeded their daily message limit."""
+# Free users get this many tokens per day (prompt + completion combined).
+# ~4 chars ≈ 1 token; 50k tokens ≈ 50-100 typical exchanges.
+FREE_DAILY_TOKENS = int(os.getenv("FREE_DAILY_TOKENS", "50000"))
+
+def check_rate_limit(user_id: str, role: str, is_byok: bool = False) -> tuple[bool, int, int]:
+    """Check if the user has exceeded their daily token budget.
+    Returns (allowed, remaining_tokens, current_tokens_used).
+    Pro/Scholar/Admin/BYOK users are always allowed."""
     if role in ["pro", "scholar", "admin"] or is_byok:
-        return True, 999999
-        
+        return True, 999999, 0
+
     profile = get_profile(user_id)
     if not profile:
-        return False, 0
-        
-    limit = 10 # Free tier limit
-    
-    # Check if we need to reset the daily count
+        return False, 0, FREE_DAILY_TOKENS
+
+    # Reset daily counts if the calendar day has rolled over
     last_reset = profile.get("daily_reset_at")
     try:
         last_reset_dt = datetime.fromisoformat(last_reset.replace('Z', '+00:00')) if last_reset else datetime.min.replace(tzinfo=timezone.utc)
-    except:
+    except Exception:
         last_reset_dt = datetime.min.replace(tzinfo=timezone.utc)
-        
+
     now = datetime.now(timezone.utc)
     if now.date() > last_reset_dt.date():
-        # Reset count
         update_profile(user_id, {
             "daily_message_count": 0,
+            "daily_tokens_used": 0,
             "deep_research_count": 0,
             "daily_reset_at": now
         })
-        return True, limit
-        
-    count = profile.get("daily_message_count", 0) or 0
-    return count < limit, limit - count
+        return True, FREE_DAILY_TOKENS, 0
+
+    current_tokens = profile.get("daily_tokens_used", 0) or 0
+    remaining = max(0, FREE_DAILY_TOKENS - current_tokens)
+    return current_tokens < FREE_DAILY_TOKENS, remaining, current_tokens
 
 
 def consume_message_unit(user_id: str, role: str, is_byok: bool = False) -> tuple[bool, int]:
@@ -302,25 +307,29 @@ def check_research_limit(user_id: str, role: str, is_byok: bool = False) -> tupl
     count = profile.get("deep_research_count", 0) or 0
     return count < limit, limit - count
 
-def increment_usage(user_id: str, session_id: str = None, model: str = None, log_only: bool = False):
-    """Log a message's usage, and (unless log_only) bump the daily message count.
+def increment_usage(user_id: str, session_id: str = None, model: str = None, tokens_used: int = 0):
+    """Record a message's usage after the stream completes — atomically.
+    Bumps the daily message count AND the daily token budget consumed, and writes
+    the analytics usage_log row. tokens_used is estimated as
+    (prompt_chars + completion_chars) // 4. Both bumps are single SQL UPDATEs
+    (not Python read-modify-write), so concurrent requests never lose increments.
 
-    When the unit has already been consumed atomically at the gate
-    (consume_message_unit), pass log_only=True so the count is NOT bumped a second
-    time — this writes the analytics row only. Default (log_only=False) preserves
-    the original count-and-log behaviour for any other caller.
-
-    The count bump is a single `SET count = count + 1` in SQL (not a Python
-    read-modify-write), so it never loses concurrent increments."""
+    Note: free-user token budgets are gated read-only at the door (check_rate_limit)
+    rather than atomically consumed, because token cost isn't known until the
+    stream finishes — so this is where the daily counters actually advance."""
     conn = get_db_conn()
     if not conn: return
+    tokens_used = max(0, int(tokens_used))
     try:
         with conn.cursor() as cur:
-            if not log_only:
-                cur.execute(
-                    "UPDATE profiles SET daily_message_count = daily_message_count + 1, updated_at = NOW() WHERE id = %s",
-                    (user_id,),
-                )
+            cur.execute(
+                """UPDATE profiles
+                   SET daily_message_count = daily_message_count + 1,
+                       daily_tokens_used = daily_tokens_used + %s,
+                       updated_at = NOW()
+                   WHERE id = %s""",
+                (tokens_used, user_id),
+            )
             cur.execute(
                 "INSERT INTO usage_logs (user_id, session_id, model_used, created_at) VALUES (%s, %s, %s, NOW())",
                 (user_id, session_id, model)
