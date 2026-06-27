@@ -3165,7 +3165,13 @@ async def revenuecat_webhook(req: Request):
         # We can configure an Authorization header in the RevenueCat dashboard for security
         auth_header = req.headers.get("Authorization")
         expected_auth = os.getenv("REVENUECAT_WEBHOOK_AUTH", "")
-        if expected_auth and auth_header != expected_auth:
+        # Fail CLOSED: without a configured shared secret we cannot authenticate
+        # the caller, so we must reject — otherwise anyone could POST a fake
+        # purchase event and grant Pro to any user_id they name.
+        if not expected_auth:
+            logger.error("RevenueCat webhook hit but REVENUECAT_WEBHOOK_AUTH is unset — rejecting (fail closed).")
+            raise HTTPException(503, "Webhook auth not configured")
+        if auth_header != expected_auth:
             raise HTTPException(401, "Unauthorized webhook source")
 
         payload = await req.json()
@@ -3194,27 +3200,12 @@ async def revenuecat_webhook(req: Request):
                 })
                 
         return {"status": "success"}
+    except HTTPException:
+        # Auth rejections (401/503) must surface as-is, not be masked as a 500.
+        raise
     except Exception as e:
         logger.error(f"RevenueCat webhook error: {e}")
         raise HTTPException(500, "Internal Server Error")
-
-@app.post("/api/billing/dev-simulate-upgrade")
-async def dev_simulate_upgrade(data: dict, user: dict = Depends(require_auth)):
-    user_id = user["id"]
-    plan = data.get("plan", "pro")
-    if plan not in ["free", "pro", "scholar"]:
-        raise HTTPException(400, "Invalid plan")
-        
-    success = activate_user_subscription(
-        user_id=user_id,
-        plan=plan,
-        provider="simulated",
-        external_sub_id=f"sim_{user_id}_{plan}"
-    )
-    if not success:
-        raise HTTPException(500, "Failed to update subscription profile")
-        
-    return {"success": True, "new_role": plan}
 
 @app.post("/api/iap/apple/verify")
 async def apple_iap_verify(data: dict, user: dict = Depends(require_auth)):

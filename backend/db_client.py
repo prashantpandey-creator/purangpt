@@ -128,6 +128,18 @@ def get_profile(user_id: str) -> dict:
             cur.execute("SELECT * FROM profiles WHERE id = %s", (user_id,))
             row = cur.fetchone()
             if row:
+                # Effective-role expiry (done BEFORE the datetime→ISO conversion
+                # below, while subscription_expires_at is still a datetime):
+                # a paid role whose subscription has lapsed is treated as 'free'.
+                # Without this, one-time Razorpay payments and Stripe subs that
+                # miss a downgrade webhook would grant Pro forever. 'admin' and
+                # rows with no expiry (NULL) are never touched.
+                expires = row.get("subscription_expires_at")
+                if row.get("role") in ("pro", "scholar") and isinstance(expires, datetime):
+                    exp = expires if expires.tzinfo else expires.replace(tzinfo=timezone.utc)
+                    if exp < datetime.now(timezone.utc):
+                        row["role"] = "free"
+                        row["subscription_status"] = "expired"
                 # Convert timestamps to ISO format strings for compatibility
                 for k, v in row.items():
                     if isinstance(v, datetime):

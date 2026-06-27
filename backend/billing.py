@@ -243,8 +243,12 @@ def verify_razorpay_payment(razorpay_order_id: str, razorpay_payment_id: str, ra
     Verifies Razorpay payment signature.
     """
     if not is_razorpay_configured():
-        # Allow validation for mock payments
-        return razorpay_order_id.startswith("mock_")
+        # Fail CLOSED: if Razorpay isn't configured we cannot verify a real
+        # signature, so we must NOT grant access. (Previously this accepted any
+        # order id starting with "mock_", letting anyone self-grant Pro when the
+        # backend's Razorpay keys were unset.)
+        logger.error("verify_razorpay_payment called but Razorpay is not configured — rejecting.")
+        return False
 
     try:
         params_dict = {
