@@ -1522,7 +1522,7 @@ async def get_user_limits(req: Request, user: Optional[dict] = Depends(get_curre
         }
     else:
         role = user.get("role", "free")
-        allowed, rem = check_rate_limit(user.get("id"), role, is_byok=is_byok)
+        allowed, rem, _used = check_rate_limit(user.get("id"), role, is_byok=is_byok)
         r_allowed, r_rem = check_research_limit(user.get("id"), role, is_byok=is_byok)
         
         max_msgs = 999999 if role in ["pro", "scholar", "admin"] or is_byok else 10
@@ -3012,7 +3012,7 @@ async def get_user_usage(user: dict = Depends(require_auth)):
     is_byok = bool(custom_keys_var.get())
     profile = get_profile(user["id"]) or {}
     
-    msg_allowed, msg_rem = check_rate_limit(user["id"], user.get("role", "free"), is_byok=is_byok)
+    msg_allowed, msg_rem, _used = check_rate_limit(user["id"], user.get("role", "free"), is_byok=is_byok)
     res_allowed, res_rem = check_research_limit(user["id"], user.get("role", "free"), is_byok=is_byok)
     
     return {
