@@ -75,5 +75,11 @@ secrets/*.plain.*
 # Commit the RECIPE (code + curated_facts.json), not the generated cake.
 tools/read_pass/out/*
 !tools/read_pass/out/curated_facts.json
+# ...EXCEPT the "compiled brain": graph_manifest + guruji_ram are needed to RUN the
+# engine + tests and are already tracked on `main` for deploy. Track them here too so
+# a branch switch can NEVER delete the moat again (see PROJECT_LEDGER 2026-06-27
+# "MOAT IS SPLIT"). The bulk 147MB of records/caches stays ignored.
+!tools/read_pass/out/graph_manifest.json
+!tools/read_pass/out/guruji_ram.json
 undefined/
 The_Awakener_EN.pdf
