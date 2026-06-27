@@ -65,6 +65,66 @@ def _get_memory():
     return _memory
 
 
+# The clean, directional transmission edge: src is the guru, dst the disciple.
+# (The fuzzier `guru`/`disciple` rels carry known direction bugs — see
+# GRAPH_CORRECTIONS.md — so the spine walk uses ONLY guru_of.)
+_GURU_REL = "guru_of"
+
+
+def _norm_name(s: str) -> str:
+    return (s or "").strip().lower()
+
+
+def _lineage_chain(mem, seed_names, max_len: int = 8):
+    """Assemble the guru→disciple transmission SPINE through any seed.
+
+    THE FIX: recall is one-hop, and a high-degree node (Babaji) crowds the
+    relationship cap, so the multi-hop lineage drifts to Yogananda instead of the
+    real Sharma spine. This walks the clean `guru_of` edges to root-then-leaf and
+    returns the ordered chain, e.g. ['Babaji', 'Lahiri Mahasaya', 'Tinkori Lahiri',
+    'Satyacharan Lahiri', 'Shailendra Sharma'] — or [] if no seed sits on a chain.
+    Never raises (fail-graceful)."""
+    try:
+        fwd, rev = {}, {}
+        for e in getattr(mem, "edges", []) or []:
+            if (e.get("rel") or "").strip().lower() != _GURU_REL:
+                continue
+            s, d = e.get("src_name"), e.get("dst_name")
+            if not s or not d or s == d:
+                continue
+            fwd.setdefault(s, set()).add(d)
+            rev.setdefault(d, set()).add(s)
+        if not fwd:
+            return []
+        members = set(fwd) | set(rev)
+        seeds_n = [_norm_name(s) for s in seed_names if _norm_name(s)]
+        matched = [m for m in members
+                   if any(sn in _norm_name(m) or _norm_name(m) in sn for sn in seeds_n)]
+        if not matched:
+            return []
+        best = []
+        for m in matched:
+            root, seen = m, set()
+            while rev.get(root) and root not in seen:  # climb to the root guru
+                seen.add(root)
+                root = sorted(rev[root])[0]
+            chain, seen, cur = [root], {root}, root
+            while fwd.get(cur):                          # descend through disciples
+                nxt = sorted(fwd[cur] - seen)
+                if not nxt:
+                    break
+                cur = nxt[0]
+                chain.append(cur)
+                seen.add(cur)
+                if len(chain) >= max_len:
+                    break
+            if len(chain) > len(best):
+                best = chain
+        return best if len(best) >= 2 else []
+    except Exception:  # noqa — never break a chat turn over the lineage walk
+        return []
+
+
 def build_graph_context(query: str, *, enabled: Optional[bool] = None) -> str:
     """The injectable graph block for the chat `{context}` slot, or "".
 
@@ -83,6 +143,17 @@ def build_graph_context(query: str, *, enabled: Optional[bool] = None) -> str:
         if not env.get("success"):
             return ""
         block = recall.render_context(env.get("data") or {})
+        # Lineage spine (the fix): one-hop recall drops the multi-hop guru chain, so
+        # surface the REAL transmission line at the TOP — walk guru_of through every
+        # recalled figure: Babaji → Lahiri → Tinkori → Satyacharan → Shailendra Sharma.
+        try:
+            names = [e.get("name", "") for e in (env.get("data") or {}).get("entities", [])]
+            chain = _lineage_chain(mem, names)
+            if len(chain) >= 3:
+                spine = "Lineage of transmission (guru to disciple): " + " → ".join(chain)
+                block = (spine + "\n\n" + block) if block else spine
+        except Exception:  # noqa — spine is a bonus; never break the block over it
+            pass
         return block or ""
     except Exception as e:  # noqa — a graph hiccup must never break a chat turn
         logger.warning("build_graph_context failed (%s) — degrading to no graph context",

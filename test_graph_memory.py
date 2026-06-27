@@ -81,6 +81,41 @@ def test_nonsense_query_returns_empty():
     assert out == "", f"nonsense should recall nothing, got: {out[:120]}"
 
 
+def test_lineage_chain_assembles_full_sharma_spine():
+    # THE FIX: recall is one-hop, so the multi-hop guru spine drifted to Yogananda.
+    # _lineage_chain walks the clean guru_of edges to assemble the REAL transmission
+    # chain through any seed. Babaji must resolve all the way to Shailendra Sharma.
+    from tools.read_pass import recall
+    _reset()
+    mem = recall.Memory.load(gm._GRAPH_PATH, gm._RAM_PATH)
+    chain = gm._lineage_chain(mem, ["Babaji"])
+    joined = " → ".join(chain)
+    for link in ["Babaji", "Lahiri Mahasaya", "Tinkori Lahiri",
+                 "Satyacharan Lahiri", "Shailendra Sharma"]:
+        assert link in joined, f"spine missing {link!r}: {joined}"
+    # order: guru precedes disciple
+    assert joined.index("Babaji") < joined.index("Lahiri Mahasaya") < \
+           joined.index("Tinkori Lahiri") < joined.index("Satyacharan Lahiri") < \
+           joined.index("Shailendra Sharma"), f"out of order: {joined}"
+
+
+def test_lineage_chain_empty_when_no_guru_seed():
+    from tools.read_pass import recall
+    _reset()
+    mem = recall.Memory.load(gm._GRAPH_PATH, gm._RAM_PATH)
+    assert gm._lineage_chain(mem, ["zzqx nonsense entity"]) == []
+
+
+def test_build_context_surfaces_the_spine_for_lineage_query():
+    # end-to-end: the lineage cue's block now NAMES the Sharma spine, not Yogananda
+    _reset()
+    block = gm.build_graph_context(
+        "Who is Babaji, and how is he connected to Lahiri Mahasaya and the Kriya lineage?",
+        enabled=True)
+    assert "Shailendra Sharma" in block, f"spine not surfaced: {block[:300]}"
+    assert "Satyacharan" in block and "Tinkori" in block, f"chain incomplete: {block[:300]}"
+
+
 def test_singleton_loads_once_not_per_call():
     # the 8.8MB graph must load once and be cached (latency: 83ms once, not per query)
     _reset()
