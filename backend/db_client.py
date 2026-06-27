@@ -214,7 +214,9 @@ def check_rate_limit(user_id: str, role: str, is_byok: bool = False) -> tuple[bo
 
     profile = get_profile(user_id)
     if not profile:
-        return False, 0, FREE_DAILY_TOKENS
+        # Brand-new signed-in user whose profile row hasn't been created yet —
+        # allow with the full daily budget rather than 429-ing their first message.
+        return True, FREE_DAILY_TOKENS, 0
 
     # Reset daily counts if the calendar day has rolled over
     last_reset = profile.get("daily_reset_at")

@@ -1993,10 +1993,15 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
 
         # The gate is read-only for token budgets (cost isn't known upfront), so we
         # record the message + token consumption here, after the stream completes.
+        # AWAIT it (rather than fire-and-forget): a dropped/errored background task
+        # silently lost the token bump, letting free users run well past the cap.
         if user:
-            asyncio.create_task(asyncio.to_thread(
-                increment_usage, user.get("id"), session_id, None, tokens_used
-            ))
+            try:
+                await asyncio.to_thread(
+                    increment_usage, user.get("id"), session_id, None, tokens_used
+                )
+            except Exception as e:
+                logger.error("increment_usage failed for %s: %s", user.get("id"), e)
 
         # Compute token totals for the frontend meter. The DB write is async so
         # we add locally for immediate feedback without an extra round-trip.

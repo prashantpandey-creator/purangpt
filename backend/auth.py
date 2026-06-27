@@ -170,10 +170,16 @@ def get_client_ip(request: Request) -> str:
     """
     forwarded = request.headers.get("X-Forwarded-For")
     if forwarded:
-        # Take the first (leftmost) IP — that's the original client
-        ip = forwarded.split(",")[0].strip()
-        if ip:
-            return ip
+        parts = [p.strip() for p in forwarded.split(",") if p.strip()]
+        if parts:
+            # X-Forwarded-For is client-controllable on the LEFT: a client can
+            # prepend a fake IP to rotate the guest rate-limit key and get
+            # unlimited free LLM calls. Our own trusted proxy (Traefik) appends
+            # the real peer on the RIGHT, so index from the right by the number
+            # of trusted hops (default 1) to get the IP our proxy actually saw.
+            hops = max(1, int(os.getenv("TRUSTED_PROXY_HOPS", "1")))
+            idx = len(parts) - hops
+            return parts[idx] if 0 <= idx < len(parts) else parts[-1]
     return request.client.host or "unknown"
 
 
