@@ -470,21 +470,60 @@ class HybridSearcher:
             results.append(SearchResult(chunk=chunk, score=float(row['similarity']), rank=rank))
         return results
 
+    # Catalog slug → actual chunk-id prefix, only where they diverge (audited against
+    # the live index 2026-06-27). Every other slug already equals its chunk-id prefix.
+    _SLUG_PREFIX_REMAP = {
+        "bhagavad_gita":   "gita",
+        "brahma_sutras":   "brahmasutras",
+        "gorakshashataka": "goraksha_shataka",
+        "hatha_yoga":      "hatha_yoga_pradipika",
+    }
+
     async def get_chapter_verses(
         self, text_id: str, chapter: int, limit: int = 500
     ) -> list[dict[str, Any]]:
-        """Fetch all verses for a given text + chapter, ordered by verse_range."""
+        """Fetch all verses for a given text + chapter, ordered by id.
+
+        Resolves the caller's text_id to chunks TWO ways, so every caller works:
+        - the corpus reader passes a catalog slug → matched by chunk-id prefix
+          (`id LIKE '{prefix}-{chapter}-%'`); the slug IS the prefix for most texts,
+          with four audited remaps above. This is what the display-name filter alone
+          missed: the index stores `purana` as the long display name
+          ("Vishnu Purana (Critical Edition)"), never the slug.
+        - the citation deep-link + workspace reader pass the metadata `purana`
+          (display name / doc_id) → matched by `metadata @> {purana, chapter}`.
+        The OR covers all three input shapes; the '-{chapter}-' delimiter keeps one
+        text's prefix from bleeding into another's.
+        """
         if not self._pool:
             return []
+        prefix = self._SLUG_PREFIX_REMAP.get(text_id, text_id)
+        # Escape LIKE wildcards so underscores in slugs (yoga_vasistha, shiva_1_7)
+        # match literally, not as the single-char wildcard.
+        esc = prefix.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        id_like = f"{esc}-{chapter}-%"
         filter_meta = json.dumps({"purana": text_id, "chapter": chapter})
         async with self._pool.acquire() as conn:
             rows = await conn.fetch('''
                 SELECT id, content, metadata
                 FROM purana_verses
-                WHERE metadata @> $1::jsonb
+                WHERE id LIKE $1 OR metadata @> $2::jsonb
                 ORDER BY id
-                LIMIT $2
-            ''', filter_meta, limit)
+                LIMIT $3
+            ''', id_like, filter_meta, limit)
+            # Chaptered texts (Mahabharata is the only one — real parvas, no chapter 0)
+            # have nothing at the reader's default chapter 0. Fall back to the text's
+            # lowest actual chapter so "open the text" still lands on its beginning.
+            # ORDER BY id puts chapter 1 first. Flat texts never reach here (their
+            # chapter-0 query already matched), so this only rescues the chaptered case.
+            if not rows:
+                rows = await conn.fetch('''
+                    SELECT id, content, metadata
+                    FROM purana_verses
+                    WHERE id LIKE $1
+                    ORDER BY id
+                    LIMIT $2
+                ''', f"{esc}-%", limit)
         results = []
         for row in rows:
             meta = json.loads(row['metadata']) if isinstance(row['metadata'], str) else row['metadata']

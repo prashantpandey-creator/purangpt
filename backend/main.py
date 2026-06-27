@@ -147,6 +147,15 @@ SOURCE_META: Dict[str, dict] = {
     "bhagavad_gita":  {"lang": "Sanskrit", "edition": "BORI Critical (1966-73)",   "tradition": "mixed",   "bias": "✅ most critical edition"},
 }
 
+
+def _source_meta_for(purana: str) -> dict:
+    """Edition/tradition/bias for a text, from the static SOURCE_META catalog
+    (keyed by the text_id, which is what SearchResult stores as `.purana`).
+    Returns {} for unknown / Guruji texts. Used to populate source-transparency
+    fields, which are NOT carried on SearchResult objects (only `.purana`)."""
+    return SOURCE_META.get(purana or "", {})
+
+
 # ── Prompts ────────────────────────────────────────────────────────────────
 KNOWN_INTERPOLATIONS = """
 ⚠️ KNOWN CONTESTED PASSAGES (always flag these explicitly):
@@ -1213,14 +1222,16 @@ def build_rag_context(results: list) -> str:
             ref  = r.get("reference", "")
             text = r.get("text", "") or r.get("excerpt", "")
             lang = r.get("language", "") or r.get("lang", "")
-            edition = r.get("edition", "")
-            bias    = r.get("bias", "")
+            meta = _source_meta_for(r.get("purana", "") or r.get("text_id", ""))
+            edition = r.get("edition", "") or meta.get("edition", "")
+            bias    = r.get("bias", "")    or meta.get("bias", "")
         else:
             ref     = getattr(r, "reference", "")
             text    = getattr(r, "text", "")
             lang    = getattr(r, "language", "")
-            edition = getattr(r, "edition", "")
-            bias    = getattr(r, "bias", "")
+            meta    = _source_meta_for(getattr(r, "purana", ""))
+            edition = meta.get("edition", "")
+            bias    = meta.get("bias", "")
         text = _decode_corpus_text(text)
         meta_parts = [p for p in [lang, edition, bias] if p]
         meta_str   = f" [{', '.join(meta_parts)}]" if meta_parts else ""
@@ -1242,6 +1253,7 @@ def build_source_list(results: list) -> List[dict]:
             continue
             
         if isinstance(r, dict):
+            meta = _source_meta_for(r.get("purana", "") or r.get("text_id", ""))
             sm = SourceModel(
                 text_id    = r.get("text_id", ""),
                 chunk_id   = r.get("id", "") or r.get("chunk_id", ""),
@@ -1253,13 +1265,14 @@ def build_source_list(results: list) -> List[dict]:
                 text       = _decode_corpus_text(r.get("text", "")),
                 excerpt    = _decode_corpus_text(r.get("excerpt", "")),
                 language   = r.get("language", "Sanskrit"),
-                edition    = r.get("edition", ""),
-                tradition  = r.get("tradition", ""),
-                bias       = r.get("bias", ""),
+                edition    = r.get("edition", "")   or meta.get("edition", ""),
+                tradition  = r.get("tradition", "") or meta.get("tradition", ""),
+                bias       = r.get("bias", "")      or meta.get("bias", ""),
                 score      = float(r.get("score", 0)),
                 line_num   = int(r.get("line_num", 0)),
             )
         else:
+            meta = _source_meta_for(getattr(r, "purana", ""))
             sm = SourceModel(
                 text_id    = getattr(r, "id", ""),
                 chunk_id   = getattr(r, "id", ""),
@@ -1270,9 +1283,9 @@ def build_source_list(results: list) -> List[dict]:
                 verse_range= getattr(r, "verse_range", ""),
                 text       = _decode_corpus_text(getattr(r, "text", "")),
                 language   = getattr(r, "language", "Sanskrit"),
-                edition    = getattr(r, "edition", ""),
-                tradition  = getattr(r, "tradition", ""),
-                bias       = getattr(r, "bias", ""),
+                edition    = meta.get("edition", ""),
+                tradition  = meta.get("tradition", ""),
+                bias       = meta.get("bias", ""),
                 score      = float(getattr(r, "score", 0)),
             )
         sources.append(sm.to_frontend_dict())
@@ -2333,6 +2346,77 @@ async def get_chapter(text_id: str, chapter: int, limit: int = 500):
         "count": len(verses),
         "verses": verses,
     }
+
+
+# ── Illuminate (the reading edition) ───────────────────────────────────────────
+# Turns a chapter's raw verses into a beautiful Markdown edition: each verse numbered,
+# the Sanskrit broken at pada boundaries, a faithful translation beneath (in the
+# seeker's language), speaker attributions for dialogue. Same shape as the guide intro:
+# one LLM pass per (text, chapter, language, offset), cached forever after.
+ILLUMINATE_SYSTEM = """You are formatting a chapter of Hindu scripture into a beautiful, readable edition. You receive raw verses — romanized Sanskrit (IAST), often cluttered with editorial markup ($ & % //, inline markers like bhp_01.01.001, scrape junk). Render them as clean GitHub-flavored Markdown.
+
+For each verse, in order:
+- A bold verse label on its own line: the verse's reference number if discernible (e.g. **1.1**), else a running count.
+- The Sanskrit in *italics*, broken into short lines at natural pada (metrical-foot) boundaries — never one long run. Strip ALL editorial markup and inline markers.
+- Immediately below, a faithful, flowing translation in {language}. Translate the meaning fully; do not merely transliterate, do not omit.
+
+Rules:
+- When verses are spoken dialogue, precede the group with the speaker in bold, e.g. **Sūta said:**
+- Insert a short level-3 heading (###) where the narrative clearly shifts to a new scene or topic.
+- Be faithful. Translate what is there; never invent verses, events, or numbers.
+- Output ONLY the Markdown — no preamble, no "here is", no closing remark."""
+
+_ILLUMINATE_CACHE: dict[str, str] = {}
+
+@app.get("/api/illuminate/{text_id}/{chapter}")
+async def illuminate_chapter(text_id: str, chapter: int, lang: str = "en", offset: int = 0, limit: int = 24):
+    """Stream a beautifully-formatted, translated Markdown edition of a chapter slice.
+
+    One LLM pass per (text, chapter, lang, offset), cached in-memory; a cache hit
+    streams instantly. `lang` honors the global language selector (en/hi/ru)."""
+    if not state.searcher or not state.searcher.is_ready:
+        raise HTTPException(503, "Search not ready")
+
+    _lang_name = {"en": "English", "hi": "Hindi", "ru": "Russian"}.get((lang or "en").lower(), "English")
+    limit = max(1, min(limit, 40))
+    cache_key = f"{text_id}:{chapter}:{lang}:{offset}:{limit}"
+
+    all_verses = await state.searcher.get_chapter_verses(text_id, chapter, offset + limit)
+    verses = all_verses[offset:offset + limit]
+    if not verses:
+        raise HTTPException(404, "No verses to illuminate")
+    raw = "\n".join((v.get("text") or "").strip() for v in verses if (v.get("text") or "").strip())
+
+    system_content = ILLUMINATE_SYSTEM.replace("{language}", _lang_name)
+    messages = [
+        {"role": "system", "content": system_content},
+        {"role": "user", "content": f"Render these raw verses as a beautiful edition in {_lang_name}:\n\n{raw}"},
+    ]
+
+    async def gen():
+        cached = _ILLUMINATE_CACHE.get(cache_key)
+        if cached:
+            yield {"data": json.dumps({"type": "token", "content": cached})}
+            yield {"data": json.dumps({"type": "done"})}
+            return
+        yield {"data": json.dumps({"type": "status", "message": "Illuminating…"})}
+        acc: list[str] = []
+        try:
+            async for item in stream_llm(messages, temperature=0.3):
+                if isinstance(item, dict):
+                    yield {"data": json.dumps(item)}
+                else:
+                    acc.append(item)
+                    yield {"data": json.dumps({"type": "token", "content": item})}
+            full = "".join(acc).strip()
+            if full:
+                _ILLUMINATE_CACHE[cache_key] = full
+        except Exception as e:
+            logger.error("illuminate failed for %s ch %s: %s", text_id, chapter, e)
+            yield {"data": json.dumps({"type": "error", "message": "Could not illuminate this passage."})}
+        yield {"data": json.dumps({"type": "done"})}
+
+    return EventSourceResponse(safe_sse_stream(gen()), headers={"X-Accel-Buffering": "no"})
 
 
 # ── Paper Review (Scholar register over a user's own uploaded document) ─────────
