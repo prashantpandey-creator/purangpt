@@ -206,10 +206,15 @@ class QueryExpansion:
         # anchor (the LLM maps soul/душа/आत्मा → "ātman" every time), so leading with
         # it pulls EN/HI/RU phrasings of one concept to the same vector neighborhood.
         # Then the English gloss, then the (more variable) synonyms for recall.
-        if self.canonical and gloss:
-            head = f"{self.canonical}. {gloss}"
+        # IAST is always lowercase — a capitalised canonical ("Nārada") with
+        # "query: " prefix hits a dead zone in e5-small's embedding space (0 hits;
+        # proven live). Lowercase before building the head so the vector lands in
+        # the same neighbourhood regardless of LLM capitalisation drift.
+        _canon_lc = self.canonical.lower() if self.canonical else ""
+        if _canon_lc and gloss:
+            head = f"{_canon_lc}. {gloss}"
         else:
-            head = self.canonical or gloss
+            head = _canon_lc or gloss
         syn = ", ".join(self.synonyms[:4])
         return f"{head}. Related: {syn}" if syn else head
 

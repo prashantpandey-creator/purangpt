@@ -309,6 +309,12 @@ class HybridSearcher:
             import asyncio
             loop = asyncio.get_running_loop()
             phrase_to_embed = embed_phrase if embed_phrase else f"query: {query}"
+            # e5 instruction-tuning: "query: " prefix puts the vector into query space
+            # (aligned with "passage: " indexed documents). Without it, statement-form
+            # embed phrases encode as passages and return 0 cosine-similarity hits
+            # (proven live: "Narada visiting Vishnu in Vaikuntha" → 0 rows without prefix).
+            if not phrase_to_embed.startswith("query: ") and not phrase_to_embed.startswith("passage: "):
+                phrase_to_embed = "query: " + phrase_to_embed
             phrases = [phrase_to_embed]
             if secondary_embed_phrase:
                 phrases.append(f"query: {secondary_embed_phrase}")
