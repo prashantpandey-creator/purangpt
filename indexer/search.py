@@ -13,7 +13,9 @@ import json
 import logging
 import math
 import os
+import re
 import hashlib
+import unicodedata
 import asyncpg
 from typing import Any, Optional
 
@@ -85,6 +87,84 @@ class SearchResult:
 
     def __repr__(self) -> str:
         return f"SearchResult({self.reference!r}, score={self.score:.3f})"
+
+
+# ── Ranking helpers (pure, unit-tested in test_search_ranking.py) ───────────
+
+FLOOR_REL_FRAC = 0.55
+
+
+def _floor_keep(rel: float, top_score: float, frac: float = FLOOR_REL_FRAC) -> bool:
+    """Gate for scripture-floor injection. The floor exists to give broad English
+    thematic queries cross-text breadth — there, every category pool returns a hit
+    that scores NEAR the best, so it passes. A narrow named-entity query drops
+    off-topic pools whose scores fall below the fraction threshold."""
+    if top_score <= 0:
+        return True
+    return rel >= frac * top_score
+
+
+def _mmr_select(results: list["SearchResult"], top_k: int,
+                mmr_lambda: float = 0.7) -> list["SearchResult"]:
+    """MMR with diversity penalty scaled by the candidate's OWN score.
+    A weakly-relevant chunk from a fresh source can never out-rank a strongly-relevant
+    one already shown — the old `max_rrf` global let parity-injected off-topic chunks
+    leapfrog genuine results."""
+    ordered = sorted(results, key=lambda x: x.score, reverse=True)
+    final: list["SearchResult"] = []
+    selected_sources: list[str] = []
+    candidates = list(ordered)
+    while len(final) < top_k and candidates:
+        if not final:
+            best = candidates.pop(0)
+            final.append(SearchResult(chunk=best.chunk, score=best.score, rank=0))
+            selected_sources.append(best.purana)
+            continue
+        source_counts: dict[str, int] = {}
+        for src in selected_sources:
+            source_counts[src] = source_counts.get(src, 0) + 1
+        best_mmr, best_idx = -math.inf, 0
+        for i, cand in enumerate(candidates):
+            overlap = source_counts.get(cand.purana, 0)
+            diversity_penalty = overlap * 0.15 * cand.score
+            mmr_score = mmr_lambda * cand.score - (1.0 - mmr_lambda) * diversity_penalty
+            if mmr_score > best_mmr:
+                best_mmr, best_idx = mmr_score, i
+        chosen = candidates.pop(best_idx)
+        final.append(SearchResult(chunk=chosen.chunk, score=chosen.score, rank=len(final)))
+        selected_sources.append(chosen.purana)
+    return final
+
+
+_IAST_FOLD = str.maketrans(
+    "āĀīĪūŪṛṚṝḷṃṄṅñṭṬḍḌṇṆśŚṣṢḥḤ",
+    "aaiiuurrrlmnnnttddnnsssshh",
+)
+_KW_SKIP = frozenset({"and", "the", "or", "with", "what", "how", "who", "was",
+                      "for", "from", "that", "this", "about", "does", "did"})
+
+
+def _iast_ascii(text: str) -> str:
+    """Fold IAST diacritics to ASCII for cross-script substring matching."""
+    return unicodedata.normalize("NFC", text).translate(_IAST_FOLD).lower()
+
+
+def _keyword_promote(results: list["SearchResult"], fts_phrase: str | None,
+                     query: str = "") -> list["SearchResult"]:
+    """Re-rank: float chunks that contain query terms (after ASCII folding) to the top.
+
+    This bridges the IAST gap that breaks the Postgres FTS channel for Sanskrit
+    named-entity queries: 'Krishna' and 'Sudharma' are ASCII; the corpus stores
+    'kṛṣṇa' and 'sudharmā'. After _iast_ascii both collapse to 'krsna'/'sudharma',
+    so substring matching finds them. No result is dropped; only ordering changes."""
+    raw = fts_phrase or query or ""
+    terms = [_iast_ascii(t) for t in re.findall(r'\w+', raw)
+             if len(t) > 3 and t.lower() not in _KW_SKIP]
+    if not terms:
+        return results
+    hits = [r for r in results if any(t in _iast_ascii(r.text) for t in terms)]
+    misses = [r for r in results if not any(t in _iast_ascii(r.text) for t in terms)]
+    return hits + misses
 
 
 # ── HybridSearcher ─────────────────────────────────────────────────────────
@@ -352,10 +432,11 @@ class HybridSearcher:
                                      if isinstance(row["metadata"], str) else row["metadata"])
                                 if (m.get("category") or "").lower() in GURUJI_CATEGORIES:
                                     continue
+                                rel = float(row["similarity"])
+                                if not _floor_keep(rel, top_score):
+                                    continue
                                 chunk = {**m, "id": row["id"], "text": row["content"]}
-                                # parity score so scripture competes in MMR; diversity
-                                # penalty on the repeated darshan source lets it surface
-                                results.append(SearchResult(chunk=chunk, score=top_score,
+                                results.append(SearchResult(chunk=chunk, score=rel,
                                                             rank=len(results)))
                     except Exception as e:
                         logger.warning("scripture floor failed, skipping: %s", e)
@@ -363,37 +444,8 @@ class HybridSearcher:
             # Sort by updated scores
             results.sort(key=lambda x: x.score, reverse=True)
 
-            # Apply MMR
-            final_results = []
-            selected_sources = []
-            candidates = results.copy()
-
-            while len(final_results) < top_k and candidates:
-                if not final_results:
-                    best = candidates.pop(0)
-                    final_results.append(SearchResult(chunk=best.chunk, score=best.score, rank=0))
-                    selected_sources.append(best.purana)
-                    continue
-
-                best_mmr = -math.inf
-                best_idx = 0
-                source_counts = {}
-                for src in selected_sources:
-                    source_counts[src] = source_counts.get(src, 0) + 1
-
-                max_rrf = candidates[0].score if candidates else 1.0
-                
-                for i, cand in enumerate(candidates):
-                    overlap = source_counts.get(cand.purana, 0)
-                    diversity_penalty = overlap * 0.15 * max_rrf
-                    mmr_score = mmr_lambda * cand.score - (1.0 - mmr_lambda) * diversity_penalty
-                    if mmr_score > best_mmr:
-                        best_mmr = mmr_score
-                        best_idx = i
-
-                chosen = candidates.pop(best_idx)
-                final_results.append(SearchResult(chunk=chosen.chunk, score=chosen.score, rank=len(final_results)))
-                selected_sources.append(chosen.purana)
+            # Select top_k with MMR diversity (cand.score-based penalty).
+            final_results = _mmr_select(results, top_k, mmr_lambda)
 
             # ── SCRIPTURE FLOOR GUARANTEE (post-MMR, deterministic) ──────────
             # MMR is heuristic. Guarantee the scripture quota actually landed in the
@@ -417,6 +469,13 @@ class HybridSearcher:
                         final_results.remove(_darshan[i])
                         final_results.append(_spare[i])
                     final_results.sort(key=lambda x: x.score, reverse=True)
+
+            # Promote chunks that contain query keywords (IAST-bridged substring match).
+            # Bridges the FTS gap for Sanskrit named-entity queries: 'Krishna'/'Sudharma'
+            # are ASCII; the IAST corpus stores 'kṛṣṇa'/'sudharmā'. After _iast_ascii
+            # folding both collapse so substring match finds genuine hits. No result is
+            # dropped; only ordering changes — keyword-matching chunks rise first.
+            final_results = _keyword_promote(final_results, fts_phrase, query)
 
             # Save to Redis
             if redis_client:
