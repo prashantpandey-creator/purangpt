@@ -453,10 +453,12 @@ class HybridSearcher:
                 # The graph's verse_ranges are exact GRETIL citation strings embedded
                 # verbatim in 12+ texts' content (Bhagavata bhp_, Narada narp_, Garuda
                 # garp_, Kurma kuurmp_, Matsya MatsP_, Agni ap_, Manusmriti ms_, etc.).
-                # Matching '%bhp_10.50.054%' finds the EXACT documented verse — higher
-                # precision than entity-name substring. +0.15 premium.
+                # Matching '%bhp_10.50.054%' finds the EXACT documented verse.
+                # Premium is LOW (+0.05) — below entity-name (+0.10) — so GRETIL adds
+                # additional candidates without outranking the better entity-name results.
+                # (A higher premium promoted off-context occurrences above better results.)
                 if graph_gretil_patterns:
-                    _channels.append((graph_gretil_patterns[:8], 0.15, 20))
+                    _channels.append((graph_gretil_patterns[:8], 0.05, 20))
                 # Channel 1: canonical entity-name ILIKE — +0.10 premium
                 _channels.append(([f"%{_ilike_terms[0]}%"], 0.10, 25))
                 # Channel 2: synonyms — recall, no premium
