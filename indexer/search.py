@@ -428,18 +428,25 @@ class HybridSearcher:
                 # vector ORDER BY surfaces the most relevant matches across all terms.
                 _patterns = [f"%{t}%" for t in _ilike_terms[:5]]
                 try:
-                    _ilike_rows = []
-                    for _attempt in range(2):  # retry once on empty (stale-conn guard)
-                        async with self._pool.acquire() as _ci:
-                            _ilike_rows = await _ci.fetch(
-                                'SELECT id, content, metadata, '
-                                '       1 - (embedding <=> $2::vector) AS similarity '
-                                'FROM purana_verses '
-                                'WHERE embedding IS NOT NULL AND content ILIKE ANY($1::text[]) '
-                                'ORDER BY embedding <=> $2::vector LIMIT 40',
-                                _patterns, emb_str)
-                        if _ilike_rows:
-                            break
+                    # MATERIALIZED CTE: filter by ILIKE FIRST, then exact-KNN sort over
+                    # that subset. A plain `ORDER BY embedding <=> $vector LIMIT k` with
+                    # an ILIKE filter hits the pgvector HNSW post-filter trap — the HNSW
+                    # index returns its GLOBAL nearest neighbours and applies the ILIKE
+                    # afterward. Since these queries embed into English/dictionary space
+                    # (the very blindspot this injection exists to bypass), zero of the
+                    # ANN candidates match the IAST pattern → 0 rows. Proven live:
+                    # direct ORDER BY returned 0 every trial; the MATERIALIZED CTE
+                    # returns a full deterministic 40. Same fix as hybrid_search.sql.
+                    async with self._pool.acquire() as _ci:
+                        _ilike_rows = await _ci.fetch(
+                            'WITH filtered AS MATERIALIZED ('
+                            '  SELECT id, content, metadata, embedding FROM purana_verses '
+                            '  WHERE embedding IS NOT NULL AND content ILIKE ANY($1::text[])'
+                            ') '
+                            'SELECT id, content, metadata, '
+                            '       1 - (embedding <=> $2::vector) AS similarity '
+                            'FROM filtered ORDER BY embedding <=> $2::vector LIMIT 40',
+                            _patterns, emb_str)
                     for _row in _ilike_rows:
                         if _row["id"] in _seen_ids:
                             continue
