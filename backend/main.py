@@ -1903,7 +1903,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         # Override detected language with user's explicit UI preference if provided
         target_lang = expansion.detected_lang
         if hasattr(request, "language") and request.language:
-            lang_map = {"en": "English", "hi": "Hindi", "ru": "Russian"}
+            lang_map = {"en": "English", "hi": "Hindi", "ru": "Russian", "fr": "French"}
             target_lang = lang_map.get(request.language.lower(), expansion.detected_lang)
 
         lang_instr = f"## IMPORTANT: Respond strictly in {target_lang}. Translate all explanations to {target_lang}, but keep Sanskrit terms in IAST transliteration." if target_lang.lower() != "english" else ""
