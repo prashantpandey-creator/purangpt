@@ -87,6 +87,57 @@ class SearchResult:
         return f"SearchResult({self.reference!r}, score={self.score:.3f})"
 
 
+# ── Ranking helpers (pure, unit-tested in test_search_ranking.py) ───────────
+
+FLOOR_REL_FRAC = 0.55  # a floor-injected scripture chunk must score at least this
+                       # fraction of the best genuine hit to enter the panel.
+
+
+def _floor_keep(rel: float, top_score: float, frac: float = FLOOR_REL_FRAC) -> bool:
+    """Gate for scripture-floor injection. The floor exists to give broad English
+    thematic queries cross-text breadth — there, every category pool returns a hit
+    that scores NEAR the best, so it passes. A narrow named-entity query ("Krishna
+    and Sudharma") makes the off-topic pools return weak hits; those are dropped so
+    the panel stays on-topic. When there is no genuine result to measure against
+    (top_score <= 0) the floor is all we have, so keep everything."""
+    if top_score <= 0:
+        return True
+    return rel >= frac * top_score
+
+
+def _mmr_select(results: list["SearchResult"], top_k: int,
+                mmr_lambda: float = 0.7) -> list["SearchResult"]:
+    """Maximal-marginal-relevance selection. The source-diversity penalty is scaled
+    by the candidate's OWN score, so a weakly-relevant chunk from a fresh source can
+    never out-rank a strongly-relevant one from a source already shown. Previously
+    the penalty used the global max score, which let a parity-injected off-topic text
+    leapfrog genuine results — the core of the off-topic-sources bug."""
+    ordered = sorted(results, key=lambda x: x.score, reverse=True)
+    final: list[SearchResult] = []
+    selected_sources: list[str] = []
+    candidates = list(ordered)
+    while len(final) < top_k and candidates:
+        if not final:
+            best = candidates.pop(0)
+            final.append(SearchResult(chunk=best.chunk, score=best.score, rank=0))
+            selected_sources.append(best.purana)
+            continue
+        source_counts: dict[str, int] = {}
+        for src in selected_sources:
+            source_counts[src] = source_counts.get(src, 0) + 1
+        best_mmr, best_idx = -math.inf, 0
+        for i, cand in enumerate(candidates):
+            overlap = source_counts.get(cand.purana, 0)
+            diversity_penalty = overlap * 0.15 * cand.score
+            mmr_score = mmr_lambda * cand.score - (1.0 - mmr_lambda) * diversity_penalty
+            if mmr_score > best_mmr:
+                best_mmr, best_idx = mmr_score, i
+        chosen = candidates.pop(best_idx)
+        final.append(SearchResult(chunk=chosen.chunk, score=chosen.score, rank=len(final)))
+        selected_sources.append(chosen.purana)
+    return final
+
+
 # ── HybridSearcher ─────────────────────────────────────────────────────────
 
 class HybridSearcher:
@@ -300,48 +351,22 @@ class HybridSearcher:
                                      if isinstance(row["metadata"], str) else row["metadata"])
                                 if (m.get("category") or "").lower() in GURUJI_CATEGORIES:
                                     continue
+                                # Gate by TRUE relevance and inject at the chunk's OWN
+                                # score — never parity. A narrow query's off-topic pools
+                                # return weak hits that are dropped here, so the panel
+                                # stays on-topic; a broad thematic query's pools score
+                                # near the top and pass, preserving cross-text breadth.
+                                rel = float(row["similarity"])
+                                if not _floor_keep(rel, top_score):
+                                    continue
                                 chunk = {**m, "id": row["id"], "text": row["content"]}
-                                # parity score so scripture competes in MMR; diversity
-                                # penalty on the repeated darshan source lets it surface
-                                results.append(SearchResult(chunk=chunk, score=top_score,
+                                results.append(SearchResult(chunk=chunk, score=rel,
                                                             rank=len(results)))
                     except Exception as e:
                         logger.warning("scripture floor failed, skipping: %s", e)
 
-            # Sort by updated scores
-            results.sort(key=lambda x: x.score, reverse=True)
-
-            # Apply MMR
-            final_results = []
-            selected_sources = []
-            candidates = results.copy()
-
-            while len(final_results) < top_k and candidates:
-                if not final_results:
-                    best = candidates.pop(0)
-                    final_results.append(SearchResult(chunk=best.chunk, score=best.score, rank=0))
-                    selected_sources.append(best.purana)
-                    continue
-
-                best_mmr = -math.inf
-                best_idx = 0
-                source_counts = {}
-                for src in selected_sources:
-                    source_counts[src] = source_counts.get(src, 0) + 1
-
-                max_rrf = candidates[0].score if candidates else 1.0
-                
-                for i, cand in enumerate(candidates):
-                    overlap = source_counts.get(cand.purana, 0)
-                    diversity_penalty = overlap * 0.15 * max_rrf
-                    mmr_score = mmr_lambda * cand.score - (1.0 - mmr_lambda) * diversity_penalty
-                    if mmr_score > best_mmr:
-                        best_mmr = mmr_score
-                        best_idx = i
-
-                chosen = candidates.pop(best_idx)
-                final_results.append(SearchResult(chunk=chosen.chunk, score=chosen.score, rank=len(final_results)))
-                selected_sources.append(chosen.purana)
+            # Select with MMR — diversity that can't beat genuine relevance.
+            final_results = _mmr_select(results, top_k, mmr_lambda)
 
             # Save to Redis
             if redis_client:
