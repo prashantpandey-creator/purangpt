@@ -156,10 +156,15 @@ def _keyword_promote(results: list["SearchResult"], fts_phrase: str | None,
     This bridges the IAST gap that breaks the Postgres FTS channel for Sanskrit
     named-entity queries: 'Krishna' and 'Sudharma' are ASCII; the corpus stores
     'kṛṣṇa' and 'sudharmā'. After _iast_ascii both collapse to 'krsna'/'sudharma',
-    so substring matching finds them. No result is dropped; only ordering changes."""
+    so substring matching finds them. No result is dropped; only ordering changes.
+
+    Term-length floor of 7 filters common Sanskrit vocabulary (dharma=6, sabha=5,
+    karma=5, loka=4) that would otherwise match thousands of unrelated chunks and
+    defeat the promotion. Specific names like sudharma(8), dvaraka(7), krishna(7)
+    pass through."""
     raw = fts_phrase or query or ""
     terms = [_iast_ascii(t) for t in re.findall(r'\w+', raw)
-             if len(t) > 3 and t.lower() not in _KW_SKIP]
+             if len(t) >= 7 and t.lower() not in _KW_SKIP]
     if not terms:
         return results
     hits = [r for r in results if any(t in _iast_ascii(r.text) for t in terms)]
@@ -319,7 +324,17 @@ class HybridSearcher:
                         pg_filter[k] = v
             filter_json = json.dumps(pg_filter)
 
-            fts_query = fts_phrase if fts_phrase else query
+            # Strip generic short-word terms (e.g. "dharma", "sabha", "karma") from the
+            # FTS phrase before sending to Postgres. These common Sanskrit words appear
+            # in unrelated texts (Amarakosha vocabulary headers, etc.) and generate false
+            # FTS rank boosts that override the semantic signal. Only named-entity-length
+            # terms (>=7 chars) are precise enough for FTS discrimination.
+            if fts_phrase:
+                _fts_terms = [t for t in re.findall(r'\w+', fts_phrase)
+                              if len(t) >= 7 and t.lower() not in _KW_SKIP]
+                fts_query = " OR ".join(_fts_terms) if _fts_terms else fts_phrase
+            else:
+                fts_query = query
             fetch_k = top_k * 6 if corpus_type else top_k * 4
 
             async def _fetch(emb_s: str, fk: int):
