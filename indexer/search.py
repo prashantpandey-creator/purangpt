@@ -421,49 +421,54 @@ class HybridSearcher:
                                 if len(t) >= 7 and t.lower() not in _KW_SKIP]
             if _ilike_terms:
                 _seen_ids = {r.id for r in results}
-                # Inject the CANONICAL named entity ONLY, not the synonyms. The
-                # injection exists to surface the specific entity e5-small misses in
-                # oblique cases (sudharmā, garuḍa, nārada); synonyms are usually common
-                # concept-words (dharma, sabhā, bhakti, nāga) whose own nearest neighbours
-                # outrank the entity and drown it (proven live: adding 'dharma' to a
-                # 'sudharmā' query buried the Vishnu Purana sudharmā verse under
-                # Vaiśeṣika/Nyāya noise). Synonym RECALL is already covered by the
-                # semantic embed_phrase, which leads with canonical + gloss + synonyms.
-                _patterns = [f"%{_ilike_terms[0]}%"]
+                # Two-channel injection.
+                #  (1) CANONICAL named entity — its OWN materialized-KNN pool, scored
+                #      with a relevance PREMIUM. The canonical is the query's primary
+                #      entity; giving its verses a dedicated pool + premium guarantees
+                #      the specific entity (sudharmā, garuḍa) surfaces above common
+                #      concept-word noise. Without the dedicated pool, a combined query
+                #      lets a common synonym (dharma, kṛṣṇa) crowd the candidate set and
+                #      the entity never appears (proven live: a 'sudharmā' query buried
+                #      the Vishnu Purana sudharmā verse under Vaiśeṣika/Nyāya).
+                #  (2) SYNONYMS — one combined pool, NO premium, for recall. Covers the
+                #      case where the LLM picks a descriptive compound as canonical
+                #      ('samudra-lāṅghana' for a Hanuman query) and the real entity lives
+                #      in the synonyms ('hanumat'); without this, that query gets nothing.
+                # Every pool uses a MATERIALIZED CTE (filter THEN exact-KNN) to dodge the
+                # pgvector HNSW post-filter trap — a plain `ORDER BY embedding <=> $vec
+                # LIMIT k` over an ILIKE filter returns the index's GLOBAL neighbours then
+                # filters, and since these queries embed into English/dictionary space
+                # (the blindspot this injection exists to bypass) that yields 0 rows
+                # (proven live). Same fix as hybrid_search.sql.
+                _CTE = ('WITH filtered AS MATERIALIZED ('
+                        '  SELECT id, content, metadata, embedding FROM purana_verses '
+                        '  WHERE embedding IS NOT NULL AND content ILIKE ANY($1::text[])'
+                        ') '
+                        'SELECT id, content, metadata, '
+                        '       1 - (embedding <=> $2::vector) AS similarity '
+                        'FROM filtered ORDER BY embedding <=> $2::vector LIMIT $3')
+                _channels = [([f"%{_ilike_terms[0]}%"], 0.10, 25)]   # canonical, premium
+                if _ilike_terms[1:4]:
+                    _channels.append(([f"%{t}%" for t in _ilike_terms[1:4]], 0.0, 25))
                 try:
-                    # MATERIALIZED CTE: filter by ILIKE FIRST, then exact-KNN sort over
-                    # that subset. A plain `ORDER BY embedding <=> $vector LIMIT k` with
-                    # an ILIKE filter hits the pgvector HNSW post-filter trap — the HNSW
-                    # index returns its GLOBAL nearest neighbours and applies the ILIKE
-                    # afterward. Since these queries embed into English/dictionary space
-                    # (the very blindspot this injection exists to bypass), zero of the
-                    # ANN candidates match the IAST pattern → 0 rows. Proven live:
-                    # direct ORDER BY returned 0 every trial; the MATERIALIZED CTE
-                    # returns a full deterministic 40. Same fix as hybrid_search.sql.
-                    async with self._pool.acquire() as _ci:
-                        _ilike_rows = await _ci.fetch(
-                            'WITH filtered AS MATERIALIZED ('
-                            '  SELECT id, content, metadata, embedding FROM purana_verses '
-                            '  WHERE embedding IS NOT NULL AND content ILIKE ANY($1::text[])'
-                            ') '
-                            'SELECT id, content, metadata, '
-                            '       1 - (embedding <=> $2::vector) AS similarity '
-                            'FROM filtered ORDER BY embedding <=> $2::vector LIMIT 40',
-                            _patterns, emb_str)
-                    for _row in _ilike_rows:
-                        if _row["id"] in _seen_ids:
-                            continue
-                        _m = (json.loads(_row["metadata"])
-                              if isinstance(_row["metadata"], str) else _row["metadata"])
-                        if corpus_type == "scripture" and (
-                                (_m.get("category") or "").lower() in GURUJI_CATEGORIES
-                                or _row["id"].startswith("darshan-")):
-                            continue
-                        _seen_ids.add(_row["id"])
-                        _chunk = {**_m, "id": _row["id"], "text": _row["content"]}
-                        results.append(SearchResult(chunk=_chunk,
-                                                    score=float(_row["similarity"]),
-                                                    rank=len(results)))
+                    for _pats, _premium, _lim in _channels:
+                        async with self._pool.acquire() as _ci:
+                            _ilike_rows = await _ci.fetch(_CTE, _pats, emb_str, _lim)
+                        for _row in _ilike_rows:
+                            if _row["id"] in _seen_ids:
+                                continue
+                            _m = (json.loads(_row["metadata"])
+                                  if isinstance(_row["metadata"], str) else _row["metadata"])
+                            if corpus_type == "scripture" and (
+                                    (_m.get("category") or "").lower() in GURUJI_CATEGORIES
+                                    or _row["id"].startswith("darshan-")):
+                                continue
+                            _seen_ids.add(_row["id"])
+                            _chunk = {**_m, "id": _row["id"], "text": _row["content"]}
+                            results.append(SearchResult(
+                                chunk=_chunk,
+                                score=float(_row["similarity"]) + _premium,
+                                rank=len(results)))
                 except Exception as _e:
                     logger.warning("canonical ilike injection failed: %s", _e)
 
