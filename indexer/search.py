@@ -421,12 +421,15 @@ class HybridSearcher:
                                 if len(t) >= 7 and t.lower() not in _KW_SKIP]
             if _ilike_terms:
                 _seen_ids = {r.id for r in results}
-                # Single combined query (ILIKE ANY) instead of one per term: 1 DB
-                # round-trip and 1 vector scan instead of N (cuts ~1s of latency on
-                # multi-term Sanskrit queries), and one connection acquire instead of
-                # N (less pool churn). LIMIT 40 leaves room for term diversity; the
-                # vector ORDER BY surfaces the most relevant matches across all terms.
-                _patterns = [f"%{t}%" for t in _ilike_terms[:5]]
+                # Inject the CANONICAL named entity ONLY, not the synonyms. The
+                # injection exists to surface the specific entity e5-small misses in
+                # oblique cases (sudharmā, garuḍa, nārada); synonyms are usually common
+                # concept-words (dharma, sabhā, bhakti, nāga) whose own nearest neighbours
+                # outrank the entity and drown it (proven live: adding 'dharma' to a
+                # 'sudharmā' query buried the Vishnu Purana sudharmā verse under
+                # Vaiśeṣika/Nyāya noise). Synonym RECALL is already covered by the
+                # semantic embed_phrase, which leads with canonical + gloss + synonyms.
+                _patterns = [f"%{_ilike_terms[0]}%"]
                 try:
                     # MATERIALIZED CTE: filter by ILIKE FIRST, then exact-KNN sort over
                     # that subset. A plain `ORDER BY embedding <=> $vector LIMIT k` with
@@ -472,6 +475,21 @@ class HybridSearcher:
                         res.score *= 1.6
                     elif res.id.startswith("darshan-") or res.purana == "Shailendra Sharma Darshans":
                         res.score *= 0.6
+
+            # ── AMARAKOSHA (THESAURUS) DEMOTION ──────────────────────────────
+            # Amarakosha (category 'kosha') is a Sanskrit dictionary/thesaurus: each
+            # entry is a list of synonyms prefixed with an English gloss. e5-small
+            # embeds English natural-language queries near those English glosses, so
+            # Amarakosha floods the top of narrative/conceptual queries ("creation",
+            # "Garuda and the serpents", "Hanuman") where it is almost never the right
+            # SOURCE to cite. Its English glosses also generate FTS false-positive RRF
+            # boosts. Demote it so it can still appear for genuine vocabulary queries
+            # but stops outranking actual scripture. Runs regardless of sharma_weighting
+            # (the chat scripture channel sets that False). Not a filter — a deweight.
+            for res in results:
+                if (res.chunk.get("category") or "").lower() == "kosha" \
+                        or str(res.id).startswith("amarakosha"):
+                    res.score *= 0.5
 
             # ── SCRIPTURE FLOOR ──────────────────────────────────────────────
             # English natural-language queries embed near the English darshan
