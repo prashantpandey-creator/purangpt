@@ -26,11 +26,11 @@ TEXTS = [
         "url": "https://raw.githubusercontent.com/INDOLOGY/GRETIL-mirror/master/gretil.sub.uni-goettingen.de/gretil/1_sanskr/6_sastra/3_phil/mimamsa/mimslovu.htm",
         "format": "htm"
     },
-    {
-        "id": "yoga_vasistha",
-        "url": "https://sanskritdocuments.org/doc_z_misc_major_works/yogavasistha.itx",
-        "format": "itx"
-    }
+    # yoga_vasistha is now sourced authoritatively from GRETIL (the Mokṣopāya
+    # critical edition, sa_mokSopAya.txt) via fetch_gretil.py — see provenance at
+    # data/raw_texts/gretil/yoga_vasistha/provenance.json. The former
+    # sanskritdocuments.org .itx entry was removed (incident 2026-06-28: a corrupt
+    # archive.org HTML page had been ingested; do NOT re-add an ad-hoc source here).
 ]
 
 def clean_html(raw_html):

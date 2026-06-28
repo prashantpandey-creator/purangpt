@@ -462,6 +462,18 @@ GRETIL_TEXTS = [
         "bias":      "✅ NATH — Attributed to Gorakhnath.",
         "notes":     "Direct teachings of the Gorakhnath tradition.",
     },
+    {
+        # The Mokṣopāya IS the (older, critical-edition) Yogavāsiṣṭha. This GRETIL
+        # plaintext REPLACES a corrupt saved archive.org details webpage that had
+        # been ingested by mistake (incident 2026-06-28). Markers: MU_<prak>,<ch>.<v>.
+        "id":        "yoga_vasistha",
+        "name":      "Yoga Vasistha",
+        "file":      "sa_mokSopAya.txt",
+        "tradition": "other",
+        "edition":   "Mokṣopāya — Historisch-kritische Gesamtausgabe (Slaje, Hanneder, Krause-Stinner et al.)",
+        "bias":      "✅ non-sectarian — Advaita idealism; the Rāma–Vasiṣṭha dialogue.",
+        "notes":     "Older Kashmiri critical recension of the Yogavāsiṣṭha; all six prakaraṇas.",
+    },
     # ── Remaining Darshanas ────────────────────────────────────────────────
     {
         "id":        "samkhya_karika",

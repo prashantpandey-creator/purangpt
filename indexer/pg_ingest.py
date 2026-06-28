@@ -66,66 +66,18 @@ class PostgresIndexer:
                 ON {TABLE_NAME} USING GIN (metadata);
             """)
             
-            # Create hybrid_search function.
-            # Uses 'simple' text search config + pre-computed fts column + RRF fusion
-            # (1/(60+rank)) — matches the production function shape.
-            cur.execute(f"""
-                CREATE OR REPLACE FUNCTION hybrid_search(
-                    query_text TEXT,
-                    query_embedding vector(384),
-                    match_count INT,
-                    filter_metadata JSONB DEFAULT '{{}}'::jsonb
-                )
-                RETURNS TABLE (
-                    id TEXT,
-                    content TEXT,
-                    metadata JSONB,
-                    similarity FLOAT
-                )
-                LANGUAGE plpgsql
-                AS $$
-                BEGIN
-                    RETURN QUERY
-                    WITH query_terms AS (
-                        SELECT websearch_to_tsquery('simple', regexp_replace(trim(query_text), '\\s+', ' OR ', 'g')) AS q
-                    ),
-                    semantic_search AS (
-                        SELECT
-                            pv.id,
-                            pv.content,
-                            pv.metadata,
-                            1 - (pv.embedding <=> query_embedding) AS sim,
-                            ROW_NUMBER() OVER (ORDER BY pv.embedding <=> query_embedding) AS semantic_rank
-                        FROM {TABLE_NAME} pv
-                        WHERE pv.embedding IS NOT NULL
-                          AND pv.metadata @> filter_metadata
-                        ORDER BY pv.embedding <=> query_embedding
-                        LIMIT match_count * 2
-                    ),
-                    keyword_search AS (
-                        SELECT
-                            pv.id,
-                            ts_rank(pv.fts, qt.q) AS fts_rank,
-                            ROW_NUMBER() OVER (ORDER BY ts_rank(pv.fts, qt.q) DESC) AS keyword_rank
-                        FROM {TABLE_NAME} pv
-                        CROSS JOIN query_terms qt
-                        WHERE pv.fts @@ qt.q
-                          AND pv.metadata @> filter_metadata
-                        ORDER BY fts_rank DESC
-                        LIMIT match_count * 2
-                    )
-                    SELECT
-                        COALESCE(ss.id, ks.id) AS id,
-                        COALESCE(ss.content, (SELECT p.content FROM {TABLE_NAME} p WHERE p.id = ks.id)) AS content,
-                        COALESCE(ss.metadata, (SELECT p.metadata FROM {TABLE_NAME} p WHERE p.id = ks.id)) AS metadata,
-                        (COALESCE(1.0 / (60 + ss.semantic_rank), 0.0) + COALESCE(1.0 / (60 + ks.keyword_rank), 0.0))::FLOAT AS similarity
-                    FROM semantic_search ss
-                    FULL OUTER JOIN keyword_search ks ON ss.id = ks.id
-                    ORDER BY similarity DESC
-                    LIMIT match_count;
-                END;
-                $$;
-            """)
+            # Create hybrid_search function — loaded from the canonical
+            # indexer/hybrid_search.sql (the FIXED version that BRANCHES on the
+            # filter to avoid the pgvector 0.5.1 HNSW post-filter trap: HNSW
+            # returns its global ANN candidates first and applies the metadata
+            # WHERE post-hoc, so a selective filter dropped EVERY candidate → 0
+            # rows, silently breaking the scripture floor for every cross-lingual
+            # query. The fix keeps the fast HNSW path when unfiltered and
+            # materializes the filtered subset first when a filter is present.
+            # Diagnosed + applied to prod 2026-06-28. Do NOT re-inline an
+            # unfiltered-only definition here — it regresses the fix.
+            _hs_sql = (Path(__file__).parent / "hybrid_search.sql").read_text(encoding="utf-8")
+            cur.execute(_hs_sql)
 
     def build(self, chunks_dir: Path):
         jsonl_files = list(chunks_dir.glob("*.jsonl"))
