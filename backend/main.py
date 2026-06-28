@@ -1738,6 +1738,8 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                     semantic_weight=weight,
                     corpus_type="scripture",  # filter: exclude yogic-discourse/commentary
                     secondary_embed_phrase=expansion.devanagari_embed_phrase,
+                    iast_terms=([expansion.canonical] + expansion.synonyms[:3])
+                               if expansion.canonical else None,
                 )
 
                 # Guruji channel — darshans/cognition context only. Runs in parallel.
@@ -1751,6 +1753,8 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                     fts_phrase=expansion.fts_phrase,
                     semantic_weight=weight,
                     corpus_type="guruji",
+                    iast_terms=([expansion.canonical] + expansion.synonyms[:3])
+                               if expansion.canonical else None,
                 )
 
                 # Multi-hop comparison
@@ -2139,7 +2143,9 @@ async def search(request: SearchRequest):
     expansion = await state.query_processor.expand(request.query)
     results = await state.searcher.hybrid_search(
         query=request.query, top_k=request.top_k, filters=request.filters,
-        embed_phrase=expansion.embed_phrase, fts_phrase=expansion.fts_phrase
+        embed_phrase=expansion.embed_phrase, fts_phrase=expansion.fts_phrase,
+        iast_terms=([expansion.canonical] + expansion.synonyms[:3])
+                   if expansion.canonical else None,
     )
     return {
         "query":   request.query,

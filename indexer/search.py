@@ -238,6 +238,7 @@ class HybridSearcher:
         fts_phrase: str | None = None,
         corpus_type: str | None = None,
         secondary_embed_phrase: str | None = None,
+        iast_terms: list[str] | None = None,
     ) -> list[SearchResult]:
         """
         Executes the hybrid_search RPC on Postgres, which performs pgvector distance
@@ -385,45 +386,53 @@ class HybridSearcher:
                            or r.id.startswith("darshan-")]
 
             # ── CANONICAL ILIKE INJECTION ─────────────────────────────────────
-            # e5-small cannot find Sanskrit named entities in oblique grammatical
-            # cases (sudharmāṃ, sudharmāyāṃ rank ~2758 for the query that asks
-            # about Sudharmā). The ASCII stem of the canonical term (e.g. 'sudharm'
-            # from 'sudharma') IS a substring of every IAST declined form — LIKE
-            # '%sudharm%' matches sudharmā, sudharmāṃ, sudharmāyāṃ, sudharmāk.
-            # Inject up to 20 such chunks at their actual semantic score so MMR
+            # e5-small misses Sanskrit named entities in oblique grammatical cases
+            # (sudharmāṃ / sudharmāyāṃ rank ~2758 for a "sudharmā" query).
+            # We inject up to 20 chunks per IAST term via substring match so MMR
             # can interleave them with the semantic pool.
-            if fts_phrase:
-                _canon_stems = [_iast_ascii(t)[:7]
+            # Using full IAST avoids ASCII-truncation false positives (e.g. the old
+            # 7-char ASCII prefix "vanavas" matched "tvanavas" in Mimamsa Sutras).
+            # iast_terms from the caller (QueryExpansion.canonical + synonyms) take
+            # priority; fall back to ASCII extraction when caller predates this param.
+            _ilike_terms: list[str] = []
+            if iast_terms:
+                # IAST terms from query expansion: use full form. Min len 4 because
+                # diacritics give specificity (rāma only matches Rāma content).
+                _ilike_terms = [t for t in iast_terms
+                                if len(t) >= 4 and t.lower() not in _KW_SKIP]
+            elif fts_phrase:
+                # Legacy fallback: ASCII stems ≥7 chars (original behaviour).
+                _ilike_terms = [_iast_ascii(t)[:7]
                                 for t in re.findall(r'\w+', fts_phrase)
                                 if len(t) >= 7 and t.lower() not in _KW_SKIP]
-                if _canon_stems:
-                    _seen_ids = {r.id for r in results}
-                    try:
-                        for _stem in _canon_stems[:2]:
-                            async with self._pool.acquire() as _ci:
-                                _ilike_rows = await _ci.fetch(
-                                    'SELECT id, content, metadata, '
-                                    '       1 - (embedding <=> $2::vector) AS similarity '
-                                    'FROM purana_verses '
-                                    'WHERE embedding IS NOT NULL AND content LIKE $1 '
-                                    'ORDER BY embedding <=> $2::vector LIMIT 20',
-                                    f"%{_stem}%", emb_str)
-                            for _row in _ilike_rows:
-                                if _row["id"] in _seen_ids:
-                                    continue
-                                _m = (json.loads(_row["metadata"])
-                                      if isinstance(_row["metadata"], str) else _row["metadata"])
-                                if corpus_type == "scripture" and (
-                                        (_m.get("category") or "").lower() in GURUJI_CATEGORIES
-                                        or _row["id"].startswith("darshan-")):
-                                    continue
-                                _seen_ids.add(_row["id"])
-                                _chunk = {**_m, "id": _row["id"], "text": _row["content"]}
-                                results.append(SearchResult(chunk=_chunk,
-                                                            score=float(_row["similarity"]),
-                                                            rank=len(results)))
-                    except Exception as _e:
-                        logger.warning("canonical ilike injection failed: %s", _e)
+            if _ilike_terms:
+                _seen_ids = {r.id for r in results}
+                try:
+                    for _term in _ilike_terms[:3]:
+                        async with self._pool.acquire() as _ci:
+                            _ilike_rows = await _ci.fetch(
+                                'SELECT id, content, metadata, '
+                                '       1 - (embedding <=> $2::vector) AS similarity '
+                                'FROM purana_verses '
+                                'WHERE embedding IS NOT NULL AND content ILIKE $1 '
+                                'ORDER BY embedding <=> $2::vector LIMIT 20',
+                                f"%{_term}%", emb_str)
+                        for _row in _ilike_rows:
+                            if _row["id"] in _seen_ids:
+                                continue
+                            _m = (json.loads(_row["metadata"])
+                                  if isinstance(_row["metadata"], str) else _row["metadata"])
+                            if corpus_type == "scripture" and (
+                                    (_m.get("category") or "").lower() in GURUJI_CATEGORIES
+                                    or _row["id"].startswith("darshan-")):
+                                continue
+                            _seen_ids.add(_row["id"])
+                            _chunk = {**_m, "id": _row["id"], "text": _row["content"]}
+                            results.append(SearchResult(chunk=_chunk,
+                                                        score=float(_row["similarity"]),
+                                                        rank=len(results)))
+                except Exception as _e:
+                    logger.warning("canonical ilike injection failed: %s", _e)
 
             # Apply source weighting
             if sharma_weighting:
