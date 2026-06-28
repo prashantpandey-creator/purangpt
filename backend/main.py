@@ -1725,6 +1725,9 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
 
                 # Scripture channel — citable sources only (excludes Guruji darshans).
                 # This is what fills the sources panel and [1][2] citations.
+                # secondary_embed_phrase (Devanagari Sanskrit) opens the Sanskrit manifold:
+                # e5-small embeds English queries near English darshans; the Devanagari
+                # secondary retrieval surfaces Yoga Vasistha, Bhavishya, Varaha, etc.
                 results = await state.searcher.hybrid_search(
                     query=expansion.original,
                     top_k=request.top_k,
@@ -1734,6 +1737,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                     fts_phrase=expansion.fts_phrase,
                     semantic_weight=weight,
                     corpus_type="scripture",  # filter: exclude yogic-discourse/commentary
+                    secondary_embed_phrase=expansion.devanagari_embed_phrase,
                 )
 
                 # Guruji channel — darshans/cognition context only. Runs in parallel.

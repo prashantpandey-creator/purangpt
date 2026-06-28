@@ -152,17 +152,23 @@ class HybridSearcher:
         embed_phrase: str | None = None,
         fts_phrase: str | None = None,
         corpus_type: str | None = None,
+        secondary_embed_phrase: str | None = None,
     ) -> list[SearchResult]:
         """
         Executes the hybrid_search RPC on Postgres, which performs pgvector distance
         and FTS websearch natively, fusing them with RRF.
 
         Args:
-            query:        Original user query (used for FTS if fts_phrase not given).
-            embed_phrase: Enriched phrase for embedding, e.g. from SanskritQueryProcessor.
-                          Falls back to "query: {query}" if None.
-            fts_phrase:   Multi-term OR phrase for Postgres FTS, e.g. "maheśvara | shiva | rudra".
-                          Falls back to raw query if None.
+            query:                  Original user query (used for FTS if fts_phrase not given).
+            embed_phrase:           Enriched phrase for embedding, e.g. from SanskritQueryProcessor.
+                                    Falls back to "query: {query}" if None.
+            fts_phrase:             Multi-term OR phrase for Postgres FTS.
+                                    Falls back to raw query if None.
+            secondary_embed_phrase: Optional Devanagari Sanskrit phrase for bi-directional
+                                    retrieval. e5-small has a hard cross-lingual gap — English
+                                    queries embed near English darshans; a second search with
+                                    this Devanagari phrase opens the Sanskrit manifold. Results
+                                    from both passes are unioned before MMR.
         """
         if not self.is_ready:
             return []
@@ -179,6 +185,8 @@ class HybridSearcher:
             # but was absent from the key — a guruji-only query collided with the default
             # mixed result for the same text. Part of the cache identity.
             "corpus_type": corpus_type,
+            # secondary_embed_phrase (Devanagari bi-query) opens the Sanskrit manifold
+            "secondary_embed_phrase": secondary_embed_phrase,
         }, sort_keys=True)
         cache_hash = hashlib.sha256(cache_params.encode()).hexdigest()
         cache_key = f"hybrid_search:{cache_hash}"
@@ -202,16 +210,26 @@ class HybridSearcher:
         GURUJI_CATEGORIES = {"yogic-commentary", "yogic-discourse", "yoga_commentary"}
 
         try:
-            # 3. Generate query embedding — use enriched phrase if provided
+            # Embed primary phrase + optional Devanagari secondary in one batch call.
             import asyncio
             loop = asyncio.get_running_loop()
             phrase_to_embed = embed_phrase if embed_phrase else f"query: {query}"
-            query_emb = await loop.run_in_executor(None, self._embed_model.encode, phrase_to_embed)
-            if hasattr(query_emb, "tolist"):
-                query_emb = query_emb.tolist()
-            emb_str = "[" + ",".join(map(str, query_emb)) + "]"
+            phrases = [phrase_to_embed]
+            if secondary_embed_phrase:
+                phrases.append(f"query: {secondary_embed_phrase}")
 
-            # 2. Build filter JSON
+            embs = await loop.run_in_executor(
+                None,
+                lambda: self._embed_model.encode(phrases, show_progress_bar=False),
+            )
+            primary_emb = embs[0].tolist() if hasattr(embs[0], "tolist") else list(embs[0])
+            emb_str = "[" + ",".join(map(str, primary_emb)) + "]"
+            sec_emb_str = None
+            if secondary_embed_phrase:
+                sec_emb = embs[1].tolist() if hasattr(embs[1], "tolist") else list(embs[1])
+                sec_emb_str = "[" + ",".join(map(str, sec_emb)) + "]"
+
+            # Build filter JSON
             pg_filter = {}
             if filters:
                 for k, v in filters.items():
@@ -219,19 +237,35 @@ class HybridSearcher:
                         pg_filter[k] = v["$eq"]
                     else:
                         pg_filter[k] = v
-
             filter_json = json.dumps(pg_filter)
 
-            # 3. Execute Postgres hybrid_search function
-            # Use fts_phrase for FTS if given (OR-joined synonyms), else raw query.
             fts_query = fts_phrase if fts_phrase else query
-            # Fetch more candidates when we'll be filtering by corpus_type post-query.
             fetch_k = top_k * 6 if corpus_type else top_k * 4
-            async with self._pool.acquire() as conn:
-                rows = await conn.fetch('''
-                    SELECT id, content, metadata, similarity
-                    FROM hybrid_search($1, $2::vector, $3, $4::jsonb)
-                ''', fts_query, emb_str, fetch_k, filter_json)
+
+            async def _fetch(emb_s: str, fk: int):
+                async with self._pool.acquire() as conn:
+                    return await conn.fetch(
+                        'SELECT id, content, metadata, similarity '
+                        'FROM hybrid_search($1, $2::vector, $3, $4::jsonb)',
+                        fts_query, emb_s, fk, filter_json)
+
+            if sec_emb_str:
+                # Run both retrievals in parallel; union by id (best score wins).
+                primary_rows, sec_rows = await asyncio.gather(
+                    _fetch(emb_str, fetch_k),
+                    _fetch(sec_emb_str, fetch_k // 2),
+                )
+                merged: dict[str, Any] = {}
+                for row in primary_rows:
+                    merged[row['id']] = row
+                for row in sec_rows:
+                    rid = row['id']
+                    if rid not in merged or float(row['similarity']) > float(merged[rid]['similarity']):
+                        merged[rid] = row
+                rows = sorted(merged.values(), key=lambda r: float(r['similarity']), reverse=True)
+                logger.debug("bi-query union: primary=%d sec=%d merged=%d", len(primary_rows), len(sec_rows), len(rows))
+            else:
+                rows = await _fetch(emb_str, fetch_k)
 
             if not rows:
                 return []
