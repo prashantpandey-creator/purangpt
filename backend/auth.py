@@ -90,6 +90,19 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Security(securi
         return None
 
     token = credentials.credentials
+
+    # First-party session token (minted by /api/auth/apple after a native Sign in
+    # with Apple). Checked first: a cheap HS256 verify, unambiguous by issuer. A
+    # Logto RS256 token fails this and falls through to the JWKS path unchanged.
+    try:
+        from backend.apple_signin import verify_session_token
+        _sess = verify_session_token(token)
+        if _sess:
+            return {"id": _sess.get("sub"), "role": _sess.get("role", "free"),
+                    "email": _sess.get("email")}
+    except Exception:
+        pass
+
     jwks = get_jwks()
 
     # Try Logto JWT verification first
