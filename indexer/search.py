@@ -210,7 +210,15 @@ class HybridSearcher:
 
         # asyncpg pool is per-worker (event-loop-bound) — keep it small since we
         # now run only 2 workers: 2 workers × 5 = 10 connections max to pgvector.
-        self._pool = await asyncpg.create_pool(self._db_url, min_size=1, max_size=5)
+        # statement_cache_size=0: asyncpg caches a prepared statement per connection
+        # by default. With pgvector queries on a long-lived pooled connection, that
+        # cache desyncs — a reused connection starts returning stale EMPTY result sets
+        # in ~2ms instead of executing (proven live: ILIKE injection flapped between
+        # full results and zero rows on identical input). Disabling the per-connection
+        # statement cache forces a fresh parse each call and makes retrieval
+        # deterministic. The re-parse cost is negligible against ~500ms vector scans.
+        self._pool = await asyncpg.create_pool(
+            self._db_url, min_size=1, max_size=5, statement_cache_size=0)
 
         # Reuse the master-preloaded model if present; otherwise load on demand
         # (e.g. dev / `run.py` path that doesn't go through the gunicorn hook).
@@ -394,11 +402,17 @@ class HybridSearcher:
             # 7-char ASCII prefix "vanavas" matched "tvanavas" in Mimamsa Sutras).
             # iast_terms from the caller (QueryExpansion.canonical + synonyms) take
             # priority; fall back to ASCII extraction when caller predates this param.
+            # NFC-normalize: the corpus stores IAST in NFC (ā = U+0101), but the LLM
+            # expansion can emit NFD (a + combining macron U+0304). ILIKE matches raw
+            # bytes, so an NFD term against NFC content returns 0 rows even when
+            # thousands match (proven live: 'rāma' NFD → 0, NFC → 8750). Always fold
+            # to NFC before the substring match.
+            import unicodedata as _ud
             _ilike_terms: list[str] = []
             if iast_terms:
                 # IAST terms from query expansion: use full form. Min len 4 because
                 # diacritics give specificity (rāma only matches Rāma content).
-                _ilike_terms = [t for t in iast_terms
+                _ilike_terms = [_ud.normalize("NFC", t) for t in iast_terms
                                 if len(t) >= 4 and t.lower() not in _KW_SKIP]
             elif fts_phrase:
                 # Legacy fallback: ASCII stems ≥7 chars (original behaviour).
@@ -407,30 +421,39 @@ class HybridSearcher:
                                 if len(t) >= 7 and t.lower() not in _KW_SKIP]
             if _ilike_terms:
                 _seen_ids = {r.id for r in results}
+                # Single combined query (ILIKE ANY) instead of one per term: 1 DB
+                # round-trip and 1 vector scan instead of N (cuts ~1s of latency on
+                # multi-term Sanskrit queries), and one connection acquire instead of
+                # N (less pool churn). LIMIT 40 leaves room for term diversity; the
+                # vector ORDER BY surfaces the most relevant matches across all terms.
+                _patterns = [f"%{t}%" for t in _ilike_terms[:5]]
                 try:
-                    for _term in _ilike_terms[:3]:
+                    _ilike_rows = []
+                    for _attempt in range(2):  # retry once on empty (stale-conn guard)
                         async with self._pool.acquire() as _ci:
                             _ilike_rows = await _ci.fetch(
                                 'SELECT id, content, metadata, '
                                 '       1 - (embedding <=> $2::vector) AS similarity '
                                 'FROM purana_verses '
-                                'WHERE embedding IS NOT NULL AND content ILIKE $1 '
-                                'ORDER BY embedding <=> $2::vector LIMIT 20',
-                                f"%{_term}%", emb_str)
-                        for _row in _ilike_rows:
-                            if _row["id"] in _seen_ids:
-                                continue
-                            _m = (json.loads(_row["metadata"])
-                                  if isinstance(_row["metadata"], str) else _row["metadata"])
-                            if corpus_type == "scripture" and (
-                                    (_m.get("category") or "").lower() in GURUJI_CATEGORIES
-                                    or _row["id"].startswith("darshan-")):
-                                continue
-                            _seen_ids.add(_row["id"])
-                            _chunk = {**_m, "id": _row["id"], "text": _row["content"]}
-                            results.append(SearchResult(chunk=_chunk,
-                                                        score=float(_row["similarity"]),
-                                                        rank=len(results)))
+                                'WHERE embedding IS NOT NULL AND content ILIKE ANY($1::text[]) '
+                                'ORDER BY embedding <=> $2::vector LIMIT 40',
+                                _patterns, emb_str)
+                        if _ilike_rows:
+                            break
+                    for _row in _ilike_rows:
+                        if _row["id"] in _seen_ids:
+                            continue
+                        _m = (json.loads(_row["metadata"])
+                              if isinstance(_row["metadata"], str) else _row["metadata"])
+                        if corpus_type == "scripture" and (
+                                (_m.get("category") or "").lower() in GURUJI_CATEGORIES
+                                or _row["id"].startswith("darshan-")):
+                            continue
+                        _seen_ids.add(_row["id"])
+                        _chunk = {**_m, "id": _row["id"], "text": _row["content"]}
+                        results.append(SearchResult(chunk=_chunk,
+                                                    score=float(_row["similarity"]),
+                                                    rank=len(results)))
                 except Exception as _e:
                     logger.warning("canonical ilike injection failed: %s", _e)
 
