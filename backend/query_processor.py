@@ -236,22 +236,20 @@ class QueryExpansion:
 
     @property
     def devanagari_embed_phrase(self) -> str | None:
-        """Secondary embedding phrase in Devanagari for bi-directional Sanskrit retrieval.
+        """Secondary embedding phrase for bi-directional Sanskrit retrieval.
 
-        e5-small has a hard cross-lingual gap: an English query embeds near English
-        darshans, never near IAST or Devanagari scripture. Running a SECOND vector
-        search with this Devanagari phrase opens the Sanskrit manifold — Yoga Vasistha,
-        Bhavishya, Varaha surface naturally. Returns None when no Devanagari form exists
-        (trivial / non-conceptual queries skip dual search).
+        The primary embed_phrase leads with the IAST canonical term, which shifts
+        the vector toward the ASCII-IAST corpus and away from Devanagari-embedded
+        texts (YV was re-embedded from Devanagari). The secondary uses the plain
+        English gloss — no IAST prefix — which e5-small aligns more naturally with
+        Devanagari-embedded Sanskrit. Verified live: plain-EN gloss → YV=4/8;
+        IAST-led embed_phrase → YV=0/8 for advaita queries.
+
+        Returns None for non-conceptual / trivial queries.
         """
-        if not self.devanagari:
+        if not self.is_sanskrit:
             return None
-        parts = [self.devanagari]
-        for syn in self.synonyms[:3]:
-            deva_syn = _to_devanagari(syn)
-            if deva_syn:
-                parts.append(deva_syn)
-        return " ".join(parts)
+        return self.english_gloss or None
 
 
 # ── LLM prompt ────────────────────────────────────────────────────────────
