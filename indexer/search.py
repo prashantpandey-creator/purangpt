@@ -247,6 +247,7 @@ class HybridSearcher:
         corpus_type: str | None = None,
         secondary_embed_phrase: str | None = None,
         iast_terms: list[str] | None = None,
+        graph_gretil_patterns: list[str] | None = None,
     ) -> list[SearchResult]:
         """
         Executes the hybrid_search RPC on Postgres, which performs pgvector distance
@@ -447,7 +448,18 @@ class HybridSearcher:
                         'SELECT id, content, metadata, '
                         '       1 - (embedding <=> $2::vector) AS similarity '
                         'FROM filtered ORDER BY embedding <=> $2::vector LIMIT $3')
-                _channels = [([f"%{_ilike_terms[0]}%"], 0.10, 25)]   # canonical, premium
+                _channels = []
+                # Channel 0 (graph-guided): GRETIL verse-ID patterns.
+                # The graph's verse_ranges are exact GRETIL citation strings embedded
+                # verbatim in 12+ texts' content (Bhagavata bhp_, Narada narp_, Garuda
+                # garp_, Kurma kuurmp_, Matsya MatsP_, Agni ap_, Manusmriti ms_, etc.).
+                # Matching '%bhp_10.50.054%' finds the EXACT documented verse — higher
+                # precision than entity-name substring. +0.15 premium.
+                if graph_gretil_patterns:
+                    _channels.append((graph_gretil_patterns[:8], 0.15, 20))
+                # Channel 1: canonical entity-name ILIKE — +0.10 premium
+                _channels.append(([f"%{_ilike_terms[0]}%"], 0.10, 25))
+                # Channel 2: synonyms — recall, no premium
                 if _ilike_terms[1:4]:
                     _channels.append(([f"%{t}%" for t in _ilike_terms[1:4]], 0.0, 25))
                 try:

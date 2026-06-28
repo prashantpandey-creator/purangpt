@@ -27,6 +27,8 @@ from __future__ import annotations
 
 import logging
 import os
+import re
+import unicodedata
 from typing import Optional
 
 logger = logging.getLogger("graph_memory")
@@ -73,6 +75,100 @@ _GURU_REL = "guru_of"
 
 def _norm_name(s: str) -> str:
     return (s or "").strip().lower()
+
+
+def _norm_form(s: str) -> str:
+    """Strip IAST diacritics → ASCII lowercase for fuzzy name matching."""
+    trans = str.maketrans({
+        "ā": "a", "ī": "i", "ū": "u", "ṛ": "r", "ṝ": "r", "ḷ": "l",
+        "ṅ": "n", "ñ": "n", "ṭ": "t", "ḍ": "d", "ṇ": "n", "ś": "s",
+        "ṣ": "s", "ḥ": "h", "ṃ": "m",
+    })
+    return re.sub(r"[^a-z0-9]", "", (s or "").lower().translate(trans))
+
+
+# Lazy index built once: normalized_form → list of entity dicts.
+_forms_index: dict | None = None
+
+
+def _get_forms_index() -> dict:
+    global _forms_index
+    if _forms_index is not None:
+        return _forms_index
+    mem = _get_memory()
+    if not mem:
+        _forms_index = {}
+        return _forms_index
+    idx: dict[str, list] = {}
+    for e in (mem.entities or []):
+        forms = [e.get("name", "")] + list(e.get("all_forms") or [])
+        for f in forms:
+            k = _norm_form(f)
+            if len(k) >= 3:
+                idx.setdefault(k, []).append(e)
+    _forms_index = idx
+    logger.debug("graph forms index built: %d normalised keys", len(idx))
+    return idx
+
+
+def get_graph_ilike_patterns(
+    canonical: str | None,
+    synonyms: list[str] | None,
+) -> tuple[list[str], list[str]]:
+    """Return (gretil_patterns, name_patterns) for graph-guided ILIKE injection.
+
+    gretil_patterns: '%bhp_10.50.054%' patterns from entity verse_ranges.
+      Texts that embed GRETIL IDs verbatim in content (Bhagavata, Narada, Garuda,
+      Kurma, Matsya, Agni, Manusmriti, Gita, …) — ultra-precise citation match.
+    name_patterns: '%Sudharmā%' patterns from entity all_forms.
+      Fallback for Mahabharata, Ramayana, Padma which don't embed GRETIL IDs.
+    Never raises.
+    """
+    try:
+        idx = _get_forms_index()
+        if not idx:
+            return [], []
+        terms = [canonical] + list(synonyms or [])
+        terms = [t for t in terms if t]
+        if not terms:
+            return [], []
+
+        seen_eids: set = set()
+        matched: list = []
+        for t in terms[:4]:
+            k = _norm_form(t)
+            if len(k) < 3:
+                continue
+            for e in idx.get(k, [])[:3]:
+                eid = e.get("id") or e.get("name")
+                if eid not in seen_eids:
+                    seen_eids.add(eid)
+                    matched.append(e)
+
+        if not matched:
+            return [], []
+
+        gretil_pats: list[str] = []
+        name_pats: list[str] = []
+        seen: set = set()
+
+        for e in matched[:4]:
+            for vr in (e.get("verse_ranges") or [])[:5]:
+                pat = "%" + unicodedata.normalize("NFC", vr) + "%"
+                if pat not in seen:
+                    seen.add(pat)
+                    gretil_pats.append(pat)
+            for f in ([e.get("name", "")] + list(e.get("all_forms") or []))[:3]:
+                if f and len(f) >= 4:
+                    pat = "%" + unicodedata.normalize("NFC", f) + "%"
+                    if pat not in seen:
+                        seen.add(pat)
+                        name_pats.append(pat)
+
+        return gretil_pats[:10], name_pats[:6]
+    except Exception as exc:
+        logger.warning("get_graph_ilike_patterns failed (%s)", exc)
+        return [], []
 
 
 def _lineage_chain(mem, seed_names, max_len: int = 8):

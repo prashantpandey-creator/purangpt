@@ -118,9 +118,10 @@ except Exception:  # pragma: no cover - import-environment guard
 # tools/rag_vs_graph_bench). Flag-gated OFF (GRAPH_MEMORY_ENABLED=1) and fail-graceful:
 # its block degrades to "" on any error, so chat is byte-identical to today when off.
 try:
-    from backend.graph_memory import build_graph_context
+    from backend.graph_memory import build_graph_context, get_graph_ilike_patterns
 except Exception:  # pragma: no cover - import-environment guard
     build_graph_context = None
+    get_graph_ilike_patterns = None
 
 # ── Session Memory ─────────────────────────────────────────────────────────
 session_manager = SessionManager(MAX_HISTORY)
@@ -1728,6 +1729,14 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                 # secondary_embed_phrase (Devanagari Sanskrit) opens the Sanskrit manifold:
                 # e5-small embeds English queries near English darshans; the Devanagari
                 # secondary retrieval surfaces Yoga Vasistha, Bhavishya, Varaha, etc.
+                _graph_gretil: list[str] = []
+                if get_graph_ilike_patterns and expansion.canonical:
+                    try:
+                        _graph_gretil, _ = get_graph_ilike_patterns(
+                            expansion.canonical, expansion.synonyms[:3])
+                    except Exception:
+                        pass
+
                 results = await state.searcher.hybrid_search(
                     query=expansion.original,
                     top_k=request.top_k,
@@ -1740,6 +1749,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                     secondary_embed_phrase=expansion.devanagari_embed_phrase,
                     iast_terms=([expansion.canonical] + expansion.synonyms[:3])
                                if expansion.canonical else None,
+                    graph_gretil_patterns=_graph_gretil or None,
                 )
 
                 # Guruji channel — darshans/cognition context only. Runs in parallel.
@@ -1755,6 +1765,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                     corpus_type="guruji",
                     iast_terms=([expansion.canonical] + expansion.synonyms[:3])
                                if expansion.canonical else None,
+                    graph_gretil_patterns=_graph_gretil or None,
                 )
 
                 # Multi-hop comparison
@@ -2141,11 +2152,19 @@ async def search(request: SearchRequest):
     if not state.searcher:
         raise HTTPException(503, "Vector index not built. Run: python extract_and_index.py")
     expansion = await state.query_processor.expand(request.query)
+    _g_gretil: list[str] = []
+    if get_graph_ilike_patterns and expansion.canonical:
+        try:
+            _g_gretil, _ = get_graph_ilike_patterns(
+                expansion.canonical, expansion.synonyms[:3])
+        except Exception:
+            pass
     results = await state.searcher.hybrid_search(
         query=request.query, top_k=request.top_k, filters=request.filters,
         embed_phrase=expansion.embed_phrase, fts_phrase=expansion.fts_phrase,
         iast_terms=([expansion.canonical] + expansion.synonyms[:3])
                    if expansion.canonical else None,
+        graph_gretil_patterns=_g_gretil or None,
     )
     return {
         "query":   request.query,
