@@ -1138,6 +1138,16 @@ def build_rag_context(results: list) -> str:
     return "\n".join(out)
 
 
+def _result_chunk_id(r) -> str:
+    """Reader-resolvable chunk id of a search result — handles BOTH a dict and a
+    SearchResult object. (The clickable-citation filter called r.get() blindly and
+    crashed on SearchResult objects → the RAG try/except swallowed it and wiped the
+    sources. Use this everywhere a result's id is read.)"""
+    if isinstance(r, dict):
+        return r.get("id", "") or r.get("chunk_id", "")
+    return getattr(r, "id", "") or getattr(r, "chunk_id", "")
+
+
 def build_source_list(results: list) -> List[dict]:
     """Convert raw search results (SearchResult objects or dicts) to typed SourceModel dicts."""
     sources = []
@@ -1660,7 +1670,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                 # them via /api/verses/{id}) and cap the count so the panel never floods.
                 # Filtering HERE — before BOTH builders — keeps the inline [N] numbering and
                 # the source cards in lockstep: every [N] the model emits has a working card.
-                clickable = [r for r in results if (r.get("id") or r.get("chunk_id"))][:MAX_CITATIONS]
+                clickable = [r for r in results if _result_chunk_id(r)][:MAX_CITATIONS]
                 sources = build_source_list(clickable)
                 rag_context = build_rag_context(clickable)
 
