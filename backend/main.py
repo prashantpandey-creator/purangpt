@@ -57,14 +57,10 @@ logger = logging.getLogger("purangpt.backend")
 #
 # Each provider: env var for the key, base_url, and default model.
 _PROVIDER_DEFS = [
-    # ── SPEED PRIMARY ──
-    {"name": "groq",       "env": "GROQ_API_KEY",       "base_url": "https://api.groq.com/openai/v1",      "model": os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")},
-    # ── RELIABILITY FAILOVERS ──
     {"name": "deepseek",   "env": "DEEPSEEK_API_KEY",   "base_url": "https://api.deepseek.com",            "model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat")},
     {"name": "gemini",     "env": "GEMINI_API_KEY",     "base_url": "https://generativelanguage.googleapis.com/v1beta/openai", "model": os.getenv("GEMINI_MODEL", "gemini-2.5-flash")},
     {"name": "openrouter", "env": "OPENROUTER_API_KEY", "base_url": "https://openrouter.ai/api/v1",        "model": os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-flash")},
     {"name": "together",   "env": "TOGETHER_API_KEY",   "base_url": "https://api.together.xyz/v1",         "model": os.getenv("TOGETHER_MODEL", "meta-llama/Llama-3.3-70B-Instruct-Turbo")},
-    # ── KEPT, NOT PREFERRED ──
     {"name": "openai",     "env": "OPENAI_API_KEY",     "base_url": "https://api.openai.com/v1",           "model": os.getenv("OPENAI_MODEL", "gpt-4o-mini")},
     {"name": "xai",        "env": "XAI_API_KEY",        "base_url": "https://api.x.ai/v1",                 "model": os.getenv("XAI_MODEL", "grok-2-latest")},
     {"name": "mistral",    "env": "MISTRAL_API_KEY",    "base_url": "https://api.mistral.ai/v1",           "model": os.getenv("MISTRAL_MODEL", "mistral-large-latest")},
@@ -126,6 +122,15 @@ try:
 except Exception:  # pragma: no cover - import-environment guard
     build_graph_context = None
     get_graph_ilike_patterns = None
+
+# Buddhi layer (backend/buddhi) — the DISCRIMINATING INTELLIGENCE that sits between
+# graph+RAG and the chat prompt. Performs 3-stage granthi-bheda synthesis on the raw
+# retrieval output. Flag-gated OFF (BUDDHI_ENABLED=1) and fail-graceful: any failure
+# falls back to raw rag_context, so chat is byte-identical to today when off.
+try:
+    from backend.buddhi import synthesize as buddhi_synthesize
+except Exception:  # pragma: no cover - import-environment guard
+    buddhi_synthesize = None
 
 # Persona extractor (tools/persona_extractor) — builds the {personality} block from
 # the GRAPH instead of the hand-written GURUJI_PERSONALITY caricature, and is the
@@ -1950,6 +1955,39 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                     rag_context = (graph_block + "\n\n" + rag_context) if rag_context else graph_block
             except Exception as _e:  # never let graph memory break a chat turn
                 logger.warning("graph_memory injection skipped: %s", _e)
+
+        # Buddhi layer — synthesize Manas (RAG) + Mahat (graph) into a structured
+        # teaching via 3-stage granthi-bheda. Flag-gated OFF (BUDDHI_ENABLED=1) and
+        # fail-graceful: any failure falls back to raw rag_context unchanged.
+        buddhi_meta = None
+        if buddhi_synthesize is not None and os.getenv("BUDDHI_ENABLED", "").strip().lower() in ("1", "true", "yes", "on"):
+            try:
+                buddhi_result = buddhi_synthesize(
+                    query=request.query,
+                    graph_block=graph_block if build_graph_context is not None else "",
+                    rag_context=rag_context,
+                    expansion=expansion,  # feeds graph_terms + canonical into RAM matching
+                )
+                if buddhi_result and buddhi_result.synthesis_text:
+                    # Replace raw context with synthesized teaching.
+                    # The original verses are still in `sources` for the citation panel;
+                    # the LLM receives pre-assimilated wisdom.
+                    rag_context = buddhi_result.synthesis_text
+                    buddhi_meta = {
+                        "lens": buddhi_result.lens,
+                        "confidence": buddhi_result.confidence,
+                        "provider": buddhi_result.provider,
+                    }
+                    logger.info("buddhi: lens=%s confidence=%.0f%% provider=%s",
+                                buddhi_result.lens, buddhi_result.confidence * 100,
+                                buddhi_result.provider)
+            except Exception as _e:
+                logger.warning("buddhi synthesis failed, using raw context: %s", _e)
+
+        # Emit Buddhi metadata as an SSE event so the frontend can show
+        # lens + confidence if desired.
+        if buddhi_meta:
+            yield {"data": json.dumps({"type": "buddhi", **buddhi_meta})}
 
         system_text = prompt_tpl.format(
             language_instruction=combined_directives,

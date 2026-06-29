@@ -179,11 +179,12 @@ class QueryExpansion:
     detected_lang: str              # "Sanskrit (Roman)" | "Hindi" | "English" | ...
     is_sanskrit: bool               # True if a canonical-Sanskrit expansion was performed
     canonical: str                  # canonical IAST form (or original if passthrough)
-    synonyms: list[str] = field(default_factory=list)   # related Sanskrit terms (IAST)
+    synonyms: list[str] = field(default_factory=list)   # related Sanskrit terms (IAST, for embedding)
     english_gloss: str = ""         # the seeker's question in clear English (x-lingual anchor)
     devanagari: str = ""            # Devanagari script form (for GRETIL)
     engagement: str = "full"        # LLM-decided: "full" | "brief" | "redirect"
     mood: str = "warm"              # LLM-assessed: "warm" | "curious" | "heavy" | "sharp" | "distant"
+    graph_terms: list[str] = field(default_factory=list)  # entity names for graph recall (English/Sanskrit), distinct from IAST synonyms
 
     @property
     def _iast_terms(self) -> list[str]:
@@ -297,18 +298,22 @@ Respond with ONLY valid JSON, no extra text:
   "canonical_iast": "the single most central Sanskrit concept in IAST (e.g. ātman, dharma, mṛtyu)",
   "synonyms": ["up to 4 related Sanskrit terms or epithets in IAST, most relevant first"],
   "english_gloss": "the seeker's actual question, stated plainly in ENGLISH, max 18 words",
-  "devanagari": "the canonical concept in Devanagari"
+  "devanagari": "the canonical concept in Devanagari",
+  "graph_terms": ["English or Sanskrit entity names for knowledge graph lookup"]
 }}
 
 If the query is a greeting, chit-chat, or has no retrievable scriptural concept, set \
 is_conceptual:false and engagement to "brief" or "redirect":
-{{ "is_conceptual": false, "engagement": "brief", "mood": "warm", "canonical_iast": "", "synonyms": [], "english_gloss": "", "devanagari": "" }}
+{{ "is_conceptual": false, "engagement": "brief", "mood": "warm", "canonical_iast": "", "synonyms": [], "english_gloss": "", "devanagari": "", "graph_terms": [] }}
 
 Rules:
 - Translate the MEANING, not the words. Examples:
-  "what happens to the soul after death" -> ātman, mṛtyu, punarjanma (rebirth)
-  "природа дхармы и долга" -> dharma, kartavya, svadharma
-  "how to still the mind" -> citta-vṛtti-nirodha, dhyāna, samādhi
+  "what happens to the soul after death" -> canonical_iast: ātman, synonyms: [mṛtyu, punarjanma, jīva], graph_terms: [Atman, Soul, Death, Rebirth, Jiva]
+  "природа дхармы и долга" -> canonical_iast: dharma, synonyms: [kartavya, svadharma], graph_terms: [Dharma, Duty]
+  "how to still the mind" -> canonical_iast: citta-vṛtti-nirodha, synonyms: [dhyāna, samādhi, manas], graph_terms: [Citta, Manas, Mind, Dhyana, Samadhi, Yoga]
+  "what are the layers of the mind" -> canonical_iast: manas, synonyms: [buddhi, mahat, puruṣa, ātman], graph_terms: [Manas, Buddhi, Mahat, Purusa, Atman, Brahman, Mind, Intellect, Consciousness]
+  "how do the three gunas affect consciousness" -> canonical_iast: guṇa, synonyms: [sattva, rajas, tamas], graph_terms: [Sattva, Rajas, Tamas, Guna, Consciousness, Mind]
+- graph_terms: Up to 8 English/Sanskrit entity names the knowledge graph can activate. Include ALL related concepts, not just the single canonical one. Use PascalCase for Sanskrit entity names (Manas, Buddhi, Atman) and English for concept names (Mind, Consciousness, Time). The graph has entities for Manas, Buddhi, Mahat, Purusa, Purusha, Atman, Brahman, Jiva, Sattva, Rajas, Tamas, Yoga, Kriya, Dhyana, Samadhi, Vairagya, Granthi, Prakriti, Ahamkara, Chitta — when the query touches mind/consciousness, include the relevant ones.
 - canonical_iast and synonyms: proper IAST diacritics (ā ī ū ṛ ṝ ṃ ṅ ñ ṭ ḍ ṇ ś ṣ ḥ), Sanskrit only.
 - english_gloss: a clear English restatement — the cross-lingual anchor, always fill for conceptual queries.
 - engagement: "redirect" ONLY for actual abuse or completely random noise. When in doubt, default to "brief".
@@ -392,14 +397,15 @@ Respond with ONLY valid JSON, no extra text:
   "canonical_iast": "the central Sanskrit concept in IAST",
   "synonyms": ["related IAST terms, most relevant first"],
   "english_gloss": "the question stated plainly in English, max 18 words",
-  "devanagari": "the canonical concept in Devanagari"
+  "devanagari": "the canonical concept in Devanagari",
+  "graph_terms": ["entity names for knowledge graph lookup"]
 }}
 
 If the rewritten query is a greeting / chit-chat / has no scriptural concept, set
 is_conceptual:false and engagement to "brief" or "redirect":
-{{ "rewritten_query": "...", "is_conceptual": false, "engagement": "brief", "mood": "warm", "canonical_iast": "", "synonyms": [], "english_gloss": "", "devanagari": "" }}
+{{ "rewritten_query": "...", "is_conceptual": false, "engagement": "brief", "mood": "warm", "canonical_iast": "", "synonyms": [], "english_gloss": "", "devanagari": "", "graph_terms": [] }}
 
-Rules: translate MEANING not words; proper IAST diacritics; always fill english_gloss for a conceptual query.
+Rules: translate MEANING not words; proper IAST diacritics; always fill english_gloss for a conceptual query. Include graph_terms as entity names (PascalCase for Sanskrit, English for concepts) — list ALL related entities the knowledge graph should activate, not just the canonical one. Mind/consciousness queries should include Manas, Buddhi, Mahat, Purusa, Atman, Brahman where relevant.
 """
         try:
             resp = await asyncio.wait_for(
@@ -454,10 +460,11 @@ Rules: translate MEANING not words; proper IAST diacritics; always fill english_
         mood = (data.get("mood") or "warm").strip()
         if mood not in ("warm", "curious", "heavy", "sharp", "distant"):
             mood = "warm"
+        graph_terms = [t.strip() for t in (data.get("graph_terms") or []) if t and t.strip()][:8]
         return QueryExpansion(
             original=original, detected_lang=detected_lang, is_sanskrit=True,
             canonical=canonical, synonyms=synonyms, english_gloss=gloss, devanagari=deva,
-            engagement=engagement, mood=mood,
+            engagement=engagement, mood=mood, graph_terms=graph_terms,
         )
 
     async def _expand_crosslingual(self, query: str, detected_lang: str) -> QueryExpansion:
