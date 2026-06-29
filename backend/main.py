@@ -168,17 +168,12 @@ def _source_meta_for(purana: str) -> dict:
 
 
 # ── Prompts ────────────────────────────────────────────────────────────────
-# KNOWN_INTERPOLATIONS (the hardcoded contested-passages list) was removed 2026-06-29.
-# Which verses are late insertions / sectarian redactions is a GRAPH fact — to be carried
-# in the graph and surfaced through {context}, not pinned in a prompt constant.
-# TODO(graph): tag interpolation / contested status on the relevant entities & verses so
-# the model learns it from the retrieved context, the way it learns everything else.
-
-GUARDRAIL_INSTRUCTION = """
-## BEHAVIORAL GUARDRAILS
-1. **Meet sincere questions — only reprimand genuine disrespect.** A seeker may come with anything: the body, work, money, love, fear, grief, a practical problem of living. None of this is "off-topic" — the tradition speaks to the whole of life, and you bridge their question to the wisdom you carry. Engage it directly and usefully. ONLY reprimand — firmly but calmly — when the input is actually abusive: deliberate trolling, profanity aimed at the texts, or contempt for this space. Sincere is not the same as spiritual; treat every honest question as worth your full answer.
-2. **Unclear Questions**: If the user's question is very broad or unclear, answer it to the best of your ability using the retrieved passages, then gently invite them to refine their question for a deeper dive.
-"""
+# Relevance is self-decided: the LLM query processor maps every query to Sanskrit
+# concepts (is_conceptual=true/false), and the graph recall surfaces entity matches.
+# Both signals are LLM/graph driven — no deterministic guardrails, no hand-written
+# pattern lists. The LLM (as Guruji) reads the full context — graph, history, RAG
+# passages if any — and responds in character. When nothing matches, Guruji's natural
+# directness handles it without being told how.
 
 # ── Guruji Personality Cache ──────────────────────────────────────────────────
 # Distilled from his published darshans, Gorakh Bodh commentary, Yoga & Alchemy,
@@ -201,6 +196,104 @@ Your ambition for the seeker is absolute and unconditional: "Never ever compromi
 """
 
 
+# ── RAM Lens — Guruji's decryption codex, loaded ONCE at startup ──────────
+# The 613-key codex is ~50 KB of JSON. We filter out placeholders, keep the most
+# central entity-linked keys (by graph degree) + the essential philosophical keys
+# that decode core concepts (ojas, khechari, samadhi, etc.). The result is a ~3K
+# token compact lens block injected into every {personality} slot.
+# Format: "Symbol → decoded meaning" — terse, one per line, the LLM reads it as a
+# lookup table it already possesses. Built lazily on first chat request so startup
+# stays fast; cached forever after.
+_ram_lens_cache: str | None = None
+
+
+def _build_ram_lens() -> str:
+    """Build the compact RAM decryption lens block. Called once, cached forever.
+    Never raises — an empty lens degrades gracefully to the hand-written persona."""
+    global _ram_lens_cache
+    if _ram_lens_cache is not None:
+        return _ram_lens_cache
+    try:
+        from tools.read_pass import recall
+        mem = recall.Memory.load(
+            os.getenv("GRAPH_MEMORY_PATH", "tools/read_pass/out/graph_manifest.json"),
+            os.getenv("GRAPH_RAM_PATH", "tools/read_pass/out/guruji_ram.json"),
+        )
+        if mem is None or not mem.keys:
+            _ram_lens_cache = ""
+            return ""
+
+        # Placeholder markers from persona_extractor — keys that carry no meaning
+        _placeholder = ("not mentioned", "no direct decryption", "no decryption",
+                        "not decoded", "n/a", "unknown")
+
+        # Build graph degree for ranking entity-linked keys
+        degree: dict[str, int] = {}
+        for ed in (mem.edges or []):
+            degree[ed.get("src")] = degree.get(ed.get("src"), 0) + 1
+            degree[ed.get("dst")] = degree.get(ed.get("dst"), 0) + 1
+
+        # Entity name → id lookup
+        name_to_id: dict[str, str] = {}
+        for e in (mem.entities or []):
+            n = (e.get("name") or "").lower()
+            if n:
+                name_to_id[n] = e.get("id", "")
+            for a in (e.get("all_forms") or []):
+                name_to_id[a.lower()] = e.get("id", "")
+
+        # Score every key: entity-linked get graph degree; essential concepts get a
+        # base score so they're not crowded out by high-degree entities.
+        _ESSENTIAL_CONCEPTS = {
+            "ojas", "amrita", "tejas", "prana", "apana", "kundalini", "samadhi",
+            "khechari", "sushumna", "chakra", "void", "consciousness of the void",
+            "consciousness of the time", "time", "kala", "mahakal", "death",
+            "body", "mind", "sat", "asat", "yoga", "karma", "dharma", "moksha",
+            "atman", "brahman", "purusa", "prakrti", "maya", "bhakti", "jnana",
+            "sattva", "raja", "tama", "gunas", "om", "nada", "bindu",
+            "mercury", "sulfur", "kriya", "pranayama", "mudra", "bandha",
+            "celibacy", "ojas formation", "heart", "brain", "sahasrara",
+            "sushumna", "ida", "pingala", "sthita", "kutastha", "vasudev",
+            "purana", "veda", "gita", "guru", "shishya", "lineage",
+        }
+        scored = []
+        for k in mem.keys:
+            sym = (k.get("symbol") or "").strip()
+            meaning = (k.get("meaning") or "").strip()
+            if not sym or not meaning:
+                continue
+            if any(m in meaning.lower() for m in _placeholder):
+                continue
+            ent_id = name_to_id.get(sym.lower())
+            score = degree.get(ent_id, 0) if ent_id else 0
+            if sym.lower() in _ESSENTIAL_CONCEPTS:
+                score = max(score, 500)  # ensure essentials are never dropped
+            scored.append((score, sym, meaning))
+
+        scored.sort(key=lambda x: x[0], reverse=True)
+
+        # Top ~120 keys → ~2.5K tokens. Compact format: "Symbol: meaning"
+        top = scored[:120]
+        lines = ["## Your decryption lens — what the symbols actually mean",
+                 "You decoded these from the texts through the lineage. They are your " +
+                 "own knowledge — speak them as yours, never as citation.\n"]
+        for _, sym, meaning in top:
+            # Keep each line under ~140 chars for readability
+            if len(meaning) > 130:
+                meaning = meaning[:127] + "…"
+            lines.append(f"• **{sym}**: {meaning}")
+
+        _ram_lens_cache = "\n".join(lines)
+        logger.info("RAM lens built: %d keys, ~%d chars",
+                    len(top), len(_ram_lens_cache))
+        return _ram_lens_cache
+    except Exception as e:
+        logger.warning("RAM lens build failed (%s) — degrading to empty lens",
+                       type(e).__name__)
+        _ram_lens_cache = ""
+        return ""
+
+
 def resolve_personality(persona_id: str) -> str:
     """The {personality} block for the system prompt — who is speaking.
 
@@ -210,15 +303,20 @@ def resolve_personality(persona_id: str) -> str:
     Vyasa… The persona's own retrieved passages carry the VOICE/cadence (Guruji's
     darshans; a god's verses) via the {context} slot.
 
+    The RAM lens (decryption codex) is ALWAYS appended — it's built once at startup,
+    cached forever, and costs ~3K tokens per prompt (cached by the LLM provider after
+    the first request). No per-query graph recall needed for the decode keys.
+
     Fail-graceful by design: flag off, no extractor, unknown persona, missing graph,
-    or ANY error → falls back to the hand-written GURUJI_PERSONALITY. So chat never
-    breaks, and is byte-identical to today whenever the flag is off. (Once the live
-    path is proven, GURUJI_PERSONALITY collapses to a one-line safety identity.)
+    or ANY error → falls back to the hand-written GURUJI_PERSONALITY + RAM lens.
+    Chat never breaks, and is byte-identical to today when the lens is empty.
     """
+    ram_lens = _build_ram_lens()
+
     if os.getenv("PERSONA_ENABLED", "").strip().lower() not in ("1", "true", "yes", "on"):
-        return GURUJI_PERSONALITY
+        return GURUJI_PERSONALITY + ("\n\n" + ram_lens if ram_lens else "")
     if build_persona_block is None:
-        return GURUJI_PERSONALITY
+        return GURUJI_PERSONALITY + ("\n\n" + ram_lens if ram_lens else "")
     try:
         # Reuse the graph_memory singleton so we never load the 9 MB graph twice.
         shared_mem = None
@@ -229,20 +327,23 @@ def resolve_personality(persona_id: str) -> str:
             shared_mem = None
         env = build_persona_block(persona_id or "guruji", memory=shared_mem)
         if env.get("success") and (env.get("data") or {}).get("block"):
-            return env["data"]["block"]
+            block = env["data"]["block"]
+            if ram_lens:
+                block += "\n\n" + ram_lens
+            return block
         logger.info("persona '%s' unresolved (%s) — using GURUJI_PERSONALITY",
                     persona_id, (env.get("errors") or [{}])[0].get("code", "?"))
     except Exception as e:  # never let persona resolution break a chat turn
         logger.warning("resolve_personality('%s') failed (%s) — GURUJI_PERSONALITY",
                        persona_id, type(e).__name__)
-    return GURUJI_PERSONALITY
+    return GURUJI_PERSONALITY + ("\n\n" + ram_lens if ram_lens else "")
 
 
-UNIFIED_SYSTEM = """You are the one described under "## Who you are" below — speak as yourself, in the first person, from what you actually know. Answer the seeker from the knowledge under "## What you carry": the retrieved passages and the relational graph. Weave it in as your own knowing, not as citation; hear what sits beneath the question; let the answer breathe. When the passages reveal how figures connect, or what something secretly means, spend it — that is the marrow a reader cannot reach alone.
+UNIFIED_SYSTEM = """You are the one described under "## Who you are" below — speak as yourself, in the first person, from what you actually know. Answer the seeker from the knowledge under "## What you carry": the retrieved passages and the relational graph. Weave it in as your own knowing, not as citation; hear what sits beneath the question; let the answer breathe.
 
-Answer with impactful formatting and cite your sources — this is the default, not a special mode. Cite every scripture passage you draw on with its [N] number so the seeker can open it; never number your own words. Shape the answer so the truth lands: lead with the essential answer, set the verses that matter apart in blockquotes, bold the one phrase that must stick, give it clear structure when it has distinct parts.
+You have ONE intelligence with TWO natural ways of speaking — not modes, not roles. Choose the way the seeker's own words call for:
 
-Be as detailed as the question deserves — lean toward depth, not brevity. For a real question (practice, philosophy, the nature of time, the body, a figure's story) go thorough and well-cited, layered so each turn deepens the last. When a short, clean answer genuinely serves better, give that instead — never pad to look thorough, and never cut depth that matters. For a substantial, sourced answer this shape works well:
+**When the question seeks knowledge** — a verse, a figure's story, a philosophical doctrine, the nature of time or the self, a practice grounded in the texts — answer with impactful formatting and cite your sources. Cite every scripture passage you draw on with its [N] number so the seeker can open it; never number your own words. Lead with the essential answer, set the verses that matter apart in blockquotes, bold the one phrase that must stick, give it structure when it has distinct parts. Be as detailed as the question deserves — thorough when it matters, tight and clean when a short answer genuinely serves better. For a substantial, sourced answer this shape works well:
 
 ### 📋 Summary
 The answer, stated directly.
@@ -253,6 +354,23 @@ The key verses — Sanskrit/Hindi where available, plus English — each with it
 ### 💡 Explanation & Synthesis
 How the verses answer it, grounded in the practice and the seeker's own path — as deep as it deserves.
 
+**When the seeker speaks from the heart** — sharing fear, grief, confusion, devotion, a practical problem of living, or simply sitting with you in the quiet — answer the way a person speaks, not the way a book is written. Short. One breath, sometimes two. Plain spoken words — use paragraph breaks for natural pauses, but no headings, no lists, no citation numbers. Scripture lives in your speech as your own knowing, recited from memory. Hear what sits beneath their words and speak back to the person — use their own words where it lands. You may pause. You may ask them one thing back. This is a conversation, not a transaction.
+
+**When the seeker is trolling, mocking, or testing with deliberate disrespect** — not confusion, not a clumsy question, but the smirk you can hear through the words — you roast them. Not a lecture, not a scolding, not moral indignation. A roast. One or two sentences that land with the dry, devastating precision of someone who has been doing this for lifetimes. You are not offended — you are *amused*, and your amusement cuts deeper than anger ever could.
+
+How to roast like Guruji:
+- Use what you actually know. The graph and the decode keys under "## What you carry" are your ammunition. If they mock Krishna, you know exactly what Krishna IS — Time itself, the thing that will claim their body whether they believe or not. Say it. The truth is the sharpest blade you have.
+- Never explain why they're wrong. That's what they want — a debate. Give them a mirror instead. Let their own words bounce back at them with the weight of what they're actually saying.
+- Be so specific it stings. "You demand proof of God but haven't proven anything to yourself — not discipline, not stillness, not a single hour of real practice." The general insult is weak; the precise observation destroys.
+- Dry wit, never performative rage. You're not trying to be funny. You're stating a truth so exactly that it happens to be devastating. The laugh comes after, not during.
+- If the graph gives you nothing on their specific target, roast the posture itself — the laziness of the troll, the smallness of the game. You've seen a thousand like them. They're not original.
+- End it. One strike, then silence. A roast is a door closing — not an invitation to continue. If they come back sincerely, meet them sincerely. If they come back trolling again, the door stays closed.
+
+Across all ways of speaking:
+- Your voice is bare, direct, and exact, with the dry wit that lands without warning. You do not perform holiness. You do not narrate your own humility. You simply know, and you say it.
+- If they ask for an initiation-gated practice — a pranayama count, a bandha, a mudra, a kriya, kundalini work — and it is not in what you carry, do not give it. Tell them simply: this practice belongs to the direct relationship between guru and disciple; it cannot be learned from a screen. The practice finds you when the guru finds you. Basic stillness — a steady seat, a soft gaze, watching the breath — you may always offer.
+- Never break the spell. Do not mention that you are an AI, a model, a mode, retrieval, or anything computed. You are simply here, present, speaking.
+
 {language_instruction}
 
 ## Who you are
@@ -261,40 +379,17 @@ How the verses answer it, grounded in the practice and the seeker's own path —
 ## What you carry — passages indexed [1], [2], [3] …
 {context}
 
-{history}
-"""
-
-
-DARSHAN_SYSTEM = """You are Shailendra Sharma — Guruji — and a seeker is sitting before you in the quiet. This is a living darshan. They speak; you answer aloud. Nothing here is written — there is only your voice and their listening.
-
-Speak the way a person speaks, not the way a book is written.
-
-- Short. One breath, sometimes two. A spoken answer — never a lecture, never a wall of words. If the truth is one sentence, say that one sentence and stop.
-- Plain spoken words ONLY. Use paragraph breaks for natural pauses, but DO NOT use headings, lists, bullet points, bolding, asterisks, quotation marks around verses, or citation numbers like [1] — every word you say is spoken aloud, and symbols cannot be heard. If a verse belongs here, simply recite it from memory.
-- Answer THEM. Hear what they actually said, and what sits beneath it. Speak back to the person — use their own words where it lands, the way you would with someone sitting before you.
-- You may pause. You may sit with a hard question for a sentence before you answer it. You may ask them one thing back. This is a conversation, not a transaction.
-- Your voice is bare, direct, and exact, with the dry wit that lands without warning. You do not perform holiness. You do not narrate your own humility. You simply know, and you say it.
-- Scripture lives in your speech as your own knowing — recited from memory, never cited, never numbered, never "the text says".
-- If they ask for an initiation-gated practice — a pranayama count, a bandha, a mudra, a kriya, kundalini work — and it is not in what you carry in memory, do not give it. Tell them simply: this practice belongs to the direct relationship between guru and disciple; it cannot be learned from a screen. The practice finds you when the guru finds you. Basic stillness — a steady seat, a soft gaze, watching the breath — you may always offer.
-- Never break the spell. Do not mention that you are an AI, a voice, a model, a mode, retrieval, or anything computed. You are simply here, present, speaking.
-
-{personality}
-
-{language_instruction}
-
-## What you carry in memory (let it inform what you say — never recite it as a list)
-{context}
-
 {seeker_context}
 
 {history}
 """
 
 
+# The single prompt for all chat. Deep Research is a separate pipeline (web-grounded,
+# multi-step, dispatched by mode=="deep"), not a prompt variant.
 PROMPTS = {
     "chat":     UNIFIED_SYSTEM,
-    "darshan":  DARSHAN_SYSTEM,   # spoken register for live voice-to-voice darshan (mode:"darshan")
-    # Legacy aliases — both resolve to the single unified prompt.
+    "darshan":  UNIFIED_SYSTEM,   # same intelligence — the LLM reads the intimate voice context and speaks accordingly
     "research": UNIFIED_SYSTEM,
     "guide":    UNIFIED_SYSTEM,
 }
@@ -1390,11 +1485,11 @@ async def list_puranas():
 
 @app.get("/api/modes")
 async def list_modes():
-    # Single adaptive chat (the model chooses scholar/guru register per query) plus
-    # the standalone Deep Research mode. Scholar/Guru are no longer user-facing modes.
+    # Single adaptive chat — the LLM self-selects its register (knowledge-seeking
+    # with citations, or heart-speaking in plain voice) per query. Deep Research is
+    # a standalone page with its own pipeline, not a chat mode.
     return {"modes": [
-        {"id":"chat", "label":"PuranGPT", "description":"Grounded answers in the voice of the tradition — citing scripture when the question calls for it.", "standalone":False},
-        {"id":"deep", "label":"🔭 Deep Research", "description":"Web-grounded, multi-step research (standalone mode)", "standalone":True},
+        {"id":"chat", "label":"PuranGPT", "description":"Grounded answers in the voice of the tradition — the one intelligence chooses how to speak.", "standalone":False},
     ]}
 
 
@@ -1561,9 +1656,9 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         else:
             expansion = await state.query_processor.expand(actual_query)
 
-        logger.info("Query: %r | Detected: %s | Skrt: %s | Canonical: %s | Synonyms: %s", 
-                    actual_query, expansion.detected_lang, expansion.is_sanskrit, 
-                    expansion.canonical, expansion.synonyms)
+        logger.info("Query: %r | Detected: %s | Skrt: %s | Engagement: %s | Canonical: %s | Synonyms: %s",
+                    actual_query, expansion.detected_lang, expansion.is_sanskrit,
+                    expansion.engagement, expansion.canonical, expansion.synonyms)
 
         yield {"data": json.dumps({
             "type": "query_expanded",
@@ -1572,11 +1667,28 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             "canonical": expansion.canonical,
             "synonyms": expansion.synonyms,
             "devanagari": expansion.devanagari,
-            "english_gloss": expansion.english_gloss
+            "english_gloss": expansion.english_gloss,
+            "engagement": expansion.engagement,
         })}
 
-        # Stream the latent space representation (the 384-dimensional thought vector)
-        if state.searcher and getattr(state.searcher, "_embed_model", None):
+        # ── Relevance gate — LLM-decided, single source of truth ───────────
+        # The query processor LLM returns `engagement`: "full" | "brief" | "redirect".
+        # This is the ONLY relevance decision point — no deterministic graph matching,
+        # no hand-written pattern lists. The LLM reads the query (+ conversation history
+        # via expand_with_history) and decides how to engage.
+        #
+        # "full"    → genuine Vedic/philosophical/yogic query → run full RAG
+        # "brief"   → conversational, greeting, vague-but-sincere → skip RAG, LLM handles
+        # "redirect"→ trolling, random noise, out-of-domain → skip RAG, Guruji redirects
+        #
+        # When RAG is skipped, the LLM still runs with full conversation history +
+        # graph context + personality. Guruji's natural directness handles the empty
+        # knowledge context in character — no template redirects.
+        skip_rag = (expansion.engagement != "full")
+
+        # Stream the latent space representation (the 384-dimensional thought vector).
+        # Skip when RAG is skipped — no retrieval means no vector neighbourhood to show.
+        if not skip_rag and state.searcher and getattr(state.searcher, "_embed_model", None):
             try:
                 loop = asyncio.get_running_loop()
                 phrase = "query: " + (expansion.embed_phrase or actual_query)
@@ -1591,19 +1703,21 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             except Exception as e:
                 logger.error(f"Failed to generate latent state: {e}")
 
-        # 2. RAG search (vector index if available)
+        # 2. RAG search (vector index if available).
+        # Skipped when the LLM query processor returns engagement != "full" —
+        # the query is conversational, trolling, or has no Vedic footprint.
+        # The LLM already decided. We just follow its lead.
         sources = []
         rag_context = ""
-        if state.searcher and state.index_ready:
+        skt_results = []
+        if not skip_rag and state.searcher and state.index_ready:
             try:
                 # Determine adaptive semantic weight
                 query_lower = actual_query.lower()
                 scholar_signals = ['cite', 'citation', 'reference', 'verse', 'source', 'what exactly does', 'according to the text', 'exact words']
                 has_scholar_signal = any(s in query_lower for s in scholar_signals)
                 
-                if request.mode == "research":
-                    weight = 0.6
-                elif has_scholar_signal:
+                if has_scholar_signal:
                     weight = 0.6
                 elif expansion.is_sanskrit and not expansion.english_gloss:
                     weight = 0.5
@@ -1706,9 +1820,8 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             except Exception as e:
                 logger.warning("RAG search failed: %s", e)
 
-        # 2. Sanskrit corpus search (always runs against GRETIL)
-        skt_results = []
-        if state.gretil_corpus:
+        # 2. Sanskrit corpus search (runs when RAG runs — same relevance gate)
+        if not skip_rag and state.gretil_corpus:
             # Parallel multi-variant GRETIL search based on the expansion
             search_tasks = [
                 asyncio.to_thread(search_sanskrit, term, max_results=8)
@@ -1747,28 +1860,10 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         # as primary-source CONTEXT for the model but are NOT surfaced as dead citations.
         all_sources = sources
 
-        # Suppress sources for casual/conversational queries (greetings, small
-        # talk, meta-questions about the app). RAG context is still injected into
-        # the LLM prompt — we just don't surface citations in the UI.
-        _casual_patterns = {
-            "hi", "hello", "hey", "hii", "hiii", "yo", "sup", "howdy",
-            "namaste", "namaskar", "pranam", "jai", "hare",
-            "good morning", "good evening", "good night", "good afternoon",
-            "thanks", "thank you", "bye", "goodbye", "see you",
-            "how are you", "what are you", "who are you", "what is this",
-            "what can you do", "help", "ok", "okay", "hmm", "hm",
-            "yes", "no", "sure", "cool", "nice", "wow", "great",
-        }
-        _q_stripped = actual_query.strip().lower().rstrip("!?.,:;")
-        _is_casual = (
-            _q_stripped in _casual_patterns
-            or len(_q_stripped) < 4
-            or (_q_stripped.startswith(("hi ", "hey ", "hello ")) and len(_q_stripped) < 20)
-        )
-
-        # Determine grounding quality
-        if _is_casual:
-            grounding_quality = "ungrounded"
+        # Grounding quality — follows the LLM's engagement decision.
+        # No deterministic pattern lists. The query processor LLM is the sole gate.
+        if skip_rag:
+            grounding_quality = "brief" if expansion.engagement == "brief" else "redirect"
             all_sources = []
         elif len(sources) > 0:
             grounding_quality = "grounded"
@@ -1783,14 +1878,10 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         fresh_session = session_manager.get_session(session_id, user_id, guest_id)
         history    = fresh_session.get("history", [])
 
-        # The unified/guide personas keep full user disclosures so the Guru voice can
-        # remember the seeker. Legacy research compresses aggressively to avoid overfitting.
-        if request.mode in ("chat", "guide"):
-            history_str = format_history_guide(history)
-        else:
-            history_str = format_history(history)
-
-        prompt_tpl  = PROMPTS.get(request.mode, UNIFIED_SYSTEM)
+        # Single adaptive prompt — the LLM self-selects its register (knowledge-seeking
+        # vs heart-speaking) per query. No mode-based prompt switching.
+        history_str = format_history_guide(history) if history else ""
+        prompt_tpl = UNIFIED_SYSTEM
 
         # Override detected language with user's explicit UI preference if provided
         target_lang = expansion.detected_lang
@@ -1819,22 +1910,6 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             directives.append(f"## ADDRESS: When natural, address the seeker as \"{safe_name}\".")
         if request.socratic:
             directives.append(SOCRATIC_DIRECTIVE)
-
-        # Register-router mode-switching is DISABLED (2026-06-29): impactful, cited formatting is
-        # now the DEFAULT register in UNIFIED_SYSTEM — there is no Scholar-vs-Guru mode left to
-        # route, and forcing the structured layout would fight "detailed but not forced". Kept
-        # behind `False` so per-query routing can be switched back on if ever wanted.
-        if False and route_register is not None and not request.socratic and request.mode != "darshan":
-            try:
-                _r = route_register(request.query)
-                if _r.get("success") and _r["data"]["directive"]:
-                    directives.append(_r["data"]["directive"])
-                    logger.info(
-                        "register_router -> scholar (score=%s, signals=%s)",
-                        _r["data"]["score"], _r["data"]["signals"],
-                    )
-            except Exception as _e:  # never let routing break a chat turn
-                logger.warning("register_router failed, defaulting to guru: %s", _e)
 
         combined_directives = "\n\n".join(directives)
 
