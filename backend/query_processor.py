@@ -183,6 +183,7 @@ class QueryExpansion:
     english_gloss: str = ""         # the seeker's question in clear English (x-lingual anchor)
     devanagari: str = ""            # Devanagari script form (for GRETIL)
     engagement: str = "full"        # LLM-decided: "full" | "brief" | "redirect"
+    mood: str = "warm"              # LLM-assessed: "warm" | "curious" | "heavy" | "sharp" | "distant"
 
     @property
     def _iast_terms(self) -> list[str]:
@@ -272,22 +273,27 @@ Mahabharata, Yoga texts) stored in IAST-romanized Sanskrit. Map the seeker's que
 whatever its language — onto the canonical Sanskrit concepts that appear in those texts, \
 so the search lands in the right place.
 
-Also decide how the Guru should engage. This is the ONLY relevance gate — there is no \
-other filter, no hand-written pattern list. Your engagement call determines everything:
+Also decide how the Guru should engage (engagement) and the seeker's emotional register
+(mood). These are the ONLY relevance/tonal gates — no hand-written pattern lists.
 
-- "full": the query genuinely seeks Vedic/philosophical/yogic knowledge, practice, or \
-  scripture — deserves a thorough, cited answer with full RAG retrieval.
-- "brief": conversational (greeting, thanks, small talk), vague but sincere, or a \
-  personal disclosure the Guru should acknowledge warmly but without launching into \
-  a full teaching — skip RAG, give a short human response.
-- "redirect": trolling, deliberate disrespect, completely out-of-domain random noise \
-  with no connection to the tradition or the conversation — skip RAG, the Guru will \
-  redirect firmly but without hostility.
+engagement:
+- "full": genuine Vedic/philosophical/yogic query → full RAG, thorough cited answer
+- "brief": conversational, vague-but-sincere, personal disclosure → skip RAG, short response
+- "redirect": trolling, deliberate disrespect, random noise → skip RAG, roast
+
+mood — read the emotional register of the seeker FROM THIS QUERY ALONE (there is no prior \
+conversation for context). Default to "warm" for a new seeker. Choose:
+- "warm": open, receptive, engaged, greeting — the default for a fresh conversation
+- "curious": questioning, exploring, intellectually hungry
+- "heavy": grief, fear, confusion, struggle — the seeker is carrying something
+- "sharp": testing, challenging, skeptical — but NOT trolling (that's engagement:redirect)
+- "distant": short, disengaged, one-word — the seeker is barely present
 
 Respond with ONLY valid JSON, no extra text:
 {{
   "is_conceptual": true,
   "engagement": "full",
+  "mood": "warm",
   "canonical_iast": "the single most central Sanskrit concept in IAST (e.g. ātman, dharma, mṛtyu)",
   "synonyms": ["up to 4 related Sanskrit terms or epithets in IAST, most relevant first"],
   "english_gloss": "the seeker's actual question, stated plainly in ENGLISH, max 18 words",
@@ -295,9 +301,8 @@ Respond with ONLY valid JSON, no extra text:
 }}
 
 If the query is a greeting, chit-chat, or has no retrievable scriptural concept, set \
-is_conceptual:false and engagement to "brief" (normal human conversation) or "redirect" \
-(actual trolling / random noise):
-{{ "is_conceptual": false, "engagement": "brief", "canonical_iast": "", "synonyms": [], "english_gloss": "", "devanagari": "" }}
+is_conceptual:false and engagement to "brief" or "redirect":
+{{ "is_conceptual": false, "engagement": "brief", "mood": "warm", "canonical_iast": "", "synonyms": [], "english_gloss": "", "devanagari": "" }}
 
 Rules:
 - Translate the MEANING, not the words. Examples:
@@ -305,9 +310,9 @@ Rules:
   "природа дхармы и долга" -> dharma, kartavya, svadharma
   "how to still the mind" -> citta-vṛtti-nirodha, dhyāna, samādhi
 - canonical_iast and synonyms: proper IAST diacritics (ā ī ū ṛ ṝ ṃ ṅ ñ ṭ ḍ ṇ ś ṣ ḥ), Sanskrit only.
-- english_gloss: a clear English restatement of the question — this is the cross-lingual anchor, always fill it for a conceptual query.
-- If several concepts are present, choose the most central as canonical_iast and put the rest in synonyms.
-- engagement: "redirect" is ONLY for actual abuse or completely random noise. When in doubt, default to "brief" (human conversation) or "full" (if there is any real question in it).
+- english_gloss: a clear English restatement — the cross-lingual anchor, always fill for conceptual queries.
+- engagement: "redirect" ONLY for actual abuse or completely random noise. When in doubt, default to "brief".
+- mood: default to "warm" unless the query clearly carries another emotional register.
 """
 
 
@@ -371,16 +376,19 @@ The seeker's follow-up query is: "{query}"
 Step 1: Rewrite the follow-up to be self-contained, using the history (keep its language).
 Step 2: Map the REWRITTEN query's meaning onto canonical Sanskrit concepts in the
 IAST-romanized scripture corpus, regardless of the query's language/script.
-Step 3: Decide how the Guru should engage — this is the ONLY relevance gate. "full" for
-a genuine knowledge-seeking question (run full RAG). "brief" for conversational /
-vague-but-sincere / personal sharing (skip RAG, short human response). "redirect" ONLY
-for actual trolling or completely random noise disconnected from the conversation thread.
+Step 3: Decide engagement ("full"/"brief"/"redirect") — the ONLY relevance gate.
+Step 4: Assess the seeker's mood from the conversation ARC. Read how their emotional
+register has shifted across turns. The mood starts "warm" and evolves. Choose:
+  "warm" (open, receptive), "curious" (questioning, hungry), "heavy" (grief, fear,
+  struggle), "sharp" (testing, challenging but not trolling), "distant" (short,
+  disengaged). Default to "warm" if the conversation doesn't clearly shift it.
 
 Respond with ONLY valid JSON, no extra text:
 {{
   "rewritten_query": "the self-contained version of the query",
   "is_conceptual": true,
   "engagement": "full",
+  "mood": "warm",
   "canonical_iast": "the central Sanskrit concept in IAST",
   "synonyms": ["related IAST terms, most relevant first"],
   "english_gloss": "the question stated plainly in English, max 18 words",
@@ -389,7 +397,7 @@ Respond with ONLY valid JSON, no extra text:
 
 If the rewritten query is a greeting / chit-chat / has no scriptural concept, set
 is_conceptual:false and engagement to "brief" or "redirect":
-{{ "rewritten_query": "...", "is_conceptual": false, "engagement": "brief", "canonical_iast": "", "synonyms": [], "english_gloss": "", "devanagari": "" }}
+{{ "rewritten_query": "...", "is_conceptual": false, "engagement": "brief", "mood": "warm", "canonical_iast": "", "synonyms": [], "english_gloss": "", "devanagari": "" }}
 
 Rules: translate MEANING not words; proper IAST diacritics; always fill english_gloss for a conceptual query.
 """
@@ -405,10 +413,13 @@ Rules: translate MEANING not words; proper IAST diacritics; always fill english_
                     engagement = (data.get("engagement") or "brief").strip()
                     if engagement not in ("full", "brief", "redirect"):
                         engagement = "brief"
+                    mood = (data.get("mood") or "warm").strip()
+                    if mood not in ("warm", "curious", "heavy", "sharp", "distant"):
+                        mood = "warm"
                     return QueryExpansion(
                         original=rewritten, detected_lang=self._hint_lang(rewritten),
                         is_sanskrit=False, canonical=rewritten,
-                        engagement=engagement,
+                        engagement=engagement, mood=mood,
                     )
                 return self._build_expansion(rewritten, data, detected_lang=self._hint_lang(rewritten))
         except asyncio.TimeoutError:
@@ -438,13 +449,15 @@ Rules: translate MEANING not words; proper IAST diacritics; always fill english_
         gloss = (data.get("english_gloss") or "").strip()
         deva = (data.get("devanagari") or "").strip() or _to_devanagari(canonical)
         engagement = (data.get("engagement") or "full").strip()
-        # Validate — only the three known values
         if engagement not in ("full", "brief", "redirect"):
             engagement = "full"
+        mood = (data.get("mood") or "warm").strip()
+        if mood not in ("warm", "curious", "heavy", "sharp", "distant"):
+            mood = "warm"
         return QueryExpansion(
             original=original, detected_lang=detected_lang, is_sanskrit=True,
             canonical=canonical, synonyms=synonyms, english_gloss=gloss, devanagari=deva,
-            engagement=engagement,
+            engagement=engagement, mood=mood,
         )
 
     async def _expand_crosslingual(self, query: str, detected_lang: str) -> QueryExpansion:
@@ -465,6 +478,7 @@ Rules: translate MEANING not words; proper IAST diacritics; always fill english_
                         english_gloss=d.get("english_gloss", ""),
                         devanagari=d.get("devanagari", ""),
                         engagement=d.get("engagement", "full"),
+                        mood=d.get("mood", "warm"),
                     )
             except Exception as e:
                 logger.warning("Redis cache read failed for %r: %s", query, e)
@@ -483,10 +497,13 @@ Rules: translate MEANING not words; proper IAST diacritics; always fill english_
                 engagement = (data.get("engagement") or "brief").strip()
                 if engagement not in ("full", "brief", "redirect"):
                     engagement = "brief"
+                mood = (data.get("mood") or "warm").strip()
+                if mood not in ("warm", "curious", "heavy", "sharp", "distant"):
+                    mood = "warm"
                 exp = QueryExpansion(
                     original=query, detected_lang=detected_lang,
                     is_sanskrit=False, canonical=query,
-                    engagement=engagement,
+                    engagement=engagement, mood=mood,
                 )
             else:
                 exp = self._build_expansion(query, data, detected_lang)
@@ -504,6 +521,7 @@ Rules: translate MEANING not words; proper IAST diacritics; always fill english_
                         "english_gloss": exp.english_gloss,
                         "devanagari": exp.devanagari,
                         "engagement": exp.engagement,
+                        "mood": exp.mood,
                     }))
                 except Exception as e:
                     logger.warning("Redis cache write failed for %r: %s", query, e)

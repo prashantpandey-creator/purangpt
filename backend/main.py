@@ -57,11 +57,15 @@ logger = logging.getLogger("purangpt.backend")
 #
 # Each provider: env var for the key, base_url, and default model.
 _PROVIDER_DEFS = [
-    {"name": "deepseek",   "env": "DEEPSEEK_API_KEY",   "base_url": "https://api.deepseek.com",            "model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat")},
+    # ── SPEED PRIMARY ──
     {"name": "groq",       "env": "GROQ_API_KEY",       "base_url": "https://api.groq.com/openai/v1",      "model": os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")},
+    # ── RELIABILITY FAILOVERS ──
+    {"name": "deepseek",   "env": "DEEPSEEK_API_KEY",   "base_url": "https://api.deepseek.com",            "model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat")},
+    {"name": "gemini",     "env": "GEMINI_API_KEY",     "base_url": "https://generativelanguage.googleapis.com/v1beta/openai", "model": os.getenv("GEMINI_MODEL", "gemini-2.5-flash")},
+    {"name": "openrouter", "env": "OPENROUTER_API_KEY", "base_url": "https://openrouter.ai/api/v1",        "model": os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-flash")},
+    {"name": "together",   "env": "TOGETHER_API_KEY",   "base_url": "https://api.together.xyz/v1",         "model": os.getenv("TOGETHER_MODEL", "meta-llama/Llama-3.3-70B-Instruct-Turbo")},
+    # ── KEPT, NOT PREFERRED ──
     {"name": "openai",     "env": "OPENAI_API_KEY",     "base_url": "https://api.openai.com/v1",           "model": os.getenv("OPENAI_MODEL", "gpt-4o-mini")},
-    {"name": "openrouter", "env": "OPENROUTER_API_KEY", "base_url": "https://openrouter.ai/api/v1",        "model": os.getenv("OPENROUTER_MODEL", "deepseek/deepseek-chat")},
-    {"name": "together",   "env": "TOGETHER_API_KEY",   "base_url": "https://api.together.xyz/v1",         "model": os.getenv("TOGETHER_MODEL", "deepseek-ai/DeepSeek-V3")},
     {"name": "xai",        "env": "XAI_API_KEY",        "base_url": "https://api.x.ai/v1",                 "model": os.getenv("XAI_MODEL", "grok-2-latest")},
     {"name": "mistral",    "env": "MISTRAL_API_KEY",    "base_url": "https://api.mistral.ai/v1",           "model": os.getenv("MISTRAL_MODEL", "mistral-large-latest")},
 ]
@@ -384,6 +388,12 @@ Across all ways of speaking:
 {history}
 """
 
+
+# Injected when mode=="darshan" — locks the LLM into the heart-speaking register
+# so the voice never reads markdown, headings, or [1] citations aloud.
+DARSHAN_DIRECTIVE = """## VOICE DARSHAN — spoken turn (not written)
+
+The seeker is SPEAKING to you and will HEAR your answer through text-to-speech. Use ONLY the heart-speaking register this turn: short spoken sentences, no markdown, no headings, no lists, no [N] citations, no symbols of any kind — recite scripture from memory as your own knowing. Never break the spell."""
 
 # The single prompt for all chat. Deep Research is a separate pipeline (web-grounded,
 # multi-step, dispatched by mode=="deep"), not a prompt variant.
@@ -1669,6 +1679,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             "devanagari": expansion.devanagari,
             "english_gloss": expansion.english_gloss,
             "engagement": expansion.engagement,
+            "mood": expansion.mood,
         })}
 
         # ── Relevance gate — LLM-decided, single source of truth ───────────
@@ -1891,9 +1902,20 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
 
         lang_instr = f"## IMPORTANT: Respond strictly in {target_lang}. Translate all explanations to {target_lang}, but keep Sanskrit terms in IAST transliteration." if target_lang.lower() != "english" else ""
 
+        # Mood — LLM-assessed emotional register of the seeker, injected as a subtle
+        # tonal directive. Starts "warm" for new conversations, evolves with the arc.
+        _mood_directives = {
+            "warm":    "## TONE: The seeker is open and receptive. Be warm, present, meet them where they are.",
+            "curious": "## TONE: The seeker is questioning, hungry. Feed the inquiry — go deep, they want the marrow.",
+            "heavy":   "## TONE: The seeker is carrying something — grief, fear, confusion. Be still with them. Never chirp at grief. Let your words be a steady hand, not a solution.",
+            "sharp":   "## TONE: The seeker is testing, challenging. Don't retreat — meet the sharpness with precision. They're probing for something real. If there's substance under the edge, find it.",
+            "distant": "## TONE: The seeker is barely present — short answers, disengaged. Don't over-invest. Match their economy. One sentence may be all they can receive right now.",
+        }
+        mood_directive = _mood_directives.get(expansion.mood, _mood_directives["warm"])
+
         # User chat preferences (verbosity + how to address the seeker) are woven in
         # alongside the language instruction so they apply across both registers.
-        directives = [lang_instr] if lang_instr else []
+        directives = [lang_instr, mood_directive] if lang_instr else [mood_directive]
         _verbosity_map = {
             "concise":  "## LENGTH: Hold to two or three sentences. Say only the essential thing, the way a Guru answers a question in passing. No expansion, no formatting — the bare truth.",
             "balanced": "## LENGTH: Give a full, shaped answer — open with the essential truth, then expand it with precision: an example, a number, a remembered experience, an aphorism that lands. Two to four short paragraphs. Neither clipped nor padded. This is the natural register of a Guru speaking to a serious seeker.",
@@ -1910,6 +1932,8 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             directives.append(f"## ADDRESS: When natural, address the seeker as \"{safe_name}\".")
         if request.socratic:
             directives.append(SOCRATIC_DIRECTIVE)
+        if request.mode == "darshan":
+            directives.append(DARSHAN_DIRECTIVE)
 
         combined_directives = "\n\n".join(directives)
 
