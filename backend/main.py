@@ -1575,6 +1575,22 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             "english_gloss": expansion.english_gloss
         })}
 
+        # Stream the latent space representation (the 384-dimensional thought vector)
+        if state.searcher and getattr(state.searcher, "_embed_model", None):
+            try:
+                loop = asyncio.get_running_loop()
+                phrase = "query: " + (expansion.embed_phrase or actual_query)
+                emb = await loop.run_in_executor(
+                    None,
+                    lambda: state.searcher._embed_model.encode([phrase], show_progress_bar=False)
+                )
+                emb_list = emb[0].tolist() if hasattr(emb[0], "tolist") else list(emb[0])
+                # Downsample to 2-decimal precision to save network bandwidth (384 floats is large)
+                emb_list = [round(float(v), 3) for v in emb_list]
+                yield {"data": json.dumps({"type": "latent_state", "vector": emb_list})}
+            except Exception as e:
+                logger.error(f"Failed to generate latent state: {e}")
+
         # 2. RAG search (vector index if available)
         sources = []
         rag_context = ""
