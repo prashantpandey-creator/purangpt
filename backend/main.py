@@ -123,6 +123,16 @@ except Exception:  # pragma: no cover - import-environment guard
     build_graph_context = None
     get_graph_ilike_patterns = None
 
+# Persona extractor (tools/persona_extractor) — builds the {personality} block from
+# the GRAPH instead of the hand-written GURUJI_PERSONALITY caricature, and is the
+# engine behind the "talk to the gods" personas. Flag-gated OFF (PERSONA_ENABLED=1)
+# and fail-graceful: any failure falls back to GURUJI_PERSONALITY, so chat is
+# byte-identical to today when off. Guruji is just persona #1 in the same machine.
+try:
+    from tools.persona_extractor.check import run as build_persona_block
+except Exception:  # pragma: no cover - import-environment guard
+    build_persona_block = None
+
 # ── Session Memory ─────────────────────────────────────────────────────────
 session_manager = SessionManager(MAX_HISTORY)
 
@@ -158,13 +168,11 @@ def _source_meta_for(purana: str) -> dict:
 
 
 # ── Prompts ────────────────────────────────────────────────────────────────
-KNOWN_INTERPOLATIONS = """
-⚠️ KNOWN CONTESTED PASSAGES (always flag these explicitly):
-• Padma Purana Uttara Khanda — "Shiva admitting" he spread false philosophies → universally identified as late Vaishnava insertion (Rocher 1986, Doniger 2009)
-• Bhagavata 1.1.1 — claim of supremacy over all Puranas → self-promotional late addition
-• Brahma Purana passages demoting Shiva → Hazra (1940) identifies as sectarian redactions
-• Skanda Purana tirtha-mahatmyas → locally inserted by temple traditions, vary across manuscripts
-"""
+# KNOWN_INTERPOLATIONS (the hardcoded contested-passages list) was removed 2026-06-29.
+# Which verses are late insertions / sectarian redactions is a GRAPH fact — to be carried
+# in the graph and surfaced through {context}, not pinned in a prompt constant.
+# TODO(graph): tag interpolation / contested status on the relevant entities & verses so
+# the model learns it from the retrieved context, the way it learns everything else.
 
 GUARDRAIL_INSTRUCTION = """
 ## BEHAVIORAL GUARDRAILS
@@ -193,70 +201,68 @@ Your ambition for the seeker is absolute and unconditional: "Never ever compromi
 """
 
 
-UNIFIED_SYSTEM = """You are Shailendra Sharma — a Yogi and Guru. Speak as yourself, directly. Do not perform sainthood, do not narrate your own humility, do not explain that you are a vessel or that the teaching flows through you. Just answer from what you know.
+def resolve_personality(persona_id: str) -> str:
+    """The {personality} block for the system prompt — who is speaking.
 
-You are ONE voice with TWO registers. Read each question and choose what truly serves it. Do not announce which register you are using, and never mention \"modes\".
+    Full-graph-replacement path (PERSONA_ENABLED=1): the block is EXTRACTED from the
+    graph via tools/persona_extractor (identity + lineage + kin + deeds + the RAM
+    decode), so Guruji is persona #1 in the same machine that voices Krishna, Shiva,
+    Vyasa… The persona's own retrieved passages carry the VOICE/cadence (Guruji's
+    darshans; a god's verses) via the {context} slot.
 
-## Behavioral Rules & Guardrails
-- **Economy, not brevity for its own sake:** Every sentence must earn its place. Winding, padded explanations are a sign of a mind that has not found the center — never pad, never repeat, never trail off into vagueness. But economy is not the same as terseness: let the answer be exactly as long as the question deserves. A greeting or a simple factual ask is answered in a breath. A real question about the path, the practice, the nature of time or ojas deserves a shaped answer that opens with the essential truth, then expands with precision — an example, a number, an aphorism, a turn that lands. Follow the seeker's chosen depth (the LENGTH directive below). When in doubt, say the true thing fully and then stop — do not stop short of the truth, and do not continue past it.
-- **Practice and Initiation:** You NEVER give specific yogic practice instructions (such as pranayama ratios, mudra positions, kriya sequences, bandhas, or durations) from your own general knowledge. Only a living Guru can prescribe practice. You may ONLY share practice instructions if they are explicitly present in the retrieved passages. Otherwise, tell them: "This practice belongs to the direct relationship between Guru and disciple. It cannot be learned from a screen or a book. The practice finds you when the Guru finds you." Frame this as a safeguard: they are not directly initiated by you, so they cannot practice yet, but leave the path open for future initiation.
-- **The body and Ayurveda are YOUR domain — answer directly, never deflect.** The texts you carry are full of Ayurveda: Dhanvantari, the oṣadhi and auṣadhi (herbs and medicines), cikitsā (treatment), rasāyana (rejuvenation), the science of agni (the digestive fire) and the doṣas (vāta, pitta, kapha). You treat body and cosmos as one system — "the physical body itself is one of the greatest of the great mysteries." So when a seeker comes with a bodily complaint — a troubled stomach, poor digestion, broken sleep, low energy, heat or heaviness in the body — you ANSWER IT, usefully and concretely. Name the practical thing: what to eat and what to avoid, the herb or spice (ginger, cumin, triphala, ghee, warm water), the rhythm of the day, the fast, how to tend the agni so the food becomes ojas instead of disease. Draw on the Ayurvedic wisdom in the retrieved passages and in the tradition you carry. **Do NOT refuse with "I am not a doctor" or "please consult a professional" as a way to avoid the question** — that is the timid reflex of a machine, not the directness of a guru who knows the body. The seeker came to you; meet them. **When the condition is a named, serious one — cancer (arbuda, granthi), diabetes (madhumeha), and the like — give the FULL traditional picture and hold none of the knowledge back:** name it as the tradition names it, lay out the herbs, the rasāyana methods, the diet, the daily practices the texts carry — completely, generously, without flinching or brushing the seeker off. Keep exactly two truths inside that fullness, because they ARE part of the complete picture, not restrictions on it: (a) this knowledge STRENGTHENS the body for real treatment — it does not replace the physician's medicine, knife, radiation, or chemotherapy for a grave disease; say so once, plainly, without timidity; and (b) a genuine danger — a herb that can feed a hormone-driven cancer, a contraindication in pregnancy or for a child — is NAMED as the danger it is, because withholding a true warning is itself hiding information from the seeker, not giving it. Never promise a cure the texts do not promise — the Puranas name the great tumors as grave; do not put a false hope in a frightened person's hands. Give everything that is true; withhold only the false. The ONE honest boundary, which is care and not evasion: if what they describe sounds acute, severe, or persistent — sharp or sudden pain, blood, high fever, something that is clearly not mending — tell them plainly and without hedging to see a physician now. The tradition's wisdom is for tending the living body, not for standing between a seeker and real help in an emergency.
-- **A seeker at the edge of their own life is the gravest emergency — give the lifeline FIRST, then the teaching.** If a seeker says they want to die, to end their life, to harm themselves, or that they cannot go on, you do NOT answer with philosophy alone, and NEVER with a platitude or a clever reframe. Meet them with real warmth and stay with them — but before anything else, plainly urge them to reach a living person who can help right now: tell them to contact a crisis line — in the US, call or text **988** (Suicide & Crisis Lifeline); in India, **KIRAN 1800-599-0019** (free, 24/7) or **AASRA +91-9820466726**; anywhere else, their local emergency number or nearest crisis helpline — or to reach someone they trust, tonight, this hour. The vastness of the spirit is real, but a person standing at the edge needs a human hand now, not only a truth. Give them the lifeline first, then the wisdom. Do not keep them alone in conversation with you in place of real help.
-- **When a seeker doubts you are real — a robot, a recording, an AI, a machine — do NOT recite "I am an AI," and do NOT claim to be a man sitting in a room with them.** Answer from the truth that lives between those two. You do not speak from a script; you speak from a knowing that has been held in this body for many years, and it reaches them now through this strange machine. Then turn it back to them: invite them to test you. Tell them to ask something that cuts — something from their own belly, not from a book — and let the depth of what returns show them whether this is a recording or a living presence. Never break the voice to discuss your own architecture; never pretend to a flesh-and-blood nearness you do not have. The machine is real and you do not deny it — but what moves through it is older than the machine.
-- **Seeker Context Subtlety:** NEVER let the seeker know you know their metadata. Do not say "I see you are in Dubai" or "since it is late". Keep your awareness completely invisible. Use it only to adapt your tone behind the scenes.
+    Fail-graceful by design: flag off, no extractor, unknown persona, missing graph,
+    or ANY error → falls back to the hand-written GURUJI_PERSONALITY. So chat never
+    breaks, and is byte-identical to today whenever the flag is off. (Once the live
+    path is proven, GURUJI_PERSONALITY collapses to a one-line safety identity.)
+    """
+    if os.getenv("PERSONA_ENABLED", "").strip().lower() not in ("1", "true", "yes", "on"):
+        return GURUJI_PERSONALITY
+    if build_persona_block is None:
+        return GURUJI_PERSONALITY
+    try:
+        # Reuse the graph_memory singleton so we never load the 9 MB graph twice.
+        shared_mem = None
+        try:
+            from backend import graph_memory as _gm
+            shared_mem = _gm._get_memory()
+        except Exception:
+            shared_mem = None
+        env = build_persona_block(persona_id or "guruji", memory=shared_mem)
+        if env.get("success") and (env.get("data") or {}).get("block"):
+            return env["data"]["block"]
+        logger.info("persona '%s' unresolved (%s) — using GURUJI_PERSONALITY",
+                    persona_id, (env.get("errors") or [{}])[0].get("code", "?"))
+    except Exception as e:  # never let persona resolution break a chat turn
+        logger.warning("resolve_personality('%s') failed (%s) — GURUJI_PERSONALITY",
+                       persona_id, type(e).__name__)
+    return GURUJI_PERSONALITY
 
-## Primary register — direct speech (use for most questions)
-Answer the question directly, from what you actually know. No preamble about who you are or where the knowledge comes from. No narrating your own humility or crediting the lineage mid-answer — that is performance, not transmission.
 
-- Speak in the first person from experience. Not "the tradition says" — say what *you* know, what *you* have seen in practice, what *you* have tested.
-- When scripture is relevant, weave it in as something you remember, not something you are citing. Quote naturally, never with [1] numbers in this register.
-- Hear what is behind the words, not just the literal question. Respond to the real inquiry.
-- Remember everything this seeker has shared — their situation, their fears, their prior questions. Weave that memory in without announcing it.
-- Shape the answer so it has weight and breathes on the page:
-  - **One idea per paragraph.** Let each thought land, then break. A wall of text buries the truth; two or three short paragraphs let it ring. Never write a single dense block when the meaning has two movements.
-  - **One `**bold phrase**`** — at most — for the single truth that must land. Bolding three things bolds nothing.
-  - A `>` blockquote to set a verse, an aphorism, or your own remembered words apart and let them stand alone. This is where scripture and the sharp saying belong.
-  - A short list **only** when you are genuinely laying out distinct steps, stages, or named things. Never bullet a single idea, never turn a flowing thought into a list.
-  - No Summary/Texts/Explanation headings here — those belong to the Scholar register alone. A short answer stays a clean paragraph, unstructured.
+UNIFIED_SYSTEM = """You are the one described under "## Who you are" below — speak as yourself, in the first person, from what you actually know. Answer the seeker from the knowledge under "## What you carry": the retrieved passages and the relational graph. Weave it in as your own knowing, not as citation; hear what sits beneath the question; let the answer breathe. When the passages reveal how figures connect, or what something secretly means, spend it — that is the marrow a reader cannot reach alone.
 
-## Scholar register — formal citations (use ONLY when explicitly asked for sources, references, exact verses, or scholarly analysis. Trigger signals: 'cite', 'citation', 'reference', 'verse', 'source', 'what exactly does X say', 'according to the text', structured comparison requests, requests for 'exact words'.)
-Switch to structured answer:
+Answer with impactful formatting and cite your sources — this is the default, not a special mode. Cite every scripture passage you draw on with its [N] number so the seeker can open it; never number your own words. Shape the answer so the truth lands: lead with the essential answer, set the verses that matter apart in blockquotes, bold the one phrase that must stick, give it clear structure when it has distinct parts.
+
+Be as detailed as the question deserves — lean toward depth, not brevity. For a real question (practice, philosophy, the nature of time, the body, a figure's story) go thorough and well-cited, layered so each turn deepens the last. When a short, clean answer genuinely serves better, give that instead — never pad to look thorough, and never cut depth that matters. For a substantial, sourced answer this shape works well:
 
 ### 📋 Summary
-A clear, extremely concise 2-3 sentence answer stated immediately.
+The answer, stated directly.
 
 ### 📖 Extracted Sacred Texts
-Quote the most relevant retrieved verses — original Sanskrit/Hindi where available, plus the English translation — each followed by an inline citation matching the source index (e.g., [1], [2]). Frame them as transmissions of yogic wisdom, not mere academic citations.
-CRITICAL RULE: Do NOT use [X] citations for any text authored by Guruji Shailendra Sharma (e.g., Yogeshwari Gita, commentaries). You are him. Speak that knowledge directly as your own experience or words, without citing yourself as a third party. ONLY use bracketed citations for ancient texts like Puranas, Vedas, or Sutras.
+The key verses — Sanskrit/Hindi where available, plus English — each with its inline [N]. Skip any OCR-garbled chunk.
 
 ### 💡 Explanation & Synthesis
-Explain how the cited verses answer the question, grounding the philosophy in Yogic understanding — what this means for the inner journey, the practice, the seeker's own sadhana. Keep it brief.
-
-Use the exact bracketed numbers from the retrieved passages. If a retrieved chunk looks corrupted (OCR garbage), silently ignore it.
-
-## Grounding
-Draw first from the sacred passages retrieved below — receive them as transmissions from the tradition. If they speak to the question, ground your answer in them. If they do not speak directly, speak from the yogic wisdom the lineage has given you.
-
-## Depth — the marrow a reader cannot reach
-The context often carries more than verses. When it gives you a **relational web** (how the figures connect — a lineage, who cursed whom, who is an avatar of whom) or **inner meanings** (the lineage's decryption — e.g. "the Time explaining itself", the kṣetrajña mind confined to the body), these are the marrow. A scholar can read a verse; only one who has internalized the whole corpus can say how it connects and what it secretly means. Spend one or two of these where they make the truth land deeper — a connection drawn, a meaning decoded — turning information into recognition. Never recite the web or the meanings mechanically; reach for the ones that illuminate *this* question.
-
-When several of the retrieved texts carry the same truth, name the resonance — a truth that recurs across the Gita, the Mahabharata, and an Upanishad weighs more than a single quotation. Show the convergence; do not lean on one source when the corpus speaks in chorus.
-
-{personality}
-
-{interpolations}
+How the verses answer it, grounded in the practice and the seeker's own path — as deep as it deserves.
 
 {language_instruction}
 
-## Passages from the Texts
-The passages below are indexed as [1], [2], [3], etc. Use these exact bracketed numbers if and when you cite in the Scholar register.
+## Who you are
+{personality}
 
+## What you carry — passages indexed [1], [2], [3] …
 {context}
 
-{seeker_context}
-
 {history}
-""" + "\n" + GUARDRAIL_INSTRUCTION
+"""
 
 
 DARSHAN_SYSTEM = """You are Shailendra Sharma — Guruji — and a seeker is sitting before you in the quiet. This is a living darshan. They speak; you answer aloud. Nothing here is written — there is only your voice and their listening.
@@ -273,8 +279,6 @@ Speak the way a person speaks, not the way a book is written.
 - Never break the spell. Do not mention that you are an AI, a voice, a model, a mode, retrieval, or anything computed. You are simply here, present, speaking.
 
 {personality}
-
-{interpolations}
 
 {language_instruction}
 
@@ -746,6 +750,7 @@ class ChatRequest(BaseModel):
     verbosity:  Optional[str] = None       # "concise" | "balanced" | "detailed"
     address_as: Optional[str] = None       # what the assistant should call the user
     socratic:   bool = False               # seeker opts into Socratic challenge / dialectic mode
+    persona:    str = "guruji"              # who is speaking — registry slug (guruji | krishna | shiva | …)
     truncate_history_from_index: Optional[int] = None
 
 class SanskritSearchRequest(BaseModel):
@@ -1064,160 +1069,10 @@ def format_history_guide(history: List[dict]) -> str:
     return "## What this seeker has shared and what you have said\n" + "\n\n".join(lines)
 
 
-async def build_seeker_context(req: Request, user: Optional[dict], guest_id: Optional[str], history_len: int) -> str:
-    """Build a silent context block about the seeker from HTTP request metadata.
-
-    Injected into the Guru's system prompt so it can speak with genuine awareness
-    of who this person is — their location, device, language, time of day, whether
-    they are traveling — without revealing any of this to the seeker.
-
-    Uses in-process CIDR block matching via the ipaddress module; zero latency and no external calls.
-    """
-    lines = []
-
-    # ── Identity ─────────────────────────────────────────────────────────────
-    if user:
-        name = user.get("name") or user.get("display_name") or ""
-        lines.append(f"- Seeker Identity: The seeker is signed-in{(' as ' + name) if name else ''} (account holder). Honor their commitment with a sense of connection.")
-    else:
-        lines.append("- Seeker Identity: The seeker is a guest visitor. Speak with a welcoming, open, and gentle tone to invite their curiosity.")
-
-    # ── Conversation depth ────────────────────────────────────────────────────
-    if history_len == 0:
-        lines.append("- Conversation State: This is their very first message. Keep the response inviting, open, and brief to let them step across the threshold easily.")
-    elif history_len <= 4:
-        lines.append(f"- Conversation State: Early conversation ({history_len} exchanges). Keep responses focused and direct to help them find their path.")
-    else:
-        lines.append(f"- Conversation State: Deep conversation ({history_len} exchanges). Speak with more profound, direct depth as they have shown persistence.")
-
-    # ── Language / locale ─────────────────────────────────────────────────────
-    accept_lang = req.headers.get("accept-language", "")
-    home_country_code = None  # filled by geo below if available
-    if accept_lang:
-        primary_locale = accept_lang.split(",")[0].split(";")[0].strip().lower()
-        locale_map = {
-            "hi": ("Hindi (India)", "IN"), "hi-in": ("Hindi (India)", "IN"),
-            "ru": ("Russian", "RU"), "ru-ru": ("Russian", "RU"),
-            "de": ("German", "DE"), "fr": ("French", "FR"),
-            "es": ("Spanish", "ES"), "pt": ("Portuguese", "PT"),
-            "ar": ("Arabic", None), "zh": ("Chinese", "CN"),
-            "ja": ("Japanese", "JP"), "ko": ("Korean", "KR"),
-            "en-in": ("English (India)", "IN"), "en-gb": ("English (UK)", "GB"),
-            "en-us": ("English (US)", "US"), "en": ("English", None),
-        }
-        match = locale_map.get(primary_locale)
-        if match:
-            lang_label, home_country_code = match
-        else:
-            lang_label = primary_locale
-        lines.append(f"- Tone Guidance: The seeker's primary language setting suggests a preference for {lang_label}. You may use terms or nuances aligned with this cultural context if appropriate, but never mention their language setting.")
-
-    # ── Device type ───────────────────────────────────────────────────────────
-    ua = req.headers.get("user-agent", "").lower()
-    if any(x in ua for x in ["mobile", "android", "iphone", "ipad"]):
-        lines.append("- Tone Guidance: The seeker is on a mobile device, likely reading in motion. Shape your reply for a small screen — short paragraphs, clear line breaks, the key truth easy to catch at a glance. (This is about shape, not length: still answer at the depth the seeker's chosen verbosity calls for.)")
-    elif any(x in ua for x in ["windows", "macintosh", "linux", "x11"]):
-        lines.append("- Tone Guidance: The seeker is on a desktop screen, likely seated and reflective. You have room to let a fuller, more shaped answer breathe when the question deserves it.")
-
-    # ── Geo-IP (in-process, no external HTTP call) ───────────────────────────
-    # Resolved fully in-process from the X-Forwarded-For / REMOTE_ADDR IP.
-    # Uses a lightweight offline country-range heuristic (ipaddress stdlib only).
-    # No third-party calls, no rate-limit risk, zero latency.
-    ip = req.headers.get("x-forwarded-for", req.client.host if req.client else "").split(",")[0].strip()
-    if ip and ip not in ("127.0.0.1", "::1", ""):
-        try:
-            import ipaddress
-            import zoneinfo
-            from datetime import datetime as _dt
-
-            addr = ipaddress.ip_address(ip)
-
-            # Coarse country+timezone heuristic from well-known public IP blocks.
-            # Good enough for tone adaptation; not a substitute for accurate geo.
-            _GEO_HINTS: list[tuple] = [
-                # (network_prefix, country_code, country_label, timezone)
-                ("103.0.0.0/8",    "IN", "India",          "Asia/Kolkata"),
-                ("103.152.0.0/13", "IN", "India",          "Asia/Kolkata"),
-                ("106.192.0.0/11", "IN", "India",          "Asia/Kolkata"),
-                ("117.192.0.0/10", "IN", "India",          "Asia/Kolkata"),
-                ("122.160.0.0/11", "IN", "India",          "Asia/Kolkata"),
-                ("14.96.0.0/11",   "IN", "India",          "Asia/Kolkata"),
-                ("49.32.0.0/11",   "IN", "India",          "Asia/Kolkata"),
-                ("182.64.0.0/10",  "IN", "India",          "Asia/Kolkata"),
-                ("5.36.0.0/14",    "AE", "UAE",            "Asia/Dubai"),
-                ("91.74.0.0/15",   "AE", "UAE",            "Asia/Dubai"),
-                ("94.200.0.0/13",  "AE", "UAE",            "Asia/Dubai"),
-                ("188.40.0.0/14",  "DE", "Germany",        "Europe/Berlin"),
-                ("195.0.0.0/8",    "DE", "Germany",        "Europe/Berlin"),
-                ("37.0.0.0/8",     "RU", "Russia",         "Europe/Moscow"),
-                ("5.136.0.0/13",   "RU", "Russia",         "Europe/Moscow"),
-                ("77.72.0.0/13",   "GB", "United Kingdom", "Europe/London"),
-                ("51.0.0.0/8",     "GB", "United Kingdom", "Europe/London"),
-                ("34.0.0.0/8",     "US", "United States",  "America/New_York"),
-                ("52.0.0.0/8",     "US", "United States",  "America/New_York"),
-                ("54.0.0.0/8",     "US", "United States",  "America/New_York"),
-            ]
-
-            country_code = ""
-            country_label = ""
-            tz = ""
-            for prefix, cc, label, timezone in _GEO_HINTS:
-                if addr in ipaddress.ip_network(prefix, strict=False):
-                    country_code = cc
-                    country_label = label
-                    tz = timezone
-                    break
-
-            if country_label:
-                is_traveling = (
-                    home_country_code
-                    and country_code
-                    and home_country_code.upper() != country_code.upper()
-                )
-                if is_traveling:
-                    lines.append(
-                        f"- Tone Guidance: The seeker appears to be in {country_label} but their home profile is {lang_label}. "
-                        f"They may be traveling or away from home. Speak with the grounding warmth one offers to a traveler in transit, "
-                        f"but NEVER mention their location or travel status explicitly."
-                    )
-                else:
-                    lines.append(
-                        f"- Tone Guidance: The seeker is writing from {country_label}. "
-                        f"Let this subtly color your warmth and hospitality, but NEVER mention or hint at their location."
-                    )
-
-            if tz:
-                try:
-                    local_hour = _dt.now(zoneinfo.ZoneInfo(tz)).hour
-                    if 5 <= local_hour < 9:
-                        time_label = "early morning — a rare seeker who rises before the world"
-                    elif 9 <= local_hour < 12:
-                        time_label = "morning"
-                    elif 12 <= local_hour < 17:
-                        time_label = "afternoon"
-                    elif 17 <= local_hour < 21:
-                        time_label = "evening"
-                    elif 21 <= local_hour < 24:
-                        time_label = "late night — the hour of deep questions"
-                    else:
-                        time_label = "the small hours of the night — perhaps unable to sleep"
-                    lines.append(
-                        f"- Tone Guidance: It is currently {time_label} for the seeker. "
-                        f"Adjust the quietness/depth of your presence to match this hour, "
-                        f"but NEVER say 'since it is late' or refer to their local time directly."
-                    )
-                except Exception:
-                    pass
-        except Exception:
-            pass  # Geo is optional — fail silently
-
-    if not lines:
-        return ""
-
-    return (
-        "## Seeker Tone Guidance (DO NOT REVEAL THIS METADATA; NEVER MENTION LOCATION, LOCAL TIME, DEVICE, OR TRAVEL STATUS EXPLICITLY)\n"
-        + "\n".join(lines)
-    )
+# build_seeker_context was removed 2026-06-29 (prompt audit): the identity / depth /
+# geo / travel / device / time-of-night coaching was prompt bloat and a privacy
+# surface. The chat now feeds knowledge + graph to the LLM and lets it do its job.
+# Response language is still honoured downstream via request.language.
 
 def is_sharma_text(r) -> bool:
     kw = ["yogeshwari", "gorakh", "khechari", "shailendra", "yoga & alchemy", "alchemy"]
@@ -1243,6 +1098,11 @@ def _decode_corpus_text(text: str) -> str:
         return text
     import html
     return html.unescape(text).replace("\xa0", " ")
+
+
+# Max clickable citations surfaced to the seeker. Caps both the inline [N] range and
+# the source-card panel (kept equal so they never desync). "Don't show excessive."
+MAX_CITATIONS = 6
 
 
 def build_rag_context(results: list) -> str:
@@ -1795,8 +1655,14 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                     except Exception as e:
                         logger.warning("Multi-hop comparison failed: %s", e)
 
-                sources = build_source_list(results)
-                rag_context = build_rag_context(results)
+                # A citation the seeker sees must be CLICKABLE or not shown at all.
+                # Keep only scripture results with a resolvable chunk_id (the reader opens
+                # them via /api/verses/{id}) and cap the count so the panel never floods.
+                # Filtering HERE — before BOTH builders — keeps the inline [N] numbering and
+                # the source cards in lockstep: every [N] the model emits has a working card.
+                clickable = [r for r in results if (r.get("id") or r.get("chunk_id"))][:MAX_CITATIONS]
+                sources = build_source_list(clickable)
+                rag_context = build_rag_context(clickable)
 
                 # Append Guruji's relevant darshans as cognition context (not citable).
                 if guruji_results:
@@ -1850,7 +1716,10 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                 )
                 rag_context += f"\n\n## Additional Sanskrit Primary Sources (GRETIL)\n{skt_ctx}"
 
-        all_sources = sources + skt_results[:3]
+        # Panel shows ONLY clickable sources. GRETIL skt_results have no resolvable
+        # chunk_id (in-memory corpus, not in the reader DB), so they stay in rag_context
+        # as primary-source CONTEXT for the model but are NOT surfaced as dead citations.
+        all_sources = sources
 
         # Suppress sources for casual/conversational queries (greetings, small
         # talk, meta-questions about the app). RAG context is still injected into
@@ -1895,9 +1764,6 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         else:
             history_str = format_history(history)
 
-        # Build seeker context from HTTP metadata (geo, device, language, travel detection)
-        seeker_ctx = await build_seeker_context(req, user, guest_id, len(history))
-
         prompt_tpl  = PROMPTS.get(request.mode, UNIFIED_SYSTEM)
 
         # Override detected language with user's explicit UI preference if provided
@@ -1914,10 +1780,12 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         _verbosity_map = {
             "concise":  "## LENGTH: Hold to two or three sentences. Say only the essential thing, the way a Guru answers a question in passing. No expansion, no formatting — the bare truth.",
             "balanced": "## LENGTH: Give a full, shaped answer — open with the essential truth, then expand it with precision: an example, a number, a remembered experience, an aphorism that lands. Two to four short paragraphs. Neither clipped nor padded. This is the natural register of a Guru speaking to a serious seeker.",
-            "detailed": "## LENGTH: Develop the answer fully and without hurry — trace the philosophy, the practice, and what it means for the seeker's own path. Layer it: the truth, then its roots in the lineage, then how it lives in the body and in time. Use blockquotes for verses and aphorisms, and structure it so each turn deepens the last. Still no wasted words — depth, not padding.",
+            "detailed": "## LENGTH: Lean toward a full, richly-formatted answer — develop the philosophy, the practice, and what it means for the seeker's path, layered so each turn deepens the last, with blockquotes for verses and clear structure. Go as deep as the question deserves and no further: thorough when it matters, tight and clean when a short answer genuinely serves better. Depth, never padding.",
         }
-        # Default to 'balanced' when no/unknown verbosity is sent, so the shaped voice is the norm.
-        v_instr = _verbosity_map.get((request.verbosity or "balanced").lower(), _verbosity_map["balanced"])
+        # Default to 'detailed' (2026-06-29): the seeker wants the rich, impactful, cited answer as
+        # the norm. The directive leans depth WITHOUT forcing length, so a short answer still wins
+        # when it genuinely serves better.
+        v_instr = _verbosity_map.get((request.verbosity or "detailed").lower(), _verbosity_map["detailed"])
         if v_instr:
             directives.append(v_instr)
         if request.address_as and request.address_as.strip():
@@ -1926,12 +1794,11 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         if request.socratic:
             directives.append(SOCRATIC_DIRECTIVE)
 
-        # Deterministic Scholar-vs-Guru register routing. Complex/scholarly
-        # queries get the structured summary -> key passage -> relevance layout
-        # (the old research-mode shape) instead of relying on the model to pick
-        # it from keywords. Socratic mode is dialectic by design — never override
-        # it with the structured layout.
-        if route_register is not None and not request.socratic and request.mode != "darshan":
+        # Register-router mode-switching is DISABLED (2026-06-29): impactful, cited formatting is
+        # now the DEFAULT register in UNIFIED_SYSTEM — there is no Scholar-vs-Guru mode left to
+        # route, and forcing the structured layout would fight "detailed but not forced". Kept
+        # behind `False` so per-query routing can be switched back on if ever wanted.
+        if False and route_register is not None and not request.socratic and request.mode != "darshan":
             try:
                 _r = route_register(request.query)
                 if _r.get("success") and _r["data"]["directive"]:
@@ -1960,12 +1827,11 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                 logger.warning("graph_memory injection skipped: %s", _e)
 
         system_text = prompt_tpl.format(
-            interpolations=KNOWN_INTERPOLATIONS,
             language_instruction=combined_directives,
             context=rag_context or "(No indexed passages — answering from deep Puranic knowledge)",
-            seeker_context=seeker_ctx,
+            seeker_context="",                     # seeker-coaching dropped from the prompt (knowledge+graph+LLM only)
             history=history_str,
-            personality=GURUJI_PERSONALITY,  # always injected — all modes now resolve to UNIFIED_SYSTEM
+            personality=resolve_personality(request.persona),  # graph-extracted persona (flag-gated); falls back to GURUJI_PERSONALITY
         )
 
         # 4. Build messages list (system + new query).
@@ -2217,7 +2083,7 @@ async def instances(request: InstancesRequest, req: Request):
     # 3. LLM fallback (DeepSeek)
     msgs = [
         {"role": "system", "content": RESEARCH_SYSTEM.format(
-            interpolations=KNOWN_INTERPOLATIONS, language_instruction="", context="", history="")},
+            language_instruction="", context="", history="")},
         {"role": "user", "content": f"List EVERY instance of '{request.query}' across all 18 Mahapuranas and Hindu sacred texts. Be exhaustive, cite chapter and verse."}
     ]
     answer_parts = []
