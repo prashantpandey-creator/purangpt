@@ -1,0 +1,11 @@
+data: {"type": "status", "message": "🔍 Searching the sacred texts…"}
+
+data: {"type": "query_expanded", "detected_lang": "Sanskrit (Roman)", "is_sanskrit": true, "canonical": "dharma", "synonyms": ["dharma", "saddharma"], "devanagari": "धर्म", "english_gloss": "righteous duty, moral law, cosmic order"}
+
+data: {"type": "sources", "sources": [{"text_id": "mahabharata-265-42982", "chunk_id": "mahabharata-265-42982", "text_name": "Mahabharata", "purana": "Mahabharata", "reference": "Mahabharata, Chapter 265, Verse 42982", "chapter": 265, "verse_range": "42982", "text": "yudhisthira uvaca", "language": "sanskrit", "edition": "", "tradition": "", "bias": "", "score": 0.0164, "line_num": 0}]}
+
+data: {"type": "token", "content": "Dharma"}
+
+data: {"type": "token", "content": " is righteous duty."}
+
+data: {"type": "done", "session_id": "abc123"}

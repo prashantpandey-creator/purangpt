@@ -1,0 +1,38 @@
+name: Merge Bot
+
+# Keeps every active claude/** branch in sync with main and AI-resolves
+# conflicts (free-tier Gemini) so a drifted branch never silently blocks its
+# own deploy. Opens a tracking issue when a conflict needs a human.
+#
+# Runs on each push to main. Branch pushes use GITHUB_TOKEN, which does NOT
+# re-trigger workflows — so this never loops or fires an unintended deploy.
+#
+# Required secret: GEMINI_API_KEY (or GOOGLE_API_KEY). Without it, conflicts
+# just open an issue instead of being auto-resolved.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write   # push synced/merged commits to claude/** branches
+  issues: write     # open a tracking issue when AI can't resolve
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sync claude/** branches with main (AI-resolve conflicts)
+        shell: bash
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERGE_BOT_MAX_AGE_DAYS: "30"
+        run: bash .github/scripts/merge-bot.sh

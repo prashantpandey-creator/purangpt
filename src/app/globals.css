@@ -1,0 +1,1050 @@
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
+
+:root {
+  /* ── Śakti Twilight palette — deep violet + candlelit gold ────────────
+     True OLED black base. Deep violet (#4c1d95 family) carries the
+     transcendent, formless Śakti. Candlelit gold (#e8b63f family) is the
+     warm flame of jñāna — knowledge illuminating the void. The two sit
+     together: violet depth, gold warmth. Indigo bridges them. */
+  --bg-deep:      #000000;   /* true black — OLED off-pixels */
+  --dark-bg:      #000000;   /* base surface (uniform black) */
+  --surface:      #0d0720;   /* deep violet-black panel */
+  --surface-2:    #120a2a;   /* slightly lifted violet-black */
+
+  /* Primary — deep violet (Śakti) */
+  --primary:       #7c3aed;   /* violet-600 — main accent */
+  --primary-bright:#a78bfa;   /* violet-400 — highlights */
+  --primary-deep:  #5b21b6;   /* violet-700 — borders, depth */
+
+  /* Gold — candlelit flame (jñāna) */
+  --gold:         #e8b63f;   /* warm candlelit gold */
+  --gold-bright:  #f6d27a;   /* warm flame highlight */
+  --gold-deep:    #b8893b;   /* aged brass — borders */
+
+  /* Accent — deep indigo (bridge between violet and void) */
+  --accent:        #4f46e5;   /* indigo-600 */
+  --accent-bright: #6366f1;   /* indigo-500 */
+
+  /* Legacy — subtle warm bronze heritage touch */
+  --legacy:        #b8945a;   /* muted brass */
+  --legacy-dim:    #8b6f3a;   /* subdued */
+
+  /* Text — warm ivory on dark */
+  --text-primary:  #e8e1d4;   /* warm ivory — body text */
+  --text-secondary:#a39b8a;   /* muted warm gray */
+  --text-tertiary: #7a7268;   /* captions, meta */
+
+  /* Glass surfaces — violet-tinted */
+  --glass-bg:      rgba(13, 7, 32, 0.72);
+  --glass-border:  rgba(124, 58, 237, 0.12);
+  --glass-glow:    0 0 30px rgba(124, 58, 237, 0.06);
+
+  /* Glows — violet warmth, gold flame */
+  --glow-primary-sm:  0 0 8px rgba(124, 58, 237, 0.22);
+  --glow-primary-md:  0 0 18px rgba(124, 58, 237, 0.30);
+  --glow-gold-sm:     0 0 8px rgba(232, 182, 63, 0.22);
+  --glow-gold-md:     0 0 18px rgba(232, 182, 63, 0.28);
+  --glow-accent-sm:   0 0 8px rgba(124, 58, 237, 0.18);
+  --glow-legacy:      0 0 6px rgba(184, 148, 90, 0.15);
+
+  /* ── Backward compat aliases ────────────────────────────────────────── */
+  --saffron:      var(--gold);          /* legacy → gold */
+  --saffron-warm: var(--gold-bright);
+  --saffron-light:#f0cd80;
+  --sun-top:      var(--gold-bright);
+  --sanskrit-text:#ffe0b3;
+  --slate:        #7e92b8;
+  --ivory:        var(--text-primary);
+  --text-color:   var(--text-primary);
+  --glow-saffron-md:var(--glow-gold-md);
+
+  /* ── Type system ────────────────────────────────────────────────────── */
+  --font-display: var(--font-marcellus), 'Marcellus', Georgia, serif;
+  --font-body: var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif;
+  --font-ui: var(--font-geist), ui-monospace, 'SFMono-Regular', 'SF Mono', Menlo, Consolas, monospace;
+  --font-devanagari: 'Noto Sans Devanagari', 'Tiro Devanagari Sanskrit', 'Kohinoor Devanagari', 'Mangal', serif;
+
+  /* ── Elevation scale — cool dark, lifted off void ───────────────────── */
+  --surface-1:    #0c0c1a;
+  --surface-2:    #1c1815;
+  --border-soft:  rgba(212,175,55,0.12);
+  --text-secondary: #b8a48f;
+}
+
+/* Legacy aliases kept so any untouched references still resolve sensibly. */
+body {
+  --font-playfair-display: var(--font-display);
+  --font-geist-sans: var(--font-body);
+}
+
+/* ── Focus visibility — accessible saffron ring on keyboard nav only ───── */
+:where(button, a, textarea, input, [role="button"], [role="menuitem"]):focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(10,8,16, 0.9), 0 0 0 4px rgba(139,92,246, 0.6),
+    0 0 14px rgba(139,92,246, 0.25);
+  border-radius: 0.5rem;
+}
+
+/* Prevent double-tap zoom on interactive elements — key for iOS */
+button, a, textarea, input, [role="button"] {
+  touch-action: manipulation;
+}
+
+/* Smooth momentum scrolling on iOS */
+.overflow-y-auto, .overflow-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  background-color: #000000;
+  /* True-black OLED base. A single whisper of living amber at the top keeps
+     it from feeling like a void; no cool/blue cast. */
+  background-image:
+    radial-gradient(ellipse at top, rgba(139,92,246,0.07), transparent 42%);
+  background-attachment: fixed;
+  color: var(--text-color);
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Accessibility text-size preference (ChatPreferencesContext sets
+     --app-font-scale). Scales all rem-based sizing across the app. */
+  font-size: calc(100% * var(--app-font-scale, 1));
+}
+
+/* ── Capacitor / WKWebView perf fixes ──────────────────────────────────────
+   backdrop-filter: blur() forces GPU compositing on every frame in WKWebView.
+   With the WebGL orb already on the GPU, blur() tanks iOS to ~20fps. The
+   solid (no-blur) path is the documented fix from the CLAUDE.md.              */
+html.capacitor-app .glass-panel,
+html.capacitor-app [style*="backdrop-filter"],
+html.capacitor-app [style*="backdropFilter"],
+html.capacitor-app [style*="BackdropFilter"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+/* Disable expensive CSS filters on Capacitor — the WebGL orb already
+   composites; stacking blur on top is the perf trap. */
+html.capacitor-app {
+  --glass-bg: rgba(10, 10, 30, 0.85);  /* opaque enough without blur */
+}
+
+/* GPU compositor hint — promotes scroll containers to their own layer so
+   the orb and text don't re-composite on every touch scroll. */
+.chat-shell,
+.overflow-y-auto,
+.overflow-auto {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* Progressive dvh enhancement — iOS Safari dynamic toolbar
+   Falls back to 100vh on browsers that don't support dvh yet. */
+@supports (height: 100dvh) {
+  .h-screen { height: 100dvh; }
+  .min-h-screen { min-height: 100dvh; }
+  .safe-h-screen { height: 100dvh; }
+  .chat-shell { height: 100dvh; }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--dark-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--saffron);
+  border-radius: 4px;
+}
+
+::selection {
+  background-color: var(--saffron);
+  color: var(--dark-bg);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 1.25rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+  color: #1a1408;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  box-shadow: 0 4px 16px 0 rgba(139,92,246, 0.14);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 6px 20px rgba(139,92,246, 0.25);
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-primary:active {
+  transform: translateY(1px) scale(0.97);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--saffron);
+  background: transparent;
+  color: var(--saffron);
+  font-weight: 600;
+  transition: all 0.2s;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: var(--saffron);
+  color: var(--dark-bg);
+}
+.btn-secondary:active {
+  transform: scale(0.97);
+}
+
+.text-gradient {
+  background: linear-gradient(to right, var(--gold-deep), var(--gold), var(--gold-bright));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.glass-panel {
+  background: rgba(14, 14, 14, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 0.5px solid rgba(232, 213, 163, 0.2);
+}
+
+.saffron-glow {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139,92,246, 0.15) 0%, rgba(139,92,246, 0) 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.truncate-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+}
+
+.truncate-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.truncate-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+@media (max-width: 768px) {
+  body {
+    font-size: 16px;
+  }
+}
+
+/* ── Design system: form + surface utilities ─────────────────────────── */
+.label-base {
+  display: block;
+  margin-bottom: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #d1d5db;
+}
+
+.input-base {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.625rem;
+  background-color: var(--surface-2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f3f4f6;
+  font-size: 0.95rem;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+.input-base.has-icon-left {
+  padding-left: 2.75rem;
+}
+.input-base.has-icon-right {
+  padding-right: 2.75rem;
+}
+.input-base::placeholder {
+  color: #6f6353;
+}
+.input-base:focus {
+  outline: none;
+  border-color: var(--saffron-warm);
+  box-shadow: 0 0 0 3px rgba(139,92,246, 0.2), 0 0 12px rgba(139,92,246, 0.08);
+}
+.input-base:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.card {
+  background-color: var(--surface-1);
+  border: 1px solid var(--border-soft);
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.35);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card:hover {
+  border-color: rgba(139,92,246, 0.25);
+  box-shadow: 0 14px 40px -10px rgba(0, 0, 0, 0.45), 0 0 20px rgba(139,92,246, 0.05);
+  transform: translateY(-2px);
+}
+
+/* ── Skeleton shimmer ────────────────────────────────────────────────── */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: #202020;
+  border-radius: 0.75rem;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.06),
+    transparent
+  );
+  animation: skeletonShimmer 1.5s infinite;
+}
+@keyframes skeletonShimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ── Markdown prose for assistant messages ───────────────────────────── */
+.prose-puran {
+  color: #e8e1d4;
+  font-size: 0.95rem;
+  line-height: 1.72;
+  word-break: break-word;
+}
+.prose-puran h1,
+.prose-puran h2,
+.prose-puran h3,
+.prose-puran h4 {
+  font-family: var(--font-marcellus), 'Marcellus', Georgia, serif;
+  color: #fff;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 1.5rem 0 0.75rem;
+}
+.prose-puran h1 { font-size: 1.35rem; }
+.prose-puran h2 { font-size: 1.2rem; }
+.prose-puran h3 { font-size: 1.05rem; }
+.prose-puran h4 { font-size: 0.95rem; }
+.prose-puran p { margin: 0.75rem 0; }
+.prose-puran ul,
+.prose-puran ol { margin: 0.6rem 0; padding-left: 1.4rem; }
+.prose-puran ul { list-style: disc; }
+.prose-puran ol { list-style: decimal; }
+.prose-puran li { margin: 0.3rem 0; }
+.prose-puran a {
+  color: var(--saffron);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose-puran a:hover { color: var(--gold-bright); }
+
+/* Clickable Sanskrit terms — clearly interactive inline chips.
+   A warm gold tint, solid bottom border, and Devanagari ॰ cue invite a tap.
+   Opens the in-app dictionary card. */
+.sanskrit-term {
+  display: inline;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 600;
+  color: #f0d98a;
+  background: linear-gradient(135deg, rgba(139,92,246,0.18), rgba(139,92,246,0.09));
+  border-radius: 0.28rem;
+  padding: 0.05em 0.28em;
+  border-bottom: 1.5px solid rgba(139,92,246,0.6);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.sanskrit-term::after {
+  /* Devanagari anunaasika-dot — marks this word as Sanskrit */
+  content: "᳒";
+  color: var(--saffron);
+  font-size: 0.65em;
+  margin-left: 0.06em;
+  vertical-align: super;
+  opacity: 0.85;
+}
+.sanskrit-term:hover {
+  background: rgba(139,92,246,0.26);
+  color: #f8e9aa;
+  border-color: var(--gold-bright);
+  box-shadow: 0 0 10px rgba(139,92,246,0.18);
+}
+.sanskrit-term:focus-visible {
+  outline: 2px solid rgba(139,92,246,0.65);
+  outline-offset: 2px;
+}
+
+.prose-puran strong { color: #fff; font-weight: 600; }
+.prose-puran em { font-style: italic; }
+.prose-puran blockquote {
+  border-left: 3px solid var(--saffron);
+  padding: 0.4rem 0 0.4rem 1rem;
+  margin: 0.8rem 0;
+  color: #cbd5e1;
+  background: rgba(139,92,246, 0.05);
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+.prose-puran code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85em;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.12rem 0.4rem;
+  border-radius: 0.3rem;
+  color: var(--gold-bright);
+}
+.prose-puran pre {
+  background: #0f0f0f;
+  border: 1px solid #2a2a2a;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin: 0.8rem 0;
+  overflow-x: auto;
+}
+.prose-puran pre code {
+  background: transparent;
+  padding: 0;
+  color: #e5e7eb;
+  font-size: 0.85rem;
+}
+.prose-puran hr {
+  border: none;
+  border-top: 1px solid #2a2a2a;
+  margin: 1.2rem 0;
+}
+.prose-puran .devanagari,
+.prose-puran [lang="sa"] {
+  font-family: var(--font-devanagari), serif;
+}
+
+/* Answer text rising from the void — no card, so legibility comes from a
+   contact shadow that lifts it off the animated field below. */
+.answer-manifest {
+  position: relative;
+  animation: answerRise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.answer-manifest .prose-puran,
+.answer-manifest .prose-puran * {
+  text-shadow:
+    0 1px 3px  rgba(4, 3, 10, 0.90),
+    0 0 20px   rgba(4, 3, 10, 0.70);
+}
+@keyframes answerRise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .answer-manifest { animation: none; opacity: 1; }
+}
+
+/* The smoked-glass surface itself. Two variants: the blurred `.answer-glass`
+   for the open web, and the no-backdrop-filter `.answer-glass--solid` for the
+   iOS immersive path — CSS blur() over the live WebGL orb is that WebView's
+   worst performance trap, so there the glass is faked with a denser dark
+   gradient + glow instead. Both carry the lit accent bar. */
+.answer-glass,
+.answer-glass--solid {
+  border-radius: 1.15rem;
+  border: 1px solid rgba(139,92,246, 0.20);
+  box-shadow:
+    0 18px 50px rgba(0,0,0, 0.55),
+    0 0 34px rgba(139,92,246, 0.08),
+    inset 0 1px 0 rgba(255,255,255, 0.05);
+}
+.answer-glass {
+  background: linear-gradient(180deg, rgba(20,17,28, 0.60), rgba(8,7,12, 0.46));
+  -webkit-backdrop-filter: blur(16px);
+          backdrop-filter: blur(16px);
+}
+.answer-glass--solid {
+  background: linear-gradient(180deg, rgba(18,15,26, 0.92), rgba(7,6,11, 0.9));
+}
+.answer-glass::before,
+.answer-glass--solid::before {
+  content: "";
+  position: absolute;
+  left: 1.15rem;
+  top: 0;
+  width: 46px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+  box-shadow: 0 0 8px rgba(139,92,246, 0.55);
+  pointer-events: none;
+}
+
+/* The question echo: floating gold inscription in 3D perspective space.
+   Older questions tilt back and recede (rotateX + translateZ set inline by
+   depth logic); the newest stays flat at the focal plane — Star Wars crawl. */
+.question-chip,
+.question-chip--solid {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.4rem;
+  border: none;
+  background: transparent;
+  text-shadow:
+    0 0 18px rgba(212, 168, 64, 0.35),
+    0 1px 3px rgba(4, 3, 10, 0.85);
+  /* The inline style applies per-message rotateX / translateZ; this sets the
+     shared perspective context so depth reads consistently. */
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+              opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* Bottom-edge emission line — a soft gold horizon that thins with depth
+   (the inline box-shadow amplitude scales inversely with depth). */
+.question-chip::after,
+.question-chip--solid::after {
+  content: '';
+  display: block;
+  width: 60%;
+  height: 1px;
+  margin: 4px auto 0;
+  background: linear-gradient(90deg, transparent, rgba(139,92,246, 0.30), transparent);
+  opacity: 0.7;
+  transition: opacity 0.8s ease, width 0.8s ease;
+}
+
+/* The newest rising question — same floating style on all sizes now. */
+@media (max-width: 768px) {
+  .question-hero {
+    background: none !important;
+    border: none !important;
+    -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+    padding: 0.3rem 0.4rem !important;
+    font-size: clamp(1.5rem, 6.6vw, 2.05rem) !important;
+    line-height: 1.32 !important;
+    background-image: linear-gradient(180deg, #fbe7ad, #a5b4fc 45%, #a78bfa) !important;
+    -webkit-background-clip: text !important;
+            background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    color: transparent !important;
+    text-shadow: none !important;
+    filter: drop-shadow(0 0 22px rgba(139,92,246, 0.50))
+            drop-shadow(0 0 9px rgba(139,92,246, 0.42));
+  }
+}
+
+/* "Give the text life" — emphasized words and headings in the answer now carry
+   a soft gold radiance rather than reading as flat ink. */
+.prose-puran h1,
+.prose-puran h2,
+.prose-puran h3,
+.prose-puran h4 {
+  text-shadow: 0 0 18px rgba(139,92,246, 0.20);
+}
+.prose-puran strong {
+  text-shadow: 0 0 12px rgba(139,92,246, 0.18);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   THE DEEP FIELD — immersive orb-background chat (iOS-gated in TS).
+   The orb is promoted out of column flow into a fixed full-bleed stage
+   behind the reading content. Legibility comes from DISTANCE (a feathered
+   column of dark + per-glyph contact shadow), never a card. Motion lives on
+   the cheapest engine: transforms + opacity only, GPU-composited, never React
+   state. No CSS blur() ever touches the live WebGL canvas (the iOS WebView's
+   worst performance trap) — defocus is faked with opacity + the scrim.
+   ════════════════════════════════════════════════════════════════════ */
+.bindu-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 1;                 /* above DashboardShell VoidField (z-0), below content (z-10) */
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* The moving / dimming layer. `top` is animated by Framer (42vh empty ↔ 30vh
+   in conversation); the -50% translate makes `top` address the orb's CORE. */
+.bindu-orb-wrap {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  will-change: transform, opacity;
+  /* Breath (scale) + precession (rotate) — two slow, cheap, infinite transforms.
+     Kept on a child so they compose with Framer's translate on the parent. */
+}
+.bindu-orb-breath {
+  animation: binduBreath 14s ease-in-out infinite,
+             binduPrecess 240s linear infinite;
+  transform-origin: 50% 50%;
+}
+@keyframes binduBreath {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.035); }
+}
+@keyframes binduPrecess {
+  from { rotate: 0turn; }
+  to   { rotate: 0.06turn; }
+}
+/* Dim-on-read: the deity quiets while it speaks. Opacity + a cheap saturate —
+   NOT blur. The scrim carries the rest of the legibility. */
+.bindu-orb-wrap {
+  opacity: 1;
+  filter: saturate(1);
+  transition: opacity 600ms ease, filter 600ms ease;
+}
+.bindu-orb-wrap[data-reading="true"] {
+  opacity: 0.78;
+  filter: saturate(0.92);
+}
+
+/* r3f Deep Field scene wrapper — fills the stage; dims while the deity speaks. */
+.bindu-orb-r3f {
+  position: absolute;
+  inset: 0;
+  opacity: 1;
+  transition: opacity 600ms ease;
+}
+.bindu-orb-r3f[data-reading="true"] { opacity: 0.82; }
+@media (prefers-reduced-motion: reduce) {
+  .bindu-orb-r3f { transition: none; }
+}
+
+/* Containment vignette — crushes the orb's edges back to the base void so it
+   reads as a contained classified signal, not wallpaper, and pools brightness
+   toward the upper signal-band (30%), keeping the lower reading band darker. */
+.bindu-vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 120% 90% at 50% 30%,
+    transparent 0%, transparent 30%,
+    rgba(10, 8, 16, 0.50) 68%, rgba(10, 8, 16, 0.86) 100%);
+}
+
+/* The reading scrim — a feathered vertical column of deeper dark over the
+   reading band. Feathered on ALL FOUR edges so it never reads as a panel.
+   Off in the empty state (orb is the hero); fades in once an answer exists. */
+.bindu-read-scrim {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg,
+    transparent 0%, rgba(10, 8, 16, 0.40) 24%, rgba(10, 8, 16, 0.52) 50%,
+    rgba(10, 8, 16, 0.40) 76%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+          mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+  opacity: 0;
+  transition: opacity 600ms ease;
+}
+.bindu-read-scrim[data-reading="true"] { opacity: 1; }
+
+/* Park a scrolled-to question BELOW the topbar + orb's bright band, not under it. */
+.scroll-anchor-top { scroll-margin-top: 14vh; }
+
+/* Mic — listening sonar: ONE concentric ring, soft, kin of the Bindu.
+   (The rAF-driven SVG variant is preferred; this CSS ring is the fallback.) */
+.mic-sonar {
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  border: 1px solid rgba(232, 182, 63, 0.45);
+  animation: micSonar 1.8s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes micSonar {
+  0%   { transform: scale(0.8); opacity: 0.55; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bindu-orb-breath { animation: none; }
+  .bindu-orb-wrap { transition: none; }
+  .bindu-read-scrim { transition: none; }
+  .mic-sonar { animation: none; opacity: 0.4; }
+}
+
+/* ── Streaming text: caret + smooth per-chunk reveal ─────────────────── */
+/* Wrapper that's actively streaming gets a fresh, low-cost fade each flush */
+.stream-live {
+  animation: streamFade 0.45s ease-out;
+}
+@keyframes streamFade {
+  from { opacity: 0.55; }
+  to   { opacity: 1; }
+}
+
+/* Blinking saffron caret trailing the streamed text */
+.stream-caret {
+  display: inline-block;
+  width: 0.5ch;
+  height: 1.05em;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  border-radius: 1px;
+  background: linear-gradient(180deg, #a5b4fc, #a78bfa);
+  box-shadow: 0 0 8px rgba(139,92,246, 0.8);
+  animation: caretBlink 1s steps(1, end) infinite;
+}
+@keyframes caretBlink {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stream-live { animation: none; }
+  .stream-caret { animation: none; opacity: 0.85; }
+  /* Global safety net — collapses all CSS transitions for motion-sensitive users.
+     Framer Motion's useReducedMotion hook handles JS-driven animations separately. */
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* ── Capacitor iOS SafeArea insets ───────────────────────────── */
+.safe-pt {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.safe-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.safe-pl {
+  padding-left: env(safe-area-inset-left, 0px);
+}
+.safe-pr {
+  padding-right: env(safe-area-inset-right, 0px);
+}
+.safe-h-screen {
+  height: 100vh;
+  height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+}
+
+/* Chat input safe-area — the composer bar must clear the iOS home indicator */
+.chat-input-bar {
+  padding-bottom: max(20px, env(safe-area-inset-bottom, 20px));
+}
+
+/* ── Message hover actions (copy / regenerate / feedback) ─────────────── */
+.msg-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  height: 1.85rem;
+  padding: 0 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(139,92,246, 0.18);
+  background: rgba(13, 13, 13, 0.5);
+  color: #8a7a5c;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: color 0.18s, border-color 0.18s, background 0.18s, transform 0.18s;
+}
+.msg-action:hover {
+  color: var(--gold-bright);
+  border-color: rgba(139,92,246, 0.45);
+  background: rgba(139,92,246, 0.08);
+  transform: translateY(-1px);
+}
+.msg-action[data-active="true"] {
+  color: var(--gold-bright);
+  border-color: rgba(139,92,246, 0.5);
+  background: rgba(139,92,246, 0.12);
+}
+
+/* The action row fades in when its message is hovered (pointer devices). */
+@media (hover: hover) {
+  .msg-actions {
+    opacity: 0;
+    transform: translateY(2px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .msg-group:hover .msg-actions,
+  .msg-actions:focus-within {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Generic hover-reveal: hidden until the parent .group is hovered on pointer
+   devices, but ALWAYS visible on touch (where there is no hover) so the
+   actions can't become unreachable on mobile. */
+@media (hover: hover) {
+  .hover-reveal {
+    opacity: 0;
+    transition: opacity 0.18s ease;
+  }
+  .group:hover .hover-reveal,
+  .hover-reveal:focus-within {
+    opacity: 1;
+  }
+}
+
+/* ── Scroll-to-latest pill ────────────────────────────────────────────── */
+.scroll-latest {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(13, 11, 9, 0.92);
+  border: 1px solid rgba(139,92,246, 0.35);
+  color: var(--gold);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45), var(--glow-gold-sm);
+  transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+}
+.scroll-latest:hover {
+  transform: translateY(-1px);
+  border-color: rgba(139,92,246, 0.6);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.5), var(--glow-gold-md);
+}
+
+/* ── Connection / offline banner ──────────────────────────────────────── */
+.net-banner {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ── Sidebar conversation skeleton rows ───────────────────────────────── */
+.convo-skeleton {
+  height: 2.1rem;
+  margin: 0 1.25rem 0.25rem;
+  border-radius: 0.55rem;
+  background: linear-gradient(
+    90deg,
+    rgba(139,92,246, 0.04),
+    rgba(139,92,246, 0.09),
+    rgba(139,92,246, 0.04)
+  );
+  background-size: 200% 100%;
+  animation: convoShimmer 1.4s ease-in-out infinite;
+}
+@keyframes convoShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Sacred-geometry psychedelic loader ───────────────────────────────── */
+/* Hue cycle gives the mandala its shifting, psychedelic colour wash. */
+.sacred-hue {
+  animation: sacredHue 9s linear infinite;
+  filter: drop-shadow(0 0 10px rgba(139,92,246, 0.35));
+}
+@keyframes sacredHue {
+  0% { filter: hue-rotate(0deg) drop-shadow(0 0 10px rgba(139,92,246, 0.35)); }
+  100% { filter: hue-rotate(360deg) drop-shadow(0 0 10px rgba(139,92,246, 0.35)); }
+}
+
+/* Periodic chromatic-style jitter + flicker — the "glitching" feel. */
+.sacred-glitch {
+  animation: sacredGlitch 2.6s steps(1, end) infinite;
+  will-change: transform, opacity, clip-path;
+}
+@keyframes sacredGlitch {
+  0%, 86%, 100% { transform: translate(0, 0); opacity: 1; clip-path: none; }
+  88% { transform: translate(-2.5px, 1px) skewX(-3deg); opacity: 0.65; clip-path: inset(12% 0 38% 0); }
+  90% { transform: translate(2.5px, -1px) skewX(2deg); opacity: 0.9; clip-path: inset(45% 0 8% 0); }
+  92% { transform: translate(-1.5px, -1.5px); opacity: 0.7; clip-path: inset(0 0 60% 0); }
+  94% { transform: translate(1px, 1px); opacity: 1; clip-path: none; }
+}
+
+.sacred-bindu {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: sacredPulse 1.8s ease-in-out infinite;
+}
+@keyframes sacredPulse {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.55); opacity: 1; }
+}
+
+/* ── Void particle — faint drifting mote behind the sacred geometry ───── */
+.void-particle {
+  will-change: transform, opacity;
+  animation: voidDrift var(--drift-dur, 10s) ease-in-out infinite alternate;
+}
+@keyframes voidDrift {
+  0%   { transform: translate(0, 0) scale(1);   opacity: var(--opacity-min, 0.12); }
+  25%  { transform: translate(var(--dx, 8px), var(--dy, -12px)) scale(1.3); opacity: var(--opacity-max, 0.28); }
+  50%  { transform: translate(calc(var(--dx, 8px) * 1.6), calc(var(--dy, -12px) * 0.4)) scale(0.8); opacity: var(--opacity-min, 0.12); }
+  75%  { transform: translate(calc(var(--dx, 8px) * -0.3), calc(var(--dy, -12px) * 1.3)) scale(1.1); opacity: var(--opacity-max, 0.28); }
+  100% { transform: translate(calc(var(--dx, 8px) * -0.8), calc(var(--dy, -12px) * -0.6)) scale(0.9); opacity: var(--opacity-min, 0.12); }
+}
+
+/* ── Void aura — breathing indigo/violet/ember halo behind the yantra ────
+   A light CSS echo of the DarshanVoid WebGL aurora: an encircling gradient
+   that slowly shifts between the three void tones, wrapping the centre in
+   a subtle luminous presence without the WebGL cost. */
+.void-aura {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  animation: voidAuraBreathe 12s ease-in-out infinite;
+  will-change: opacity;
+}
+@keyframes voidAuraBreathe {
+  0%, 100% {
+    background:
+      radial-gradient(ellipse 48% 42% at 50% 50%, rgba(15,28,69,0.18) 0%, transparent 45%),
+      radial-gradient(ellipse 38% 32% at 48% 48%, rgba(43,26,82,0.12) 0%, transparent 38%),
+      radial-gradient(circle at 50% 50%, rgba(71,31,18,0.06) 0%, transparent 50%);
+    opacity: 0.7;
+  }
+  33% {
+    background:
+      radial-gradient(ellipse 52% 46% at 50% 50%, rgba(43,26,82,0.20) 0%, transparent 48%),
+      radial-gradient(ellipse 40% 34% at 48% 52%, rgba(71,31,18,0.10) 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, rgba(15,28,69,0.08) 0%, transparent 52%);
+    opacity: 0.9;
+  }
+  66% {
+    background:
+      radial-gradient(ellipse 46% 40% at 50% 50%, rgba(71,31,18,0.16) 0%, transparent 42%),
+      radial-gradient(ellipse 36% 30% at 52% 50%, rgba(15,28,69,0.14) 0%, transparent 36%),
+      radial-gradient(circle at 50% 50%, rgba(43,26,82,0.07) 0%, transparent 48%);
+    opacity: 0.75;
+  }
+}
+
+/* ── Void halo — a subtle encircling ring that pulses around the yantra ── */
+.void-halo {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: voidHaloPulse 6s ease-in-out infinite;
+}
+@keyframes voidHaloPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 60px 30px rgba(15,28,69,0.08),
+      0 0 120px 50px rgba(15,28,69,0.03),
+      inset 0 0 40px 20px rgba(0,0,0,0.5);
+  }
+  50% {
+    box-shadow:
+      0 0 80px 40px rgba(43,26,82,0.10),
+      0 0 150px 60px rgba(43,26,82,0.04),
+      inset 0 0 50px 25px rgba(0,0,0,0.55);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .convo-skeleton,
+  .skeleton::after,
+  .sacred-glitch,
+  .sacred-bindu,
+  .sacred-hue,
+  .void-particle,
+  .void-aura,
+  .void-halo { animation: none; }
+  html { scroll-behavior: auto; }
+}
+
+/* Desktop sidebar collapse — icon rail at 72px (Tailwind arbitrary lg:w-[72px]
+   was unreliable under JIT, so the width lives here as a plain class). */
+@media (min-width: 1024px) {
+  .sidebar-collapsed { width: 72px; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Voice Darshan — the integrated atmosphere (/darshan)
+   Edgeless bindu in a reactive void; a wordless ripple + bilingual invocation
+   at rest; the question rises and collapses into the flame; the answer emerges
+   from it in gold. (owner 2026-06-29 "integrate the whole thing, intuitive,
+   no mic, no instructions — the bindu invites the touch")
+   ───────────────────────────────────────────────────────────────────────── */
+.darshan-orb { display: block; }
+.darshan-ripplewrap { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
+.darshan-ripple {
+  position: absolute; left: 0; top: 0; width: 150px; height: 150px; margin: -75px 0 0 -75px;
+  border-radius: 50%; border: 1px solid rgba(232, 182, 63, 0.5); opacity: 0;
+  animation: darshanRipple 3.8s ease-out infinite;
+}
+.darshan-ripple--delay { animation-delay: 1.9s; }
+@keyframes darshanRipple { 0% { transform: scale(0.42); opacity: 0; } 18% { opacity: 0.42; } 100% { transform: scale(2.7); opacity: 0; } }
+
+.darshan-invoke {
+  position: absolute; left: 0; right: 0; top: 64%; z-index: 10; text-align: center; padding: 0 2rem;
+  font-family: var(--font-display), var(--font-devanagari), serif;
+  font-size: clamp(1.15rem, 4.8vw, 1.5rem); letter-spacing: 0.015em; color: #a78bfa;
+  opacity: 0; transition: opacity 1s ease; pointer-events: none;
+  text-shadow: 0 0 18px rgba(232, 182, 63, 0.30);
+}
+.darshan-invoke[data-show="1"] { opacity: 0.88; }
+.darshan-invoke-line { display: inline-block; animation: darshanInvoke 6.4s ease-in-out; }
+@keyframes darshanInvoke { 0% { opacity: 0; transform: translateY(6px); } 12% { opacity: 1; transform: translateY(0); } 86% { opacity: 1; } 100% { opacity: 0; } }
+
+.darshan-q {
+  position: absolute; left: 0; right: 0; top: 70%; z-index: 10; text-align: center; padding: 0 2rem;
+  font-family: var(--font-display), var(--font-devanagari), serif;
+  font-size: clamp(1.05rem, 4.4vw, 1.2rem); line-height: 1.5; color: #cdb79a; opacity: 0;
+  transform-origin: center -170px;
+  transition: opacity 0.6s ease, transform 1s cubic-bezier(0.6, 0, 0.3, 1), filter 0.9s ease;
+  pointer-events: none;
+}
+.darshan-q.is-on { opacity: 0.92; }
+.darshan-q.is-suck { opacity: 0; transform: scale(0.3) translateY(-190px); filter: blur(4px); }
+
+.darshan-ascrim {
+  position: absolute; left: 0; right: 0; top: 48%; bottom: 0; z-index: 9; pointer-events: none;
+  background: radial-gradient(120% 76% at 50% 28%, rgba(18, 14, 26, 0.55), rgba(6, 5, 10, 0) 72%);
+  animation: darshanFade 0.9s ease;
+}
+.darshan-a {
+  position: absolute; left: 0; right: 0; top: 60%; z-index: 10; text-align: center; padding: 0 1.9rem;
+  font-family: var(--font-display), var(--font-devanagari), serif;
+  font-size: clamp(1.1rem, 4.6vw, 1.25rem); line-height: 1.66; color: #f0d79a;
+  text-shadow: 0 0 18px rgba(232, 182, 63, 0.26); pointer-events: none;
+}
+.darshan-aword { display: inline-block; opacity: 0; transform: translateY(10px); animation: darshanWord 0.7s ease forwards; }
+.darshan-aword.is-init { font-size: 1.4em; color: #fbe7ad; text-shadow: 0 0 22px rgba(232, 182, 63, 0.4); }
+@keyframes darshanWord { to { opacity: 1; transform: translateY(0); } }
+@keyframes darshanFade { from { opacity: 0; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .darshan-ripple { animation: none; opacity: 0.3; transform: scale(1.4); }
+  .darshan-invoke-line { animation: none; }
+  .darshan-aword { animation: none; opacity: 1; transform: none; }
+  .darshan-q { transition: opacity 0.4s ease; }
+  .darshan-q.is-suck { transform: none; filter: none; }
+}
