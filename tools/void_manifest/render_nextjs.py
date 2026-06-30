@@ -620,10 +620,25 @@ def _find_id_field(entity: EntityDef):
 
 
 def _route_to_filepath(path: str, method: HttpMethod) -> str:
-    """Convert route path to Next.js App Router file path."""
-    # /api/users → /api/users/route.ts (handles all methods in one file)
+    """Convert route path to Next.js App Router file path.
+
+    /api/users → /users  (the 'api' prefix is handled by src/app/api/ directory)
+    /api/users/:id → /users/[id]
+    """
     clean = path.rstrip("/")
-    return clean
+    # Strip leading /api since it's implicit in the src/app/api/ directory
+    if clean.startswith("/api/"):
+        clean = clean[4:]  # remove /api, keep the rest
+    elif clean == "/api":
+        clean = ""
+    # Convert :param → [param] for Next.js dynamic routes
+    parts = []
+    for p in clean.split("/"):
+        if p.startswith(":"):
+            parts.append(f"[{p[1:]}]")
+        else:
+            parts.append(p)
+    return "/".join(parts)
 
 
 def _route_to_type_name(route: RouteDef) -> str:
@@ -657,14 +672,33 @@ def _guess_entity_from_route(route: RouteDef, graph: ArchitecturalGraph) -> Enti
 
 
 def _page_to_dir(path: str) -> str:
-    """Convert page path to Next.js directory, e.g. /dashboard → /dashboard"""
-    return path.rstrip("/")
+    """Convert page path to Next.js directory, e.g. /dashboard → /dashboard, /sutras/:id → /sutras/[id]"""
+    clean = path.rstrip("/")
+    parts = []
+    for p in clean.split("/"):
+        if p.startswith(":"):
+            parts.append(f"[{p[1:]}]")
+        else:
+            parts.append(p)
+    return "/".join(parts)
 
 
 def _page_to_component_name(page: PageDef) -> str:
-    """Generate component name from page path."""
-    path = page.path.strip("/").replace("-", " ").replace("/", " ")
-    return "".join(w.capitalize() for w in path.split()) + "Page"
+    """Generate component name from page path, e.g. /sutras/:id → SutraDetailPage"""
+    path = page.path.strip("/")
+    # Strip dynamic params (:id → id) and take the meaningful segments
+    parts = []
+    for p in path.replace("-", " ").replace("/", " ").split():
+        if p.startswith(":"):
+            parts.append(p[1:])  # strip colon
+        else:
+            parts.append(p)
+    if len(parts) >= 2 and parts[-1] in ("id", "slug", "key"):
+        # /sutras/:id → SutraDetail, /posts/:slug → PostDetail
+        name = "".join(w.capitalize() for w in parts[:-1]) + "Detail"
+    else:
+        name = "".join(w.capitalize() for w in parts)
+    return name + "Page"
 
 
 def _format_default(val) -> str:
