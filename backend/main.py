@@ -429,31 +429,24 @@ def _pick_visual_form(query: str) -> str | None:
 
 
 def _warm_open(query: str) -> str:
-    """A single engaging line fired INSTANTLY before any pipeline work.
-    Buys 3-4 seconds while expansion+RAG run. Feels like the beginning
-    of the answer, not a loading indicator. Never more than one line.
-
-    Skipped for: long analytical queries, explicit scholar requests,
-    or queries that will produce structured responses."""
+    """An instant opening token — fires before any pipeline work. Must feel
+    like the natural start of an answer, not a loading trick. One phrase."""
     q = query.strip().rstrip('?!. ')
-    ql = q.lower()
     if len(q) < 4 or len(q) > 80:
         return ""
-    # Don't warm-open scholarly/structured queries — they get headings
-    _scholar_signals = ['cite', 'source', 'verse', 'according to the text',
-                        'what does .+ say about', 'what is the relationship']
-    if any(s in ql for s in _scholar_signals):
+    # Short greetings get nothing — the response will be instant
+    if len(q.split()) <= 2:
         return ""
-    # Extract a topic word from the query
-    topic_words = [w for w in ql.split()
-                   if w not in ('what', 'is', 'the', 'a', 'an', 'how', 'why',
-                                'who', 'when', 'where', 'tell', 'me', 'about',
-                                'can', 'you', 'do', 'does', 'did', 'i', 'my',
-                                'in', 'of', 'to', 'and', 'or', 'please')]
-    topic = topic_words[-1].rstrip('s') if topic_words else ""
+    # Extract the core topic — the last substantive word
+    _stop = {'what','is','the','a','an','how','why','who','when','where',
+             'tell','me','about','can','you','do','does','did','i','my',
+             'in','of','to','and','or','please','are','your','that','this'}
+    words = [w for w in q.lower().split() if w not in _stop]
+    topic = words[-1] if words else ""
     if not topic or len(topic) < 3:
-        return "Let me find what the texts say."
-    return f"About {topic} — "
+        return ""
+    # Natural: just the topic + comma. Feels like the answer is forming.
+    return f"{topic.capitalize()} — "
 
 
 # Injected as an additional directive when the seeker opts into Socratic challenge mode.
@@ -1700,11 +1693,20 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
     session_data = session_manager.get_session(session_id, user_id, guest_id)
 
     async def event_gen() -> AsyncGenerator[dict, None]:
-        # Immediate feedback so the UI shows motion while we translate+search,
-        # rather than dead air until the first LLM token.
-        # Warm opening — fires instantly before any pipeline work. The user sees
-        # motion immediately while expansion+RAG run. One line. Engaging. Brief.
         actual_query = request.query
+        history_len = len(session_data.get("history", []))
+
+        # ── Progressive depth — match the seeker where they are ──────────────
+        _user_exchanges = sum(1 for m in session_data.get("history", [])
+                              if m.get("role") == "user")
+        if _user_exchanges < 4:
+            _depth_directive = "## DEPTH: This seeker is new or early. Keep it 2-3 sentences. Lead with the essential truth. If the topic has depth, end with a single invitation: 'Want to go deeper?' Let them pull. Do not push."
+        elif _user_exchanges < 9:
+            _depth_directive = "## DEPTH: This seeker has been here for several exchanges. You can go deeper — 3-4 paragraphs if the topic warrants. Still invite rather than dump: 'Want the verses?' if appropriate."
+        else:
+            _depth_directive = "## DEPTH: This seeker trusts you. Full depth. Cite verses. Go as deep as the topic deserves. They will ask for less if they need it."
+
+        # Instant opening token — fires before expansion. Human. Brief.
         _greeting = _warm_open(actual_query)
         if _greeting:
             yield {"data": json.dumps({"type": "token", "content": _greeting})}
@@ -1997,7 +1999,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
 
         # User chat preferences (verbosity + how to address the seeker) are woven in
         # alongside the language instruction so they apply across both registers.
-        directives = [lang_instr, mood_directive] if lang_instr else [mood_directive]
+        directives = [lang_instr, _depth_directive, mood_directive] if lang_instr else [_depth_directive, mood_directive]
         _verbosity_map = {
             "concise":  "## LENGTH: Hold to two or three sentences. Say only the essential thing, the way a Guru answers a question in passing. No expansion, no formatting — the bare truth.",
             "balanced": "## LENGTH: Give a full, shaped answer — open with the essential truth, then expand it with precision: an example, a number, a remembered experience, an aphorism that lands. Two to four short paragraphs. Neither clipped nor padded. This is the natural register of a Guru speaking to a serious seeker.",
