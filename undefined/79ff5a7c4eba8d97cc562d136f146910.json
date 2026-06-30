@@ -1,0 +1,373 @@
+{
+  "chapter_summary": "This record combines two passages. (1) The opening of the Bhagavad Gita, Chapter 1: the blind king Dhritarashtra asks his charioteer-narrator Samjaya what his sons and the Pandavas did upon gathering on the battlefield of Kurukshetra. Samjaya reports that Duryodhana, seeing the Pandava army drawn up in formation, approaches his teacher Dronacharya and enumerates the great warriors on both sides — Bhima, Arjuna, Yuyudhana, Virata, Drupada, Dhrishtaketu, Chekitana, Kashiraja, Kuntibhoja, Purujit, Shaibya, Yudhamanyu, Uttamauja, the sons of Subhadra and Draupadi on the Pandava side; and Bhishma, Karna, Kripa, Ashvatthama, Vikarna and the son of Somadatta on his own. Duryodhana urges all to guard Bhishma at every entry of the formation. Bhishma, the Kuru grandsire, roars like a lion and blows his conch, after which conches, drums and horns sound a tumultuous din; then Krishna (Madhava/Hrishikesha) and Arjuna (Pandava/Dhananjaya), seated in a great chariot drawn by white horses, blow their divine conches — Krishna his Panchajanya, Arjuna his Devadatta, and Bhima (Vrikodara) his great conch Paundra. (2) Brihannaradiya (Narada) Purana, first part, fourth pada (chapter following the third adhyaya on creation, Bharatakhanda, and cosmography): the sage Sanaka teaches that all dharmas are preceded by shraddha (faith); by faith everything is accomplished and Hari is pleased. Devotion (bhakti) must be performed through devotion, and works without faith bear no fruit. As light is the cause of creatures' activity and as water is the life of all worlds, so bhakti is the life and cause of all attainments. The faithful gain dharma, artha, kama and moksha; gifts, austerities and sacrifices devoid of devotion are fruitless — even mountains of gold given without bhakti are wasted, austerity without devotion is mere bodily torment, and oblations without faith are like ghee cast on ashes. Even a tiny act done with faith yields lasting reward, whereas a thousand horse-sacrifices done without devotion are fruitless. Hari-bhakti is the wish-fulfilling cow (kamadhenu) for men; Hari is far from the envious, the hypocritical, the falsely pious, and those without faith in dharma. The Veda enjoins dharma, dharma is Narayana supreme; one who lives faithfully within his own ashrama-conduct and devoted to Hari attains Vishnu's abode and the supreme state, while one who falls from his prescribed conduct — even a master of the Vedanta — is reckoned fallen and excluded from karma.",
+  "entities": [
+    {
+      "name": "Dhritarashtra",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["1.1"]
+    },
+    {
+      "name": "Samjaya",
+      "kind": "sage",
+      "aliases": ["Sanjaya"],
+      "verse_ranges": ["1.1", "1.2"]
+    },
+    {
+      "name": "Duryodhana",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["1.2", "1.3"]
+    },
+    {
+      "name": "Dronacharya",
+      "kind": "sage",
+      "aliases": ["Acharya"],
+      "verse_ranges": ["1.2", "1.3"]
+    },
+    {
+      "name": "Arjuna",
+      "kind": "king",
+      "aliases": ["Pandava", "Dhananjaya"],
+      "verse_ranges": ["1.4", "1.14", "1.15"]
+    },
+    {
+      "name": "Bhima",
+      "kind": "king",
+      "aliases": ["Vrikodara", "Bhimakarma"],
+      "verse_ranges": ["1.4", "1.10", "1.15"]
+    },
+    {
+      "name": "Yuyudhana",
+      "kind": "king",
+      "aliases": ["Satyaki"],
+      "verse_ranges": ["1.4"]
+    },
+    {
+      "name": "Virata",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["1.4"]
+    },
+    {
+      "name": "Drupada",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["1.4"]
+    },
+    {
+      "name": "Dhrishtaketu",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["1.5"]
+    },
+    {
+      "name": "Chekitana",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["1.5"]
+    },
+    {
+      "name": "Kashiraja",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["1.5"]
+    },
+    {
+      "name": "Purujit",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["1.5"]
+    },
+    {
+      "name": "Kuntibhoja",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["1.5"]
+    },
+    {
+      "name": "Shaibya",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["1.5"]
+    },
+    {
+      "name": "Yudhamanyu",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["1.6"]
+    },
+    {
+      "name": "Uttamauja",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["1.6"]
+    },
+    {
+      "name": "Bhishma",
+      "kind": "king",
+      "aliases": ["Pitamaha", "Kuruvriddha"],
+      "verse_ranges": ["1.8", "1.10", "1.11", "1.12"]
+    },
+    {
+      "name": "Karna",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["1.8"]
+    },
+    {
+      "name": "Kripa",
+      "kind": "sage",
+      "aliases": ["Kripacharya"],
+      "verse_ranges": ["1.8"]
+    },
+    {
+      "name": "Ashvatthama",
+      "kind": "sage",
+      "aliases": [],
+      "verse_ranges": ["1.8"]
+    },
+    {
+      "name": "Vikarna",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["1.8"]
+    },
+    {
+      "name": "Krishna",
+      "kind": "deity",
+      "aliases": ["Madhava", "Hrishikesha"],
+      "verse_ranges": ["1.14", "1.15"]
+    },
+    {
+      "name": "Kurukshetra",
+      "kind": "place",
+      "aliases": ["Dharmakshetra"],
+      "verse_ranges": ["1.1"]
+    },
+    {
+      "name": "Panchajanya",
+      "kind": "concept",
+      "aliases": [],
+      "verse_ranges": ["1.15"]
+    },
+    {
+      "name": "Devadatta",
+      "kind": "concept",
+      "aliases": [],
+      "verse_ranges": ["1.15"]
+    },
+    {
+      "name": "Paundra",
+      "kind": "concept",
+      "aliases": [],
+      "verse_ranges": ["1.15"]
+    },
+    {
+      "name": "Sanaka",
+      "kind": "sage",
+      "aliases": [],
+      "verse_ranges": ["narp_1,4.1"]
+    },
+    {
+      "name": "Narada",
+      "kind": "sage",
+      "aliases": [],
+      "verse_ranges": ["narp_1,3.83"]
+    },
+    {
+      "name": "Hari",
+      "kind": "deity",
+      "aliases": ["Vishnu", "Narayana", "Achyuta", "Bhagavan"],
+      "verse_ranges": ["narp_1,4.1", "narp_1,4.7", "narp_1,4.12", "narp_1,4.17", "narp_1,4.20", "narp_1,4.22"]
+    },
+    {
+      "name": "Shraddha",
+      "kind": "concept",
+      "aliases": ["Faith"],
+      "verse_ranges": ["narp_1,4.1", "narp_1,4.6", "narp_1,4.10", "narp_1,4.19"]
+    },
+    {
+      "name": "Bhakti",
+      "kind": "practice",
+      "aliases": ["Devotion", "Hari-bhakti"],
+      "verse_ranges": ["narp_1,4.2", "narp_1,4.3", "narp_1,4.4", "narp_1,4.12", "narp_1,4.13"]
+    },
+    {
+      "name": "Dharma",
+      "kind": "concept",
+      "aliases": [],
+      "verse_ranges": ["narp_1,4.16", "narp_1,4.17", "narp_1,4.18", "narp_1,4.22", "narp_1,4.23"]
+    },
+    {
+      "name": "Kamadhenu",
+      "kind": "concept",
+      "aliases": [],
+      "verse_ranges": ["narp_1,4.12"]
+    },
+    {
+      "name": "Veda",
+      "kind": "text",
+      "aliases": [],
+      "verse_ranges": ["narp_1,4.16", "narp_1,4.17"]
+    },
+    {
+      "name": "Vishnubhavana",
+      "kind": "place",
+      "aliases": ["abode of Vishnu", "paramam padam"],
+      "verse_ranges": ["narp_1,4.20", "narp_1,4.21"]
+    }
+  ],
+  "relationships": [
+    {
+      "src": "Dhritarashtra",
+      "rel": "questions",
+      "dst": "Samjaya",
+      "verse_ranges": ["1.1"]
+    },
+    {
+      "src": "Samjaya",
+      "rel": "narrates_to",
+      "dst": "Dhritarashtra",
+      "verse_ranges": ["1.2"]
+    },
+    {
+      "src": "Duryodhana",
+      "rel": "approaches_and_addresses",
+      "dst": "Dronacharya",
+      "verse_ranges": ["1.2", "1.3"]
+    },
+    {
+      "src": "Arjuna",
+      "rel": "disciple_of",
+      "dst": "Drupada",
+      "verse_ranges": ["1.3"]
+    },
+    {
+      "src": "Krishna",
+      "rel": "charioteer_of",
+      "dst": "Arjuna",
+      "verse_ranges": ["1.14"]
+    },
+    {
+      "src": "Krishna",
+      "rel": "blows_conch",
+      "dst": "Panchajanya",
+      "verse_ranges": ["1.15"]
+    },
+    {
+      "src": "Arjuna",
+      "rel": "blows_conch",
+      "dst": "Devadatta",
+      "verse_ranges": ["1.15"]
+    },
+    {
+      "src": "Bhima",
+      "rel": "blows_conch",
+      "dst": "Paundra",
+      "verse_ranges": ["1.15"]
+    },
+    {
+      "src": "Duryodhana",
+      "rel": "orders_protection_of",
+      "dst": "Bhishma",
+      "verse_ranges": ["1.11"]
+    },
+    {
+      "src": "Bhishma",
+      "rel": "grandfather_of",
+      "dst": "Duryodhana",
+      "verse_ranges": ["1.12"]
+    },
+    {
+      "src": "Sanaka",
+      "rel": "teaches",
+      "dst": "Bhakti",
+      "verse_ranges": ["narp_1,4.1", "narp_1,4.2"]
+    },
+    {
+      "src": "Bhakti",
+      "rel": "pleases",
+      "dst": "Hari",
+      "verse_ranges": ["narp_1,4.1", "narp_1,4.7"]
+    },
+    {
+      "src": "Shraddha",
+      "rel": "precedes_and_enables",
+      "dst": "Dharma",
+      "verse_ranges": ["narp_1,4.1", "narp_1,4.6"]
+    },
+    {
+      "src": "Hari-bhakti",
+      "rel": "compared_to",
+      "dst": "Kamadhenu",
+      "verse_ranges": ["narp_1,4.12"]
+    },
+    {
+      "src": "Dharma",
+      "rel": "is_supreme_as",
+      "dst": "Narayana",
+      "verse_ranges": ["narp_1,4.16"]
+    },
+    {
+      "src": "Hari",
+      "rel": "is_master_of",
+      "dst": "Dharma",
+      "verse_ranges": ["narp_1,4.22"]
+    }
+  ],
+  "story": {
+    "title": "The Conches of Kurukshetra and the Primacy of Faith",
+    "arc": "Two movements joined in one record. First, the Gita's overture: a blind king's anxious question opens onto the war-field, Duryodhana nervously counts the heroes on both sides and rallies his army around the grandsire Bhishma, whose lion-roar and conch ignite a thunderous clamor — answered by the divine conches of Krishna and the Pandavas, the sound that announces the coming dialogue. Second, the Narada Purana's teaching: the sage Sanaka turns from cosmic description to the inner cause of all attainment, declaring that faith (shraddha) and devotion (bhakti) are the root and life-sap of every dharma, and that all ritual without them is ash; Hari draws near the faithful and recedes infinitely from the hypocrite.",
+    "characters": ["Dhritarashtra", "Samjaya", "Duryodhana", "Dronacharya", "Bhishma", "Arjuna", "Bhima", "Krishna", "Sanaka", "Hari"],
+    "timeline_note": "The Gita passage occurs at the very start of the eighteen-day Kurukshetra war, narrated retrospectively by Samjaya to Dhritarashtra. The Narada Purana passage is a timeless didactic discourse by Sanaka, set after the third adhyaya's account of creation and cosmography.",
+    "comic_potential": "Duryodhana's roll-call has a nervous over-counting comedy — a commander reassuring himself by naming heroes aloud, then anxiously declaring his huge force 'wanting' and the enemy's smaller one 'thorough'. The conch contest is operatic slapstick: each warrior trying to out-blow the next until the noise itself becomes a character."
+  },
+  "teachings": [
+    {
+      "teaching": "All dharmas are preceded by faith (shraddha); by faith everything is accomplished and by faith Hari is pleased.",
+      "lens_note": "In Sharma's Kriya-Yoga framework, shraddha is not blind belief but the settled conviction that powers consistent practice — without it kriya remains mechanical and the inner door stays shut; faith is the prana behind sustained sadhana.",
+      "verse_ranges": ["narp_1,4.1"]
+    },
+    {
+      "teaching": "Devotion must be done through devotion, and works performed without faith do not succeed.",
+      "lens_note": "For Sharma, technique alone is inert; the practitioner's surrendered attitude (bhakti) is what makes the energetic work fruitful — the breath-discipline must be carried by love, not performed as dry obligation.",
+      "verse_ranges": ["narp_1,4.2"]
+    },
+    {
+      "teaching": "As light is the cause of creatures' activity and water the life of all worlds, so bhakti is the cause and life of all attainments.",
+      "lens_note": "Sharma reads bhakti as the animating current of sadhana, much as he treats inner light and the flow of life-force in kriya — devotion is the medium in which every spiritual attainment becomes living rather than theoretical.",
+      "verse_ranges": ["narp_1,4.3", "narp_1,4.4", "narp_1,4.5"]
+    },
+    {
+      "teaching": "The faithful attain dharma, artha, kama and moksha; without faith none of the four human goals are realized.",
+      "lens_note": "Sharma holds that liberation is the maturation of disciplined inner practice; faith is the precondition that lets the whole arc — worldly and spiritual goals alike — ripen rather than abort.",
+      "verse_ranges": ["narp_1,4.6", "narp_1,4.19"]
+    },
+    {
+      "teaching": "Gifts, austerities, sacrifices and oblations devoid of devotion are fruitless — gold given without bhakti is wasted, austerity is mere bodily torment, and oblation is ghee cast on ashes.",
+      "lens_note": "This matches Sharma's insistence that outer austerity and ritual are worthless without inner transformation; kriya is precisely the method that turns effort inward so it is not 'ghee on ashes' but fuel for actual change.",
+      "verse_ranges": ["narp_1,4.7", "narp_1,4.8", "narp_1,4.9", "narp_1,4.11"]
+    },
+    {
+      "teaching": "Even a tiny act done with faith yields lasting reward, while a thousand horse-sacrifices without devotion bear no fruit.",
+      "lens_note": "Sharma's teaching that brief, sincere, correctly-attuned practice outweighs vast undirected effort — quality of inner attention, not quantity of outer performance, is what accrues.",
+      "verse_ranges": ["narp_1,4.10", "narp_1,4.11"]
+    },
+    {
+      "teaching": "Hari-bhakti is the wish-fulfilling cow (kamadhenu) of men; possessing it, the ignorant still drink the poison of samsara.",
+      "lens_note": "For Sharma, the inner attainment is the true wish-fulfiller; the tragedy he warns against is having the means to liberation yet remaining bound by habitual outward craving instead of turning the practice inward.",
+      "verse_ranges": ["narp_1,4.12"]
+    },
+    {
+      "teaching": "Hari is far from the envious, the hypocritical, the falsely pious, and those without faith in dharma.",
+      "lens_note": "Sharma stresses that inner purity of motive conditions spiritual progress — ego, pretense and envy block the very current kriya is meant to open; nearness to the divine is a function of the heart's honesty.",
+      "verse_ranges": ["narp_1,4.13", "narp_1,4.14", "narp_1,4.15", "narp_1,4.16", "narp_1,4.17"]
+    },
+    {
+      "teaching": "One who lives faithfully within his own ashrama-conduct, meditating on Hari, attains the abode of Vishnu and the supreme state; one fallen from prescribed conduct — even a master of Vedanta — is reckoned fallen.",
+      "lens_note": "Sharma joins disciplined right-living to inner meditation: dhyana on Hari plus fidelity to one's prescribed conduct is the complete path, whereas scriptural mastery without lived discipline is hollow — the realized state is reached by integrated practice, not learning alone.",
+      "verse_ranges": ["narp_1,4.18", "narp_1,4.20", "narp_1,4.21", "narp_1,4.22", "narp_1,4.23", "narp_1,4.24"]
+    }
+  ]
+}

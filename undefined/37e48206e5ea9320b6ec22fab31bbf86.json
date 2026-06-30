@@ -1,0 +1,214 @@
+{
+  "chapter_summary": "This portion of the Narada Purana (1.4.24-46) extols sadachara (right conduct / one's prescribed ashrama duties) and bhakti (devotion to Hari/Vishnu) as the supreme means of spiritual attainment. It declares that one fallen from right conduct cannot be purified by Vedic study, pilgrimage, sacred bathing, or sacrifice, however much devotion to Hari or Maheshvara (Shiva) he claims. Right conduct yields heaven, happiness, and even liberation. Bhakti is praised as the mother of all the worlds, by whom all the righteous live; through devotion actions succeed, Hari is pleased, knowledge arises, and from knowledge liberation is obtained. Bhakti is born from the company of the Lord's devotees (satsang), which is itself the fruit of merit gathered in past births; such company destroys accumulated sins and brings eternal peace. Narada then asks Sanaka about the marks of these bhagavatas (devotees), their deeds, and the world they attain. Sanaka begins to relate a supreme secret told to the sage Markandeya by Jagannatha (Vishnu) when roused from his yoga-nidra: how at the end of the age (yuga), Vishnu in his Rudra form withdraws the universe, and when all is one ocean and all moving and unmoving beings are dissolved, the Lord as Shesha-atma reclines as Hari upon a banyan leaf (vata-dale), adorned with countless lotus-born beings, subtler than the subtle, holding the cosmic egg within, while the sage Markandeya, devoted to Narayana, abides there witnessing the play (lila) of the Lord.",
+  "entities": [
+    {
+      "name": "Hari",
+      "kind": "deity",
+      "aliases": ["Vishnu", "Hari", "Bhagavan", "Devadeva", "Jagannatha", "Narayana", "Rameshvara", "Sanatana", "Shesha-atma"],
+      "verse_ranges": ["narp_1,4.24", "narp_1,4.25", "narp_1,4.28", "narp_1,4.29", "narp_1,4.31", "narp_1,4.32", "narp_1,4.40", "narp_1,4.42", "narp_1,4.43", "narp_1,4.44", "narp_1,4.45", "narp_1,4.46"]
+    },
+    {
+      "name": "Maheshvara",
+      "kind": "deity",
+      "aliases": ["Shiva", "Maheshvara", "Shivabrahma"],
+      "verse_ranges": ["narp_1,4.25", "narp_1,4.42"]
+    },
+    {
+      "name": "Narada",
+      "kind": "sage",
+      "aliases": [],
+      "verse_ranges": ["narp_1,4.39", "narp_1,4.40"]
+    },
+    {
+      "name": "Sanaka",
+      "kind": "sage",
+      "aliases": [],
+      "verse_ranges": ["narp_1,4.41"]
+    },
+    {
+      "name": "Markandeya",
+      "kind": "sage",
+      "aliases": [],
+      "verse_ranges": ["narp_1,4.41", "narp_1,4.46"]
+    },
+    {
+      "name": "Bhakti",
+      "kind": "concept",
+      "aliases": ["devotion", "haribhakti"],
+      "verse_ranges": ["narp_1,4.28", "narp_1,4.29", "narp_1,4.30", "narp_1,4.31", "narp_1,4.32", "narp_1,4.33"]
+    },
+    {
+      "name": "Achara",
+      "kind": "concept",
+      "aliases": ["sadachara", "right conduct", "svashramachara", "varnashramachara"],
+      "verse_ranges": ["narp_1,4.24", "narp_1,4.25", "narp_1,4.26", "narp_1,4.27", "narp_1,4.31", "narp_1,4.34"]
+    },
+    {
+      "name": "Satsanga",
+      "kind": "concept",
+      "aliases": ["company of devotees", "bhagavadbhaktasanga", "satsangati"],
+      "verse_ranges": ["narp_1,4.33", "narp_1,4.34", "narp_1,4.35", "narp_1,4.36", "narp_1,4.38"]
+    },
+    {
+      "name": "Moksha",
+      "kind": "concept",
+      "aliases": ["liberation"],
+      "verse_ranges": ["narp_1,4.27", "narp_1,4.32"]
+    },
+    {
+      "name": "Yoganidra",
+      "kind": "concept",
+      "aliases": ["yoga-nidra", "cosmic sleep"],
+      "verse_ranges": ["narp_1,4.41"]
+    },
+    {
+      "name": "Veda",
+      "kind": "text",
+      "aliases": ["Vedas"],
+      "verse_ranges": ["narp_1,4.25"]
+    },
+    {
+      "name": "Brahmanda",
+      "kind": "concept",
+      "aliases": ["cosmic egg", "the universe"],
+      "verse_ranges": ["narp_1,4.42", "narp_1,4.43", "narp_1,4.45"]
+    },
+    {
+      "name": "Ganga",
+      "kind": "place",
+      "aliases": ["Ganges"],
+      "verse_ranges": ["narp_1,4.45"]
+    },
+    {
+      "name": "Shesha",
+      "kind": "deity",
+      "aliases": ["Shesha-atma", "cosmic serpent"],
+      "verse_ranges": ["narp_1,4.44"]
+    }
+  ],
+  "relationships": [
+    {
+      "src": "Bhakti",
+      "rel": "is_described_as_mother_of",
+      "dst": "Brahmanda",
+      "verse_ranges": ["narp_1,4.29"]
+    },
+    {
+      "src": "Bhakti",
+      "rel": "arises_from",
+      "dst": "Satsanga",
+      "verse_ranges": ["narp_1,4.33"]
+    },
+    {
+      "src": "Satsanga",
+      "rel": "destroys_sins_of_devotee_of",
+      "dst": "Hari",
+      "verse_ranges": ["narp_1,4.36"]
+    },
+    {
+      "src": "Bhakti",
+      "rel": "leads_to_pleasing",
+      "dst": "Hari",
+      "verse_ranges": ["narp_1,4.28", "narp_1,4.32"]
+    },
+    {
+      "src": "Bhakti",
+      "rel": "yields",
+      "dst": "Moksha",
+      "verse_ranges": ["narp_1,4.32"]
+    },
+    {
+      "src": "Achara",
+      "rel": "yields",
+      "dst": "Moksha",
+      "verse_ranges": ["narp_1,4.27"]
+    },
+    {
+      "src": "Narada",
+      "rel": "questions",
+      "dst": "Sanaka",
+      "verse_ranges": ["narp_1,4.39", "narp_1,4.40"]
+    },
+    {
+      "src": "Sanaka",
+      "rel": "narrates_secret_to",
+      "dst": "Narada",
+      "verse_ranges": ["narp_1,4.41"]
+    },
+    {
+      "src": "Jagannatha",
+      "rel": "revealed_secret_to",
+      "dst": "Markandeya",
+      "verse_ranges": ["narp_1,4.41"]
+    },
+    {
+      "src": "Hari",
+      "rel": "withdraws_at_yuga_end_as_Rudra_form",
+      "dst": "Brahmanda",
+      "verse_ranges": ["narp_1,4.42", "narp_1,4.43"]
+    },
+    {
+      "src": "Hari",
+      "rel": "reclines_as_Shesha_atma_upon_banyan_leaf",
+      "dst": "Shesha",
+      "verse_ranges": ["narp_1,4.44"]
+    },
+    {
+      "src": "Ganga",
+      "rel": "flows_from_toe_of",
+      "dst": "Hari",
+      "verse_ranges": ["narp_1,4.45"]
+    },
+    {
+      "src": "Markandeya",
+      "rel": "witnesses_lila_of",
+      "dst": "Hari",
+      "verse_ranges": ["narp_1,4.46"]
+    },
+    {
+      "src": "Hari",
+      "rel": "identified_with",
+      "dst": "Maheshvara",
+      "verse_ranges": ["narp_1,4.42"]
+    }
+  ],
+  "story": {
+    "title": "Bhakti the Mother, and the Lord on the Banyan Leaf",
+    "arc": "A discourse rises from ethics to cosmology: first the supremacy of right conduct and devotion is established (no ritual saves the one fallen from achara; bhakti is the mother by whom all live, born of satsang). Narada then asks Sanaka to describe the true devotees, and Sanaka opens the supreme secret Jagannatha once told Markandeya — the dissolution of the cosmos, the Lord reclining as Shesha-atma on a banyan leaf upon the single ocean, with Markandeya witnessing his play.",
+    "characters": ["Narada", "Sanaka", "Markandeya", "Hari/Vishnu", "Jagannatha"],
+    "timeline_note": "The frame is a present dialogue between Narada and Sanaka; the inner narrative recalls a past revelation by Jagannatha to Markandeya and points to the recurring cosmic dissolution at the end of the yuga (pralaya).",
+    "comic_potential": "Low — this is solemn doctrinal and cosmological teaching; mild wonder potential in the image of the immense Lord reclining on a single banyan leaf afloat the cosmic ocean while a lone sage watches."
+  },
+  "teachings": [
+    {
+      "teaching": "One who has fallen from right conduct (achara) is not purified by Vedic study, devotion to Hari or Shiva, pilgrimage, sacred bathing, or sacrifice; conduct is the indispensable ground.",
+      "lens_note": "In Sharma's Kriya framework, achara is the disciplined inner regimen — the steady practice that prepares the body-mind; without the established sadhana-conduct, even high aspiration and outer ritual cannot purify, just as kriya without right living leaks its charge.",
+      "verse_ranges": ["narp_1,4.24", "narp_1,4.25", "narp_1,4.26"]
+    },
+    {
+      "teaching": "From right conduct come heaven, happiness, and liberation — what is not attained through achara? It is foundational to all yogas.",
+      "lens_note": "Sharma reads achara as the prerequisite of yoga itself: liberation is not granted by belief but earned through sustained correct practice, conduct being the first rung that makes the higher kriya effective.",
+      "verse_ranges": ["narp_1,4.27", "narp_1,4.28"]
+    },
+    {
+      "teaching": "Bhakti is the mother of all the worlds; as creatures live sheltered by their mother, so all the righteous live sheltered by devotion.",
+      "lens_note": "In the Kriya lens, devotion is the sustaining inner attitude that holds the practitioner — surrender to the Lord within is the maternal field in which all higher practice is nourished and kept alive.",
+      "verse_ranges": ["narp_1,4.29", "narp_1,4.30"]
+    },
+    {
+      "teaching": "By devotion actions succeed and Hari is pleased; when he is pleased knowledge arises, and from knowledge liberation is attained.",
+      "lens_note": "Sharma frames this as the inward sequence of kriya: devotion purifies action, the awakened inner Lord yields direct knowledge (not bookish), and that knowledge ripens into liberation — bhakti, jnana and moksha as one ascending current.",
+      "verse_ranges": ["narp_1,4.31", "narp_1,4.32"]
+    },
+    {
+      "teaching": "Bhakti is born from the company of the Lord's devotees (satsang), itself the fruit of merit gathered over past lives; such company destroys accumulated sins and brings eternal peace.",
+      "lens_note": "Sharma stresses the living guru-and-sangha lineage: real devotion is transmitted through the company of the realized, not self-generated; the meeting with such company is itself the fruit of long sadhana across births, and it burns the residual karmic load.",
+      "verse_ranges": ["narp_1,4.33", "narp_1,4.34", "narp_1,4.35", "narp_1,4.36", "narp_1,4.37", "narp_1,4.38"]
+    },
+    {
+      "teaching": "At the end of the age the Lord, who is creator and is one with Shiva-Brahman, withdraws the universe in his Rudra form; when all is a single ocean and all beings dissolved, he reclines as Shesha-atma upon a banyan leaf, subtler than the subtle, holding the cosmic egg within — and the devotee Markandeya abides witnessing his play.",
+      "lens_note": "In Sharma's cosmology the periodic dissolution mirrors the yogi's inner withdrawal: as the cosmos is reabsorbed into the subtle reclining Lord, the practitioner's prana and attention are drawn inward to the subtlest center; the witnessing Markandeya is the established sadhaka who, unmoved by dissolution, beholds the Self's lila from steady awareness.",
+      "verse_ranges": ["narp_1,4.41", "narp_1,4.42", "narp_1,4.43", "narp_1,4.44", "narp_1,4.45", "narp_1,4.46"]
+    }
+  ]
+}

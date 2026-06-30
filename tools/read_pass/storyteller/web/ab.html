@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guruji Voice — A/B</title>
+<style>
+  :root { --bg:#0d0a1a; --surface:#18133a; --accent:#f59e0b; --accent2:#a855f7;
+          --text:#f0e8d0; --muted:#6b5a8a; --border:#2d2060; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:Georgia,serif;
+         min-height:100vh; display:flex; flex-direction:column; align-items:center;
+         justify-content:center; gap:28px; padding:40px 20px; }
+  h1 { color:var(--accent); letter-spacing:2px; font-size:24px; }
+  .quote { font-style:italic; color:var(--muted); max-width:560px; text-align:center;
+           line-height:1.7; }
+  .cards { display:flex; gap:20px; flex-wrap:wrap; justify-content:center; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:16px;
+          padding:24px 28px; width:260px; text-align:center; }
+  .card.new { border-color:var(--accent); box-shadow:0 0 30px rgba(245,158,11,.15); }
+  .tag { font-size:12px; letter-spacing:1px; color:var(--muted); text-transform:uppercase; }
+  .card.new .tag { color:var(--accent); }
+  .title { font-size:19px; margin:6px 0 18px; }
+  button { background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none;
+           border-radius:12px; color:#0d0a1a; font-weight:bold; font-size:15px;
+           padding:12px 20px; cursor:pointer; width:100%; font-family:inherit; }
+  button:hover { opacity:.9; }
+  .meta { font-size:12px; color:var(--muted); margin-top:12px; }
+</style>
+</head>
+<body>
+  <h1>GURUJI VOICE — A / B</h1>
+  <div class="quote">"There is no shortcut, seeker. The path is the practice, and the practice is daily."</div>
+  <div class="cards">
+    <div class="card">
+      <div class="tag">Before</div>
+      <div class="title">Single clip</div>
+      <button onclick="play('old',this)">▶ Play</button>
+      <div class="meta">1 reference · Patanjali + Govardhan</div>
+    </div>
+    <div class="card new">
+      <div class="tag">After</div>
+      <div class="title">8-clip voiceprint</div>
+      <button onclick="play('new',this)">▶ Play</button>
+      <div class="meta">8 refs · gated pure corpus (62 min)</div>
+    </div>
+  </div>
+  <audio id="old" src="voice_old.wav"></audio>
+  <audio id="new" src="voice_new.wav"></audio>
+<script>
+  function play(id, btn){
+    document.querySelectorAll('audio').forEach(a=>{ if(a.id!==id){a.pause();a.currentTime=0;} });
+    document.querySelectorAll('button').forEach(b=>{ if(b!==btn) b.textContent='▶ Play'; });
+    const a = document.getElementById(id);
+    if(a.paused){ a.play(); btn.textContent='⏸ Playing'; }
+    else { a.pause(); btn.textContent='▶ Play'; }
+    a.onended = ()=> btn.textContent='▶ Play';
+  }
+</script>
+</body>
+</html>

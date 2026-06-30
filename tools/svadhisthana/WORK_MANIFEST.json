@@ -1,0 +1,18 @@
+{
+  "_description": "Svādhiṣṭhāna — Self-Established Coordination. Every agent reads this before touching any file. Every agent updates it when they start, progress, and finish work. The layers (Manas/Buddhi/Mahat/Purusa/Brahman) are the coordination boundaries. Agents at different layers never conflict because they touch different parts of the same files.",
+  "_granthi_stages": {
+    "brahma": "declare — intent is visible, no code written yet",
+    "vishnu": "publish — code pushed to branch, visible for review",
+    "rudra": "merge — verified, merged to main, work complete"
+  },
+  "_layers": {
+    "manas": "Retrieval, search, indexing — surfaces facts from the corpus. Touches: indexer/, search.py, query_processor embedding logic",
+    "buddhi": "Synthesis, reasoning, prompt architecture — discriminates and resolves. Touches: buddhi.py, UNIFIED_SYSTEM prompt, main.py synthesis block",
+    "mahat": "Graph, relationships, RAM keys — structural intelligence. Touches: graph_memory.py, recall.py, guruji_ram.json, graph_manifest.json",
+    "purusa": "Query understanding, intent, lens detection — the witnessing attention. Touches: query_processor.py expansion logic, build_seeker_context()",
+    "brahman": "The corpus itself, training data, embeddings — the ground. Touches: data/chunks/, embeddings, raw texts"
+  },
+  "active": {},
+  "completed": [],
+  "lineage": {}
+}

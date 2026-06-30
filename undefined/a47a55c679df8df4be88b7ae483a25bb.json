@@ -1,0 +1,278 @@
+{
+  "chapter_summary": "This portion of Gheranda Samhita Chapter 1 (GhS_1.22-1.44) continues the shatkarma purifications of ghatastha yoga. It completes the secret antar-dhauti by prescribing prakshalana of the abdominal shakti-nadi performed standing navel-deep in water, declared supremely secret (para gopya) and unattainable even by the gods, said to grant a divine body (devadeha) yet possible only after one has mastered the ardha-dharana retention. It then teaches Danta-dhauti, the cleansing of five seats: the teeth-root, tongue-root, the two ear-cavities, and the frontal aperture. The tongue (lambika) is rubbed, milked with butter and drawn out with an iron instrument until it lengthens, conquering ageing, death and disease. Rubbing the ear-cavities makes the inner sound (nada) manifest, and pressing the frontal aperture clears kapha so the nadi purifies and divine sight (divyadrishti) arises. Hrd-dhauti (heart/chest cleansing) is given in three modes -- by reed-stick (danda), by vomiting water (vamana), and by swallowing cloth (vaso) -- destroying heart disease, gulma, fever, spleen, leprosy and the kapha-pitta humours. Finally Mula-shodhana cleanses the root with stick or finger and water, since until the root is cleansed the apana stays harsh; this softens the bowels, cures indigestion, and kindles the digestive fire (vahni-mandala) that brings radiance and strength day by day.",
+  "entities": [
+    {
+      "name": "Dhauti",
+      "kind": "practice",
+      "aliases": ["dhautih", "mahadhauti", "para dhautih", "cleansing"],
+      "verse_ranges": ["GhS_1.22", "GhS_1.24", "GhS_1.25", "GhS_1.27", "GhS_1.40"]
+    },
+    {
+      "name": "Shakti-nadi prakshalana",
+      "kind": "practice",
+      "aliases": ["shaktinadi", "prakshalanam", "abdominal nadi washing", "nabhimagnajale prakshalana"],
+      "verse_ranges": ["GhS_1.22", "GhS_1.23", "GhS_1.24"]
+    },
+    {
+      "name": "Danta-dhauti",
+      "kind": "practice",
+      "aliases": ["dantadhauti", "dantamulam dhauti", "teeth-root cleansing"],
+      "verse_ranges": ["GhS_1.26", "GhS_1.27", "GhS_1.28"]
+    },
+    {
+      "name": "Lambika elongation",
+      "kind": "practice",
+      "aliases": ["lambika", "dirghalambika", "jihvashodhana", "tongue cleansing"],
+      "verse_ranges": ["GhS_1.29", "GhS_1.30", "GhS_1.31", "GhS_1.32"]
+    },
+    {
+      "name": "Karna-randhra cleansing",
+      "kind": "practice",
+      "aliases": ["karnarandhrayoh", "ear-cavity cleansing"],
+      "verse_ranges": ["GhS_1.33"]
+    },
+    {
+      "name": "Bhala-randhra cleansing",
+      "kind": "practice",
+      "aliases": ["bhalarandhrakam", "kapalarandhram", "frontal-aperture massage"],
+      "verse_ranges": ["GhS_1.26", "GhS_1.34"]
+    },
+    {
+      "name": "Hrd-dhauti",
+      "kind": "practice",
+      "aliases": ["hrddhautim", "heart cleansing", "chest cleansing"],
+      "verse_ranges": ["GhS_1.36"]
+    },
+    {
+      "name": "Danda-dhauti",
+      "kind": "practice",
+      "aliases": ["dandadhauti", "rambhadandam", "haridandam", "vetradandam", "stick cleansing"],
+      "verse_ranges": ["GhS_1.37", "GhS_1.38"]
+    },
+    {
+      "name": "Vamana-dhauti",
+      "kind": "practice",
+      "aliases": ["vamana", "jalam vamayet", "water-vomiting cleansing"],
+      "verse_ranges": ["GhS_1.39"]
+    },
+    {
+      "name": "Vaso-dhauti",
+      "kind": "practice",
+      "aliases": ["vasasa", "sukshmavastram graset", "cloth swallowing"],
+      "verse_ranges": ["GhS_1.40", "GhS_1.41"]
+    },
+    {
+      "name": "Mula-shodhana",
+      "kind": "practice",
+      "aliases": ["mulashodhanam", "guhya kshalana", "root cleansing"],
+      "verse_ranges": ["GhS_1.42", "GhS_1.43", "GhS_1.44"]
+    },
+    {
+      "name": "Nadi",
+      "kind": "concept",
+      "aliases": ["nadi", "shaktinadi", "subtle channel"],
+      "verse_ranges": ["GhS_1.23", "GhS_1.35"]
+    },
+    {
+      "name": "Nada",
+      "kind": "concept",
+      "aliases": ["nadantaram", "inner sound", "unstruck sound"],
+      "verse_ranges": ["GhS_1.33"]
+    },
+    {
+      "name": "Divyadrishti",
+      "kind": "concept",
+      "aliases": ["divyadrishtih", "divine sight", "divine vision"],
+      "verse_ranges": ["GhS_1.35"]
+    },
+    {
+      "name": "Devadeha",
+      "kind": "concept",
+      "aliases": ["devadeho", "divine body"],
+      "verse_ranges": ["GhS_1.24"]
+    },
+    {
+      "name": "Apana",
+      "kind": "concept",
+      "aliases": ["apana", "apanakrurata", "downward vital air"],
+      "verse_ranges": ["GhS_1.42"]
+    },
+    {
+      "name": "Kapha",
+      "kind": "concept",
+      "aliases": ["kapha", "kaphadosham", "kaphapittam", "phlegm humour"],
+      "verse_ranges": ["GhS_1.30", "GhS_1.34", "GhS_1.37", "GhS_1.39"]
+    },
+    {
+      "name": "Vahni-mandala",
+      "kind": "concept",
+      "aliases": ["vahnimandalam", "gastric fire", "agni", "digestive fire"],
+      "verse_ranges": ["GhS_1.44"]
+    },
+    {
+      "name": "Yogin",
+      "kind": "practice",
+      "aliases": ["yoginam", "yogavit", "narah", "sudhih", "the practitioner"],
+      "verse_ranges": ["GhS_1.25", "GhS_1.28", "GhS_1.39"]
+    },
+    {
+      "name": "Gheranda Samhita",
+      "kind": "text",
+      "aliases": ["Gheranda Samhita", "GhS", "ghatastha yoga"],
+      "verse_ranges": ["GhS_1.22", "GhS_1.44"]
+    }
+  ],
+  "relationships": [
+    {
+      "src": "Shakti-nadi prakshalana",
+      "rel": "is_secret_form_of",
+      "dst": "Dhauti",
+      "verse_ranges": ["GhS_1.22", "GhS_1.23"]
+    },
+    {
+      "src": "Shakti-nadi prakshalana",
+      "rel": "produces",
+      "dst": "Devadeha",
+      "verse_ranges": ["GhS_1.24"]
+    },
+    {
+      "src": "Shakti-nadi prakshalana",
+      "rel": "cleanses",
+      "dst": "Nadi",
+      "verse_ranges": ["GhS_1.23"]
+    },
+    {
+      "src": "Danta-dhauti",
+      "rel": "comprises",
+      "dst": "Lambika elongation",
+      "verse_ranges": ["GhS_1.26", "GhS_1.29"]
+    },
+    {
+      "src": "Danta-dhauti",
+      "rel": "comprises",
+      "dst": "Karna-randhra cleansing",
+      "verse_ranges": ["GhS_1.26", "GhS_1.33"]
+    },
+    {
+      "src": "Danta-dhauti",
+      "rel": "comprises",
+      "dst": "Bhala-randhra cleansing",
+      "verse_ranges": ["GhS_1.26", "GhS_1.34"]
+    },
+    {
+      "src": "Lambika elongation",
+      "rel": "removes",
+      "dst": "Kapha",
+      "verse_ranges": ["GhS_1.30"]
+    },
+    {
+      "src": "Karna-randhra cleansing",
+      "rel": "reveals",
+      "dst": "Nada",
+      "verse_ranges": ["GhS_1.33"]
+    },
+    {
+      "src": "Bhala-randhra cleansing",
+      "rel": "removes",
+      "dst": "Kapha",
+      "verse_ranges": ["GhS_1.34"]
+    },
+    {
+      "src": "Bhala-randhra cleansing",
+      "rel": "produces",
+      "dst": "Divyadrishti",
+      "verse_ranges": ["GhS_1.35"]
+    },
+    {
+      "src": "Hrd-dhauti",
+      "rel": "comprises",
+      "dst": "Danda-dhauti",
+      "verse_ranges": ["GhS_1.36", "GhS_1.37"]
+    },
+    {
+      "src": "Hrd-dhauti",
+      "rel": "comprises",
+      "dst": "Vamana-dhauti",
+      "verse_ranges": ["GhS_1.36", "GhS_1.39"]
+    },
+    {
+      "src": "Hrd-dhauti",
+      "rel": "comprises",
+      "dst": "Vaso-dhauti",
+      "verse_ranges": ["GhS_1.36", "GhS_1.40"]
+    },
+    {
+      "src": "Danda-dhauti",
+      "rel": "destroys",
+      "dst": "Kapha",
+      "verse_ranges": ["GhS_1.37", "GhS_1.38"]
+    },
+    {
+      "src": "Vamana-dhauti",
+      "rel": "removes",
+      "dst": "Kapha",
+      "verse_ranges": ["GhS_1.39"]
+    },
+    {
+      "src": "Mula-shodhana",
+      "rel": "subdues",
+      "dst": "Apana",
+      "verse_ranges": ["GhS_1.42"]
+    },
+    {
+      "src": "Mula-shodhana",
+      "rel": "kindles",
+      "dst": "Vahni-mandala",
+      "verse_ranges": ["GhS_1.44"]
+    },
+    {
+      "src": "Gheranda Samhita",
+      "rel": "prescribes_to",
+      "dst": "Yogin",
+      "verse_ranges": ["GhS_1.28", "GhS_1.42"]
+    },
+    {
+      "src": "Dhauti",
+      "rel": "part_of_corpus",
+      "dst": "Gheranda Samhita",
+      "verse_ranges": ["GhS_1.22"]
+    }
+  ],
+  "teachings": [
+    {
+      "teaching": "The shakti-nadi prakshalana, washed navel-deep in water, is supremely secret (para gopya), unattainable even by the gods, and by mere cleansing the body becomes a divine body (devadeha).",
+      "lens_note": "For Sharma the secrecy IS transmission: the deepest pranic purification comes only through the guru-given practice that works the shakti-nadi through which kundalini rises. Devadeha is read literally -- the vessel transmuted toward the deathless light-body, not a metaphor.",
+      "verse_ranges": ["GhS_1.22", "GhS_1.23", "GhS_1.24"]
+    },
+    {
+      "teaching": "Maha-dhauti does not arise in one who has not first mastered the ardha-dharana retention capacity; purification follows a strict order of prerequisites.",
+      "lens_note": "Sharma's krama principle: no opening comes by skipping steps. An unprepared vessel yields nothing, and capacity in retention is the gate to the deeper cleansings.",
+      "verse_ranges": ["GhS_1.25"]
+    },
+    {
+      "teaching": "Danta-dhauti cleanses five seats -- teeth-root, tongue-root, the two ear-cavities and the frontal aperture -- and is supreme because these serve dharana and must be kept pure daily.",
+      "lens_note": "Sharma reads the five head-gates as apertures of dharana, cleansed because a fouled gate cannot hold prana; the teeth and tongue-root border khechari territory where the higher locks are formed.",
+      "verse_ranges": ["GhS_1.26", "GhS_1.27", "GhS_1.28"]
+    },
+    {
+      "teaching": "Rubbing, milking with butter, and drawing the tongue out with an iron instrument lengthens the lambika and conquers ageing, death and disease.",
+      "lens_note": "This is the physical groundwork of khechari mudra: the tongue lengthened to seal the cranial aperture and reach the nectar (amrita), the closed gate stopping it being consumed by the gastric fire so decay halts.",
+      "verse_ranges": ["GhS_1.29", "GhS_1.30", "GhS_1.31", "GhS_1.32"]
+    },
+    {
+      "teaching": "Rubbing the ear-cavities makes the inner sound (nada) manifest, and pressing the frontal aperture clears kapha so the nadi purifies and divine sight (divyadrishti) arises.",
+      "lens_note": "For Sharma these are the doorways of laya yoga -- anahata nada and ajna divyadrishti -- where a gross cleansing precipitates subtle perception; physical shuddhi is the precondition for the divine senses, not a substitute for them.",
+      "verse_ranges": ["GhS_1.33", "GhS_1.34", "GhS_1.35"]
+    },
+    {
+      "teaching": "Hrd-dhauti is threefold -- by reed-stick (danda), by vomiting water (vamana), by swallowing cloth (vaso) -- and destroys heart disease, gulma, fever, spleen, leprosy and the kapha-pitta humours.",
+      "lens_note": "Sharma reads heart cleansing as clearing the anahata seat where prana stagnates; removing kapha-pitta lifts the doshic veil that blocks prana from rising past the heart toward the higher centres.",
+      "verse_ranges": ["GhS_1.36", "GhS_1.37", "GhS_1.38", "GhS_1.39", "GhS_1.40", "GhS_1.41"]
+    },
+    {
+      "teaching": "Until the root (mula) is cleansed, apana remains harsh (apana-krurata); therefore root cleansing must be done with every effort, softening the bowels, curing indigestion, and kindling the digestive fire.",
+      "lens_note": "The lens keystone: the entire ascent depends on the apana at muladhara being reversed and merged with prana to awaken the fire that lifts shakti. Kindling the vahni-mandala is the first cause of the upward process -- nothing rises until the bottom is clean.",
+      "verse_ranges": ["GhS_1.42", "GhS_1.43", "GhS_1.44"]
+    }
+  ]
+}

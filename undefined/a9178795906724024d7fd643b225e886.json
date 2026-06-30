@@ -1,0 +1,345 @@
+{
+  "chapter_summary": "A cosmological-theological discourse (Narada Purana 1,3) on the nature of the Supreme. It opens with the analogy that just as one space (ākāśa) appears divided by adjuncts (upādhi), so this whole world appears manifold through the adjunct of avidyā (nescience). Viṣṇu pervades the world and his Śakti inheres in him as burning-power inheres in a coal, abiding within its own substratum. This Śakti is named by various sages — Umā, Lakṣmī, Bhāratī, Girijā, Ambikā, Durgā, Bhadrakālī, Caṇḍī, Māheśvarī, Kaumārī, Vaiṣṇavī, Vārāhī, Indrī, Śāmbhavī, Brāhmī, Vidyā/Avidyā, Māyā, Parā Prakṛti. The supreme residual Śakti (Śeṣaśakti) of Viṣṇu effects creation, maintenance and dissolution and abides pervading the world in manifest and unmanifest form. Prakṛti, Puruṣa and Kāla are the threefold ordinance through which the One becomes the cause of creation, sustenance and destruction; assuming Brahmā's form he generates all. That from which all arises is declared the eternal Deva, beyond whom there is nothing — the imperishable (akṣara), attributeless (nirguṇa), pure, all-full, eternal supreme abode (paramaṃ padam), knowable by knowledge alone, of the form of being-consciousness-bliss (saccidānanda). Though pure and supreme, when joined with ahaṃkāra he is foolishly called an embodied being (dehī) — sheer mockery of ignorance. By the division of sattva and other guṇas the one pure Deva assumes the three forms (mūrtitraya) that are the cause of creation, maintenance and end. The chapter then narrates the cosmic evolution: from the primal Viṣṇu, at the first creation (ādisarga), arise Prakṛti, Puruṣa and Kāla; when Prakṛti is agitated in the Puruṣa (the world-teacher), Mahat (buddhi) manifests, then ahaṃkāra, then the subtle tanmātras and senses, and from the tanmātras the gross elements (ākāśa, vāyu, agni, jala, bhūmi), each becoming the cause of the next in sequence. Brahmā the world-supporter then creates the tāmasa order — beasts, birds, animals and creatures of the animal wombs; deeming that inadequate he fashions the divine creation and the human creation, and then Dakṣa and other sons devoted to the means of creation.",
+  "entities": [
+    {
+      "name": "Viṣṇu",
+      "kind": "deity",
+      "aliases": ["Hari", "Mahāviṣṇu", "Antaryāmī", "Parameśvara"],
+      "verse_ranges": ["narp_1,3.12", "narp_1,3.16", "narp_1,3.26", "narp_1,3.28", "narp_1,3.29"]
+    },
+    {
+      "name": "Hari",
+      "kind": "deity",
+      "aliases": ["Viṣṇu"],
+      "verse_ranges": ["narp_1,3.12"]
+    },
+    {
+      "name": "Śakti",
+      "kind": "concept",
+      "aliases": ["Mahāmāyā", "Śeṣaśakti", "Parā Śakti"],
+      "verse_ranges": ["narp_1,3.12", "narp_1,3.13", "narp_1,3.14", "narp_1,3.15", "narp_1,3.16", "narp_1,3.26", "narp_1,3.27"]
+    },
+    {
+      "name": "Umā",
+      "kind": "deity",
+      "aliases": ["Śakti"],
+      "verse_ranges": ["narp_1,3.13"]
+    },
+    {
+      "name": "Lakṣmī",
+      "kind": "deity",
+      "aliases": ["Śakti"],
+      "verse_ranges": ["narp_1,3.13"]
+    },
+    {
+      "name": "Bhāratī",
+      "kind": "deity",
+      "aliases": ["Śakti"],
+      "verse_ranges": ["narp_1,3.13"]
+    },
+    {
+      "name": "Girijā",
+      "kind": "deity",
+      "aliases": ["Śakti", "Ambikā"],
+      "verse_ranges": ["narp_1,3.13"]
+    },
+    {
+      "name": "Durgā",
+      "kind": "deity",
+      "aliases": ["Śakti", "Bhadrakālī", "Caṇḍī", "Māheśvarī"],
+      "verse_ranges": ["narp_1,3.14"]
+    },
+    {
+      "name": "Kaumārī",
+      "kind": "deity",
+      "aliases": ["Śakti"],
+      "verse_ranges": ["narp_1,3.14"]
+    },
+    {
+      "name": "Vaiṣṇavī",
+      "kind": "deity",
+      "aliases": ["Śakti"],
+      "verse_ranges": ["narp_1,3.14"]
+    },
+    {
+      "name": "Vārāhī",
+      "kind": "deity",
+      "aliases": ["Śakti"],
+      "verse_ranges": ["narp_1,3.14"]
+    },
+    {
+      "name": "Indrī",
+      "kind": "deity",
+      "aliases": ["Śakti", "Aindrī"],
+      "verse_ranges": ["narp_1,3.14"]
+    },
+    {
+      "name": "Śāmbhavī",
+      "kind": "deity",
+      "aliases": ["Śakti"],
+      "verse_ranges": ["narp_1,3.14"]
+    },
+    {
+      "name": "Brāhmī",
+      "kind": "deity",
+      "aliases": ["Śakti"],
+      "verse_ranges": ["narp_1,3.15"]
+    },
+    {
+      "name": "Māyā",
+      "kind": "concept",
+      "aliases": ["Vidyā", "Avidyā", "Mahāmāyā"],
+      "verse_ranges": ["narp_1,3.11", "narp_1,3.15", "narp_1,3.26"]
+    },
+    {
+      "name": "Prakṛti",
+      "kind": "concept",
+      "aliases": ["Parā Prakṛti"],
+      "verse_ranges": ["narp_1,3.15", "narp_1,3.17", "narp_1,3.27", "narp_1,3.28", "narp_1,3.31"]
+    },
+    {
+      "name": "Puruṣa",
+      "kind": "concept",
+      "aliases": ["Jagadguru"],
+      "verse_ranges": ["narp_1,3.17", "narp_1,3.28", "narp_1,3.31"]
+    },
+    {
+      "name": "Kāla",
+      "kind": "concept",
+      "aliases": ["Kālarūpī"],
+      "verse_ranges": ["narp_1,3.17", "narp_1,3.21", "narp_1,3.28", "narp_1,3.30"]
+    },
+    {
+      "name": "Brahman",
+      "kind": "concept",
+      "aliases": ["Paramaṃ Padam", "Saccidānanda", "Akṣara", "Nirguṇa", "Paramātmā"],
+      "verse_ranges": ["narp_1,3.18", "narp_1,3.20", "narp_1,3.21", "narp_1,3.22", "narp_1,3.29"]
+    },
+    {
+      "name": "Brahmā",
+      "kind": "deity",
+      "aliases": ["Padmaja", "Jagatkartā", "Jagaddhātā"],
+      "verse_ranges": ["narp_1,3.24", "narp_1,3.25", "narp_1,3.34", "narp_1,3.35"]
+    },
+    {
+      "name": "Maheśvara",
+      "kind": "deity",
+      "aliases": ["Parameśvara"],
+      "verse_ranges": ["narp_1,3.30"]
+    },
+    {
+      "name": "Mahat",
+      "kind": "concept",
+      "aliases": ["Buddhi"],
+      "verse_ranges": ["narp_1,3.31"]
+    },
+    {
+      "name": "Ahaṃkāra",
+      "kind": "concept",
+      "aliases": ["Ego-principle"],
+      "verse_ranges": ["narp_1,3.23", "narp_1,3.31", "narp_1,3.32"]
+    },
+    {
+      "name": "Tanmātra",
+      "kind": "concept",
+      "aliases": ["Subtle elements"],
+      "verse_ranges": ["narp_1,3.32"]
+    },
+    {
+      "name": "Pañcabhūta",
+      "kind": "concept",
+      "aliases": ["Ākāśa", "Vāyu", "Agni", "Jala", "Bhūmi", "Five gross elements"],
+      "verse_ranges": ["narp_1,3.32", "narp_1,3.33"]
+    },
+    {
+      "name": "Avidyā",
+      "kind": "concept",
+      "aliases": ["Nescience", "Ignorance"],
+      "verse_ranges": ["narp_1,3.11"]
+    },
+    {
+      "name": "Dakṣa",
+      "kind": "sage",
+      "aliases": [],
+      "verse_ranges": ["narp_1,3.35"]
+    },
+    {
+      "name": "Narada Purana",
+      "kind": "text",
+      "aliases": ["Nāradīya Purāṇa"],
+      "verse_ranges": ["narp_1,3.11"]
+    }
+  ],
+  "relationships": [
+    {
+      "src": "Śakti",
+      "rel": "inheres_in",
+      "dst": "Viṣṇu",
+      "verse_ranges": ["narp_1,3.12"]
+    },
+    {
+      "src": "Śakti",
+      "rel": "named_as",
+      "dst": "Umā",
+      "verse_ranges": ["narp_1,3.13"]
+    },
+    {
+      "src": "Śakti",
+      "rel": "named_as",
+      "dst": "Lakṣmī",
+      "verse_ranges": ["narp_1,3.13"]
+    },
+    {
+      "src": "Śakti",
+      "rel": "named_as",
+      "dst": "Durgā",
+      "verse_ranges": ["narp_1,3.14"]
+    },
+    {
+      "src": "Durgā",
+      "rel": "alias_of",
+      "dst": "Bhadrakālī",
+      "verse_ranges": ["narp_1,3.14"]
+    },
+    {
+      "src": "Śakti",
+      "rel": "is_called",
+      "dst": "Māyā",
+      "verse_ranges": ["narp_1,3.15"]
+    },
+    {
+      "src": "Śeṣaśakti",
+      "rel": "belongs_to",
+      "dst": "Viṣṇu",
+      "verse_ranges": ["narp_1,3.16"]
+    },
+    {
+      "src": "Śeṣaśakti",
+      "rel": "causes",
+      "dst": "Creation",
+      "verse_ranges": ["narp_1,3.16"]
+    },
+    {
+      "src": "Viṣṇu",
+      "rel": "manifests_as",
+      "dst": "Prakṛti",
+      "verse_ranges": ["narp_1,3.28"]
+    },
+    {
+      "src": "Viṣṇu",
+      "rel": "manifests_as",
+      "dst": "Puruṣa",
+      "verse_ranges": ["narp_1,3.28"]
+    },
+    {
+      "src": "Viṣṇu",
+      "rel": "manifests_as",
+      "dst": "Kāla",
+      "verse_ranges": ["narp_1,3.28"]
+    },
+    {
+      "src": "Viṣṇu",
+      "rel": "assumes_form_of",
+      "dst": "Brahman",
+      "verse_ranges": ["narp_1,3.18"]
+    },
+    {
+      "src": "Brahman",
+      "rel": "assumes",
+      "dst": "Mūrtitraya",
+      "verse_ranges": ["narp_1,3.24"]
+    },
+    {
+      "src": "Prakṛti",
+      "rel": "agitated_in",
+      "dst": "Puruṣa",
+      "verse_ranges": ["narp_1,3.31"]
+    },
+    {
+      "src": "Prakṛti",
+      "rel": "produces",
+      "dst": "Mahat",
+      "verse_ranges": ["narp_1,3.31"]
+    },
+    {
+      "src": "Mahat",
+      "rel": "produces",
+      "dst": "Ahaṃkāra",
+      "verse_ranges": ["narp_1,3.31"]
+    },
+    {
+      "src": "Ahaṃkāra",
+      "rel": "produces",
+      "dst": "Tanmātra",
+      "verse_ranges": ["narp_1,3.32"]
+    },
+    {
+      "src": "Tanmātra",
+      "rel": "produces",
+      "dst": "Pañcabhūta",
+      "verse_ranges": ["narp_1,3.32", "narp_1,3.33"]
+    },
+    {
+      "src": "Brahmā",
+      "rel": "creates",
+      "dst": "Tāmasa beings",
+      "verse_ranges": ["narp_1,3.34"]
+    },
+    {
+      "src": "Brahmā",
+      "rel": "creates",
+      "dst": "Dakṣa",
+      "verse_ranges": ["narp_1,3.35"]
+    },
+    {
+      "src": "Brahmā",
+      "rel": "born_from",
+      "dst": "Viṣṇu",
+      "verse_ranges": ["narp_1,3.25"]
+    }
+  ],
+  "story": {
+    "title": "The One Pure Deva and the Unfolding of the World through His Śakti",
+    "arc": "From the unity of the Supreme (Viṣṇu/Brahman, pure and attributeless) the chapter moves through the inherent Śakti called by a hundred names, to the threefold ordinance of Prakṛti-Puruṣa-Kāla, and finally to the staged cosmic evolution — Mahat, ahaṃkāra, tanmātras, the five elements, and Brahmā's graded creation of beasts, gods, humans and the progenitor Dakṣa. A descent from non-dual being into manifold creation, while insisting the One alone is real and the manifold is an appearance through upādhi and avidyā.",
+    "characters": ["Viṣṇu", "Śakti", "Brahmā", "Prakṛti", "Puruṣa", "Kāla", "Dakṣa"],
+    "timeline_note": "Set at ādisarga, the primal creation; describes the sequential (yathākramam) emergence of cosmic principles from Prakṛti's agitation onward, then Brahmā's ordered creative acts.",
+    "comic_potential": "Low — this is dense metaphysics. The one wry note is the verse mocking the foolish (mūḍha) who, seeing the pure Supreme joined with ego, call it a mere 'embodied being' (dehī) — 'aho ajñāna-viḍambanam', a sigh at the absurdity of ignorance."
+  },
+  "teachings": [
+    {
+      "teaching": "As one space appears divided by adjuncts (upādhi), the whole world appears manifold only through the adjunct of avidyā; the apparent multiplicity is not ultimate.",
+      "lens_note": "In Sharma's Kriya framework this is the ākāśa-within-the-pot teaching: the single consciousness seems fragmented only by the limiting vessel of the body-mind. Kriya dissolves the upādhi so the practitioner directly knows the one undivided space he always was.",
+      "verse_ranges": ["narp_1,3.11"]
+    },
+    {
+      "teaching": "Śakti is not separate from the Lord but inheres in him as burning-power inheres in a coal, pervading its own substratum.",
+      "lens_note": "Sharma reads power and its source as non-different: the prāṇic/kuṇḍalinī energy the yogi awakens is not foreign but the latent burning-power already resident in the body, abiding in its own seat until kindled.",
+      "verse_ranges": ["narp_1,3.12"]
+    },
+    {
+      "teaching": "The single Śakti is worshipped under countless names — Umā, Lakṣmī, Durgā, Māyā, Prakṛti and the rest; the names differ, the power is one.",
+      "lens_note": "For Sharma the many deity-names are skillful pointers to one inner energy; the Kriya yogi need not chase outer forms but turns the named Śakti inward as the awakening force met in meditation.",
+      "verse_ranges": ["narp_1,3.13", "narp_1,3.14", "narp_1,3.15"]
+    },
+    {
+      "teaching": "The supreme Deva is imperishable (akṣara), attributeless (nirguṇa), pure, all-full and eternal — the highest abode (paramaṃ padam), knowable by knowledge alone, of the nature of being-consciousness-bliss.",
+      "lens_note": "This is the goal-state of Kriya in Sharma's terms: the formless paramaṃ padam realized not by ritual but by jñāna ripened in stilled meditation — saccidānanda experienced directly, not believed.",
+      "verse_ranges": ["narp_1,3.20", "narp_1,3.21", "narp_1,3.22"]
+    },
+    {
+      "teaching": "Though supremely pure, when joined with ahaṃkāra (ego) the Self is foolishly called a 'dehī' (embodied one) — the mockery of ignorance.",
+      "lens_note": "Sharma identifies ahaṃkāra as the precise knot Kriya must untie: bondage is nothing but the pure Self mis-identified with ego. The work of practice is to withdraw that false 'I' so the dehī-illusion collapses and the akṣara stands revealed.",
+      "verse_ranges": ["narp_1,3.23"]
+    },
+    {
+      "teaching": "Creation unfolds in sequence from Prakṛti's agitation in Puruṣa: Mahat (buddhi), then ahaṃkāra, then the subtle tanmātras and senses, then the five gross elements, each becoming the cause of the next.",
+      "lens_note": "Sharma uses this tattva-ladder in reverse as the map of the inward journey: the Kriya yogi retraces the descent — withdrawing from gross elements through senses, ego and intellect back to Prakṛti and the Puruṣa — so cosmology becomes a step-by-step return route to the source.",
+      "verse_ranges": ["narp_1,3.31", "narp_1,3.32", "narp_1,3.33"]
+    },
+    {
+      "teaching": "The one pure Deva, by the division of sattva and the other guṇas, assumes the three forms (mūrtitraya) that cause creation, maintenance and dissolution; the triad is one in essence.",
+      "lens_note": "In Sharma's non-dual reading the trimūrti are functional faces of a single consciousness; the yogi reveres the forms but rests in the undivided substratum behind sṛṣṭi-sthiti-laya, beyond the play of the guṇas.",
+      "verse_ranges": ["narp_1,3.24", "narp_1,3.25"]
+    }
+  ]
+}

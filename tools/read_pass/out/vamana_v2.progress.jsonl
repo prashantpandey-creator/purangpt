@@ -1,0 +1,122 @@
+{"seq_start": 1, "chapter_label": "Chapter 0", "success": true, "lens": false}
+{"seq_start": 2, "chapter_label": "Chapter 1", "success": true, "lens": true}
+{"seq_start": 34, "chapter_label": "Chapter 2", "success": true, "lens": true}
+{"seq_start": 91, "chapter_label": "Chapter 3", "success": true, "lens": true}
+{"seq_start": 145, "chapter_label": "Chapter 4", "success": true, "lens": true}
+{"seq_start": 204, "chapter_label": "Chapter 5", "success": true, "lens": true}
+{"seq_start": 269, "chapter_label": "Chapter 6 (part 1)", "success": true, "lens": true}
+{"seq_start": 349, "chapter_label": "Chapter 6 (part 2)", "success": true, "lens": true}
+{"seq_start": 388, "chapter_label": "Chapter 7", "success": true, "lens": true}
+{"seq_start": 456, "chapter_label": "Chapter 8", "success": true, "lens": true}
+{"seq_start": 536, "chapter_label": "Chapter 9", "success": true, "lens": true}
+{"seq_start": 594, "chapter_label": "Chapter 10 (part 1)", "success": true, "lens": false}
+{"seq_start": 674, "chapter_label": "Chapter 10 (part 2)", "success": true, "lens": false}
+{"seq_start": 676, "chapter_label": "Chapter 11 (part 1)", "success": true, "lens": true}
+{"seq_start": 756, "chapter_label": "Chapter 11 (part 2)", "success": true, "lens": true}
+{"seq_start": 766, "chapter_label": "Chapter 12 (part 1)", "success": true, "lens": true}
+{"seq_start": 846, "chapter_label": "Chapter 12 (part 2)", "success": true, "lens": false}
+{"seq_start": 849, "chapter_label": "Chapter 13 (part 1)", "success": true, "lens": true}
+{"seq_start": 929, "chapter_label": "Chapter 13 (part 2)", "success": true, "lens": false}
+{"seq_start": 933, "chapter_label": "Chapter 14 (part 1)", "success": true, "lens": true}
+{"seq_start": 1013, "chapter_label": "Chapter 14 (part 2)", "success": true, "lens": false}
+{"seq_start": 1016, "chapter_label": "Chapter 15 (part 1)", "success": true, "lens": true}
+{"seq_start": 1096, "chapter_label": "Chapter 15 (part 2)", "success": true, "lens": true}
+{"seq_start": 1114, "chapter_label": "Chapter 16 (part 1)", "success": true, "lens": true}
+{"seq_start": 1194, "chapter_label": "Chapter 16 (part 2)", "success": true, "lens": false}
+{"seq_start": 1206, "chapter_label": "Chapter 17 (part 1)", "success": true, "lens": true}
+{"seq_start": 1286, "chapter_label": "Chapter 17 (part 2)", "success": true, "lens": true}
+{"seq_start": 1304, "chapter_label": "Chapter 18 (part 1)", "success": true, "lens": true}
+{"seq_start": 1384, "chapter_label": "Chapter 18 (part 2)", "success": true, "lens": true}
+{"seq_start": 1410, "chapter_label": "Chapter 19", "success": true, "lens": true}
+{"seq_start": 1463, "chapter_label": "Chapter 20", "success": true, "lens": false}
+{"seq_start": 1528, "chapter_label": "Chapter 21", "success": true, "lens": true}
+{"seq_start": 1603, "chapter_label": "Chapter 22 (part 1)", "success": true, "lens": true}
+{"seq_start": 1683, "chapter_label": "Chapter 22 (part 2)", "success": true, "lens": true}
+{"seq_start": 1693, "chapter_label": "Chapter 23", "success": true, "lens": true}
+{"seq_start": 1760, "chapter_label": "Chapter 24", "success": true, "lens": true}
+{"seq_start": 1774, "chapter_label": "Chapter 25 (part 1)", "success": true, "lens": true}
+{"seq_start": 1854, "chapter_label": "Chapter 25 (part 2)", "success": true, "lens": true}
+{"seq_start": 1890, "chapter_label": "Chapter 26 (part 1)", "success": true, "lens": true}
+{"seq_start": 1970, "chapter_label": "Chapter 26 (part 2)", "success": true, "lens": true}
+{"seq_start": 1999, "chapter_label": "Chapter 27 (part 1)", "success": true, "lens": true}
+{"seq_start": 2079, "chapter_label": "Chapter 27 (part 2)", "success": true, "lens": true}
+{"seq_start": 2089, "chapter_label": "Chapter 28 (part 1)", "success": true, "lens": true}
+{"seq_start": 2169, "chapter_label": "Chapter 28 (part 2)", "success": true, "lens": true}
+{"seq_start": 2204, "chapter_label": "Chapter 29 (part 1)", "success": true, "lens": true}
+{"seq_start": 2284, "chapter_label": "Chapter 29 (part 2)", "success": true, "lens": true}
+{"seq_start": 2338, "chapter_label": "Chapter 30 (part 1)", "success": true, "lens": true}
+{"seq_start": 2418, "chapter_label": "Chapter 30 (part 2)", "success": true, "lens": true}
+{"seq_start": 2447, "chapter_label": "Chapter 31 (part 1)", "success": true, "lens": true}
+{"seq_start": 2527, "chapter_label": "Chapter 31 (part 2)", "success": true, "lens": true}
+{"seq_start": 2599, "chapter_label": "Chapter 32 (part 1)", "success": true, "lens": true}
+{"seq_start": 2679, "chapter_label": "Chapter 32 (part 2)", "success": true, "lens": true}
+{"seq_start": 2759, "chapter_label": "Chapter 32 (part 3)", "success": true, "lens": true}
+{"seq_start": 2779, "chapter_label": "Chapter 33", "success": true, "lens": true}
+{"seq_start": 2850, "chapter_label": "Chapter 34 (part 1)", "success": true, "lens": true}
+{"seq_start": 2930, "chapter_label": "Chapter 34 (part 2)", "success": true, "lens": true}
+{"seq_start": 2973, "chapter_label": "Chapter 35 (part 1)", "success": true, "lens": true}
+{"seq_start": 3053, "chapter_label": "Chapter 35 (part 2)", "success": true, "lens": true}
+{"seq_start": 3086, "chapter_label": "Chapter 36 (part 1)", "success": true, "lens": true}
+{"seq_start": 3166, "chapter_label": "Chapter 36 (part 2)", "success": true, "lens": false}
+{"seq_start": 3174, "chapter_label": "Chapter 37 (part 1)", "success": true, "lens": true}
+{"seq_start": 3254, "chapter_label": "Chapter 37 (part 2)", "success": true, "lens": true}
+{"seq_start": 3287, "chapter_label": "Chapter 38 (part 1)", "success": true, "lens": true}
+{"seq_start": 3367, "chapter_label": "Chapter 38 (part 2)", "success": true, "lens": true}
+{"seq_start": 3403, "chapter_label": "Chapter 39 (part 1)", "success": true, "lens": true}
+{"seq_start": 3483, "chapter_label": "Chapter 39 (part 2)", "success": true, "lens": true}
+{"seq_start": 3552, "chapter_label": "Chapter 30", "success": true, "lens": false}
+{"seq_start": 3553, "chapter_label": "Chapter 39", "success": true, "lens": false}
+{"seq_start": 3559, "chapter_label": "Chapter 30", "success": true, "lens": true}
+{"seq_start": 3561, "chapter_label": "Chapter 39 (part 1)", "success": true, "lens": true}
+{"seq_start": 3641, "chapter_label": "Chapter 39 (part 2)", "success": true, "lens": false}
+{"seq_start": 3655, "chapter_label": "Chapter 40 (part 1)", "success": true, "lens": true}
+{"seq_start": 3735, "chapter_label": "Chapter 40 (part 2)", "success": true, "lens": true}
+{"seq_start": 3750, "chapter_label": "Chapter 41 (part 1)", "success": true, "lens": true}
+{"seq_start": 3830, "chapter_label": "Chapter 41 (part 2)", "success": true, "lens": true}
+{"seq_start": 3838, "chapter_label": "Chapter 42 (part 1)", "success": true, "lens": true}
+{"seq_start": 3918, "chapter_label": "Chapter 42 (part 2)", "success": true, "lens": true}
+{"seq_start": 3934, "chapter_label": "Chapter 43 (part 1)", "success": true, "lens": true}
+{"seq_start": 4014, "chapter_label": "Chapter 43 (part 2)", "success": true, "lens": true}
+{"seq_start": 4094, "chapter_label": "Chapter 43 (part 3)", "success": true, "lens": true}
+{"seq_start": 4174, "chapter_label": "Chapter 43 (part 4)", "success": true, "lens": false}
+{"seq_start": 4179, "chapter_label": "Chapter 44 (part 1)", "success": true, "lens": true}
+{"seq_start": 4259, "chapter_label": "Chapter 44 (part 2)", "success": true, "lens": true}
+{"seq_start": 4325, "chapter_label": "Chapter 45", "success": true, "lens": true}
+{"seq_start": 4387, "chapter_label": "Chapter 46 (part 1)", "success": true, "lens": true}
+{"seq_start": 4467, "chapter_label": "Chapter 46 (part 2)", "success": true, "lens": true}
+{"seq_start": 4497, "chapter_label": "Chapter 47", "success": true, "lens": true}
+{"seq_start": 4570, "chapter_label": "Chapter 48", "success": true, "lens": true}
+{"seq_start": 4640, "chapter_label": "Chapter 49", "success": true, "lens": true}
+{"seq_start": 4715, "chapter_label": "Chapter 50", "success": true, "lens": true}
+{"seq_start": 4788, "chapter_label": "Chapter 51 (part 1)", "success": true, "lens": true}
+{"seq_start": 4868, "chapter_label": "Chapter 51 (part 2)", "success": true, "lens": true}
+{"seq_start": 4875, "chapter_label": "Chapter 52 (part 1)", "success": true, "lens": true}
+{"seq_start": 4955, "chapter_label": "Chapter 52 (part 2)", "success": true, "lens": true}
+{"seq_start": 5011, "chapter_label": "Chapter 53 (part 1)", "success": true, "lens": true}
+{"seq_start": 5091, "chapter_label": "Chapter 53 (part 2)", "success": true, "lens": true}
+{"seq_start": 5133, "chapter_label": "Chapter 54", "success": true, "lens": true}
+{"seq_start": 5189, "chapter_label": "Chapter 55", "success": true, "lens": true}
+{"seq_start": 5236, "chapter_label": "Chapter 56", "success": true, "lens": true}
+{"seq_start": 5302, "chapter_label": "Chapter 57 (part 1)", "success": true, "lens": true}
+{"seq_start": 5382, "chapter_label": "Chapter 57 (part 2)", "success": true, "lens": true}
+{"seq_start": 5410, "chapter_label": "Chapter 58 (part 1)", "success": true, "lens": true}
+{"seq_start": 5490, "chapter_label": "Chapter 58 (part 2)", "success": true, "lens": true}
+{"seq_start": 5536, "chapter_label": "Chapter 59 (part 1)", "success": true, "lens": true}
+{"seq_start": 5616, "chapter_label": "Chapter 59 (part 2)", "success": true, "lens": true}
+{"seq_start": 5696, "chapter_label": "Chapter 59 (part 3)", "success": true, "lens": true}
+{"seq_start": 5721, "chapter_label": "Chapter 60", "success": true, "lens": true}
+{"seq_start": 5794, "chapter_label": "Chapter 61", "success": false, "lens": true, "error": {"code": "bad_json", "message": "Expecting ',' delimiter: line 124 column 38 (char 4870)"}}
+{"seq_start": 5834, "chapter_label": "Chapter 62 (part 1)", "success": true, "lens": true}
+{"seq_start": 5914, "chapter_label": "Chapter 62 (part 2)", "success": true, "lens": true}
+{"seq_start": 5921, "chapter_label": "Chapter 63", "success": true, "lens": true}
+{"seq_start": 5991, "chapter_label": "Chapter 64 (part 1)", "success": true, "lens": true}
+{"seq_start": 6071, "chapter_label": "Chapter 64 (part 2)", "success": true, "lens": true}
+{"seq_start": 6151, "chapter_label": "Chapter 64 (part 3)", "success": true, "lens": true}
+{"seq_start": 6166, "chapter_label": "Chapter 65 (part 1)", "success": true, "lens": true}
+{"seq_start": 6246, "chapter_label": "Chapter 65 (part 2)", "success": true, "lens": true}
+{"seq_start": 6270, "chapter_label": "Chapter 66", "success": true, "lens": true}
+{"seq_start": 6297, "chapter_label": "Chapter 67 (part 1)", "success": true, "lens": true}
+{"seq_start": 6377, "chapter_label": "Chapter 67 (part 2)", "success": true, "lens": true}
+{"seq_start": 6409, "chapter_label": "Chapter 68 (part 1)", "success": true, "lens": true}
+{"seq_start": 6489, "chapter_label": "Chapter 68 (part 2)", "success": true, "lens": true}
+{"seq_start": 6512, "chapter_label": "Chapter 69", "success": true, "lens": true}

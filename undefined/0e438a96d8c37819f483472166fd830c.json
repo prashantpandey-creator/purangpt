@@ -1,0 +1,192 @@
+{
+  "chapter_summary": "This section of the Narada Purana (narp_1,3.35–59) describes Brahma's (Pahmaja, the lotus-born) creation of the cosmos and its inhabitants. After fashioning the non-human creation he produces Daksha and the other prajapatis devoted to the work of generation, by whom the entire world of gods, demons and humans is pervaded. The text then lays out cosmic geography: the seven upper worlds (Bhuh, Bhuvah, Svah, Mahah, Janah, Tapah, Satya) rising above one another, and the seven netherworlds (Atala, Vitala, Sutala, Talatala, Mahatala, Rasatala, Patala) descending below. Brahma sets lords (lokanathas) over all worlds and arranges the boundary-mountains, rivers and means of subsistence for the dwellers of each. Mount Meru stands at the center of the earth as the refuge of all gods, with the ring-mountain Lokaloka at the edge of the earth; between them lie the seven continents (Jambu, Plaksha, Shalmala, Kusha, Krauncha, Shaka, Pushkara) and seven oceans (of salt, sugarcane-juice, wine, ghee, curd, milk and water), each ocean and continent twice the size of the preceding one. The passage exalts Bharata-varsha (India), the only land of action (karma-bhumi) where deeds bear fruit, so coveted that even the gods desire birth there in order to accumulate merit and reach the supreme abode. The remainder is a long encomium (narp_1,3.52–59) on who is truly worthy of veneration: the devotee of Vishnu, the chanter of Hari's names (Narayana, Krishna, Vasudeva), the rememberer of Shiva (Nilakantha, Shankara), the guru-devoted, the well-wisher of all beings, the helper of brahmanas, and above all the one who sees non-difference between Narayana and Shiva and beholds Brahman in all.",
+  "entities": [
+    {
+      "name": "Brahma",
+      "kind": "deity",
+      "aliases": ["Pahmaja", "Padmaja", "the lotus-born"],
+      "verse_ranges": ["narp_1,3.35", "narp_1,3.36", "narp_1,3.39", "narp_1,3.40"]
+    },
+    {
+      "name": "Daksha",
+      "kind": "deity",
+      "aliases": ["Daksha-prajapati"],
+      "verse_ranges": ["narp_1,3.36"]
+    },
+    {
+      "name": "Narada",
+      "kind": "sage",
+      "aliases": [],
+      "verse_ranges": ["narp_1,3.47", "narp_1,3.52", "narp_1,3.55"]
+    },
+    {
+      "name": "Vishnu",
+      "kind": "deity",
+      "aliases": ["Hari", "Narayana", "Krishna", "Vasudeva", "Jagadisha"],
+      "verse_ranges": ["narp_1,3.51", "narp_1,3.52", "narp_1,3.53", "narp_1,3.54", "narp_1,3.55", "narp_1,3.59"]
+    },
+    {
+      "name": "Shiva",
+      "kind": "deity",
+      "aliases": ["Nilakantha", "Shankara"],
+      "verse_ranges": ["narp_1,3.56", "narp_1,3.59"]
+    },
+    {
+      "name": "Bharata-varsha",
+      "kind": "place",
+      "aliases": ["Bharata", "Bharatabhumi", "Bharatabhutala"],
+      "verse_ranges": ["narp_1,3.46", "narp_1,3.47", "narp_1,3.48", "narp_1,3.49", "narp_1,3.50", "narp_1,3.52"]
+    },
+    {
+      "name": "Mount Meru",
+      "kind": "place",
+      "aliases": ["Meru"],
+      "verse_ranges": ["narp_1,3.41"]
+    },
+    {
+      "name": "Lokaloka",
+      "kind": "place",
+      "aliases": ["Lokaloka mountain"],
+      "verse_ranges": ["narp_1,3.41", "narp_1,3.45"]
+    },
+    {
+      "name": "The seven upper worlds",
+      "kind": "place",
+      "aliases": ["Bhuh", "Bhuvah", "Svah", "Mahah", "Janah", "Tapah", "Satya"],
+      "verse_ranges": ["narp_1,3.37"]
+    },
+    {
+      "name": "The seven netherworlds (Patalas)",
+      "kind": "place",
+      "aliases": ["Atala", "Vitala", "Sutala", "Talatala", "Mahatala", "Rasatala", "Patala"],
+      "verse_ranges": ["narp_1,3.38", "narp_1,3.39"]
+    },
+    {
+      "name": "The seven continents (dvipas)",
+      "kind": "place",
+      "aliases": ["Jambu", "Plaksha", "Shalmala", "Kusha", "Krauncha", "Shaka", "Pushkara"],
+      "verse_ranges": ["narp_1,3.41", "narp_1,3.42", "narp_1,3.43", "narp_1,3.44"]
+    },
+    {
+      "name": "The seven oceans",
+      "kind": "place",
+      "aliases": ["salt ocean", "sugarcane-juice ocean", "wine ocean", "ghee ocean", "curd ocean", "milk ocean", "freshwater ocean"],
+      "verse_ranges": ["narp_1,3.44"]
+    },
+    {
+      "name": "Brahman",
+      "kind": "concept",
+      "aliases": ["the Absolute"],
+      "verse_ranges": ["narp_1,3.59"]
+    },
+    {
+      "name": "Karma",
+      "kind": "concept",
+      "aliases": ["action and its fruit", "shubha-ashubha karma"],
+      "verse_ranges": ["narp_1,3.46", "narp_1,3.47", "narp_1,3.48"]
+    },
+    {
+      "name": "Vishnu-puja",
+      "kind": "practice",
+      "aliases": ["worship of Vishnu", "Hari-puja"],
+      "verse_ranges": ["narp_1,3.52", "narp_1,3.53", "narp_1,3.54"]
+    },
+    {
+      "name": "Hari-kirtana / nama-smarana",
+      "kind": "practice",
+      "aliases": ["chanting the names of Hari", "remembrance of the divine name"],
+      "verse_ranges": ["narp_1,3.53", "narp_1,3.55", "narp_1,3.56"]
+    },
+    {
+      "name": "Guru-bhakti",
+      "kind": "practice",
+      "aliases": ["devotion to the guru"],
+      "verse_ranges": ["narp_1,3.56", "narp_1,3.57"]
+    }
+  ],
+  "relationships": [
+    {
+      "src": "Brahma",
+      "rel": "creates",
+      "dst": "Daksha",
+      "verse_ranges": ["narp_1,3.36"]
+    },
+    {
+      "src": "Brahma",
+      "rel": "creates the non-human creation",
+      "dst": "The seven continents (dvipas)",
+      "verse_ranges": ["narp_1,3.35", "narp_1,3.40", "narp_1,3.41"]
+    },
+    {
+      "src": "Brahma",
+      "rel": "appoints lords over",
+      "dst": "The seven upper worlds",
+      "verse_ranges": ["narp_1,3.39"]
+    },
+    {
+      "src": "Daksha",
+      "rel": "begets/populates the world of gods, demons and humans",
+      "dst": "Bharata-varsha",
+      "verse_ranges": ["narp_1,3.36"]
+    },
+    {
+      "src": "Mount Meru",
+      "rel": "stands at the center of",
+      "dst": "Bharata-varsha",
+      "verse_ranges": ["narp_1,3.41"]
+    },
+    {
+      "src": "The seven continents (dvipas)",
+      "rel": "are encircled by",
+      "dst": "The seven oceans",
+      "verse_ranges": ["narp_1,3.44"]
+    },
+    {
+      "src": "Narayana",
+      "rel": "is identically one with",
+      "dst": "Shiva",
+      "verse_ranges": ["narp_1,3.59"]
+    },
+    {
+      "src": "Vishnu",
+      "rel": "is invoked by the names",
+      "dst": "Hari-kirtana / nama-smarana",
+      "verse_ranges": ["narp_1,3.55"]
+    },
+    {
+      "src": "The devotee",
+      "rel": "attains the supreme abode of",
+      "dst": "Vishnu",
+      "verse_ranges": ["narp_1,3.52", "narp_1,3.54"]
+    }
+  ],
+  "story": {
+    "title": "Brahma's Cosmos and the Glory of Bharata",
+    "arc": "Brahma completes creation by producing Daksha and the prajapatis, then orders the cosmos into seven upper worlds, seven netherworlds, seven concentric continents and seven oceans around Mount Meru. The narration zooms from this vast architecture down to a single privileged plot of ground — Bharata-varsha, the only land where action bears fruit — so prized that the gods themselves long to be born there. It closes by ranking, in ascending order, the kinds of devotees who become worthy of even the gods' worship, culminating in the seer who beholds Narayana and Shiva as one and Brahman in all.",
+    "characters": ["Brahma", "Daksha", "Narada", "Vishnu", "Shiva"],
+    "timeline_note": "Set at the dawn of a creation cycle (kalpa): Brahma's secondary creation of the prajapatis and the laying out of cosmic geography, followed by a timeless eulogy on Bharata and on the worthy devotee.",
+    "comic_potential": "The gods enviously eyeing Bharata-varsha and wishing they could be reborn as ordinary humans there — immortals coveting a mortal address purely for the karmic real-estate value — has gentle satirical charm."
+  },
+  "teachings": [
+    {
+      "teaching": "The cosmos is a vast, ordered hierarchy — seven worlds above (up to Satya), seven below (down to Patala), with concentric continents and oceans — yet all of it is the deliberate arrangement of a single creative intelligence that sets a presiding consciousness (lokanatha) over every level.",
+      "lens_note": "In Sharma's Kriya-Yoga the outer cosmic ladder mirrors the inner one: the seven lokas correspond to the ascending centres of the spinal column, and the practitioner climbs from Bhuh (the gross body-consciousness at the base) toward Satya (the truth-consciousness at the crown). The 'lord set over each world' is the awareness one must establish at each chakra rather than passing through it asleep.",
+      "verse_ranges": ["narp_1,3.37", "narp_1,3.38", "narp_1,3.39"]
+    },
+    {
+      "teaching": "Bharata-varsha alone is the karma-bhumi, the land of action where deeds (good or evil) actually bear fruit; elsewhere beings only consume previously-earned merit. Human birth here is so rare and valuable that even gods covet it for the chance to accumulate imperishable merit and reach the supreme state.",
+      "lens_note": "For Sharma this is the doctrine that liberation is won only in the human body, here and now, through practice — not in any heaven where one merely enjoys results. The 'gods longing for Bharata-birth' is the teaching that the meditator's present incarnation is the irreplaceable workshop; the kriya is the karma that yields the akshaya (imperishable) fruit the verse names.",
+      "verse_ranges": ["narp_1,3.46", "narp_1,3.47", "narp_1,3.48", "narp_1,3.49", "narp_1,3.50"]
+    },
+    {
+      "teaching": "One who, having gained human birth, becomes devoted to the worship and remembrance of Vishnu — chanting Narayana, Krishna, Vasudeva — has no equal in the three worlds and goes to the supreme abode of Vishnu.",
+      "lens_note": "Sharma reads nama-smarana not as mere verbal repetition but as continuous inner remembrance riding the breath; the 'name on the breath' is itself the kriya. The unsurpassed status of such a devotee reflects his point that constant inward attention to the divine current outranks any outward ritual.",
+      "verse_ranges": ["narp_1,3.52", "narp_1,3.53", "narp_1,3.54", "narp_1,3.55"]
+    },
+    {
+      "teaching": "The truly venerable person is the one devoted to the guru, the meditator on Shiva, the well-wisher of all beings, the pure and self-controlled, the helper of brahmanas — and supremely the one who sees no difference between Narayana and Shiva and beholds Brahman in everything.",
+      "lens_note": "The verse's climax — abheda-darshi, seeing Narayana and Shiva as one — is the heart of Sharma's non-sectarian Kriya teaching: the apparent two are a single conscious current. Guru-bhakti is placed first deliberately, matching his insistence that the realized teacher's transmission is the indispensable doorway to that unitive seeing.",
+      "verse_ranges": ["narp_1,3.56", "narp_1,3.57", "narp_1,3.58", "narp_1,3.59"]
+    }
+  ]
+}

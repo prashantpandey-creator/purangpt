@@ -1,0 +1,109 @@
+{
+  "success": true,
+  "data": {
+    "insights": [
+      {
+        "type": "pattern",
+        "title": "Divine Multi-Faceted Agency",
+        "insight": "Krishna's 137 diverse predicates demonstrate that he is portrayed as the ultimate agent in the cosmos, performing every possible role (abducts, advises, avatars, etc.), which argues for his omnipotence and omnipresence beyond that of other deities. The sharp drop to Brahma (59) and Indra (50) shows a hierarchical concentration of agency, with Krishna/Vishnu as the central actor.",
+        "evidence": [
+          "Krishna: 137 predicates (abducts, accompanies, advises, alias, ally, an_avatar... )",
+          "Brahma: 59 predicates",
+          "Indra: 50 predicates"
+        ],
+        "confidence": "high",
+        "cross_references": [
+          "Bhagavata Purana Canto 1, Chapter 3 where Krishna is declared svayam bhagavan",
+          "Mahabharata Shanti Parva on Narayana's supremacy"
+        ]
+      },
+      {
+        "type": "karmic_chain",
+        "title": "Curses as Catalysts for Divine Lila",
+        "insight": "Multiple curses (Sages curse Jaya-Vijaya, Lakshmi curses them) set off long chains of demonic incarnations that culminate in liberation by Krishna, showing that even negative karma is woven into the divine plan for ultimate redemption. The chain spans chapters and lifetimes, emphasizing the inexorable law of karma transformed into a path of grace.",
+        "evidence": [
+          "Sages cursed Jaya (ch.16) → Dhritarashtra disciple Sanjaya → Kumbhakarṇa incarnation (ch.10)",
+          "Lakshmi cursed Vijaya (ch.16) → Dashagriva/Ravana incarnation (ch.10) → Shishupala incarnation (ch.10)"
+        ],
+        "confidence": "high",
+        "cross_references": [
+          "Bhagavata Purana 3.16, 7.1 on Jaya-Vijaya's curse",
+          "Vishnu Purana on Hiranyakashipu and Hiranyaksha"
+        ]
+      },
+      {
+        "type": "theological_synthesis",
+        "title": "Krishna as the Central Axis of Theophany",
+        "insight": "The graph positions Krishna/Vishnu as the hub from which all avataras and divine actions emanate; Brahma, Shiva, and others serve as his agents, reinforcing the Bhagavata theology that Narayana is the ultimate source. The avatar patterns list multiple forms of Hari, and even Brahma's highest role is receiving instruction from Bhagavan (revealed_vaikuntha_to).",
+        "evidence": [
+          "Vishnu: 45 predicates, many avatars (Kapila, Dattatreya, etc.)",
+          "Avatar patterns: Prithu as avatar of Hari, Varaha, etc.",
+          "Brahma's predicates include: instructed Brahma, reveals_to Brahma"
+        ],
+        "confidence": "high",
+        "cross_references": [
+          "Bhagavata Purana 1.1.1 (oṁ namo bhagavate vāsudevāya)",
+          "Brahma Samhita on Krishna as the primal cause"
+        ]
+      },
+      {
+        "type": "anomaly",
+        "title": "Draupadi's Prominence Beyond Epic Context",
+        "insight": "Draupadi's appearance with 38 predicates, including being an avatar, appears_to, and brother, suggests she is not just a queen but a divine figure (possibly an incarnation of Shakti) whose role spans beyond the Mahabharata narrative, symbolizing feminine divine grace. Her mention alongside major deities in the hub list indicates a deliberate theological elevation.",
+        "evidence": [
+          "Draupadī: 38 predicates (alias, also_known_as, appears_to, approved, avatar, brother... )",
+          "She is connected to avatar links (avatar of... )",
+          "Listed among hubs like Krishna, Brahma, Vishnu"
+        ],
+        "confidence": "medium",
+        "cross_references": [
+          "Mahabharata Adi Parva on Draupadi's previous births",
+          "Devi Bhagavatam on the five elemental forms of the goddess"
+        ]
+      },
+      {
+        "type": "structural",
+        "title": "Non-Linear Pedagogy through Entity Repetition",
+        "insight": "The compiler uses recurring entities (like Narada, Vyasa) across distant chapters to create a web of teachings that mimic oral tradition and allow multiple entry points into spiritual knowledge, emphasizing the timeless and interconnected nature of puranic wisdom. The chains show a teacher-disciple loop that reinforces the transmission of sacred knowledge.",
+        "evidence": [
+          "Narada chains: cursed → taught by Brahma → discourses (ch.5, ch.4, ch.6)",
+          "Vyasa avatar with disciples (Paila, Jaimini, etc.) appearing in multiple chapter contexts"
+        ],
+        "confidence": "high",
+        "cross_references": [
+          "Bhagavata Purana 1.4 on Vyasa's compilation",
+          "Shuka's instruction to Parikshit spanning multiple chapters"
+        ]
+      },
+      {
+        "type": "cross_text",
+        "title": "Yogic Interpretation of Avatar Descents",
+        "insight": "From a Kriya-Yoga perspective, the avatar patterns reflect the descent of the divine vibration (Krishna) into the chakras (various forms like Kurma, Varaha) to purify and liberate the individual soul (represented by curses leading to demonic births and release), mirroring the inner process of kundalini awakening. The repeated instruction to Brahma (revealing Vaikuntha) symbolizes the inner vision of higher realms obtained through yogic practice.",
+        "evidence": [
+          "Avatar patterns: Kurma form, Varaha avatar, Prithu pursues Earth",
+          "Krishna liberates Manigriva (ch.10)",
+          "Bhagavan reveals Vaikuntha to Brahma (instructed Brahma, reveals_to Brahma)"
+        ],
+        "confidence": "speculative",
+        "cross_references": [
+          "Yoga Sutras 2.44 on svadhyaya and ishta-devata",
+          "Shailendra Sharma's commentary on Kriya-Yoga in Bhagavata Purana"
+        ]
+      }
+    ],
+    "meta_observation": "The Puranic graph constructs a holographic cosmos where every entity is karmically and theologically interwoven, with Krishna as the central pivot. The narrative structure itself—cyclical, non-linear, and interconnected—mirrors the Advaitic truth that all is Brahman, and the repeated patterns of curse-incarnation-liberation serve as a map for the soul's journey from causality to grace, a key theme in Kriya-Yoga.",
+    "n_insights": 6,
+    "type_counts": {
+      "pattern": 1,
+      "karmic_chain": 1,
+      "theological_synthesis": 1,
+      "anomaly": 1,
+      "structural": 1,
+      "cross_text": 1
+    }
+  },
+  "metadata": {
+    "model": "deepseek-v4-pro"
+  },
+  "errors": []
+}

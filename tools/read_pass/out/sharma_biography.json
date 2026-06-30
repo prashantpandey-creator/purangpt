@@ -1,0 +1,4553 @@
+{
+  "success": true,
+  "data": {
+    "biography": {
+      "lineage_chain": [
+        "Babaji",
+        "Lahiri Mahasaya",
+        "Yukteshwar Giri",
+        "Yogananda",
+        "Shailendra Sharma",
+        "Mahavatar Babaji",
+        "Swami Sri Yukteswar",
+        "Paramahansa Yogananda",
+        "Shri Shailendra Sharma",
+        "Rajendra Singh (guru of Gulab Singh)",
+        "Gulab Singh",
+        "Yukteswar",
+        "Hariharananda (disciple of Yukteswar)",
+        "Satya Charan Lahiri",
+        "Satya Charan Lahiri (grandson of Lahiri Mahasaya)",
+        "Yukteshwar",
+        "Bhupendranath Sanyal Mahasaya",
+        "Shailendranath Mukherjee",
+        "Babaji → Lahiri Mahasaya → Yukteshwar → Yogananda → Shailendra Sharma",
+        "Tinkori Lahiri Mahasaya",
+        "Shri Satyacharan Lahiri",
+        "Satya Charan Lahiri (Sharma's guru)",
+        "Sri Yukteshwar",
+        "Sri Satyacharan Lahiri",
+        "Babaji → Lahiri Mahasaya → Tinkori Lahiri → Satyacharan Lahiri → Shailendra Sharma",
+        "Babaji (taught highest pranayama to Sharma)",
+        "Shailendra Sharma (the fifth Guru of Kriya Yoga lineage)",
+        "Shailendra Sharma (initiated by Babaji)",
+        "Swami Yukteshwar",
+        "Shiva (potential) → Shankara (initiated by chandala → may be Shiva or Babaji)",
+        "Shiva",
+        "Babaji → Lahiri Mahasaya → Yukteshwar → Yogananda → Sharma",
+        "Babaji → Lahiri Mahasaya → Sri Yukteshwar → Paramahansa Yogananda → Shailendra Sharma",
+        "Dattatreya",
+        "Shiva (Adi Nath)",
+        "Matsyendranath",
+        "Gorakhnath",
+        "Babaji → Lahiri Mahasaya → Yukteshwar → Yogananda → Satyacharan Lahiri → Shailendra Sharma",
+        "Babaji → Lahiri Mahasaya → Satyacharan Lahiri (direct transmission from Lahiri to Sharma's guru)"
+      ],
+      "biographical_arc": [
+        {
+          "event": "At age 14, saw vision of Shiva in Himalayas (Devaldhar, near Bageshwar)",
+          "order": 1
+        },
+        {
+          "event": "Three months later, vision of Shiva repeated in his room",
+          "order": 2
+        },
+        {
+          "event": "Born in Bhopal on July 10, 1957, as the sixth child of Shri Himmat Bahadur Sharma and Shrimati Gyani Devi Sharma.",
+          "order": 1
+        },
+        {
+          "event": "At eight months, spoke his first word 'kutta' (dog), showing early affinity for animals.",
+          "order": 2
+        },
+        {
+          "event": "Started reading Hindi before age five, preferring adult company over peers.",
+          "order": 3
+        },
+        {
+          "event": "Family connections included Mahatma Gandhi, Jawaharlal Nehru, and other prominent figures; father was a judge.",
+          "order": 4
+        },
+        {
+          "event": "Mother Gyani Devi was exceptionally strong-willed and physically strong, with an exalted Mars in her horoscope.",
+          "order": 5
+        },
+        {
+          "event": "Learned from stories about Hanuman puja, aghoris, tantrics, and the lives of saints like Trailanga Swami and Vivekananda",
+          "order": 1
+        },
+        {
+          "event": "Witnessed his uncle Shraddhanand Brahmachari's failed tantric curse and subsequent death, learning about the dangers of misuse of tantra",
+          "order": 2
+        },
+        {
+          "event": "At age 15, became friends with Lalmani Sharma and visited his father to hear about Hanuman's appearance",
+          "order": 3
+        },
+        {
+          "event": "Grandfather Gulab Singh dies at 97; Sharma witnesses luminous spheres descending and ascending at deathbed",
+          "order": 1
+        },
+        {
+          "event": "Lives in Sagar, Madhya Pradesh; attends government school, makes friends across castes",
+          "order": 2
+        },
+        {
+          "event": "Observes friend Hari Om tenderly massaging his mother's blistered hands; feels envy and later tries to replicate scene with his own mother",
+          "order": 3
+        },
+        {
+          "event": "Slapped by a teacher for inattention; laughs at the absurdity of the situation",
+          "order": 4
+        },
+        {
+          "event": "Learns about social hierarchy when a constable forbids his son from playing with Sharma due to class differences",
+          "order": 5
+        },
+        {
+          "event": "Death of elder brother Mahendra; family holds wedding on same day as funeral rites",
+          "order": 1
+        },
+        {
+          "event": "Reflects on death and meaning of life; existential crisis",
+          "order": 2
+        },
+        {
+          "event": "Rejects army career citing long hair; family shocked",
+          "order": 3
+        },
+        {
+          "event": "Reads Autobiography of a Yogi (Dec 1978); decides to dedicate life to Kriya Yoga",
+          "order": 4
+        },
+        {
+          "event": "Completes M.A. Political Science; remains focused on yoga",
+          "order": 5
+        },
+        {
+          "event": "Encounter with mysterious ascetic on Mount Amara (summer 1979)",
+          "order": 6
+        },
+        {
+          "event": "Discovers Kriya Yoga group in Gwalior; meets Sidhoji Rao S.",
+          "order": 7
+        },
+        {
+          "event": "Fifth Guru of Kriya Yoga lineage, carries authentic teaching into new century.",
+          "order": 1
+        },
+        {
+          "event": "Emphasizes connection with Mother Earth as main deity.",
+          "order": 2
+        },
+        {
+          "event": "States that spiritual union is achieved when one's own spirit becomes the Guru and mind becomes student of that Spirit.",
+          "order": 3
+        },
+        {
+          "event": "Depicted as supremely realized yogi, not a miracle worker or modern saint.",
+          "order": 4
+        },
+        {
+          "event": "Sharma witnesses Hanuman's appearance during a ritual performed by a 'Master' (a cart-driver) in Sagor.",
+          "order": 1
+        },
+        {
+          "event": "Sharma's eyesight deteriorates; he retires from government service.",
+          "order": 2
+        },
+        {
+          "event": "After retirement, Sharma visits Sagor and learns that the Master and devotees have died, but the miracles (healing, children) manifested.",
+          "order": 3
+        },
+        {
+          "event": "Sharma has a transformative realization about faith: seeing the divine requires a leap of faith; faith is a lightning strike that cannot be ignored.",
+          "order": 4
+        },
+        {
+          "event": "At age ~16, Sharma pursues a military career, joining the National Cadet Corps, excelling in shooting and marching.",
+          "order": 5
+        },
+        {
+          "event": "In 1976, Sharma participates in the Republic Day parade in Delhi, hosted at the President's residence.",
+          "order": 6
+        },
+        {
+          "event": "Sharma meets Harpal Singh Siyal, who recommends 'Autobiography of a Yogi'.",
+          "order": 7
+        },
+        {
+          "event": "In 1977, Sharma passes the SSB interview (including unusual questions) and is recommended for a commission as Second Lieutenant.",
+          "order": 8
+        },
+        {
+          "event": "Sharma returns home to learn of his elder brother Mahendra's sudden death from a heart attack at age 32, a blow that initiates his spiritual search.",
+          "order": 9
+        },
+        {
+          "event": "Born into a large extended family living in a centuries-old, four-story house with 150+ relatives.",
+          "order": 1
+        },
+        {
+          "event": "Observed a devoted servant couple; the wife's unwavering respect and rituals towards her husband profoundly impressed him.",
+          "order": 2
+        },
+        {
+          "event": "Lived in Gwalior and later Shivpuri, where a famous astrologer predicted he would fail at everything; he resolved to do nothing.",
+          "order": 3
+        },
+        {
+          "event": "Had no life line or head line on his palms at birth; they appeared later after he started yoga.",
+          "order": 4
+        },
+        {
+          "event": "Developed a passion for reading, devouring hundreds of books including the Bible, Indian myths, Jack London, Shakespeare, Voltaire, and Richard Bach's 'Jonathan Livingston Seagull'.",
+          "order": 5
+        },
+        {
+          "event": "Became convinced that imagination is the most powerful energy; later equated 'willpower' with controlled imagination.",
+          "order": 6
+        },
+        {
+          "event": "Often skipped school with his cousin to sit on hills overlooking Gwalior, contemplating life.",
+          "order": 7
+        },
+        {
+          "event": "Barely passed college exams; parents despaired of his future.",
+          "order": 8
+        },
+        {
+          "event": "He later wrote a book about Time; the passage implies this was his first book.",
+          "order": 9
+        },
+        {
+          "event": "Gulab Singh (grandfather of Shailendra Sharma) was a jagirdar who killed British soldiers and lost his principality.",
+          "order": 1
+        },
+        {
+          "event": "Gulab Singh served as a telegraphist in Assam, survived a black fever epidemic.",
+          "order": 2
+        },
+        {
+          "event": "Gulab Singh fled to Burma, worked for a timber merchant, and read the Bhagavata Purana to the merchant's mother.",
+          "order": 3
+        },
+        {
+          "event": "While reading the Bhagavata Purana, Gulab Singh experienced spiritual awakening (vairagya).",
+          "order": 4
+        },
+        {
+          "event": "Gulab Singh went to Allahabad for Kumbh Mela seeking a guru.",
+          "order": 5
+        },
+        {
+          "event": "Gulab Singh met Rajendra Singh, guru of the Maharaja of Patiala, and received initiation.",
+          "order": 6
+        },
+        {
+          "event": "Gulab Singh became head of an ashram in Patiala but felt dissatisfied.",
+          "order": 7
+        },
+        {
+          "event": "Gulab Singh was forcibly married by his family after being found.",
+          "order": 8
+        },
+        {
+          "event": "Gulab Singh returned to his guru who told him to fulfill worldly duties.",
+          "order": 9
+        },
+        {
+          "event": "Gulab Singh served as a colonel in the Afghan War (1892), received commendation from Queen Victoria.",
+          "order": 10
+        },
+        {
+          "event": "Gulab Singh participated in a nationalist conspiracy, forged bills for 200,000 rupees, and was arrested but acquitted.",
+          "order": 11
+        },
+        {
+          "event": "In Calcutta jail, Gulab Singh met Sri Aurobindo.",
+          "order": 12
+        },
+        {
+          "event": "Gulab Singh lived a long adventurous life, died old.",
+          "order": 13
+        },
+        {
+          "event": "Shailendra Sharma (grandson) grew up; as a schoolboy, bandits like Mohar Singh surrendered and were jailed in Gwalior.",
+          "order": 14
+        },
+        {
+          "event": "First meditation on July 11, 1979 during a fire ceremony (havan). Experienced void and clear realization that self-inquiry is life's purpose.",
+          "order": 1
+        },
+        {
+          "event": "Met Anandamayi Ma in Vrindavan in late July 1979. Received prasad and teaching 'Karoge to hoga'.",
+          "order": 2
+        },
+        {
+          "event": "Practiced 2000 rounds of bhastrika daily. In December 1979, experienced out-of-body travel (astral projection).",
+          "order": 3
+        },
+        {
+          "event": "Traveled to Puri in March 1981 to join Karar Ashram under Swami Hariharananda and learn Kriya Yoga.",
+          "order": 4
+        },
+        {
+          "event": "Arrives in Varanasi for first meeting with Guru Satya Charan Lahiri (October 1982)",
+          "order": 1
+        },
+        {
+          "event": "Initiation by Satya Charan Lahiri: activation of energy nodes (chakras) along spine",
+          "order": 2
+        },
+        {
+          "event": "Guru questions why he does not wear the sacred thread (janeu); admits he never underwent the rite",
+          "order": 3
+        },
+        {
+          "event": "Guru teaches first level of Kriya; he realizes he already knows the techniques",
+          "order": 4
+        },
+        {
+          "event": "Guru sends him back to Gwalior to master Khechari Mudra before next level",
+          "order": 5
+        },
+        {
+          "event": "Family moves to a farm in Gwalior after selling house (November 1982)",
+          "order": 6
+        },
+        {
+          "event": "Year-long siege by bandits; involvement in armed conflicts",
+          "order": 7
+        },
+        {
+          "event": "Discovers his pulse stops during practice; gains control over heart rate and blood vessels (January 1983)",
+          "order": 8
+        },
+        {
+          "event": "Masters Khechari Mudra (March 1983)",
+          "order": 9
+        },
+        {
+          "event": "During night practice, perceives Kutastha (inner light sphere); recounts to Guru who identifies it as Atma and Paramatma",
+          "order": 10
+        },
+        {
+          "event": "Encounter with a mysterious sadhu who taught him alchemy and the Maran mantra",
+          "order": 1
+        },
+        {
+          "event": "Performed Maran mantra ritual at a cremation ground for 21 nights",
+          "order": 2
+        },
+        {
+          "event": "Experienced a blue flame and a corpse turning its head; completed the ritual",
+          "order": 3
+        },
+        {
+          "event": "Struggled with inner anger for a year after acquiring the mantra",
+          "order": 4
+        },
+        {
+          "event": "Confessed to his Guru and was advised to relinquish the mantra; performed ritual on copper plate and threw it into the Ganges",
+          "order": 5
+        },
+        {
+          "event": "Attended a festival at Bhupendranath Sanyal's ashram in Puri",
+          "order": 6
+        },
+        {
+          "event": "Met Jwalaprasad Tiwari, who gave him Satya Charan Lahiri's address in Varanasi",
+          "order": 7
+        },
+        {
+          "event": "Left Puri ashram and returned to Gwalior",
+          "order": 8
+        },
+        {
+          "event": "Corresponded with Satya Charan Lahiri who advised him to settle worldly matters first",
+          "order": 9
+        },
+        {
+          "event": "Arrived in Varanasi on 30 Sept 1982, Lahiri Mahasaya's birthday",
+          "order": 10
+        },
+        {
+          "event": "Met Satya Charan Lahiri and received instruction to come next morning with supplies",
+          "order": 11
+        },
+        {
+          "event": "Bathed in the Ganges and prepared for initiation",
+          "order": 12
+        },
+        {
+          "event": "Learns to see human karmas under his Guru's guidance",
+          "order": 1
+        },
+        {
+          "event": "Observes karma through stories of a former murderer and servant Debi Lal",
+          "order": 2
+        },
+        {
+          "event": "Studies Samudrika Shastra and other methods to read past karmas from physical traits",
+          "order": 3
+        },
+        {
+          "event": "Resolves to repay karmic debts and avoid new ones",
+          "order": 4
+        },
+        {
+          "event": "Reflects on Aghori path while in Varanasi",
+          "order": 5
+        },
+        {
+          "event": "Sent by Satya Charan Lahiri to visit an Aghori in final meditation (November 1985)",
+          "order": 6
+        },
+        {
+          "event": "Receives prophecy from Aghori about USSR dissolution and US disunion",
+          "order": 7
+        },
+        {
+          "event": "Later sees prophecy fulfilled as USSR collapses and spiritual seekers come to India",
+          "order": 8
+        },
+        {
+          "event": "Disillusionment with the initial ashram (Karrar) - realized practitioners lacked essence and authenticity",
+          "order": 1
+        },
+        {
+          "event": "Encountered a Sikh travel agent who played a meaningful Bollywood song, lifting his mood",
+          "order": 2
+        },
+        {
+          "event": "Visited Guru Dham ashram in Puri, met Shailendranath Mukherjee, a disciple of Bhupendranath Sanyal",
+          "order": 3
+        },
+        {
+          "event": "Read Lahiri Mahasaya's commentary on the Gita, realizing the techniques he learned were not authentic Kriya",
+          "order": 4
+        },
+        {
+          "event": "Left the ashram to test divine providence: wandered in the jungle without food",
+          "order": 5
+        },
+        {
+          "event": "Collapsed under a banyan tree, slept for days; local women brought food and a young girl fed him with her hands",
+          "order": 6
+        },
+        {
+          "event": "Had a realization about women's compassion as a manifestation of the Life Force",
+          "order": 7
+        },
+        {
+          "event": "Returned to the ashram; tension with the manager",
+          "order": 8
+        },
+        {
+          "event": "Went to the beach at night and encountered two winged humanoid creatures emerging from the sea, then diving back",
+          "order": 9
+        },
+        {
+          "event": "Family moves back to city in 1985",
+          "order": 1
+        },
+        {
+          "event": "First samadhi during night sadhana: consciousness expands, heart and breath stop, experiences collective human emotions and past lives",
+          "order": 2
+        },
+        {
+          "event": "Rapid aging and depression following samadhi; physical and mental exhaustion",
+          "order": 3
+        },
+        {
+          "event": "Recovery through physical exercises (weightlifting, mahamudra) to reverse aging",
+          "order": 4
+        },
+        {
+          "event": "Learns to block waves of human thoughts and emotions after samadhi",
+          "order": 5
+        },
+        {
+          "event": "Realizes samadhi as a meeting with death; body began aging due to cessation of heartbeat and breath",
+          "order": 6
+        },
+        {
+          "event": "Reveals the illusory nature of religious and social institutions",
+          "order": 7
+        },
+        {
+          "event": "After samadhi, can see his own soul (Jiva) as a golden figure when eyes closed",
+          "order": 8
+        },
+        {
+          "event": "18 months of intense practice, gains full control of pulse and heart rate.",
+          "order": 1
+        },
+        {
+          "event": "Masters Khechari mudra and writes to guru; receives invitation to Varanasi to receive second kriya.",
+          "order": 2
+        },
+        {
+          "event": "In April 1984, learns second level kriya (amantra and samantra) from Satyacharan Lahiri.",
+          "order": 3
+        },
+        {
+          "event": "During service to Lahiri Mahasaya's statue, the marble turns to warm flesh; he is startled.",
+          "order": 4
+        },
+        {
+          "event": "Satyacharan Lahiri declares him the successor (fifth guru of the parampara) despite being only 26 and a novice of 1.5 years.",
+          "order": 5
+        },
+        {
+          "event": "Initially confused by the appointment, but accepts; finds that he can give profound answers during darśans.",
+          "order": 6
+        },
+        {
+          "event": "After April 1984, his Guru initiated only a few disciples; later Sharma gave diksha to hundreds in his Guru's presence.",
+          "order": 1
+        },
+        {
+          "event": "He returned to Benares 2-3 times a year for several weeks over three years.",
+          "order": 2
+        },
+        {
+          "event": "He gave Kriya initiation to about 400 disciples in his Guru's presence.",
+          "order": 3
+        },
+        {
+          "event": "Received subtle instruction from Guru on answering questions and reading karma.",
+          "order": 4
+        },
+        {
+          "event": "Silently touched Lahiri Mahasaya's statue but felt only cool marble.",
+          "order": 5
+        },
+        {
+          "event": "After returning from Puri, warned acquaintances about ineffective techniques at Karar ashram.",
+          "order": 6
+        },
+        {
+          "event": "Met SR (Siddhoji Rao), who later became his 25th disciple.",
+          "order": 7
+        },
+        {
+          "event": "Initiated first disciple Bhardwaj Dubey in Gwalior.",
+          "order": 8
+        },
+        {
+          "event": "Old friend Vvas-ji (Shivanath Vyas) recognized him as guru due to a vision; initiated Vvas-ji and later Upendra and Shastri-ji.",
+          "order": 9
+        },
+        {
+          "event": "Fame spread; disciples began visiting his room, surprising family.",
+          "order": 10
+        },
+        {
+          "event": "Attended Superman movie in Gwalior; two elderly pandits prostrated at his feet.",
+          "order": 11
+        },
+        {
+          "event": "Mother saw a golden flame around his head (first sight of his aura).",
+          "order": 12
+        },
+        {
+          "event": "Learned to control his aura; aura later turned greenish, then became white Shivling-like.",
+          "order": 13
+        },
+        {
+          "event": "Witnessed Guru's stern dealing with a crippled former criminal disguised as a priest.",
+          "order": 14
+        },
+        {
+          "event": "Encountered an Aghori, which seeded his future connection with Aghora and Parashurama.",
+          "order": 1
+        },
+        {
+          "event": "Received personal message from Parashurama via another's dream, 19 years after the Aghori meeting.",
+          "order": 2
+        },
+        {
+          "event": "Obtained a mystical Sri Yantra with precise installation instructions.",
+          "order": 3
+        },
+        {
+          "event": "In March 1986, visited Kashi Vishwanath temple during Mahashivaratri, where he fell onto the Shivalingam, interpreted as a darshan and offering of himself to Shiva.",
+          "order": 4
+        },
+        {
+          "event": "Under Satyacharan Lahiri's guidance from November 1985 to March 1986, made several fateful visits to people and places.",
+          "order": 5
+        },
+        {
+          "event": "Practiced Kriya intensely, extending meditation to 20 hours daily from April 1985, overcoming pain, and experiencing inner time.",
+          "order": 6
+        },
+        {
+          "event": "After six months of intense sadhana, pain dissolved, and he achieved a state where the body became mind.",
+          "order": 7
+        },
+        {
+          "event": "Lived at maternal uncle's house after brother Gyandendra left",
+          "order": 1
+        },
+        {
+          "event": "Practiced weightlifting with cousin, spent all money",
+          "order": 2
+        },
+        {
+          "event": "Gave last 5 rupees to a crying balloon seller boy",
+          "order": 3
+        },
+        {
+          "event": "Received 300 rupees from grateful father as first monetary offering",
+          "order": 4
+        },
+        {
+          "event": "Encountered a king of beggars at railway station, learned lesson about limitations in asking",
+          "order": 5
+        },
+        {
+          "event": "Learned that Guru Shri Satyacharan Lahiri had prophesied his arrival as successor back in 1968",
+          "order": 6
+        },
+        {
+          "event": "Studied under Shri Satyacharan Lahiri for five years, read Lahiri Mahasaya's diaries, meditated in his room",
+          "order": 7
+        },
+        {
+          "event": "Became successor after Guru's departure",
+          "order": 8
+        },
+        {
+          "event": "Received protection and guidance from unexpected fellow passenger, revealing father's legacy of justice",
+          "order": 1
+        },
+        {
+          "event": "Promised dying father (1984) to repay aunt's gold loan of half a kilogram",
+          "order": 2
+        },
+        {
+          "event": "Fulfilled promise 32 years later, returning gold to aunt and adding four gold bangles",
+          "order": 3
+        },
+        {
+          "event": "Saved from train collision by guru's voice commanding him to leave tracks",
+          "order": 4
+        },
+        {
+          "event": "Met the 'Saint of Boiled Potatoes' (old woman with Krishna darshan) who served him tea and potato",
+          "order": 5
+        },
+        {
+          "event": "Encountered elderly beggar who offered him money instead of asking",
+          "order": 6
+        },
+        {
+          "event": "1990: Visits Chitrakut, recalls Guru's story about a never-dying ascetic and inquires about him",
+          "order": 1
+        },
+        {
+          "event": "During a visit to Varanasi, tells his guru about visions of future palaces, pinhole, tree, etc.",
+          "order": 2
+        },
+        {
+          "event": "Guru predicts he will live in a palace-like place that is actually a cremation ground (smashan), and that if he maintains celibacy and practice, the Om symbol will form in his brain by age 44",
+          "order": 3
+        },
+        {
+          "event": "First book read on yoga: father's Gheranda Samhita; devours Puranas",
+          "order": 4
+        },
+        {
+          "event": "Father dies of cancer on 16 Sep 1984",
+          "order": 5
+        },
+        {
+          "event": "One year later, traveling by train to Gwalior, meets an old man who offers him a seat – the encounter reinforces his spiritual path",
+          "order": 6
+        },
+        {
+          "event": "Guru Satyacharan Lahiri leaves body on Jan 22, 1987, performing Omkar kriya",
+          "order": 1
+        },
+        {
+          "event": "Sharma handles family duties at a Kali temple in Chuchura, Bengal",
+          "order": 2
+        },
+        {
+          "event": "Sharma undergoes sacred thread ceremony (janeu) at temple festival",
+          "order": 3
+        },
+        {
+          "event": "Sharma receives telegram of guru's death 20 days later",
+          "order": 4
+        },
+        {
+          "event": "Sharma reaches Varanasi 12 days after cremation, performs final rituals",
+          "order": 5
+        },
+        {
+          "event": "Sharma gives darshan in Asansol as new guru",
+          "order": 6
+        },
+        {
+          "event": "Five bearded men examine Sharma's feet and find 'OM' sign on his soles",
+          "order": 7
+        },
+        {
+          "event": "Sharma undergoes MRI at age 45; OM sign appears in brain, confirming guru's prediction",
+          "order": 8
+        },
+        {
+          "event": "Sharma attends Maha Kumbh Mela in Allahabad in Feb 1988",
+          "order": 9
+        },
+        {
+          "event": "Attended Kumbh Mela, bathed in cold river, sensed spiritual meaning of bath",
+          "order": 1
+        },
+        {
+          "event": "Met a sadhu at Kumbh Mela who recognized him as the one who had initiated the sadhu's guru into Kriya",
+          "order": 2
+        },
+        {
+          "event": "Stayed two days as VIP guest at Kumbh Mela camp",
+          "order": 3
+        },
+        {
+          "event": "Traveled to Benares in March 1988 to help a student's job issue",
+          "order": 4
+        },
+        {
+          "event": "On night of March 31 / April 1, 1988, in Benares ashram, met Babaji in person and received detailed Kriya instruction",
+          "order": 5
+        },
+        {
+          "event": "Recorded notes of Babaji's teachings, including new techniques to be started after age 57",
+          "order": 6
+        },
+        {
+          "event": "Returned home energized, but family skeptical; built a small cottage with loan from cousin",
+          "order": 7
+        },
+        {
+          "event": "First spontaneous samadhi experience (described earlier, referenced here).",
+          "order": 1
+        },
+        {
+          "event": "After nearly five years, second samadhi occurs, entering the realm of superconsciousness, with calm and peaceful experience unlike the first.",
+          "order": 2
+        },
+        {
+          "event": "Experiences heightened senses, perceiving mental vibrations of animals and astral tastes; realizes bliss of samadhi as enjoyment of the world, understanding Shiva Sutras.",
+          "order": 3
+        },
+        {
+          "event": "Samadhi becomes regular; learns to control entry and exit from the state; understands that lack of expectation is key to repetition.",
+          "order": 4
+        },
+        {
+          "event": "Gains physical strength, golden aura, and lifts disciples overhead; internal energy requires daily practice with heavy clubs (mudgars).",
+          "order": 5
+        },
+        {
+          "event": "Enters regular samadhi leading to realization of the Void consciousness and its omnipresence; becomes aware of time's nature and connection between mind and breath.",
+          "order": 6
+        },
+        {
+          "event": "Encounters astral beings and learns to communicate on subtle planes; consciousness moves like tsunamis.",
+          "order": 7
+        },
+        {
+          "event": "Performs longest planned samadhi (7.5 hours) on first week of December 1991; experiences prolonged recovery, concludes optimal duration is 1.5 hours.",
+          "order": 8
+        },
+        {
+          "event": "Receives knowledge spontaneously during and outside samadhi, without need to focus on specific topics.",
+          "order": 9
+        },
+        {
+          "event": "Experienced repeated samadhi and out-of-body experiences; learned to adapt to them.",
+          "order": 1
+        },
+        {
+          "event": "Began writing commentaries on the Bhagavad Gita, describing near-death and post-mortem experiences.",
+          "order": 2
+        },
+        {
+          "event": "Commentaries were published in August 1992; public readings held during Janmashtami.",
+          "order": 3
+        },
+        {
+          "event": "Property disputes forced him to leave the farm; moved to Vrindavan with Devi and several disciples.",
+          "order": 4
+        },
+        {
+          "event": "Arrived in Vrindavan on October 2 with cows and dogs; stayed at Goshala Nagar ashram hosted by Brahmachari Vairag Swarup.",
+          "order": 5
+        },
+        {
+          "event": "Became a sensation in Vrindavan for his charisma, knowledge, and yogic sadhana.",
+          "order": 6
+        },
+        {
+          "event": "Devotees injured his feet in fervent worship, leading him to avoid crowds",
+          "order": 1
+        },
+        {
+          "event": "Learned to enter the Void (shunya) and return to the body",
+          "order": 2
+        },
+        {
+          "event": "Practiced daily Bhagavad Gita reading as per parampara vow for years",
+          "order": 3
+        },
+        {
+          "event": "Wrote a commentary on the Bhagavad Gita, experiencing dictation of knowledge",
+          "order": 4
+        },
+        {
+          "event": "Realized that matter arises from the union of Time and Void",
+          "order": 5
+        },
+        {
+          "event": "Had an encounter with Babaji that expanded his consciousness",
+          "order": 6
+        },
+        {
+          "event": "Pondered the nature of Time and Void, recognizing them as conscious beings",
+          "order": 7
+        },
+        {
+          "event": "Reflected on the Gita's teaching that Krishna is Time",
+          "order": 8
+        },
+        {
+          "event": "Participated in Govardhan parikrama on 21 December (Dattatreya Purnima night) with about 30-35 disciples, walking nearly naked in extreme cold.",
+          "order": 1
+        },
+        {
+          "event": "Experienced spontaneous empathy: others' physical pain manifested in his own body as a side effect of samadhi.",
+          "order": 2
+        },
+        {
+          "event": "Helped by an elderly woman during the parikrama; later encountered a mysterious man who bowed at his bleeding feet.",
+          "order": 3
+        },
+        {
+          "event": "Reflected on his name Shailendra meaning 'King of the Mountain', linked to Govardhan hill, and recalled how Shailendranath Mukherjee in Puri guided him to Kriya Yoga books and a teacher.",
+          "order": 4
+        },
+        {
+          "event": "After the first parikrama, experienced a life change: wrote four books in a few weeks and found a 'palace'.",
+          "order": 5
+        },
+        {
+          "event": "Settled in Govardhan in July 1993 after many unexpected events.",
+          "order": 6
+        },
+        {
+          "event": "Observed a wealthy leprous girl completing dandavat parikrama, later healed.",
+          "order": 7
+        },
+        {
+          "event": "Experienced the 'Inner Symphony': profound internal perception of body sounds and microcosmic universe during samadhi.",
+          "order": 8
+        },
+        {
+          "event": "At age 33, after a quarrel with relatives, he left home and moved to an unfinished farmhouse, beginning a new life of solitude and practice.",
+          "order": 1
+        },
+        {
+          "event": "On his first night at the farm, a worker built a makeshift stove from bricks and wild ingredients, teaching him that nature provides all needs; he tasted freedom.",
+          "order": 2
+        },
+        {
+          "event": "During excavation, a massive termite mound was destroyed, revealing a black cobra; later that night, a three-meter-tall Naga appeared in a dream, asking him not to harm his children, and offering protection.",
+          "order": 3
+        },
+        {
+          "event": "The next morning, a golden cobra with red eyes appeared on the veranda; he decided not to harm it and negotiated a peaceful coexistence.",
+          "order": 4
+        },
+        {
+          "event": "One night in September, he saw two luminous, naked human figures (male and female) floating above the ground; they laughed and then disappeared, leaving him ecstatic.",
+          "order": 5
+        },
+        {
+          "event": "Two blue-throated jays began visiting daily, perching on poles near his chair as if guarding him.",
+          "order": 6
+        },
+        {
+          "event": "His mother sent his elder brother Gyanendra to check on him; Gyanendra found high-ranking officials serving at the farm and reported back that he was doing well.",
+          "order": 7
+        },
+        {
+          "event": "A disciple brought two cows and a month-old calf named Gandhi; his cousin Devahuti visited and played with the calf.",
+          "order": 8
+        },
+        {
+          "event": "During a farewell, two blue-throated jays landed on his head, which he interpreted as an auspicious sign.",
+          "order": 9
+        },
+        {
+          "event": "He described his first samadhi to his Guru, who said it was just the beginning and advised him to continue practicing.",
+          "order": 10
+        },
+        {
+          "event": "Living on the Govardhan hill smasana from September 1993, clearing the land of filth and dealing with local gangs through physical confrontations.",
+          "order": 1
+        },
+        {
+          "event": "After a fight, ordered his wife to pack to leave, but their auto broke down near the temple within 100 meters of the smasana, and then a jeep also broke down.",
+          "order": 2
+        },
+        {
+          "event": "Lal Baba's arrival at Sarnath ashram draws large crowds and media attention.",
+          "order": 1
+        },
+        {
+          "event": "On Shivaratri, leads a march to Sarangnath Mahadev temple; police investigation resolved by gifting Bhagavad Gita.",
+          "order": 2
+        },
+        {
+          "event": "Dehuti gives him a poem; he writes 19 poems in response, later compiling 52 into 'The Pilgrim'.",
+          "order": 3
+        },
+        {
+          "event": "Compiles scattered notes into 'Thorns and Roses'.",
+          "order": 4
+        },
+        {
+          "event": "Registers 'Siddha Siddhanta Yoga Academy'.",
+          "order": 5
+        },
+        {
+          "event": "Visits Banamali Lahiri at Lahiri Mahasaya's old house; learns that Yogananda has reincarnated as a recluse near the Ganges.",
+          "order": 6
+        },
+        {
+          "event": "Received a book of Alex Grey's art, which resonated with his own psychedelic experiences of cosmic consciousness",
+          "order": 1
+        },
+        {
+          "event": "After intensive sadhana, realized that Matter arises from Void and that Void is conscious",
+          "order": 2
+        },
+        {
+          "event": "Spontaneous parikrama of Govardhan where he understood the structure of the elements and material reality",
+          "order": 3
+        },
+        {
+          "event": "Felt a great invisible presence follow him from Govardhan and settle nearby",
+          "order": 4
+        },
+        {
+          "event": "During a séance with his cousin Devahuti in Mathura, a Siddha appeared and commanded him to begin writing commentaries on the Bhagavad Gita",
+          "order": 5
+        },
+        {
+          "event": "Dictated commentaries on the Bhagavad Gita over 21 days, from January 14 to Vasanta Panchami eve",
+          "order": 6
+        },
+        {
+          "event": "Led a march of yogis on Maha Shivaratri from Kālī temple to Gupteshwara Mahadeva shrine",
+          "order": 7
+        },
+        {
+          "event": "Performed his first Abhishek at the Shiva temple, after which thousands spontaneously prostrated before him",
+          "order": 8
+        },
+        {
+          "event": "Stays at an ashram in Vrindavan, observes political and religious corruption",
+          "order": 1
+        },
+        {
+          "event": "Participates in a march for Ram temple in Ayodhya, refuses further political involvement",
+          "order": 2
+        },
+        {
+          "event": "Witnesses a mysterious beggar who performs a grand bhandara and then disappears, suspecting a siddha",
+          "order": 3
+        },
+        {
+          "event": "Intervenes to give alms to a beggar after a wealthy man refuses, citing karma",
+          "order": 4
+        },
+        {
+          "event": "Receives disciples and, over four days, dictates commentary on Yoga Sutras of Patanjali (one chapter per day)",
+          "order": 5
+        },
+        {
+          "event": "Completes commentary on Shiva Sutras in 17 hours, feeling the presence of Shiva, Shakti, and Dattatreya",
+          "order": 6
+        },
+        {
+          "event": "Has a dream of a monkey-faced being (langur) who promises to take care of everything",
+          "order": 7
+        },
+        {
+          "event": "Receives invitation from Lal Baba to stay at Shanti Peeth Ashram in Sarnath; accepts after deliberation",
+          "order": 8
+        },
+        {
+          "event": "Meets Dalai Lama briefly in Sarnath, but is more focused on the kriva techniques from Babaji",
+          "order": 9
+        },
+        {
+          "event": "Before leaving for Sarnath, performs a parikrama of Govardhan hill and asks Giriraj for a permanent home",
+          "order": 10
+        },
+        {
+          "event": "Receives a garland from an astral female spirit at the Govardhan cremation ground (smashan), recognizing it as his home.",
+          "order": 1
+        },
+        {
+          "event": "Purchases the royal smashan (Moksha Bhumi) in Govardhan from the Bharatpur royal family in June 1993.",
+          "order": 2
+        },
+        {
+          "event": "Moves into the white house on the smashan, a building with 108 doorways, and experiences disturbances with a photo of Lahiri Mahasaya.",
+          "order": 3
+        },
+        {
+          "event": "Recognizes the Govardhan hill and the white house from a childhood vision and a medium's vision in Mathura, confirming his destiny.",
+          "order": 4
+        },
+        {
+          "event": "Birth and early years in a family",
+          "order": 1
+        },
+        {
+          "event": "Last journey of grandfather and early friendships",
+          "order": 2
+        },
+        {
+          "event": "Encounter with a servant's wife",
+          "order": 3
+        },
+        {
+          "event": "City life, books, and time",
+          "order": 4
+        },
+        {
+          "event": "Epic stories from Gulab Singh's life",
+          "order": 5
+        },
+        {
+          "event": "Visit to a gangster, pan, and prison",
+          "order": 6
+        },
+        {
+          "event": "Past lives and Mahadev realization",
+          "order": 7
+        },
+        {
+          "event": "Blessings and curses",
+          "order": 8
+        },
+        {
+          "event": "Brother Hanuman",
+          "order": 9
+        },
+        {
+          "event": "On the verge of a military career",
+          "order": 10
+        },
+        {
+          "event": "Death, marriage, and beginning of seeking",
+          "order": 11
+        },
+        {
+          "event": "Read Autobiography of a Yogi",
+          "order": 12
+        },
+        {
+          "event": "Hermit of Mount Amaresh",
+          "order": 13
+        },
+        {
+          "event": "Kshatriya valor, Brahmin power, instruction from Anandamayi Ma",
+          "order": 14
+        },
+        {
+          "event": "Out-of-body experience",
+          "order": 15
+        },
+        {
+          "event": "Stay in Puri",
+          "order": 16
+        },
+        {
+          "event": "Under the banyan tree",
+          "order": 17
+        },
+        {
+          "event": "Meeting with marine creatures",
+          "order": 18
+        },
+        {
+          "event": "Sadhu on the beach, mantra of death",
+          "order": 19
+        },
+        {
+          "event": "Won lottery",
+          "order": 20
+        },
+        {
+          "event": "Beginning of formal journey",
+          "order": 21
+        },
+        {
+          "event": "Benares, meeting teacher",
+          "order": 22
+        },
+        {
+          "event": "Initiation",
+          "order": 23
+        },
+        {
+          "event": "War and peace experiences",
+          "order": 24
+        },
+        {
+          "event": "Secret mudra, eternal spirit, and Kshetra",
+          "order": 25
+        },
+        {
+          "event": "Education facets",
+          "order": 26
+        },
+        {
+          "event": "Became Guru",
+          "order": 27
+        },
+        {
+          "event": "Regained voice, last film, head on fire",
+          "order": 28
+        },
+        {
+          "event": "Karmic lessons",
+          "order": 29
+        },
+        {
+          "event": "Last meditation of an Aghori",
+          "order": 30
+        },
+        {
+          "event": "Darshan of Vishwanath",
+          "order": 31
+        },
+        {
+          "event": "Pain, bonuses, inner time",
+          "order": 32
+        },
+        {
+          "event": "Samadhi experience",
+          "order": 33
+        },
+        {
+          "event": "Trick or achievement, lost meaning of Samadhi",
+          "order": 34
+        },
+        {
+          "event": "Visions of the future",
+          "order": 35
+        },
+        {
+          "event": "Meeting on a train",
+          "order": 36
+        },
+        {
+          "event": "Promise",
+          "order": 37
+        },
+        {
+          "event": "Blessings on the path, Saint of Boiled Potatoes",
+          "order": 38
+        },
+        {
+          "event": "Taste of mango drink and art of begging",
+          "order": 39
+        },
+        {
+          "event": "Choosing successor",
+          "order": 40
+        },
+        {
+          "event": "Departure of teacher",
+          "order": 41
+        },
+        {
+          "event": "Om and other signs",
+          "order": 42
+        },
+        {
+          "event": "Kumbh Mela and smell of karma",
+          "order": 43
+        },
+        {
+          "event": "Babaji",
+          "order": 44
+        },
+        {
+          "event": "Places and books",
+          "order": 45
+        },
+        {
+          "event": "On the farm",
+          "order": 46
+        },
+        {
+          "event": "Naga encounter",
+          "order": 47
+        },
+        {
+          "event": "Other meetings",
+          "order": 48
+        },
+        {
+          "event": "Art of non-expectation",
+          "order": 49
+        },
+        {
+          "event": "Longest samadhi, parikrama",
+          "order": 50
+        },
+        {
+          "event": "Inner symphony",
+          "order": 51
+        },
+        {
+          "event": "Commentary on Gita",
+          "order": 52
+        },
+        {
+          "event": "March of yogis",
+          "order": 53
+        },
+        {
+          "event": "Time and emptiness",
+          "order": 54
+        },
+        {
+          "event": "Great Clockmaker",
+          "order": 55
+        },
+        {
+          "event": "Art of dying, alternative escape path",
+          "order": 56
+        },
+        {
+          "event": "Vrindavan, Yoga Darshana, Shiva Sutras",
+          "order": 57
+        },
+        {
+          "event": "Sarnath, 'Thorns and Roses', 'The Wanderer'",
+          "order": 58
+        },
+        {
+          "event": "Beginning of spiritual democracy, other life of Yogananda",
+          "order": 59
+        },
+        {
+          "event": "Name of Spirit, 'find' of Devahuti",
+          "order": 60
+        },
+        {
+          "event": "Arrival at Land of Liberation",
+          "order": 61
+        },
+        {
+          "event": "Legend",
+          "order": 62
+        },
+        {
+          "event": "Giriraj",
+          "order": 63
+        },
+        {
+          "event": "Battle of Latrine Fields",
+          "order": 64
+        },
+        {
+          "event": "Prisoner of Dark Lord",
+          "order": 65
+        },
+        {
+          "event": "Last confrontation",
+          "order": 66
+        },
+        {
+          "event": "Saving worker Fateh",
+          "order": 67
+        },
+        {
+          "event": "About visitors, prophets, and fruits of karma",
+          "order": 68
+        },
+        {
+          "event": "King is dead, long live Yogi",
+          "order": 69
+        },
+        {
+          "event": "Mantra of snake charmer",
+          "order": 70
+        },
+        {
+          "event": "Royal guardian",
+          "order": 71
+        },
+        {
+          "event": "Dying man, wounded bull, absolution of monkey sins",
+          "order": 72
+        },
+        {
+          "event": "Gandhiji",
+          "order": 73
+        },
+        {
+          "event": "Magical Baroncha",
+          "order": 74
+        },
+        {
+          "event": "Keepers of archives",
+          "order": 75
+        },
+        {
+          "event": "Gods, Avatars, and Forces of Nature",
+          "order": 76
+        },
+        {
+          "event": "Play of Gods",
+          "order": 77
+        },
+        {
+          "event": "Arrival of Yamuna",
+          "order": 78
+        },
+        {
+          "event": "Puja to Hanuman",
+          "order": 79
+        },
+        {
+          "event": "Prayashchitta, Abhishek, Milk",
+          "order": 80
+        },
+        {
+          "event": "Second meeting with Babaji",
+          "order": 81
+        },
+        {
+          "event": "Personality of Babaji",
+          "order": 82
+        },
+        {
+          "event": "Siddhis, small miracles, magic tricks",
+          "order": 83
+        },
+        {
+          "event": "Avadhut and Devi Braja",
+          "order": 84
+        },
+        {
+          "event": "Shivalingam",
+          "order": 85
+        },
+        {
+          "event": "Nepal, ritual",
+          "order": 86
+        },
+        {
+          "event": "Heart of the Earth",
+          "order": 87
+        },
+        {
+          "event": "Devi Braja",
+          "order": 88
+        },
+        {
+          "event": "Three Naths",
+          "order": 89
+        },
+        {
+          "event": "Yantras",
+          "order": 90
+        },
+        {
+          "event": "Matsyendranath",
+          "order": 91
+        },
+        {
+          "event": "Dhuni",
+          "order": 92
+        },
+        {
+          "event": "Accessories of Sadhana",
+          "order": 93
+        },
+        {
+          "event": "Aghora, 'most beautiful'",
+          "order": 94
+        },
+        {
+          "event": "Psychedelic flowers, divine trees, astral creatures",
+          "order": 95
+        },
+        {
+          "event": "Guru Datta",
+          "order": 96
+        },
+        {
+          "event": "Grace of Devi",
+          "order": 97
+        },
+        {
+          "event": "Secrets of Golden Bird",
+          "order": 98
+        },
+        {
+          "event": "Journey North, meetings and blessings",
+          "order": 99
+        },
+        {
+          "event": "Journey South",
+          "order": 100
+        },
+        {
+          "event": "Making Mother happy",
+          "order": 101
+        },
+        {
+          "event": "Spirits and everything else",
+          "order": 102
+        },
+        {
+          "event": "Land of Ghosts",
+          "order": 103
+        },
+        {
+          "event": "God of Death",
+          "order": 104
+        },
+        {
+          "event": "Trial of Spirits and Ghost Tamers",
+          "order": 105
+        },
+        {
+          "event": "Mehandipur",
+          "order": 106
+        },
+        {
+          "event": "Gaya Kshetra",
+          "order": 107
+        },
+        {
+          "event": "Brahmarakshasa",
+          "order": 108
+        },
+        {
+          "event": "Two ghosts",
+          "order": 109
+        },
+        {
+          "event": "Saddest of spirits",
+          "order": 110
+        },
+        {
+          "event": "Nirmala Devi",
+          "order": 111
+        },
+        {
+          "event": "Mother",
+          "order": 112
+        },
+        {
+          "event": "Power of Guru and curious case of sex change",
+          "order": 113
+        },
+        {
+          "event": "Additional duties",
+          "order": 114
+        },
+        {
+          "event": "Mahamari",
+          "order": 115
+        },
+        {
+          "event": "Alchemy section",
+          "order": 116
+        },
+        {
+          "event": "Eggs of Golden Bird",
+          "order": 117
+        },
+        {
+          "event": "Formula",
+          "order": 118
+        },
+        {
+          "event": "Naked alchemists",
+          "order": 119
+        },
+        {
+          "event": "Ever-young sadhu",
+          "order": 120
+        },
+        {
+          "event": "Search for rare herb",
+          "order": 121
+        },
+        {
+          "event": "Encoded mantra",
+          "order": 122
+        },
+        {
+          "event": "Philosopher's Stone",
+          "order": 123
+        },
+        {
+          "event": "Alchemical parallels",
+          "order": 124
+        },
+        {
+          "event": "Alchemical Gita",
+          "order": 125
+        },
+        {
+          "event": "Khechari, key to inner heavens",
+          "order": 126
+        },
+        {
+          "event": "Sister Devahuti",
+          "order": 127
+        },
+        {
+          "event": "Sadhana of life",
+          "order": 128
+        },
+        {
+          "event": "Mantra of change",
+          "order": 129
+        },
+        {
+          "event": "Preparations",
+          "order": 130
+        },
+        {
+          "event": "Departure of sister",
+          "order": 131
+        },
+        {
+          "event": "Return of Shakti",
+          "order": 132
+        },
+        {
+          "event": "Gurukula section",
+          "order": 133
+        },
+        {
+          "event": "Children of Mothers",
+          "order": 134
+        },
+        {
+          "event": "Probabilities and Predictions, Motives and Expectations",
+          "order": 135
+        },
+        {
+          "event": "Artist",
+          "order": 136
+        },
+        {
+          "event": "Astrologer",
+          "order": 137
+        },
+        {
+          "event": "Second coming",
+          "order": 138
+        },
+        {
+          "event": "Philosophy of healing and healing of philosopher",
+          "order": 139
+        },
+        {
+          "event": "Pujari",
+          "order": 140
+        },
+        {
+          "event": "Discipline",
+          "order": 141
+        },
+        {
+          "event": "Guide, Man and Myth",
+          "order": 142
+        },
+        {
+          "event": "Sadhana",
+          "order": 143
+        },
+        {
+          "event": "Five promises",
+          "order": 144
+        },
+        {
+          "event": "Knowledge",
+          "order": 145
+        },
+        {
+          "event": "What and Why",
+          "order": 146
+        },
+        {
+          "event": "Magic of Reality",
+          "order": 147
+        },
+        {
+          "event": "Sound, Emptiness, Elements, Prana",
+          "order": 148
+        },
+        {
+          "event": "Origin of Karma",
+          "order": 149
+        },
+        {
+          "event": "Kingdom of Death, Mrityu Loka",
+          "order": 150
+        },
+        {
+          "event": "Stages of Evolution",
+          "order": 151
+        },
+        {
+          "event": "Last transformation",
+          "order": 152
+        },
+        {
+          "event": "Earth, Kundalini, Samadhi",
+          "order": 153
+        },
+        {
+          "event": "Hatha Yoga Pradipika and real Mahavedha",
+          "order": 154
+        },
+        {
+          "event": "Law of Repulsion and Surfing in Time",
+          "order": 155
+        },
+        {
+          "event": "Twilight Language",
+          "order": 156
+        },
+        {
+          "event": "Tradition",
+          "order": 157
+        },
+        {
+          "event": "Waves of the Future",
+          "order": 158
+        },
+        {
+          "event": "Beginning of a New Era",
+          "order": 159
+        },
+        {
+          "event": "Brave new world and revival of spirituality",
+          "order": 160
+        },
+        {
+          "event": "Lottery and prize",
+          "order": 161
+        },
+        {
+          "event": "Remaining Desires",
+          "order": 162
+        },
+        {
+          "event": "Flame and Embers",
+          "order": 163
+        },
+        {
+          "event": "Moved to smashan (cremation ground) in Govardhan and began living there, despite multiple vehicle breakdowns trying to leave.",
+          "order": 1
+        },
+        {
+          "event": "Postponed visiting a saint on inner instruction; the saint later fell into a coma.",
+          "order": 2
+        },
+        {
+          "event": "Visited the dying saint Pandit ji at his wife's urging; the saint died that night.",
+          "order": 3
+        },
+        {
+          "event": "Survived first harsh winter on the smashan with his wife.",
+          "order": 4
+        },
+        {
+          "event": "Thwarted assassination plot by local gangsters because the boss's wife recognized his uncle as her husband's savior.",
+          "order": 5
+        },
+        {
+          "event": "Fought and defeated a local gangster in a fistfight; that gangster was later killed by a bus.",
+          "order": 6
+        },
+        {
+          "event": "Demonstrated superhuman strength by holding a 350kg stone beam to save worker Fateh, which convinced locals of his sainthood.",
+          "order": 7
+        },
+        {
+          "event": "Began philanthropic work in Braj: providing water during drought, planting trees, installing water coolers at police station.",
+          "order": 8
+        },
+        {
+          "event": "Lived at a cremation ground (smashan) with a five-thousand-year-old ritual pond",
+          "order": 1
+        },
+        {
+          "event": "Experience of mysterious hissing sound from the pond and discovery of a giant serpent (Naga) guard",
+          "order": 2
+        },
+        {
+          "event": "Encounter with the Naga on 27 January 1995, receiving blessings and protection",
+          "order": 3
+        },
+        {
+          "event": "Rescued an unknown dying man found at the gates in summer 1997",
+          "order": 4
+        },
+        {
+          "event": "Rescued a wounded bull (Bhola Shankar Tiwari) from Mathura",
+          "order": 5
+        },
+        {
+          "event": "Observed monkeys bringing dead companions; performed last rites for a dying monkey in 2006",
+          "order": 6
+        },
+        {
+          "event": "Performed a Puranic forgiveness ritual for a dying monkey holding straw in its mouth",
+          "order": 7
+        },
+        {
+          "event": "Inherits father's land; sells it and receives share as inheritance.",
+          "order": 1
+        },
+        {
+          "event": "Moves to Govardhan smashan (cremation ground) and begins renovation.",
+          "order": 2
+        },
+        {
+          "event": "Runs out of funds to pay workers; trusts in divine plan; money arrives from a healed footballer.",
+          "order": 3
+        },
+        {
+          "event": "Heals a former Mohun Bagan footballer via alchemical mercury pill.",
+          "order": 4
+        },
+        {
+          "event": "Receives donation from footballer exactly equal to worker wages.",
+          "order": 5
+        },
+        {
+          "event": "Declines commercial offers including a government paranormal research program.",
+          "order": 6
+        },
+        {
+          "event": "June 1995: vultures gather and leave; portent of Maharaja Brijendra Singh's death.",
+          "order": 7
+        },
+        {
+          "event": "Maharaja Brijendra Singh dies; cremated at the royal smashan now owned by Sharma.",
+          "order": 8
+        },
+        {
+          "event": "Meets Prince Vishvendra Singh after cremation; they become friends.",
+          "order": 9
+        },
+        {
+          "event": "Distributes copies of his Gita commentary to dispel rumors.",
+          "order": 10
+        },
+        {
+          "event": "Years later, Jat elders visit and prostrate, saying 'The king has returned'.",
+          "order": 11
+        },
+        {
+          "event": "Heard stories of people meeting Babaji, who described long spiritual discussions and advice on diet and career.",
+          "order": 1
+        },
+        {
+          "event": "First personal meeting with Babaji at his home in winter, receiving a Sri Yantra and instructions for its installation.",
+          "order": 2
+        },
+        {
+          "event": "Second meeting with Babaji revealed new perspectives and a sense of mission.",
+          "order": 3
+        },
+        {
+          "event": "Occasional mental messages from Babaji every 4-5 years, containing visions and scenes with voiceover.",
+          "order": 4
+        },
+        {
+          "event": "Last mental communication from Babaji in autumn 2019, showing Babaji living in Varanasi.",
+          "order": 5
+        },
+        {
+          "event": "Received a buffalo horn as a gift for Shiva puja",
+          "order": 1
+        },
+        {
+          "event": "Bull named Gandhiji arrived in 1991",
+          "order": 2
+        },
+        {
+          "event": "Gandhiji became a companion for 14 years until death in 2005",
+          "order": 3
+        },
+        {
+          "event": "Lived on a cremation ground (smashan) in Govardhan",
+          "order": 4
+        },
+        {
+          "event": "Hosted ISKCON's centenary celebration of Srila Prabhupada in summer 1996",
+          "order": 5
+        },
+        {
+          "event": "Received marriage proposals during the ISKCON festival, declined",
+          "order": 6
+        },
+        {
+          "event": "Cared for over 300 abandoned cows in winter 2001",
+          "order": 7
+        },
+        {
+          "event": "Built cow sheds and moved the herd",
+          "order": 8
+        },
+        {
+          "event": "Collected 16 baroncha (hairballs) from happy cows",
+          "order": 9
+        },
+        {
+          "event": "He did not refute rumors of royal lineage but kept knowledge of past lives to himself.",
+          "order": 0
+        },
+        {
+          "event": "He helped catch a rare snake at one of the palaces, summoning the snake charmer Bhimnath.",
+          "order": 1
+        },
+        {
+          "event": "He observed Bhimnath get bitten and apply traditional remedies; later researched theoretical implications of the event.",
+          "order": 2
+        },
+        {
+          "event": "He requested Bhimnath to teach him the art of venom removal; Bhimnath sought permission from his guru.",
+          "order": 3
+        },
+        {
+          "event": "Received permission: 'You may teach this yogi. Living at the cremation ground, he has broken ties with society, hence he deserves the knowledge.'",
+          "order": 4
+        },
+        {
+          "event": "Underwent initiation: Bhimnath taught him two mantras in ancient Hindi; at midnight he had a vision of two dark women with vertical pupils.",
+          "order": 5
+        },
+        {
+          "event": "Bhimnath brought a black cobra for him to test his healing ability; he declined, but later successfully healed Bhimnath after the latter was bitten by a Raktavanchi cobra.",
+          "order": 6
+        },
+        {
+          "event": "Healed a bull named Gandhiji from snakebite using the mantra.",
+          "order": 7
+        },
+        {
+          "event": "During land clearing for Siddha Siddhanta Academy, snakes invaded the cremation ground; he healed a bitten snake charmer using a frog stone and mantra.",
+          "order": 8
+        },
+        {
+          "event": "Bhimnath taught him the invocation of Kanif Nath, the guru of the Sapera clan.",
+          "order": 9
+        },
+        {
+          "event": "Years later, while commenting on the Nath text 'Gorakh Bodh', he realized Bhimnath's greeting echoed the words of Matsyendranath.",
+          "order": 10
+        },
+        {
+          "event": "Encounter with a python that attacks him; he refuses to leave the smashan despite severe bleeding.",
+          "order": 1
+        },
+        {
+          "event": "Vision of Hanuman collecting dark spirits with a rope and staff, then stopping his bleeding.",
+          "order": 2
+        },
+        {
+          "event": "December 1996: annual Hanuman puja begins at Govardhan smashan, conducted yearly for 12 years.",
+          "order": 3
+        },
+        {
+          "event": "December 2008: final elaborate puja with 600 participants, including fire sacrifice and 1000 names of Hanuman.",
+          "order": 4
+        },
+        {
+          "event": "Reflection on the temporary nature of all things and the purpose of self-realization through reincarnation.",
+          "order": 5
+        },
+        {
+          "event": "Family lineage traced back to Ashwatthama (son of Drona) through clan archivists in June 1995",
+          "order": 1
+        },
+        {
+          "event": "June 16, 1996: Vision of Vishnu and Shiva; Shiva carries him outside, then he faints; regains consciousness with wound on wrist",
+          "order": 2
+        },
+        {
+          "event": "June 25, 1996: Makes offering to Yamuna River at Vrindavan, asking her to come to the cremation ground",
+          "order": 3
+        },
+        {
+          "event": "Next day after offering: Floodwaters inundate the smashan; is struck by a python; internal hemorrhage; prays to Babaji and is visited by Hanuman; hemorrhage stops",
+          "order": 4
+        },
+        {
+          "event": "Starts experiencing daily samadhis and performing daily pujas and annual rituals",
+          "order": 1
+        },
+        {
+          "event": "Hanuman begins speaking directly to him, without a medium",
+          "order": 2
+        },
+        {
+          "event": "In 2005, a medium relays that Hanuman has known him for 33 years",
+          "order": 3
+        },
+        {
+          "event": "Performs prayashchitta (purification) ritual for disciples at Govardhan smashan",
+          "order": 4
+        },
+        {
+          "event": "In February 2009, holds the last prayashchitta at Govardhan",
+          "order": 5
+        },
+        {
+          "event": "Witnesses the pond turning milky white on multiple occasions, including 50 days in November 2016",
+          "order": 6
+        },
+        {
+          "event": "Performs abhishek of milk on Shiva lingam for nearly a year in 2017, pouring 101 liters nightly",
+          "order": 7
+        },
+        {
+          "event": "Second meeting with Babaji on December 22, 1995",
+          "order": 8
+        },
+        {
+          "event": "Hears a voice telling him to find a Shivalingam on Govardhan Hill",
+          "order": 1
+        },
+        {
+          "event": "Discovers a natural Shivalingam at a crossroads on Govardhan Hill on the day after Shivaratri",
+          "order": 2
+        },
+        {
+          "event": "Establishes the Shivalingam on the cremation site of Maharaja Daswant Singh, converting the pavilion into a temple on June 26, 1998.",
+          "order": 3
+        },
+        {
+          "event": "A golden snake appears during the consecration ritual, then disappears.",
+          "order": 4
+        },
+        {
+          "event": "A dog dies mysteriously during the puja, later understood as a substitute for his own death according to Nath belief.",
+          "order": 5
+        },
+        {
+          "event": "Visitors who touch the Shivalingam fall ill, prompting him to seek guidance.",
+          "order": 6
+        },
+        {
+          "event": "Hears a voice during meditation telling him to go to Nepal; a 99-year-old Bhatta in Pashupatinath will teach him the correct ritual.",
+          "order": 7
+        },
+        {
+          "event": "Travels to Gorakhpur, visits the Gorakhnath temple, and proceeds to Pashupatinath in Nepal.",
+          "order": 8
+        },
+        {
+          "event": "Meets the old Bhatta, who instructs him to wear red clothes during puja and dictates detailed ritual procedures.",
+          "order": 9
+        },
+        {
+          "event": "Returns to Varanasi, visits Kashi Vishwanath and the home of Lahiri Mahasaya (Banamali Lahiri), but does not share his Nepal experience.",
+          "order": 10
+        },
+        {
+          "event": "After moving to the Smashan, he begins performing Shiva puja twice daily, guided by Devahuti and Mahatamaji.",
+          "order": 1
+        },
+        {
+          "event": "During puja, a child actor dressed as Shiva appears, offering a moment of grace.",
+          "order": 2
+        },
+        {
+          "event": "He regularly touches the Shivalingam at night, feels its eternal energy and becomes one with Shiva.",
+          "order": 3
+        },
+        {
+          "event": "He perceives the Smashan as a Shakti Pitha, with feminine energies present.",
+          "order": 4
+        },
+        {
+          "event": "On December 1, 1994, stone fragments in the shape of female reproductive organs are unearthed, confirming Shakti's presence.",
+          "order": 5
+        },
+        {
+          "event": "On January 27, 1995, a guard or further event occurs (text truncated).",
+          "order": 6
+        },
+        {
+          "event": "Encountered the story of Shankara being initiated by a chandala (Shiva or Babaji)",
+          "order": 1
+        },
+        {
+          "event": "In 2014, while commenting on Hatha Yoga Pradipika, noted similarities between Babaji and Svātmarāma",
+          "order": 2
+        },
+        {
+          "event": "Discovered Lahiri Mahasaya's diary entry: 'Babaji is the supreme representative of Hatha Yoga'",
+          "order": 3
+        },
+        {
+          "event": "Refrained from speculating on Babaji's origins, respecting his secrecy",
+          "order": 4
+        },
+        {
+          "event": "Studied ancient texts, including 'Puran Indrajaal' by Ravana, and performed tantric experiments (e.g., growing plants in skulls, optical illusions)",
+          "order": 5
+        },
+        {
+          "event": "Demonstrated disappearance and other siddhis to neighbors, students, and at Sarnath",
+          "order": 6
+        },
+        {
+          "event": "Experimented with reviving drowned flies using prana and mantra",
+          "order": 7
+        },
+        {
+          "event": "Realized the danger of becoming a 'spiritual showman' and stopped public demonstrations",
+          "order": 8
+        },
+        {
+          "event": "Performed Hanuman puja at Govardhan (2008)",
+          "order": 9
+        },
+        {
+          "event": "Conversations with disciples (2018)",
+          "order": 10
+        },
+        {
+          "event": "Celebrated Mahashivaratri at home in 1998 with Gwalior pandits; heard a voice instructing him to perform Bhumi puja at the Red Samadhi",
+          "order": 11
+        },
+        {
+          "event": "Sri Yantra delivered by a silent companion of Babaji in December 1995.",
+          "order": 1
+        },
+        {
+          "event": "Rudra Yantra delivered in 1998, left at the gate in a 20 kg bag.",
+          "order": 2
+        },
+        {
+          "event": "Ganganath delivered the Bagalamukhi and Dhumavati yantras two months later.",
+          "order": 3
+        },
+        {
+          "event": "Two visitors in January 2000 left the Smashan Tara and Smashan Kali yantras.",
+          "order": 4
+        },
+        {
+          "event": "In October 2001, during Navaratri, the Kamala Yantra was left at the gate.",
+          "order": 5
+        },
+        {
+          "event": "On June 6, 2009, Dewahuti dreamed of a room; four more yantras were found: Tripura Bhairavi, Chinnamasta, Matangi, and Bhuvaneshwari.",
+          "order": 6
+        },
+        {
+          "event": "In April 2000, Ganganath delivered two yantras and invited Sharma to meet Matsyendranath in Mahurgarh on June 16.",
+          "order": 7
+        },
+        {
+          "event": "Sharma traveled to Mahurgarh with a disciple, met the mahant of the Dattatreya temple, and meditated in a secluded room.",
+          "order": 8
+        },
+        {
+          "event": "Matsyendranath entered the room, patted Sharma on the head, and said all yogis are equal.",
+          "order": 9
+        },
+        {
+          "event": "Learned from Mahavatar Babaji that an advanced practitioner can reach the 'stage of Aghora' only at a cremation ground.",
+          "order": 1
+        },
+        {
+          "event": "Settled at a cremation ground (smashan) in Govardhan.",
+          "order": 2
+        },
+        {
+          "event": "Established a Shiva lingam at the smashan.",
+          "order": 3
+        },
+        {
+          "event": "Began nightly pujas, spontaneously invoking 'Alakh Niranjan' and later 'Alakh Datta, Guru Datta'.",
+          "order": 4
+        },
+        {
+          "event": "Dattatreya started visiting the smashan nightly after the Shiva lingam installation.",
+          "order": 5
+        },
+        {
+          "event": "Discovery of bronze four-armed goddess statue at the gate of smasana",
+          "order": 1
+        },
+        {
+          "event": "Hanuman speaks to him personally for the first time (October 1995)",
+          "order": 2
+        },
+        {
+          "event": "Babaji appears at the smasana (December 1995)",
+          "order": 3
+        },
+        {
+          "event": "Finding of stone yoni fragment (January 4, 1996)",
+          "order": 4
+        },
+        {
+          "event": "Trees 'menstruating' resin at the smasana garden",
+          "order": 5
+        },
+        {
+          "event": "Shiva (Mahadev) appears in the darshan hall (June 1996)",
+          "order": 6
+        },
+        {
+          "event": "Discovery of Shivalingam at the smasana (within two years of Shiva's appearance)",
+          "order": 7
+        },
+        {
+          "event": "Visited by three Nath yogis on Guru Purnima (July 8, 1998)",
+          "order": 8
+        },
+        {
+          "event": "Installation of large replica of the goddess statue (2016)",
+          "order": 9
+        },
+        {
+          "event": "Discovery of stone navel of Shakti (October 28, 2020)",
+          "order": 10
+        },
+        {
+          "event": "Found a natural Shivalingam at Govardhan, which was direct grace of Shiva.",
+          "order": 1
+        },
+        {
+          "event": "Ganganath appeared at the cremation ground to see the Shivalingam and requested a meeting.",
+          "order": 2
+        },
+        {
+          "event": "Invited by the head of the Nath order, Matsyendranath, to Mahurgad for special instructions.",
+          "order": 3
+        },
+        {
+          "event": "Matsyendranath gave special guidance to continue yoga sadhana and worship of Avadhut.",
+          "order": 4
+        },
+        {
+          "event": "Dattatreya, the Kula guru of the Nath order, appeared on the scene.",
+          "order": 5
+        },
+        {
+          "event": "Realized that Adi Shakti chose this place to bless the Babaji lineage for its equal treatment of women.",
+          "order": 6
+        },
+        {
+          "event": "Realized that all the great forces and beings came of their own accord; he never tried to invoke them.",
+          "order": 7
+        },
+        {
+          "event": "Babaji himself knocked on his door and gave instructions on new levels of Kriya without being asked.",
+          "order": 8
+        },
+        {
+          "event": "Underwent formal Nath initiation with kundalas",
+          "order": 1
+        },
+        {
+          "event": "Ganganath called him 'Senior Nath'",
+          "order": 2
+        },
+        {
+          "event": "Established controlled samadhi, installed Shivalingam, worshiped Shiva",
+          "order": 3
+        },
+        {
+          "event": "Moved to Govardhan cremation ground (smashan) and lived there for twenty years",
+          "order": 4
+        },
+        {
+          "event": "Acquired antique rhino horn cup from German student; new kundalas carved from it (2010)",
+          "order": 5
+        },
+        {
+          "event": "Practiced Smashan-sadhana, worshiped Shiva and Babaji",
+          "order": 6
+        },
+        {
+          "event": "Labeled 'Aghori Baba' by ISKCON members",
+          "order": 7
+        },
+        {
+          "event": "Wore black tilak, red clothes, rudraksha necklaces, heavy black earrings",
+          "order": 8
+        },
+        {
+          "event": "Blows horn in front of dhuni before Bhairav",
+          "order": 9
+        },
+        {
+          "event": "Met an authentic Aghori in Benares at insistence of Satyacharan Lahiri",
+          "order": 10
+        },
+        {
+          "event": "Met Matsyendranath and two female ascetics at Mahurgad; received instructions for dhyuni installation on a cremation ground.",
+          "order": 1
+        },
+        {
+          "event": "Wore large circular kundalas (earrings) as instructed by Matsyendranath; had earlobes pierced by Praveen Bharadwaj.",
+          "order": 2
+        },
+        {
+          "event": "Began construction of the dhyuni (yogic fire pit) based on instructions received at Mahurgad; preparation took nearly a year.",
+          "order": 3
+        },
+        {
+          "event": "On September 11, 2001, lit the dhyuni for the first time; observed a giant UV sphere emerge and witnessed the 9/11 attacks on TV.",
+          "order": 4
+        },
+        {
+          "event": "Travels with disciples to Badrinath; meets two elderly women pilgrims, one of whom performs a powerful blessing ritual.",
+          "order": 1
+        },
+        {
+          "event": "Recognizes the murti of Badrinath as Babaji; encounters priest who drinks Yamuna water offering, then beats the priest at the priest's own challenge.",
+          "order": 2
+        },
+        {
+          "event": "Travels to Kanchipuram (Kamakoti Peetham), Sriperumbudur, Tirumala, Rameswaram, and Kanyakumari in 1997 as part of 'Golden Bird' project.",
+          "order": 3
+        },
+        {
+          "event": "At Rameswaram, performs a ritual penance involving 22 wells and ocean bathing, feeling presence of Rama and Hanuman.",
+          "order": 4
+        },
+        {
+          "event": "Hanuman appears to Sharma as Balaji, introduces him to spirit world",
+          "order": 1
+        },
+        {
+          "event": "Sharma is tasked by Hanuman to remove Shankaracharya's seals on sacred knowledge",
+          "order": 2
+        },
+        {
+          "event": "Travels to 12 jyotirlingas and other sites to perform unlocking rituals",
+          "order": 3
+        },
+        {
+          "event": "Visits Jageshwar in the Himalayas",
+          "order": 4
+        },
+        {
+          "event": "Visits Badrinath as part of the mission",
+          "order": 5
+        },
+        {
+          "event": "Accompanied by Umashankar Sharma and Rajendra Sharma on a journey from Govardhan to the Himalayas in May 1997",
+          "order": 6
+        },
+        {
+          "event": "Transports a powerful spirit from Kedarnath to Amarnath",
+          "order": 7
+        },
+        {
+          "event": "Puja to Shiva, Hanuman, Mahavatar Babaji, and others (implied practices)",
+          "order": 8
+        },
+        {
+          "event": "Developed ability to perceive spirits and subtle beings through meditation and bhastrika",
+          "order": 1
+        },
+        {
+          "event": "Moved to rental housing on outskirts of Gwalior near Morar smashan",
+          "order": 2
+        },
+        {
+          "event": "Settled in Govardhan with sister; began encountering spirits at the smashan",
+          "order": 3
+        },
+        {
+          "event": "Lit dhuni fire; myriad transparent spheres appeared from flames",
+          "order": 4
+        },
+        {
+          "event": "Found two skulls (female and child) in garden; performed cremation ritual",
+          "order": 5
+        },
+        {
+          "event": "Workers discovered 8-9 female skulls during irrigation trench digging; performed silent cremation",
+          "order": 6
+        },
+        {
+          "event": "Encountered Churel (female ghost) who attached to newborn puppies; addressed her jokingly and she vanished",
+          "order": 7
+        },
+        {
+          "event": "A king cobra entered the darshan hall, defecated, and left; skin hung above door",
+          "order": 8
+        },
+        {
+          "event": "Received unexpected official permission to remain on the smashan land from Yama (first week of November 1993)",
+          "order": 9
+        },
+        {
+          "event": "Had vision of a black buffalo head at window, interpreted as visit from Yama",
+          "order": 10
+        },
+        {
+          "event": "First encounter with Yama (God of Death) on a buffalo",
+          "order": 1
+        },
+        {
+          "event": "Hanuman names him 'Yogiraj'; spirits begin to call him thus",
+          "order": 2
+        },
+        {
+          "event": "Agrees to have his photo used in exorcism darbars; name chanted",
+          "order": 3
+        },
+        {
+          "event": "Program to rehabilitate spirits launched (December 1996)",
+          "order": 4
+        },
+        {
+          "event": "New medium (Rajkumar) arrives at smashan (March 2009), receives permission to use his name and photo for darbars",
+          "order": 5
+        },
+        {
+          "event": "Puts photo in famous Mehandipur Balaji temple; seen in astral form near altar",
+          "order": 6
+        },
+        {
+          "event": "Performs pinda daan and other rituals for the departed at Gaya Kshetra, including at Pret Raj temple, Pret Bhut Baori well, and Sita Kund.",
+          "order": 1
+        },
+        {
+          "event": "Meeting with brahmarakshas Chhote Maharaj through medium Umeshankar Sharma.",
+          "order": 2
+        },
+        {
+          "event": "Another encounter with a brahmarakshas possessing a 13-year-old girl, which he resolves through reasoning.",
+          "order": 3
+        },
+        {
+          "event": "Reflects on the nature of ghosts, justice, and the coming 'Age of Earthlings'.",
+          "order": 4
+        },
+        {
+          "event": "Visited Meenakshi Temple in Madurai, meditated there.",
+          "order": 1
+        },
+        {
+          "event": "Visited Rameswaram, Mallikarjuna Temple in Srisailam, and Hyderabad; meditated at each.",
+          "order": 2
+        },
+        {
+          "event": "Visited Srikalahasti temple, meditated at the air lingam; recognized by a devotee who prostrated.",
+          "order": 3
+        },
+        {
+          "event": "Took on seva: cleaned Radha Kund pond area, maintained a 9km parikrama road, hired workers.",
+          "order": 4
+        },
+        {
+          "event": "After a jungle fire, negotiated with forest department and planted 25 acres of trees.",
+          "order": 5
+        },
+        {
+          "event": "Used a $21,000 donation for planting instead of a car; planted 50,000 jojoba trees and thousands more.",
+          "order": 6
+        },
+        {
+          "event": "Maintained water supply along parikrama, installed drinking water tanks for residents and animals.",
+          "order": 7
+        },
+        {
+          "event": "Built a police barracks for 60 officers with foreign donations.",
+          "order": 8
+        },
+        {
+          "event": "During flooding of Manasi Ganga lake, organized pumping and drainage, successfully diverted water in under a month.",
+          "order": 9
+        },
+        {
+          "event": "Planted 150,000 trees along the road from cremation ground to Radha Kund, including 11,000 jamun trees inspired by a monkey named Chunmun.",
+          "order": 10
+        },
+        {
+          "event": "Realized the interconnectedness of all life: animals, plants, stones, rivers, natural phenomena are conscious and interrelated.",
+          "order": 11
+        },
+        {
+          "event": "By 1998, Hanuman shared a part of his power with Sharma, and they had good relations; tasks given by Hanuman were successfully fulfilled, mostly related to the world of ghosts.",
+          "order": 1
+        },
+        {
+          "event": "Around 1998-1999, Hanuman appeared accompanied by a silent spirit needing liberation: the spirit of a former messiah of a major world religion, burdened by the sins of his followers.",
+          "order": 2
+        },
+        {
+          "event": "In August 1999, Sharma, together with a disciple and friend Mr. Javlekar, traveled to Bihar to perform rituals for the liberation of this spirit in Gaya Kshetra.",
+          "order": 3
+        },
+        {
+          "event": "On August 19, 1999, from early morning to late evening, Sharma conducted rituals at the behest of Hanuman, fasting and only occasionally drinking water.",
+          "order": 4
+        },
+        {
+          "event": "After an experiment with mercury, began reading alchemy-related literature, including a relative's Ayurvedic collection.",
+          "order": 1
+        },
+        {
+          "event": "Family supported experiments; mother (an Ayurvedic graduate) added solid mercury to the kitchen tea.",
+          "order": 2
+        },
+        {
+          "event": "Encountered two naked sadhu alchemists in winter 1985 who turned tin into silver and gold; became their intermediary for selling the metals.",
+          "order": 3
+        },
+        {
+          "event": "Observed the sadhus build a Hanuman temple and feed thousands; they left after completion, sharing some formulas.",
+          "order": 4
+        },
+        {
+          "event": "Met 88-year-old Swami Shivananda Saraswati, who introduced a 96-year-old yogi looking young; the yogi received Kriya initiation and later shared his story of being revived by a sadhu in Uttarkashi.",
+          "order": 5
+        },
+        {
+          "event": "In autumn 1991, around the time Nirmala Devi visited him in astral body, he began experiencing repeated series of samadhi, which soon became regular.",
+          "order": 1
+        },
+        {
+          "event": "He found Nirmala Devi through a disciple and took care of her soul; later arranged her reincarnation by advising a childless couple to adopt a baby girl who would smile and grab their hands.",
+          "order": 2
+        },
+        {
+          "event": "His mother, Gyani Devi Sharma, passed away suddenly on 2 January 1999 at age 82. He attended her cremation in Gwalior on 3 January.",
+          "order": 3
+        },
+        {
+          "event": "He has the ability to see the essence of a soul, its unique nature and sometimes its mission. He can mentally project force to help those in danger, often appearing in visions to disciples.",
+          "order": 4
+        },
+        {
+          "event": "Early life surrounded by Ayurvedic doctors, exposure to alchemical concepts.",
+          "order": 1
+        },
+        {
+          "event": "First samadhi experience, followed by rapid aging and mental inertia.",
+          "order": 2
+        },
+        {
+          "event": "Reversed aging through vigorous strength training and discipline.",
+          "order": 3
+        },
+        {
+          "event": "Began studying and experimenting with alchemy and Ayurveda.",
+          "order": 4
+        },
+        {
+          "event": "Met a sadhu on Puri beach who taught him alchemical formulas, including solidifying mercury.",
+          "order": 5
+        },
+        {
+          "event": "Learned Marana mantra, became irritable, and was later made to give it up by his Guru.",
+          "order": 6
+        },
+        {
+          "event": "After a relative's death, successfully solidified mercury using the sadhu's formula, surprising his relatives.",
+          "order": 7
+        },
+        {
+          "event": "Vision of Mahamari (the Great Disease) in 2012, granting her permission to work.",
+          "order": 8
+        },
+        {
+          "event": "In 2020, Mahamari's prophecy manifested as the COVID-19 pandemic.",
+          "order": 9
+        },
+        {
+          "event": "Read and commented on the Bhagavad Gita, later interpreting it as an alchemical manual.",
+          "order": 1
+        },
+        {
+          "event": "In 2019, began interpreting the Bhagavad Gita as an alchemical guide.",
+          "order": 2
+        },
+        {
+          "event": "Learned and mastered Khechari mudra over a year and a half.",
+          "order": 3
+        },
+        {
+          "event": "Was visited by a distant relative who questioned his yogic achievements.",
+          "order": 4
+        },
+        {
+          "event": "Performed last rites of his mother in Gwalior",
+          "order": 1
+        },
+        {
+          "event": "Attended a darbar (spiritual court) held in his name in Gwalior; a child with ambiguous genitalia was presented",
+          "order": 2
+        },
+        {
+          "event": "Felt a sharp pain in his heart while a child touched his feet; later learned the child transformed into a fully female girl",
+          "order": 3
+        },
+        {
+          "event": "After Guru's departure, inherited responsibility for 16,000+ disembodied disciples",
+          "order": 4
+        },
+        {
+          "event": "Moved from Varanasi to Gwalior, then Vrindavan, Sarnath, and finally Moksh Bhumi (cremation ground) to accommodate the spirits",
+          "order": 5
+        },
+        {
+          "event": "Installed a Shiva lingam at the cremation ground; spirits and other astral beings attended puja",
+          "order": 6
+        },
+        {
+          "event": "Learned about the ritual of exorcism in Braj (Govardhan) and heard from Dwarka Prasad Shastri about a pandit who encountered Mahamari (Great Epidemic) goddess",
+          "order": 7
+        },
+        {
+          "event": "Studies alchemy with a sadhu in search of eternal life formula",
+          "order": 1
+        },
+        {
+          "event": "Travels to Narmada river basin, collects herbs and assists in preparing elixir",
+          "order": 2
+        },
+        {
+          "event": "Sadhu disappears after final dose; the narrator becomes a student",
+          "order": 3
+        },
+        {
+          "event": "Settles in Rishikesh ashram, lives as ascetic",
+          "order": 4
+        },
+        {
+          "event": "People notice he does not age; rumors spread that he is a siddha",
+          "order": 5
+        },
+        {
+          "event": "Leaves Rishikesh, takes vow of non-attachment, wanders",
+          "order": 6
+        },
+        {
+          "event": "Meets the 96-year-old swami who took the elixir 60 years prior and looks young",
+          "order": 7
+        },
+        {
+          "event": "Swami teaches Khechari mudra; shares formula for the elixir",
+          "order": 8
+        },
+        {
+          "event": "Expedition to find rare herb near Narmada with Dwarka Prakash Shastri",
+          "order": 9
+        },
+        {
+          "event": "Helped by a Kanjar youth; escapes armed tribe",
+          "order": 10
+        },
+        {
+          "event": "Discovers Mahamrityunjaya mantra encodes an alchemical formula",
+          "order": 11
+        },
+        {
+          "event": "Experiments with the formula; cures two women of tuberculoma",
+          "order": 12
+        },
+        {
+          "event": "1987 February: after the final rituals for Shri Satyacharan Lahiri, Sharma felt lost without a guru. He stayed in Varanasi.",
+          "order": 1
+        },
+        {
+          "event": "1987: While walking along the Ganges in Varanasi, he sensed a presence and later that night was visited by two astral beings (Bhola Shankar Tewari and Jata Shankar Pandey) who became his companions.",
+          "order": 2
+        },
+        {
+          "event": "1993 February: The two brahmarakshasas told him to return to Braj (specifically Vrindavan/Govardhan). He moved back and later found the royal cremation ground and palaces.",
+          "order": 3
+        },
+        {
+          "event": "1984: During his father's tarpan ceremony, he encountered the ghost of a young photographer friend who had committed suicide. He helped the ghost find peace.",
+          "order": 4
+        },
+        {
+          "event": "1994: He learned about Nirmala Devi, a woman from a dream, living in Mitani, West Bengal. She was the wife of a mafia don.",
+          "order": 5
+        },
+        {
+          "event": "Appeared to Michael N. in astral form over his home altar",
+          "order": 1
+        },
+        {
+          "event": "Corrected Michael N.'s practice during astral encounters",
+          "order": 2
+        },
+        {
+          "event": "Gave darshan to Michael N. on a cliff in Puerto Vallarta, Mexico",
+          "order": 3
+        },
+        {
+          "event": "Instructed Michael N. to experience healing plants",
+          "order": 4
+        },
+        {
+          "event": "Met Michael N. in Govardhan in February 2020",
+          "order": 5
+        },
+        {
+          "event": "Explained guru as teacher, friend, parent, and child",
+          "order": 6
+        },
+        {
+          "event": "Said he wears sunglasses so people don't burn from his gaze of love and compassion",
+          "order": 7
+        },
+        {
+          "event": "Proclaimed as Guru of the parampara after two years of practice",
+          "order": 1
+        },
+        {
+          "event": "Daily darshan and answering questions, learning to see deep reasons",
+          "order": 2
+        },
+        {
+          "event": "Teaching students with patience, describing the non-glamorous aspects of samadhi",
+          "order": 3
+        },
+        {
+          "event": "Observing that success in Kriya depends on motivation",
+          "order": 4
+        },
+        {
+          "event": "Reflecting on his own years of searching and supporting all practitioners",
+          "order": 5
+        },
+        {
+          "event": "Lived in a cottage; conducted alchemical experiments with students for nine months.",
+          "order": 1
+        },
+        {
+          "event": "Alchemical explosion occurred due to Vyasa-ji's participation; all survived due to Khechari mudra.",
+          "order": 2
+        },
+        {
+          "event": "At age 9, met his baby cousin Devahuti in Shivpuri.",
+          "order": 3
+        },
+        {
+          "event": "Family moved to Gwalior; Devahuti visited frequently.",
+          "order": 4
+        },
+        {
+          "event": "Death of elder brother Mahendra caused him to abandon career plans.",
+          "order": 5
+        },
+        {
+          "event": "In 1990, Devahuti requested Kriya initiation.",
+          "order": 6
+        },
+        {
+          "event": "Moved to a cremation ground (smashan) with Devahuti.",
+          "order": 7
+        },
+        {
+          "event": "Performed tongue-snipping on students about seven or eight times over 37 years.",
+          "order": 8
+        },
+        {
+          "event": "Practices Kriya yoga and experiences inner balance.",
+          "order": 1
+        },
+        {
+          "event": "Travels to India and is initiated by Guru (Shailendra Sharma).",
+          "order": 2
+        },
+        {
+          "event": "First Kriya practice in a dusty palace room in Govardhan.",
+          "order": 3
+        },
+        {
+          "event": "Experiences visions and inner seeing during Kriya, including geometric forms and lights from Kutastha.",
+          "order": 4
+        },
+        {
+          "event": "Participates in Mexican women's circle ceremony with dancing under full moon, sees myriad Ganeshas in the sky.",
+          "order": 5
+        },
+        {
+          "event": "Learned and taught Hatha Yoga in Russia after Soviet collapse, performing asanas on broken glass",
+          "order": 1
+        },
+        {
+          "event": "Received initiation into Virashaiva lineage in January 2002 from Kashi Jagadguru Shri Chandrashekhar Shivacharya Mahaswamiji",
+          "order": 2
+        },
+        {
+          "event": "Lived at Jangamwadi Math in Varanasi for three months, studying Sanskrit and Hindi",
+          "order": 3
+        },
+        {
+          "event": "Visited Kashi Vishwanath temple and asked Shiva for a Guru and teaching",
+          "order": 4
+        },
+        {
+          "event": "Met K. M. Tripathi who showed him a photo of Shailendra Sharma",
+          "order": 5
+        },
+        {
+          "event": "Traveled to Govardhan to meet Shailendra Sharma",
+          "order": 6
+        },
+        {
+          "event": "Returned to Kudalasangama to get permission from his Virashaiva Jagadguru",
+          "order": 7
+        },
+        {
+          "event": "Received first level of Kriya initiation on June 6, 2003 from Shailendra Sharma",
+          "order": 8
+        },
+        {
+          "event": "Sharma receives astral initiation from a golden-skinned yogi in a vision at Govardhan, receiving the Svapna mantra on January 10, 2005.",
+          "order": 1
+        },
+        {
+          "event": "Starting from summer 2007 (age 50), Sharma experiences drastic physical transformation: weight loss from 100 to 62 kg, muscle wasting, weakness, depression, and constant thirst.",
+          "order": 2
+        },
+        {
+          "event": "In September 2008, Russian disciples leave his photo at Mount Kailash, after which his thirst subsides.",
+          "order": 3
+        },
+        {
+          "event": "Sharma receives vision of Devahuti leading him to a cobra-shaped rock and a young ascetic who gives him the Svapna mantra.",
+          "order": 4
+        },
+        {
+          "event": "Hanuman informs Sharma that Devahuti will not live long; preparations for her departure begin with pilgrimages.",
+          "order": 5
+        },
+        {
+          "event": "Sharma is in deep mourning after the death of his sister Devahuti, lost in meditation.",
+          "order": 1
+        },
+        {
+          "event": "Devahuti appears to him at Govardhan hill, together with a young ascetic who gave him the Guru mantra.",
+          "order": 2
+        },
+        {
+          "event": "The ascetic tells him Devahuti is returning soon via reincarnation; instructs him to contact his niece Neha.",
+          "order": 3
+        },
+        {
+          "event": "Sharma contacts Neha and her husband Gaurav, informing them they will have a daughter and that he will be her guardian.",
+          "order": 4
+        },
+        {
+          "event": "Yashashwini is born on 17 April 2014; Sharma's friend Deepak Kumar takes her in his arms and she smiles knowingly.",
+          "order": 5
+        },
+        {
+          "event": "Yashashwini at 18 months walks the same daily route as Devahuti used to, including stopping at the memorial pavilion built before her birth.",
+          "order": 6
+        },
+        {
+          "event": "Experienced Sa-kriya samadhi in December 1996, after a series of events including encounter with Shiva, a flood, and first appearance of Hanuman.",
+          "order": 1
+        },
+        {
+          "event": "First saw Vasudeva in his heart, when his heart stopped and a bud of immense bliss bloomed.",
+          "order": 2
+        },
+        {
+          "event": "Sharma fell seriously ill, Devahuti began having visions of deities",
+          "order": 1
+        },
+        {
+          "event": "Devahuti traveled to Narmada Kund at Amarkantak to seek blessings of Ashwatthama",
+          "order": 2
+        },
+        {
+          "event": "Devahuti visited Chuchura Kali temple",
+          "order": 3
+        },
+        {
+          "event": "Devahuti traveled to Tarapith in August 2008",
+          "order": 4
+        },
+        {
+          "event": "Devahuti visited Kalighat Kali temple in Kolkata",
+          "order": 5
+        },
+        {
+          "event": "Devahuti visited Vindhyachal temple",
+          "order": 6
+        },
+        {
+          "event": "Devahuti climbed Girnar mountain to Dattatreya temple",
+          "order": 7
+        },
+        {
+          "event": "Sharma's health improved from summer 2008",
+          "order": 8
+        },
+        {
+          "event": "Devahuti diagnosed with cancer in spring 2013",
+          "order": 9
+        },
+        {
+          "event": "Devahuti passed away; Sharma went into mourning",
+          "order": 10
+        },
+        {
+          "event": "Sharma had an astral meeting with Devahuti guided by Hanuman",
+          "order": 11
+        },
+        {
+          "event": "Astrloger predicted Devahuti's rebirth in Braj",
+          "order": 12
+        },
+        {
+          "event": "First heard the sound (Anahata Nada) in early September 1979 during extreme bhastrika practice",
+          "order": 1
+        },
+        {
+          "event": "Experienced an out-of-body journey a few months later",
+          "order": 2
+        },
+        {
+          "event": "Discussed the inner sound with yoga group members and people from Adhyatma Niketan ashram",
+          "order": 3
+        },
+        {
+          "event": "After about a week understood the nature of transmission",
+          "order": 4
+        },
+        {
+          "event": "Later shared the experience with his Teacher, who expressed great satisfaction",
+          "order": 5
+        },
+        {
+          "event": "Learned to concentrate on the sound and then release focus, discovering the nature of elements",
+          "order": 6
+        },
+        {
+          "event": "In samadhi, experienced the grandeur of Void, Time, Sound, elements",
+          "order": 7
+        },
+        {
+          "event": "Shared insight about Void with his cousin, who was alarmed",
+          "order": 8
+        },
+        {
+          "event": "Taught about the process of death and the elements",
+          "order": 1
+        },
+        {
+          "event": "Explained chakras as symbols of elements and cosmic music",
+          "order": 2
+        },
+        {
+          "event": "Discussed origin of karma and control of thoughts",
+          "order": 3
+        },
+        {
+          "event": "Described the nature of body, time, and reincarnation",
+          "order": 4
+        },
+        {
+          "event": "Spoke about Earth as Mritya Loka (realm of death)",
+          "order": 5
+        },
+        {
+          "event": "Stabilization of Sa-kriya samadhi; ability to enter the Void in 10-15 minutes using Shvasahita pranayama",
+          "order": 1
+        },
+        {
+          "event": "Being Guru for over 39 years, still feeling a novice",
+          "order": 2
+        },
+        {
+          "event": "Received six levels and techniques of Kriya from Shri Satyacharan Lahiri before his passing",
+          "order": 3
+        },
+        {
+          "event": "Trained in advanced Kriyas by Mahavatar Babaji, who personally tailored the complexity; Babaji taught him to leave the body at will and Omkar kriya",
+          "order": 4
+        },
+        {
+          "event": "Divided advanced Kriyas into 11 levels for systematic teaching",
+          "order": 5
+        },
+        {
+          "event": "Set proportional ratios for pranayamas based on personal experience",
+          "order": 6
+        },
+        {
+          "event": "Described Kriya as an art that takes one beyond karma, beyond happiness and sorrow, to a state of peace",
+          "order": 7
+        },
+        {
+          "event": "Emphasized that the goal of Kriya is meeting one's own Self",
+          "order": 8
+        },
+        {
+          "event": "Sharma lives on a cremation ground (smashan)",
+          "order": 1
+        },
+        {
+          "event": "He performs daily puja to Shiva and practices Kriya Yoga",
+          "order": 2
+        },
+        {
+          "event": "He teaches disciples and gives guidance (e.g., telling a disciple 'I see you; have the courage to see yourself')",
+          "order": 3
+        },
+        {
+          "event": "He lost his wife Devahuti, which caused him great grief",
+          "order": 4
+        },
+        {
+          "event": "He installed a large brass statue of Devi in the house, bringing a powerful presence",
+          "order": 5
+        },
+        {
+          "event": "In 2017, during Hanuman puja, a mace moved by itself, interpreted as a sign",
+          "order": 6
+        },
+        {
+          "event": "His assistant and pujari Narendra Sharma (Mahatmaji) had a scandalous affair and left the ashram",
+          "order": 7
+        },
+        {
+          "event": "Sharma rings the buffalo horn himself now, and continues his disciplined routine",
+          "order": 8
+        },
+        {
+          "event": "Read Hatha Yoga Pradipika in Hindi after joining a Kriya Yoga group in 1982",
+          "order": 1
+        },
+        {
+          "event": "Practiced 16 asanas from Hatha Yoga Pradipika for 3-4 months",
+          "order": 2
+        },
+        {
+          "event": "Learned mudras, bandhas, and breath retentions before initiation",
+          "order": 3
+        },
+        {
+          "event": "Experienced first samadhi",
+          "order": 4
+        },
+        {
+          "event": "Visited Aghori",
+          "order": 5
+        },
+        {
+          "event": "Visited Sanskrit scholars (mahamahopadhyaya) in Varanasi, heard story about Brahmananda and Hatha Yoga Pradipika",
+          "order": 6
+        },
+        {
+          "event": "Formed conclusion: always refer to original source",
+          "order": 7
+        },
+        {
+          "event": "Left home and chose the path of yoga",
+          "order": 1
+        },
+        {
+          "event": "Learned to observe the collisions of old and new through the lens of Kriya",
+          "order": 2
+        },
+        {
+          "event": "Spent 30 years speaking about shifts in the hierarchy of astral rulers",
+          "order": 3
+        },
+        {
+          "event": "Communicated with various spirits, ghosts and their lords",
+          "order": 4
+        },
+        {
+          "event": "Realized that prayers have only therapeutic effect on the pray-ers",
+          "order": 5
+        },
+        {
+          "event": "During the pandemic, he advised students to move away from cities and stockpile supplies.",
+          "order": 1
+        },
+        {
+          "event": "He believed the pandemic was announced eight years earlier when Goddess Mahamari asked his permission to begin her work.",
+          "order": 2
+        },
+        {
+          "event": "He predicted that positive transformations would become tangible in 30-40 years.",
+          "order": 3
+        },
+        {
+          "event": "He emphasized that objective perception of reality is possible only through contact with one's own Spirit.",
+          "order": 4
+        },
+        {
+          "event": "First asked about Gorakh Bodh in 2008",
+          "order": 1
+        },
+        {
+          "event": "Full-scale commentary work on Gorakh Bodh began in 2015",
+          "order": 2
+        },
+        {
+          "event": "Yogic commentary published as 'Twilight Language of Gorakh Bodh' in 2017",
+          "order": 3
+        },
+        {
+          "event": "Encounters the immortal teacher Matsyendranath in Mahurgad, which seeds new inquiry",
+          "order": 4
+        },
+        {
+          "event": "Gives interview in documentary 'Yoga: Traditions Through the Eyes of Modernity' in 2013",
+          "order": 5
+        },
+        {
+          "event": "Writes commentaries on Bhagavad Gita, Shiva Sutras, Yoga Sutras, Hatha Yoga Pradipika; publishes books 'By the Right Hand of God' and 'Upanishad of Immortality'",
+          "order": 6
+        },
+        {
+          "event": "Predicts his books will become shastras",
+          "order": 7
+        },
+        {
+          "event": "At age five, he already knew he had been a yogi in past lives.",
+          "order": 0
+        },
+        {
+          "event": "In 1993, he began living on a cremation ground (smashan) and starting daily sadhana there.",
+          "order": 1
+        },
+        {
+          "event": "After the death of his guru Satyacharan Lahiri, he had subtle-body visitations from him in 1993, before installing a Shivalingam, and before Devahuti's death.",
+          "order": 2
+        },
+        {
+          "event": "He experienced a breakthrough where his awakened subconscious became both Teacher and Knower; he explored past lives and confirmed he was a yogi through many births.",
+          "order": 3
+        },
+        {
+          "event": "He felt his last incarnation (approx. 1893–1957) was intentionally blocked from memory by the masters.",
+          "order": 4
+        },
+        {
+          "event": "He maintained a strict daily routine: day duties, night puja, midnight sadhana leading to samadhi.",
+          "order": 5
+        },
+        {
+          "event": "He rarely left the smashan except for medical visits or to see a sick aunt, upholding the discipline of the dhuni fire.",
+          "order": 6
+        },
+        {
+          "event": "He received thought-messages from Babaji and a physical-plane appearance of Mahavatar, guiding him.",
+          "order": 7
+        },
+        {
+          "event": "Lived on a smashan (cremation ground) for 30+ years",
+          "order": 1
+        },
+        {
+          "event": "Received instruction from Babaji to practice a special Kriya",
+          "order": 2
+        },
+        {
+          "event": "Manifests spontaneous empathy (e.g., bleeding forehead during darshan coinciding with devotee's accident)",
+          "order": 3
+        },
+        {
+          "event": "Declared himself the last living lineage holder of Kriya Yoga",
+          "order": 4
+        },
+        {
+          "event": "Awaits next meeting with Mahavatar Babaji after 12 years of practice",
+          "order": 5
+        },
+        {
+          "event": "Could no longer perform Baddha Padmasana due to weight training expanding chest.",
+          "order": 1
+        },
+        {
+          "event": "Practiced weight training and also some asanas for nervous system; used heavy Indian clubs (mudgars).",
+          "order": 2
+        },
+        {
+          "event": "Perfected half-lying posture on sofa with legs on coffee table, jokingly called Guru-asana.",
+          "order": 3
+        },
+        {
+          "event": "Sat in Padmasana for 6-8 hours every night.",
+          "order": 4
+        },
+        {
+          "event": "In winter 2013, Ukrainian students asked about Hatha Yoga Pradipika; he dictated a new interpretation linking asanas to Kriya.",
+          "order": 5
+        },
+        {
+          "event": "Twenty years earlier, wanted to translate and comment on HYP but received signal from Babaji not to; later permission came.",
+          "order": 6
+        },
+        {
+          "event": "Revealed that Svātmarāma, author of HYP, was Babaji himself.",
+          "order": 7
+        },
+        {
+          "event": "In 1986, analyzed the true meaning of Mahavedha mudra and realized conventional instruction (bouncing on buttocks) was based on mistranslation: 'bhumau' means 'tongue', not 'earth'; 'sama-hasta-yugō' means 'join hands together', not 'place on ground'. Correct practice involves Khechari mudra stimulating frontal lobes.",
+          "order": 8
+        },
+        {
+          "event": "Discussed 'Law of Repulsion' as counterpart to gravity, and idea that Samadhi enables 'time surfing' - visiting past eras like Jesus, Buddha, Mahabharata, Jurassic period.",
+          "order": 9
+        },
+        {
+          "event": "Read 'Gorakh Bodh' (dialogue between Matsyendranath and Gorakhnath) bought for 2 rupees over 40 years ago; noted it uses twilight language (sandhya bhasha), a code of the immortals.",
+          "order": 10
+        },
+        {
+          "event": "Realized the unity of Earth and Kali, viewing the planet as a laboratory for spiritual evolution",
+          "order": 1
+        },
+        {
+          "event": "Developed the theory of three gunas as stages of evolution—Tamas (sperm/egg), Rajas (human life), Satva (union with Earth)",
+          "order": 2
+        },
+        {
+          "event": "Concluded that Kriya encodes keys to eternal life; Nabhi and Khechari mudra are techniques for longevity and mind control",
+          "order": 3
+        },
+        {
+          "event": "Received knowledge of Omkar kriya only after experiencing Samadhi; understood death as a threshold for self-realization",
+          "order": 4
+        },
+        {
+          "event": "Taught that advanced yogis can merge with Earth's consciousness, becoming 'awakened sperm' ready for fertilization by the planet",
+          "order": 5
+        },
+        {
+          "event": "Believed that buried yogis in samadhi are not dead but inert, signaling readiness for union with Earth",
+          "order": 6
+        },
+        {
+          "event": "Asserted that all human beings are in the rajasic stage; final satvic stage is achieved through transformation within Earth's womb",
+          "order": 7
+        }
+      ],
+      "entity_encounters": [
+        {
+          "entity": "Shiva (Mahadev)",
+          "encounter": "Vision at Devaldhar: Shiva standing on Nanda Devi and Trishul peaks; later repeated vision"
+        },
+        {
+          "entity": "Hanuman",
+          "encounter": "Heard about a ritual for Hanuman from Shradhanand Brahmachari"
+        },
+        {
+          "entity": "Hanuman",
+          "encounter": "Learned about Hanuman's manifestation through the story told by Lalmani's father; heard that Hanuman can appear in rituals and grant boons"
+        },
+        {
+          "entity": "Ashwatthama",
+          "encounter": "Sharma's family claims descent from Ashwatthama, a legendary hero from the Mahabharata"
+        },
+        {
+          "entity": "Babaji",
+          "encounter": "Felt familiarity upon seeing photo; recognized as immortal master of Kriya Yoga"
+        },
+        {
+          "entity": "Yukteshwar Giri",
+          "encounter": "Read his post-death appearance to Yogananda; considered it proof of life after death"
+        },
+        {
+          "entity": "Amar Guru (siddha)",
+          "encounter": "Possibly encountered on Mount Amara; a naked ascetic in lotus pose who gave him water"
+        },
+        {
+          "entity": "Mahavatar Babaji",
+          "encounter": "Transmitted Kriya Yoga to Lahiri Mahasaya, founder of the lineage."
+        },
+        {
+          "entity": "Mother Earth",
+          "encounter": "Sharma's main deity; he explores connection with Her."
+        },
+        {
+          "entity": "Shiva (Rudra)",
+          "encounter": "Symbolized through rudraksha beads worn by Sharma; reference to Halahala poison that Shiva drank."
+        },
+        {
+          "entity": "Shivalingam / giant cobra",
+          "encounter": "Transparent outlines of Shivalingam or cobra hood appeared over Sharma's head, signifying yogic aura."
+        },
+        {
+          "entity": "Hanuman",
+          "encounter": "Appeared in a flash of light during a puja performed by a Master (cart-driver) in Sagor; Hanuman granted boons to devotees and answered Sharma's question about suffering."
+        },
+        {
+          "entity": "Shakti",
+          "encounter": "Conceptualized female energy as Shakti, the primordial creative power; believed a woman's blessing is a magical elixir."
+        },
+        {
+          "entity": "Djinns",
+          "encounter": "Heard legends of djinns living in Gwalior fort; personally saw coins used by djinns, which convinced him of parallel worlds."
+        },
+        {
+          "entity": "Jesus",
+          "encounter": "Read the Bible and empathized with Jesus's adventures."
+        },
+        {
+          "entity": "Samson",
+          "encounter": "Was most impressed by Samson's physical strength from the biblical stories."
+        },
+        {
+          "entity": "Sri Krishna",
+          "encounter": "Gulab Singh experienced spiritual awakening while reading Krishna's teachings to Uddhava in the Bhagavata Purana"
+        },
+        {
+          "entity": "Uddhava",
+          "encounter": "Referenced in the Bhagavata Purana passage that inspired Gulab Singh"
+        },
+        {
+          "entity": "Sri Aurobindo",
+          "encounter": "Gulab Singh met him in Calcutta jail during the revolutionary trial"
+        },
+        {
+          "entity": "Anandamayi Ma",
+          "encounter": "Received her blessing, prasad, and verbal instruction in Vrindavan, 1979."
+        },
+        {
+          "entity": "Babaji",
+          "encounter": "Felt protected by Babaji during the farm siege; attributed his survival without injury to Babaji's grace"
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "Khechari Mudra described as Shiva's favorite mudra; performed it to attain amrita"
+        },
+        {
+          "entity": "Kutastha (Atma/Paramatma)",
+          "encounter": "Perceived as a luminous sphere of light during meditation; identified as his own spirit and the Supreme Spirit"
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "Offered flower garlands as per Guru's instruction"
+        },
+        {
+          "entity": "Babaji",
+          "encounter": "Offered flower garlands as per Guru's instruction"
+        },
+        {
+          "entity": "Lahiri Mahasaya",
+          "encounter": "Offered flower garlands; his books inspired Sharma"
+        },
+        {
+          "entity": "Parashurama",
+          "encounter": "Aghori described his vision of Parashurama appearing with Shri Yantra after 40-day ritual"
+        },
+        {
+          "entity": "Babaji",
+          "encounter": "Sharma pondered Babaji's grace during his fast in the jungle; did not physically meet but invoked his presence"
+        },
+        {
+          "entity": "Lahiri Mahasaya",
+          "encounter": "Received Lahiri Mahasaya's commentary on the Gita, which revealed the true Kriya techniques and inspired him"
+        },
+        {
+          "entity": "Sea creatures (Nāgas or other beings)",
+          "encounter": "Saw two winged humanoid beings emerge from the ocean, covered in gold jewelry, then dive back; considered them inhabitants of an unknown world"
+        },
+        {
+          "entity": "Kutastha (the indwelling Spirit, Purusha)",
+          "encounter": "Observed the changing colors as a language of the Spirit; learned patience; understood it as the basis for dialogue."
+        },
+        {
+          "entity": "Lahiri Mahasaya (as an avatar/lineage being)",
+          "encounter": "While massaging the marble statue, felt it turn into warm living flesh; this event triggered his recognition as successor."
+        },
+        {
+          "entity": "Satyacharan Lahiri (guru as worldly being)",
+          "encounter": "Received initiation, training, and the direct declaration of being the new guru."
+        },
+        {
+          "entity": "Shiva (Vishwanath)",
+          "encounter": "At Kashi Vishwanath temple, he was pushed onto the Shivalingam, interpreting it as a darshan and being accepted as an offering."
+        },
+        {
+          "entity": "Parashurama (Rama with Axe)",
+          "encounter": "Received a personal message from Parashurama via another person's dream, 19 years after an Aghori meeting."
+        },
+        {
+          "entity": "Aghori",
+          "encounter": "Met an Aghori ascetic, which planted seeds for his future connection with Aghora."
+        },
+        {
+          "entity": "Anandamayi Ma",
+          "encounter": "Her words 'Dealing – you will succeed' remained with him as a mantra."
+        },
+        {
+          "entity": "Krishna",
+          "encounter": "Aura of the 'Saint of Boiled Potatoes' revealed Krishna's shadow, indicating she had seen him personally"
+        },
+        {
+          "entity": "Guru (Shailendra Sharma's guru)",
+          "encounter": "Audible voice warning him to leave train tracks before collision"
+        },
+        {
+          "entity": "Shankh Baba (guru of Ram Sia Sarkar)",
+          "encounter": "Heard about from Ram Sia Sarkar during her visit; his spirit stayed with her during her year-long samadhi"
+        },
+        {
+          "entity": "Hanuman",
+          "encounter": "Mentioned as having a temple in Tarot village, near a cave where Ram Sia Sarkar did samadhi"
+        },
+        {
+          "entity": "Ram (Lord Rama)",
+          "encounter": "Story of a woman who chanted 'Ram, Ram' all her life and the name appeared on her skull bone; referenced as an example of mantra devotion"
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "OM signs on feet, nail, and brain are interpreted as Shiva's mark of grace"
+        },
+        {
+          "entity": "Kali",
+          "encounter": "Sharma served at a Kali temple (Chuchura) known as 'Merciful Mother' where no animal sacrifices occur"
+        },
+        {
+          "entity": "Babaji",
+          "encounter": "Met him in person at the ashram in Benares at 2 AM on April 1, 1988; received detailed Kriya instruction"
+        },
+        {
+          "entity": "Yamadutas",
+          "encounter": "Theorized they track humans by scent and that Kumbh Mela bath confuses them"
+        },
+        {
+          "entity": "Babaji",
+          "encounter": "Encounter with Babaji expanded his consciousness and enabled realization of Time and Void"
+        },
+        {
+          "entity": "Krishna",
+          "encounter": "Encountered as the speaker of the Bhagavad Gita revealing His universal form as Time"
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "Contemplated as an aspect of Time, the destroyer, without beginning or end"
+        },
+        {
+          "entity": "Arjuna",
+          "encounter": "Referenced as the recipient of Krishna's revelation of Time"
+        },
+        {
+          "entity": "Krishna (Dark Lord of Govardhan)",
+          "encounter": "Performed parikrama of Govardhan hill, which is sacred to Krishna; received grace (kripa) from Him."
+        },
+        {
+          "entity": "Dattatreya",
+          "encounter": "The parikrama took place on Dattatreya Purnima night."
+        },
+        {
+          "entity": "Hanuman",
+          "encounter": "Other pilgrims chanted Hanuman hymns nearby."
+        },
+        {
+          "entity": "Indra",
+          "encounter": "Mentioned in context of Govardhan legend."
+        },
+        {
+          "entity": "Shailendranath Mukherjee (guru figure)",
+          "encounter": "An elderly sadhak in Puri who helped him find Kriya Yoga books and his teacher."
+        },
+        {
+          "entity": "Naga (serpent being / guardian of the land)",
+          "encounter": "Appeared in a dream as a three-meter-tall man in silk dhoti with yellow skin and vertical pupils; asked him not to harm his children (small golden snakes) and promised protection. Later, a golden cobra (possibly the same Naga) appeared physically."
+        },
+        {
+          "entity": "Two luminous beings (male and female, possibly celestial or divine)",
+          "encounter": "Appeared floating above the ground, with diamond-like bodies; they laughed and vanished like a hologram, leaving him ecstatic. After their visit, two blue-throated jays began arriving daily."
+        },
+        {
+          "entity": "Krishna (Temple)",
+          "encounter": "Near Govardhan, their vehicle broke down near His temple, preventing departure."
+        },
+        {
+          "entity": "Shiva (Shivalingam)",
+          "encounter": "Prophecy: a future yogi will find a Shivalingam and establish it on the site of his own cremation to lift Pulastya's curse."
+        },
+        {
+          "entity": "Lal Baba",
+          "encounter": "Lal Baba is Sharma's spiritual mentor (guru), whose reputation draws seekers."
+        },
+        {
+          "entity": "Yogananda (reincarnated)",
+          "encounter": "Meets the reincarnated Yogananda (as Mukunda Lal Ghosh) at Banamali Lahiri's house in Varanasi."
+        },
+        {
+          "entity": "Banamali Lahiri",
+          "encounter": "Regularly visits and discusses spiritual matters with Lahiri Mahasaya's nephew."
+        },
+        {
+          "entity": "Gorakhnath",
+          "encounter": "Mentions Gorakhnath as the author of the 'Siddha Siddhanta' text, establishing a link to the Nath tradition."
+        },
+        {
+          "entity": "Babaji",
+          "encounter": "Taught Shailendra the highest pranayama"
+        },
+        {
+          "entity": "Siddha (seated under tree, grey-bearded)",
+          "encounter": "Appeared during séance in Mathura, told Shailendra to start commentary on Gita"
+        },
+        {
+          "entity": "Shiva (as Nīlakaṇṭha, blue-throated)",
+          "encounter": "Two nilkanth birds (symbolizing Shiva) sat behind his chair while he dictated Gita commentary"
+        },
+        {
+          "entity": "Shiva (as Mahadeva)",
+          "encounter": "Performed Abhishek at Gupteshwara Mahadeva shrine; chanted 'Om Namah Shivaya'"
+        },
+        {
+          "entity": "Dark spirits (demonic realms)",
+          "encounter": "Attempted to obstruct the Gita commentary; seen as plumes of smoke outside the gate"
+        },
+        {
+          "entity": "Golden shadow (double/kṛtyā?)",
+          "encounter": "Appeared to his left after third chapter of Gita, stayed until the end"
+        },
+        {
+          "entity": "Shiva (Mahadeva)",
+          "encounter": "Dictated commentary on Shiva Sutras, felt Shiva as one of the authors"
+        },
+        {
+          "entity": "Shakti",
+          "encounter": "Felt Shakti as co-author of Shiva Sutras"
+        },
+        {
+          "entity": "Dattatreya",
+          "encounter": "Sensed Dattatreya as third author of Shiva Sutras"
+        },
+        {
+          "entity": "Babaji",
+          "encounter": "Received initiation and kriva techniques from Babaji; considered the most important meeting"
+        },
+        {
+          "entity": "Monkey-faced being (langur) in dream",
+          "encounter": "Appeared in a dream, promised to help, and later his situation improved"
+        },
+        {
+          "entity": "Giriraj (Govardhan hill deity)",
+          "encounter": "Prayed to Giriraj during parikrama, asking for a permanent home"
+        },
+        {
+          "entity": "Dalai Lama",
+          "encounter": "Had a brief audience; received a white scarf but gave it away"
+        },
+        {
+          "entity": "Astral female spirit (guardian of the smashan)",
+          "encounter": "Appears in a red Rajasthan dress, places a jasmine garland around his neck, and vanishes."
+        },
+        {
+          "entity": "White-bearded sage (unknown)",
+          "encounter": "Appeared in a vision under the old tree at the smashan, conveying the message to begin writing commentaries on the Gita."
+        },
+        {
+          "entity": "Sage (first raja's encounter)",
+          "encounter": "Legendary sage who blessed the Bharatpur dynasty and designated the smashan as a place of liberation; indirectly linked to Sharma through the site's history."
+        },
+        {
+          "entity": "Mahavatar Babaji",
+          "encounter": "Appeared to him, gave instructions"
+        },
+        {
+          "entity": "Hanuman",
+          "encounter": "Performed puja to him at Govardhan, considered as brother"
+        },
+        {
+          "entity": "Anandamayi Ma",
+          "encounter": "Gave instruction"
+        },
+        {
+          "entity": "Shiva (Mahadev)",
+          "encounter": "Realization of past lives involving Mahadev"
+        },
+        {
+          "entity": "Vishwanath (Shiva)",
+          "encounter": "Had darshan"
+        },
+        {
+          "entity": "Yamuna (goddess)",
+          "encounter": "Her arrival is described"
+        },
+        {
+          "entity": "Devi Braja",
+          "encounter": "Met Avadhut and Devi Braja"
+        },
+        {
+          "entity": "Matsyendranath",
+          "encounter": "Encountered"
+        },
+        {
+          "entity": "Guru Datta",
+          "encounter": "Encountered"
+        },
+        {
+          "entity": "Nirmala Devi",
+          "encounter": "Encountered"
+        },
+        {
+          "entity": "Mother (goddess)",
+          "encounter": "Making Mother happy, encountering Mother spirit"
+        },
+        {
+          "entity": "God of Death (Yama)",
+          "encounter": "Encountered as entity"
+        },
+        {
+          "entity": "Brahmarakshasa",
+          "encounter": "Encountered"
+        },
+        {
+          "entity": "Spirits/ghosts",
+          "encounter": "Numerous encounters with ghosts and spirits"
+        },
+        {
+          "entity": "Naga",
+          "encounter": "Encountered"
+        },
+        {
+          "entity": "Aghori",
+          "encounter": "Last meditation of an Aghori witnessed"
+        },
+        {
+          "entity": "Naths (three Naths)",
+          "encounter": "Encountered"
+        },
+        {
+          "entity": "Govardhan Maharaj",
+          "encounter": "Heard the voice of Govardhan Maharaj instructing him not to visit a saint, and later that the saint needed his presence for liberation."
+        },
+        {
+          "entity": "Giriraj Maharaj",
+          "encounter": "Associated with the peaceful death of Pandit ji at the foothills of Giriraj, considered a blessing."
+        },
+        {
+          "entity": "Hanuman",
+          "encounter": "Locals believed his superhuman strength was due to Hanuman's grace for his celibacy and purity."
+        },
+        {
+          "entity": "Varaha (Vishnu's boar avatar)",
+          "encounter": "Golden idol of Varaha rumored to be at the bottom of the pond"
+        },
+        {
+          "entity": "Nag (giant serpent)",
+          "encounter": "Direct encounter: spoke telepathically, offered blessings and protection"
+        },
+        {
+          "entity": "Krishna",
+          "encounter": "Braj considered land of Krishna; water turning milky symbolized divine presence"
+        },
+        {
+          "entity": "Hanuman",
+          "encounter": "Monkey entered Hanuman temple and attended evening pujas"
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "Identified by a 93-year-old African-American oracle as being related to Shiva; his muladhara chakra said to be brightest on the planet."
+        },
+        {
+          "entity": "Bhairava",
+          "encounter": "Implicitly associated with his dogs; guards at the cremation ground fled thinking Bhairava and his dogs were patrolling."
+        },
+        {
+          "entity": "Govardhan Hill (personified as a deity)",
+          "encounter": "Praised as 'Lord of Govardhan Hill' for providing financial help."
+        },
+        {
+          "entity": "Babaji",
+          "encounter": "Invoked as part of the parampara; credited with providing grace for finances."
+        },
+        {
+          "entity": "Babaji",
+          "encounter": "Multiple personal meetings and ongoing mental communications"
+        },
+        {
+          "entity": "Gorakhnath",
+          "encounter": "Friend S.R. Sithole hypothesized connection between Gorakhnath and Babaji, but Shailendra considers them different beings"
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "Performed puja with milk abhishek to Shiva using a horn"
+        },
+        {
+          "entity": "Krishna",
+          "encounter": "Living in Braj, land of Krishna; participated in Krishna lila scene at the ISKCON festival"
+        },
+        {
+          "entity": "Chaitanya Mahaprabhu",
+          "encounter": "Connected via ISKCON celebration honoring Srila Prabhupada, considered a representative of Chaitanya"
+        },
+        {
+          "entity": "Kanif Nath",
+          "encounter": "Learned invocation of Kanif Nath from the snake charmer Bhimnath; later recognized his words in the Gorakh Bodh text."
+        },
+        {
+          "entity": "Matsyendranath",
+          "encounter": "Recognized that Bhimnath's greeting was the words of Matsyendranath, the great Nath guru."
+        },
+        {
+          "entity": "Takshaka",
+          "encounter": "Raktavanchi cobras are said to descend from Takshaka, the king of cobras."
+        },
+        {
+          "entity": "Vasuki",
+          "encounter": "The sacred snake Vasuki is mentioned in the context of the Sapera tribe."
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "Vasuki is depicted around Shiva's neck; the location of the bull Gandhiji later became a Shiva temple."
+        },
+        {
+          "entity": "Naga / Nagas",
+          "encounter": "The Sapera consider snakes as divine incarnations of the Nagas, descendants of Vasuki."
+        },
+        {
+          "entity": "Gorakhnath",
+          "encounter": "The story of Kanif Nath and Gorakhnath is recounted: Gorakhnath cursed Kanif Nath's descendants to be snake charmers."
+        },
+        {
+          "entity": "Hanuman",
+          "encounter": "Appears in his room to stop bleeding from python attack; also communicates through a medium (son of astrologer) during 1995-1996."
+        },
+        {
+          "entity": "Yamuna",
+          "encounter": "He summons her, causing a flood at the smashan; drama of injury and healing unfolds."
+        },
+        {
+          "entity": "Pampa (Parvati)",
+          "encounter": "The smashan pond worshipped as Pampa Sarovar (form of Goddess Parvati) during the annual Hanuman puja."
+        },
+        {
+          "entity": "Spirits (dark entities)",
+          "encounter": "Hanuman collects them; spirits attend the smashan as guests during his rituals."
+        },
+        {
+          "entity": "Vishnu",
+          "encounter": "Appeared suddenly in his central room (June 16, 1996); grabbed him under his arm"
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "Appeared immediately after Vishnu (June 16, 1996); pulled him from Vishnu's hold; carried him outside to pavilion; later caused flooding; his footprints made rudraksha trees grow"
+        },
+        {
+          "entity": "Yamuna",
+          "encounter": "Received offerings at Vrindavan (June 25, 1996) with request to come to smashan; accepted the invitation, leading to flood"
+        },
+        {
+          "entity": "Babaji",
+          "encounter": "Prayed to him during hemorrhage; heard his voice reply that bleeding would stop"
+        },
+        {
+          "entity": "Hanuman",
+          "encounter": "Appeared during hemorrhage; stood in room with lion-like tail; later seen on roof holding a flag"
+        },
+        {
+          "entity": "Ashwatthama",
+          "encounter": "Ancestor of his clan; blessed by Shiva to become immortal Brahmarishi"
+        },
+        {
+          "entity": "Hanuman",
+          "encounter": "Direct communication on mental plane; appears as indistinct figure of an old man, sometimes in traditional form but always with his back turned"
+        },
+        {
+          "entity": "Babaji (Mahavatar)",
+          "encounter": "Second physical meeting in late December 1995, at Govardhan; Babaji sat on a wooden cot, spoke, and a dog licked his feet"
+        },
+        {
+          "entity": "Shakti",
+          "encounter": "Daily evening puja at the pond in honor of Shakti"
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "Abhishek (milk offering) on a Shiva lingam at the smashan"
+        },
+        {
+          "entity": "Dattatreya",
+          "encounter": "Second Babaji meeting coincided with Dattatreya's birthday"
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "Discovers a natural Shivalingam; establishes it as a temple; performs puja; receives guidance from a voice identified as Shiva's; encounters a golden snake as a sign of Shiva's presence."
+        },
+        {
+          "entity": "Hanuman",
+          "encounter": "Not mentioned in this passage."
+        },
+        {
+          "entity": "Krishna",
+          "encounter": "Not directly encountered, but the location Govardhan is associated with Krishna."
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "Performs puja to Shivalingam, feels Shiva's presence and energy, becomes one with Him in sadhana."
+        },
+        {
+          "entity": "Shakti (Devi)",
+          "encounter": "Senses Her presence on the Smashan; discovers stone fragments resembling female organs, confirming the place as Shakti Pitha."
+        },
+        {
+          "entity": "Child actor as Shiva",
+          "encounter": "A boy dressed as Shiva performs a humble puja, which he interprets as a blessing and re-consecration of the temple."
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "Possibly the chandala who initiated Shankara, thus indirectly linked to Sharma's lineage"
+        },
+        {
+          "entity": "Babaji",
+          "encounter": "Encountered through lineage study; observed his siddhis (no shadow, invisibility) and teachings"
+        },
+        {
+          "entity": "Hanuman",
+          "encounter": "Performed puja to Hanuman at Govardhan in 2008"
+        },
+        {
+          "entity": "Ravana",
+          "encounter": "Studied and practiced from his text 'Puran Indrajaal'"
+        },
+        {
+          "entity": "Dattatreya",
+          "encounter": "Referenced in the text 'Ravan Sanhita'; associated with the Nath lineage"
+        },
+        {
+          "entity": "Nath Siddhas (Navnath)",
+          "encounter": "Described as having siddhis like body control, invisibility, etc."
+        },
+        {
+          "entity": "Babaji",
+          "encounter": "Delivered the Sri Yantra via a silent companion in December 1995."
+        },
+        {
+          "entity": "Ganganath (Nath siddha)",
+          "encounter": "Delivered yantras and conveyed Matsyendranath's invitation."
+        },
+        {
+          "entity": "Matsyendranath",
+          "encounter": "Met personally in Mahurgarh; blessed Sharma by patting his head."
+        },
+        {
+          "entity": "Dattatreya",
+          "encounter": "Visited the Dattatreya temple in Mahurgarh and meditated there."
+        },
+        {
+          "entity": "Mahavatar Babaji",
+          "encounter": "Received teaching about Aghora and cremation ground directly from Babaji."
+        },
+        {
+          "entity": "Dattatreya",
+          "encounter": "Saw Dattatreya's transparent three-headed figure appear at the temple; Dattatreya included Govardhan in his nightly route."
+        },
+        {
+          "entity": "Dattatreya's four black dogs",
+          "encounter": "Saw the semi-transparent, large black dogs with his sister Devahuti; they were emissaries of Dattatreya."
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "Received Shiva lingam; performed puja; believed Shiva appeared as Aghora aspect."
+        },
+        {
+          "entity": "Devi (four-armed goddess on cat/tiger)",
+          "encounter": "Statue found, installed; goddess fills area with sweetness, watches his night sadhana"
+        },
+        {
+          "entity": "Hanuman",
+          "encounter": "Speaks to him personally in October 1995 due to arrival of Shakti"
+        },
+        {
+          "entity": "Babaji (Mahavatar)",
+          "encounter": "Appears at the smasana, brings Sri Yantra"
+        },
+        {
+          "entity": "Mahadev (Shiva)",
+          "encounter": "Appears in darshan hall in June 1996; his sweat burns Sharma's skin"
+        },
+        {
+          "entity": "Shakti (Adi Shakti, Smashan Kali)",
+          "encounter": "Signs of her presence: stone yoni, breast, navel; trees menstruate; she called Shiva to the smasana"
+        },
+        {
+          "entity": "Ganganath (Nath yogi, immortal)",
+          "encounter": "Visits with two companions, bows to Sharma, discusses Nath tradition"
+        },
+        {
+          "entity": "Darshaninath (Nath yogi)",
+          "encounter": "Companion of Ganganath, controls media"
+        },
+        {
+          "entity": "Chandnath (Nath yogi, thousands of years old)",
+          "encounter": "Guru of Ganganath and Darshaninath, taught by Smashan Kali"
+        },
+        {
+          "entity": "Dattatreya (Avadhut)",
+          "encounter": "Referenced as the three-headed Guru; his Shiva-Aghora aspect awakened by Shivalingam installation"
+        },
+        {
+          "entity": "Gorakshanath",
+          "encounter": "Mentioned as ancient immortal teacher of Chandnath"
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "Found a natural Shivalingam at Govardhan, indicating Shiva's direct grace and command to begin searching."
+        },
+        {
+          "entity": "Adi Shakti (Great Goddess)",
+          "encounter": "Left stone fragments as signs of her presence at the cremation ground; she chose the place to bless the lineage."
+        },
+        {
+          "entity": "Ganganath",
+          "encounter": "Appeared at the cremation ground to see the Shivalingam and asked for a meeting with the finder."
+        },
+        {
+          "entity": "Matsyendranath",
+          "encounter": "Invited Sharma to Mahurgad and gave special instructions for yoga sadhana and worship."
+        },
+        {
+          "entity": "Dattatreya",
+          "encounter": "Appeared as the Kula guru of the Nath order, after arrangements were made for his arrival."
+        },
+        {
+          "entity": "Babaji",
+          "encounter": "Knocked on Sharma's room door and gave instructions on new levels of Kriya."
+        },
+        {
+          "entity": "Matsyendranath",
+          "encounter": "Saw his kundalas and realized they were worn in earlobes, not cartilage"
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "Worshiped as first Guru; performed puja at smashan; known as Aghor, dwells on cremation ground"
+        },
+        {
+          "entity": "Bhairav",
+          "encounter": "Made offerings of horn-blowing before dhuni"
+        },
+        {
+          "entity": "Babaji",
+          "encounter": "Included in parampara worship"
+        },
+        {
+          "entity": "Dattatreya",
+          "encounter": "Recognized as origin of Aghora, Nath, and Kapalika traditions"
+        },
+        {
+          "entity": "Aghori in Benares",
+          "encounter": "Met a true Aghori at insistence of Satyacharan Lahiri"
+        },
+        {
+          "entity": "Matsyendranath",
+          "encounter": "Received initiation, instructions for dhyuni, and kundalas at Mahurgad."
+        },
+        {
+          "entity": "Dattatreya",
+          "encounter": "Believed Dattatreya was present at Mahurgad in disguise as an old beggar during the noon break."
+        },
+        {
+          "entity": "Devahuti",
+          "encounter": "Felt her presence behind him during the meeting with the Nath yogis, although physically impossible."
+        },
+        {
+          "entity": "Dhumavati",
+          "encounter": "Her yantra was installed before the dhyuni was built; she was invoked as the goddess of the dhyuni, acting as a portal for spirits."
+        },
+        {
+          "entity": "Shiva (as Avadhut, Aghora, fifth angry form)",
+          "encounter": "The installation of the Shivalinga on the cremation ground was seen as an invocation of this form of Shiva."
+        },
+        {
+          "entity": "Shivaganas, Bhutas, Nagas, Yakshas, Pramathas, Pishachas, Raksha Ganas, Vinayakas, Guhyakas, Manushyas, Vidyadharas",
+          "encounter": "These beings arrived nightly through the dhyuni portal; observed as transparent spheres, triangles, squares, and other forms."
+        },
+        {
+          "entity": "Babaji (Mahavatar Babaji)",
+          "encounter": "Recognizes Babaji's face and energy in the murti of Badrinath at Badrinath temple. Later interprets the priest incident as Babaji's test and humor."
+        },
+        {
+          "entity": "Adi Shakti (Devi)",
+          "encounter": "Believes the high-old woman who blessed him at Badrinath was Adi Shakti in disguise."
+        },
+        {
+          "entity": "Rama",
+          "encounter": "Felt Rama's strong presence in Rameswaram."
+        },
+        {
+          "entity": "Hanuman",
+          "encounter": "Felt Hanuman's presence in Rameswaram; refers to Hanuman in the blessing prophecy ('You will become world-famous, like Hanuman')."
+        },
+        {
+          "entity": "Hanuman (as Balaji)",
+          "encounter": "Appeared to him at Govardhan, revealed secrets of the spirit realm and tasked him with removing Shankaracharya's seals"
+        },
+        {
+          "entity": "Adi Shakti",
+          "encounter": "Her presence at the cremation ground (smashan) confirmed the spiritual merits of the lineage"
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "Performed puja to Shiva; Shivagana mentioned in context of transporting a spirit to Amarnath"
+        },
+        {
+          "entity": "Mahavatar Babaji",
+          "encounter": "Performed puja to Babaji; Babaji initiated Lahiri Mahasaya in 1857"
+        },
+        {
+          "entity": "Powerful spirit (captured)",
+          "encounter": "Transported from Kedarnath to Amarnath for transfer to Shivagana"
+        },
+        {
+          "entity": "Elderly women at Badrinath",
+          "encounter": "Two mysterious women, possibly divine, met at a restaurant during the pilgrimage"
+        },
+        {
+          "entity": "Radha and Krishna",
+          "encounter": "Stones worshipped as Radha and Krishna along roadsides in Braj"
+        },
+        {
+          "entity": "Hanuman",
+          "encounter": "Stones worshipped as Hanuman in Braj fields"
+        },
+        {
+          "entity": "Yama (Yamaraj)",
+          "encounter": "Received permission to live on Govardhan hill from Yama; visited by vision of black buffalo"
+        },
+        {
+          "entity": "Yamraj (Yama, God of Death and Dharma)",
+          "encounter": "Sharma rode a buffalo to meet Yama, who spoke about Moksh Bhumi and entrusted him to care for the smashan."
+        },
+        {
+          "entity": "Hanuman (Balaji)",
+          "encounter": "Hanuman first called him 'Yogiraj' and commissioned him as the presiding force of exorcism darbars."
+        },
+        {
+          "entity": "Shiva (Mahadev)",
+          "encounter": "Yama mentioned that Shiva would 'soon come to his wife'; details not remembered."
+        },
+        {
+          "entity": "Gorakhnath",
+          "encounter": "Sharma recalled Gorakhnath's saying 'Meri bhakti, Guru ki Shakti' and made it his motto."
+        },
+        {
+          "entity": "Chhote Maharaj (brahmarakshas)",
+          "encounter": "Spoke through medium Umeshankar Sharma; offered help, later provided protection."
+        },
+        {
+          "entity": "Hanuman (Balaji)",
+          "encounter": "Related stories of Hanuman's judgments on ghosts; Chhote Maharaj was a devotee who sought forgiveness."
+        },
+        {
+          "entity": "Vishnu",
+          "encounter": "At Meenakshi Temple, the temple was built where Vishnu gave his sister Meenakshi in marriage to Shiva."
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "At Srikalahasti, meditated at the air lingam; devotees chanted 'Har Har Mahadev' and prostrated before him."
+        },
+        {
+          "entity": "Bharadvaja Rishi",
+          "encounter": "Went to Srikalahasti to pay respects at the samadhi of Bharadvaja Rishi, an ancestor and founder of their clan."
+        },
+        {
+          "entity": "Govardhan Maharaj (Krishna as the hill)",
+          "encounter": "Recognized that the success of tree plantations was due to 'the Dark Lord of the Hill, Govardhan Maharaj himself'."
+        },
+        {
+          "entity": "Chunmun (monkey)",
+          "encounter": "A monkey living with him inspired planting 11,000 jamun trees for her relatives."
+        },
+        {
+          "entity": "Deities of the five elements (Panchabhuta)",
+          "encounter": "At Srikalahasti, experienced the symbolism of the air element (Vayu) as representing Prana, consciousness, and time-Shiva."
+        },
+        {
+          "entity": "Hanuman",
+          "encounter": "Hanuman appeared to Sharma, shared a part of his power, gave tasks related to the ghost world, and later brought a spirit for liberation."
+        },
+        {
+          "entity": "Pret Raj Sarkar (king of ghosts, assistant of Hanuman)",
+          "encounter": "Encountered at Mehandipur Temple; a stone deity with piercing black eyes, heavy energy."
+        },
+        {
+          "entity": "Mahakal Bhairav (Captain Kotwal, general of Hanuman's army)",
+          "encounter": "Encountered at Mehandipur Temple; a stone with black eyes, a trishul, and a hole in the floor for judgment."
+        },
+        {
+          "entity": "Unnamed spirit (former messiah of a major world religion)",
+          "encounter": "Hanuman brought this spirit to Sharma for liberation; the spirit was burdened by collective sins of followers and trapped in lower worlds."
+        },
+        {
+          "entity": "Hanuman",
+          "encounter": "The naked sadhus built a temple to Hanuman with proceeds from alchemy."
+        },
+        {
+          "entity": "Chhinnamasta",
+          "encounter": "Nirmala Devi received mantra of Chhinnamasta from her guru; after her death, her tapasya helped her contact him astrally. He later received her soul and facilitated her rebirth; the goddess's grace remains with the reborn girl."
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "At his mother's cremation, instead of traditional 'Ram naam satya hai', people chanted praises to Shiva: 'Har Har Mahadev, Shambo Jai Giriraj Ji Manasi Gange'."
+        },
+        {
+          "entity": "Nath Siddhas / Naths",
+          "encounter": "The text mentions that Naths call the ability to help others 'Guru's power', and the parampara supports this energy."
+        },
+        {
+          "entity": "Mahamari",
+          "encounter": "Vision in 2012; she asked permission to begin her work; granted."
+        },
+        {
+          "entity": "Unknown sadhu (alchemist)",
+          "encounter": "Met on Puri beach; taught alchemical formulas."
+        },
+        {
+          "entity": "Shakti",
+          "encounter": "Perceived her as winking and whispering a mantra; later saw the transformation of a hermaphrodite child as her smile"
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "Installed a Shiva lingam at the cremation ground"
+        },
+        {
+          "entity": "Mahamari (Great Epidemic goddess)",
+          "encounter": "Heard the story of a pandit who was forced to escort her into a village, causing a cholera outbreak"
+        },
+        {
+          "entity": "Spirits of 16,000 disciples of Satyacharan Lahiri",
+          "encounter": "Inherited responsibility for them; they followed him and attended puja at the cremation ground"
+        },
+        {
+          "entity": "Two ash-smeared jinns (giant beings)",
+          "encounter": "Observed at the cremation ground puja; one tried to approach drummers, the other stayed near a tree"
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "Mahamrityunjaya mantra interpreted as revealing three substances: mercury, mumiyo, and black datura (forms of Shiva)"
+        },
+        {
+          "entity": "Kanjar spirit world",
+          "encounter": "Kanjar tribe practices ancestor worship and leaves offerings on smashans"
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "Shiva is referenced in the myth of Manikarnika Ghat and in the installation of a Shivlingam; the brahmarakshasas served Shiva after liberation."
+        },
+        {
+          "entity": "Vishnu",
+          "encounter": "Vishnu is mentioned as the one who begged Shiva not to destroy Varanasi, leading to the boon of Manikarnika Ghat."
+        },
+        {
+          "entity": "Parvati",
+          "encounter": "Parvati is part of the Manikarnika myth (she and Shiva bathed there, her earring fell)."
+        },
+        {
+          "entity": "Sati",
+          "encounter": "Sati's earring fell during her cremation, leading to the curse on the Dom community."
+        },
+        {
+          "entity": "Bhola Shankar Tewari (brahmarakshasa)",
+          "encounter": "Sharma encountered this ancient brahmin ghost in Varanasi; it followed him for years and helped him, then disappeared after the Shivlingam installation."
+        },
+        {
+          "entity": "Jata Shankar Pandey (brahmarakshasa)",
+          "encounter": "Similar to above, encountered together with Bhola Shankar."
+        },
+        {
+          "entity": "Ghost of the young photographer",
+          "encounter": "Sharma met his ghost during the tarpan ritual for his father, heard his story, and helped him attain peace."
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "Khechari mudra is described as Shiva's favorite mudra, granting protection and clairvoyance."
+        },
+        {
+          "entity": "Avadhut",
+          "encounter": "Instructed by Ganganath that an Avadhut can be summoned if a brother and sister live on a cremation ground."
+        },
+        {
+          "entity": "Devi of Braja",
+          "encounter": "Devahuti is described as an instrument through whom the Devi of Braja observed, breathed, and softened grief and illness."
+        },
+        {
+          "entity": "Seven Rishis",
+          "encounter": "Devahuti had a near-death vision where six rishis in a spaceship offered her a seat, but she chose to stay with her mother."
+        },
+        {
+          "entity": "Ganesha",
+          "encounter": "Seen as myriads emerging from a mandala in the sky during a Mexican moon ceremony."
+        },
+        {
+          "entity": "Shiva (Adi Guru)",
+          "encounter": "Received inner guidance at Kashi Vishwanath temple to ask for a guru and teaching"
+        },
+        {
+          "entity": "Shailendra Sharma",
+          "encounter": "Saw his photo and felt a powerful energy; later became his disciple"
+        },
+        {
+          "entity": "Parashurama",
+          "encounter": "Appeared in Devahuti's dream (around 2004) coming out of a pond at the smashan, saying 'Tell Shailendra that the time for his initiation has come.'"
+        },
+        {
+          "entity": "Young ascetic (astral Guru)",
+          "encounter": "Appeared in Sharma's vision, walked through fire, and taught him the Svapna mantra three times."
+        },
+        {
+          "entity": "Hanuman",
+          "encounter": "Sharma had regular conversations with Hanuman; Hanuman mentioned Devahuti's impending death."
+        },
+        {
+          "entity": "Babaji (Mahavatar)",
+          "encounter": "Babaji instructed Sharma to start a new practice on his 57th birthday; Sharma knows Babaji watches over him."
+        },
+        {
+          "entity": "Shri Satyacharan Lahiri (Lahiri Mahasaya)",
+          "encounter": "Part of the parampara; watches over Sharma."
+        },
+        {
+          "entity": "Babaji",
+          "encounter": "Sharma hears Babaji's voice ordering him to go instantly to Govardhan hill."
+        },
+        {
+          "entity": "Devahuti",
+          "encounter": "Deceased sister appears as a fully materialized being at Govardhan, later accompanied by the young ascetic (the same being who gave him the Guru mantra)."
+        },
+        {
+          "entity": "Young Ascetic / Guru mantra giver",
+          "encounter": "The same ascetic who had previously given Sharma the Guru mantra appears with Devahuti and speaks about her reincarnation."
+        },
+        {
+          "entity": "Hanuman",
+          "encounter": "It is mentioned that Hanuman himself protected Devahuti in the astral world (not directly encountered by Sharma in this passage)."
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "Personal encounter in 1996."
+        },
+        {
+          "entity": "Hanuman",
+          "encounter": "First appeared in 1996; later performed puja to him at Govardhan."
+        },
+        {
+          "entity": "Vasudeva",
+          "encounter": "Saw him in his heart; Vasudeva resided in the garden of his heart every night."
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "intervened to save Sharma from Vishnu's grasp, leading to Devahuti's visions"
+        },
+        {
+          "entity": "Krishna",
+          "encounter": "Devahuti claimed to converse with him; Sharma was skeptical"
+        },
+        {
+          "entity": "Ashwatthama",
+          "encounter": "Devahuti sought his blessing for a fearless death at Amarkantak"
+        },
+        {
+          "entity": "Kali",
+          "encounter": "Devahuti visited Kali temples at Chuchura, Kalighat, and Tarapith"
+        },
+        {
+          "entity": "Tara",
+          "encounter": "Devahuti prayed to Mother Tara at Tarapith for blessings"
+        },
+        {
+          "entity": "Yogamaya",
+          "encounter": "Devahuti visited her temple at Vindhyachal"
+        },
+        {
+          "entity": "Dattatreya",
+          "encounter": "Devahuti visited his temple on Girnar; a Nath yogi assured her of Sharma's healing"
+        },
+        {
+          "entity": "Hanuman",
+          "encounter": "Appeared to Sharma as an old man and guided him to an astral meeting with Devahuti"
+        },
+        {
+          "entity": "Krishna",
+          "encounter": "Cited Krishna's words from Bhagavad Gita about elements and time"
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "Referenced Shiva Sutras, described soul as Shiva; commented on Shiva Sutras"
+        },
+        {
+          "entity": "Babaji (Mahavatar)",
+          "encounter": "Trained the Fifth Guru in advanced Kriyas and taught Omkar kriya and conscious exit from the body"
+        },
+        {
+          "entity": "Shri Satyacharan Lahiri",
+          "encounter": "Transmitted six levels and techniques of Kriya before leaving the body"
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "Sharma performs daily puja to Shiva on the cremation ground"
+        },
+        {
+          "entity": "Devi (Goddess)",
+          "encounter": "Sharma installed a brass statue of Devi, which brought a new powerful presence"
+        },
+        {
+          "entity": "Hanuman",
+          "encounter": "During a Hanuman puja, a mace moved by itself, interpreted as a sign from Hanuman"
+        },
+        {
+          "entity": "astral spirits and ghosts",
+          "encounter": "communicated with them and their lords"
+        },
+        {
+          "entity": "astral rulers",
+          "encounter": "observed and spoke about their hierarchy shifts"
+        },
+        {
+          "entity": "Mahamari (Goddess of epidemics)",
+          "encounter": "She asked his permission to begin her work eight years before the pandemic."
+        },
+        {
+          "entity": "Matsyendranath",
+          "encounter": "Encountered him in Mahurgad; received blessings for commentary work on Gorakh Bodh"
+        },
+        {
+          "entity": "Satyacharan Lahiri (his guru, a disciple of Lahiri Mahasaya)",
+          "encounter": "Appeared in subtle body multiple times after physical death: in 1993 during early smashan life, before installing a Shivalingam, and before Devahuti's death."
+        },
+        {
+          "entity": "Babaji (Mahavatar Babaji)",
+          "encounter": "Sent thought-messages and appeared on the physical plane to guide Sharma."
+        },
+        {
+          "entity": "Mahavatar Babaji (as above)",
+          "encounter": "Physical-plane appearance."
+        },
+        {
+          "entity": "Great Mother (Devi/Shakti)",
+          "encounter": "Felt her breath through his body during samadhi; Earth as Mother."
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "Worships Shiva nightly on the smashan; lives as His devotee"
+        },
+        {
+          "entity": "Shakti",
+          "encounter": "Honors the Great Mother; desires to remain with Her forever"
+        },
+        {
+          "entity": "Babaji",
+          "encounter": "Received direct instruction from Mahavatar Babaji to take up residence on the smashan and practice a special Kriya"
+        },
+        {
+          "entity": "Hanuman",
+          "encounter": "Performed puja to him at Govardhan (inferred from context; not explicit in this passage)"
+        },
+        {
+          "entity": "Babaji",
+          "encounter": "Received signal not to translate Hatha Yoga Pradipika; later permission came; learned that Svātmarāma was Babaji."
+        },
+        {
+          "entity": "Matsyendranath",
+          "encounter": "Studied his dialogue with Gorakhnath in 'Gorakh Bodh' over 40 years ago."
+        },
+        {
+          "entity": "Gorakhnath",
+          "encounter": "Same text; considered a dialogue between guru and disciple."
+        },
+        {
+          "entity": "Kali (Shyama / Dark Mother)",
+          "encounter": "Personal insight equated Kali with Earth; both are 'Shyama' (Dark), representing destruction and protection. Kali's iconography (naked, garland of skulls) mirrors Earth's nature."
+        },
+        {
+          "entity": "Shiva",
+          "encounter": "Recognized Earth as floating on the void (Shiva) just as Kali stands on Shiva's body; time (Shiva) supports the planet."
+        },
+        {
+          "entity": "Yamaraja",
+          "encounter": "Studied Hindu concept of Yama as ruler of souls; used it to teach Dharma of death."
+        },
+        {
+          "entity": "Gorakhnath",
+          "encounter": "Quoted 'Gorakh Bodh': 'Who is the husband of Earth? The Void'—supporting his understanding of Earth's marriage to emptiness."
+        },
+        {
+          "entity": "Great Mother (Earth as goddess)",
+          "encounter": "Personal devotion to Earth as the source of life, death, and spiritual transformation; sought Her blessing for the journey."
+        }
+      ],
+      "places": [
+        "Govardhan",
+        "Gaya",
+        "Mehandipur",
+        "Devaldhar (near Bageshwar)",
+        "Himalayas (Trishul and Nanda Devi peaks)",
+        "Bhopal",
+        "Gwalior",
+        "Sagar, Madhya Pradesh",
+        "Sagar central prison (across from their home)",
+        "Mount Amara",
+        "Govardhan (referred to as Gowardhan, site of parikrama)",
+        "Rajasthan (Jaisalmer, Thar Desert)",
+        "Delhi (Paharganj, 'Kaiser Castle' hotel)",
+        "Mathura district (Uttar Pradesh, Govardhan area)",
+        "Sagor",
+        "Shivpuri",
+        "Birla Mandir in Gwalior",
+        "Gwalior Fort",
+        "Maharaj Bada market in Gwalior",
+        "Upper Lake in Gwalior",
+        "Shimala slums in Gwalior",
+        "Kaitthal Fort",
+        "Agra",
+        "Assam",
+        "Burma",
+        "Allahabad (Prayagraj)",
+        "Patiala",
+        "Jodhpur",
+        "Calcutta (Kolkata)",
+        "Bhind",
+        "Morena",
+        "Shivram-ki-garhi (ancestral estate on Yamuna)",
+        "Gwalior (palace Jai Vilas, Gangasagar baori)",
+        "Pune",
+        "Vrindavan",
+        "Mathura",
+        "Puri (Karar Ashram)",
+        "Varanasi (Kashi/Benares)",
+        "Farm in Gwalior",
+        "Swargadwar cremation ground, Puri",
+        "Karar ashram, Puri",
+        "Puri",
+        "Varanasi (Benares)",
+        "Chusatti Ghat, Varanasi",
+        "Ganges River",
+        "Pandey Dharamshala, Varanasi",
+        "Kashi (Varanasi)",
+        "Puri (ashram, beach)",
+        "Konark (direction of travel)",
+        "Guru Dham (ashram in Puri)",
+        "Govardhan Math (monastery)",
+        "Karrar (initial ashram)",
+        "Gwalior (suburbs – rented house after farm contract ended)",
+        "Farm (location of the brother's contract)",
+        "Satyacharan Lahiri's home compound (includes Shiva shrine, statues of Lahiri Mahasaya and Tinkori Lahiri)",
+        "Benares",
+        "Karar ashram",
+        "Kashi Vishwanath Temple",
+        "Vishwanath Gali",
+        "Govardhan (implied through Parashurama connection)",
+        "Mehandipur (implied through Aghori connection)",
+        "Satya Lok (Lahiri Mahasaya's house on Chausati Street)",
+        "Jhansi",
+        "Sarnath",
+        "Lucknow",
+        "Chitrakut",
+        "Lakhnau",
+        "Tarot (village near Hanuman temple)",
+        "Govardhan (implied by Vrindavan vicinity)",
+        "Mehandipur (mentioned in context of Ram Sia Sarkar? Not directly; but included due to passage context?)",
+        "Gaya (not in this passage)",
+        "Rishikesh (not in this passage)",
+        "Vrindavan (alluded to as location of future palace vision)",
+        "Chuchura",
+        "Asansol",
+        "Allahabad (Kumbh Mela)",
+        "Kumbh Mela",
+        "Chitrakoot",
+        "Benares (Kashi)",
+        "Ashram of Kashi Mumuksha",
+        "Govardhan (Govardhan hill, referred to in context of upcoming puja)",
+        "Braja (region mentioned in footnote)",
+        "Goshala Nagar",
+        "Govardhan (Govardhan hill, Braj region)",
+        "Delhi",
+        "Uttar Pradesh (Braj region)",
+        "Farm (location not named, but near a city; sacred site: termite mound considered entrance to Bhogavati, the realm of the Nagas)",
+        "Govardhan Hill",
+        "Radha Kund",
+        "Bharatpur (Rajput palaces)",
+        "Vrindavan (implied)",
+        "Varanasi (Kashi)",
+        "Gwalior (Kālī Māta Mandir, Gupteshwara Mahadeva)",
+        "Ayodhya",
+        "Govardhan (Govardhan hill / Giriraj)",
+        "Bharatpur",
+        "Mehandipur (implied by proximity, though not explicit)",
+        "Gaya (implied by context of pilgrimage sites)",
+        "Benares (Varanasi)",
+        "Mount Amaresh",
+        "Nepal",
+        "Land of Liberation",
+        "Dig",
+        "Haridwar",
+        "Ganges",
+        "Rajasthan",
+        "Braj",
+        "rishikesh",
+        "orissa",
+        "bengal",
+        "Govardhan (smashan, Brahma Kund/Vrishbhan Kund)",
+        "Vrindavan (ashram where the astrologer's son came)",
+        "Lahore",
+        "Kashmir",
+        "Govardhan (smashan, palace, pond, kunda)",
+        "Kampur",
+        "Vrindavan (Manasi Ganga lake, Radha Kund)",
+        "Smashan (cremation site of Maharaja Daswant Singh, Bharatpur)",
+        "Gorakhpur",
+        "Gorakhnath Temple",
+        "Pashupatinath Temple (Nepal)",
+        "Banares (Varanasi)",
+        "Home of Lahiri Mahasaya in Varanasi",
+        "Smashan (cremation ground) near Govardhan",
+        "Shiva temple on the Smashan",
+        "Braja region",
+        "Red Samadhi (wooden pavilion at cremation site of Maharaja Jashwant Singh, Bharatpur, now at Siddha-Siddhanta Yoga Academy)",
+        "Mahurgarh (Mahur)",
+        "Nanded",
+        "Barsana",
+        "Girnar",
+        "Kolhapur",
+        "Mahurgad",
+        "Pashupatinath",
+        "Govardhan (smasana, dharamshala)",
+        "Bhatinda (Punjab, samadhi shrine of Ganganath?)",
+        "Mehandipur (implied by deity encounters)",
+        "Gaya (possibly referenced through lineage)",
+        "Govardhan cremation ground (smasan)",
+        "Smashan (cremation ground at Govardhan)",
+        "Gwalior (source of the rhinoceros hide shield)",
+        "Badrinath",
+        "Kanchi (Kanchipuram)",
+        "Sriperumbudur",
+        "Tirumala",
+        "Rameswaram",
+        "Kanyakumari",
+        "Kedarnath",
+        "Amarnath",
+        "Jageshwar",
+        "Dwaraka (Shardha Pith)",
+        "Puri (Govardhan Pith)",
+        "Kanchipuram (Kanchi Kamkoti)",
+        "Bhadrikashram (Jyoti Pith)",
+        "Govardhan (Braj region)",
+        "Gwalior (Morar smashan)",
+        "Kusum Sarovar (lake near Govardhan)",
+        "Smashan (cremation ground) – Sharma's first meeting with Yama; royal smashan (ashram)",
+        "Govardhan – location of Sharma's ashram; Rajkumar visits here for guidance.",
+        "Mehandipur – temple of Balaji (Hanuman) where Sharma's photo was placed; site of exorcism darbars.",
+        "Gaya Kshetra",
+        "Pret Raj temple",
+        "Pret-shila rock",
+        "Footprint of Lord Brahma",
+        "Pret Bhut Baori (well of the dead)",
+        "Sita Kund",
+        "Phalgu river",
+        "Meenakshi Temple, Madurai",
+        "Mallikarjuna Temple, Srisailam",
+        "Hyderabad",
+        "Srikalahasti",
+        "Manasi Ganga (lake)",
+        "Mathura-Barsana roads",
+        "Cremation ground (smashan) at Radha Kund",
+        "Mehandipur (temple of Hanuman-Balaji, Pret Raj Sarkar, Mahakal Bhairav)",
+        "Gaya Kshetra (Bihar, specifically Pret-shila hill for rituals for the dead)",
+        "Ghora Samshan (cremation ground near the ashram, used for observing spirits)",
+        "Govardhan (mentioned as a location in Braj, but not directly visited in this passage)",
+        "Madhya Pradesh",
+        "Uttar Pradesh",
+        "Uttarkashi",
+        "Mitaani",
+        "Shivram-ki-Garhi (village on Yamuna)",
+        "Varanasi (old Birla temple)",
+        "Moksh Bhumi (cremation ground)",
+        "Govardhan (Braj)",
+        "Lalitpur",
+        "Narmada River",
+        "Ganga River",
+        "Ujjain",
+        "Barangar",
+        "Varanasi / Kashi (holy city, cremation ghats)",
+        "Manikarnika Ghat (main cremation ghat in Varanasi)",
+        "Sarnath (where the brahmarakshasas told him to return to Braj)",
+        "Vrindavan (part of Braj, where he had lived before)",
+        "Govardhan (in Braj, where he found the royal cremation ground)",
+        "Gwalior (where he had a photographer friend)",
+        "Mitani (village near Asansol, West Bengal, where Nirmala Devi lived)",
+        "Asansol (near Mitani)",
+        "Himalayas",
+        "Puerto Vallarta",
+        "Mexico",
+        "Jalisco",
+        "Smashan (cremation ground)",
+        "Jangamwadi Math",
+        "Kudalasangama",
+        "Bijaipur",
+        "Mount Kailash",
+        "Smashan (cremation ground) at Govardhan",
+        "Narmada Kunda, Amarkantak",
+        "Chuchura (Kali temple)",
+        "Tarapith (Tara temple, Maha Smashan)",
+        "Kalighat, Kolkata (Kali temple)",
+        "Vindhyachal (Yogamaya temple)",
+        "Girnar mountain (Dattatreya temple)",
+        "Braj (predicted rebirth location)",
+        "Gwalior (where Sharma first met Narendra)",
+        "Vrindavan (temporary ashram)",
+        "Sarnath (temporary stay)",
+        "Delhi (for mother's cremation ritual)",
+        "Haidwar (Haridwar) - Sapata Sarovar ashram",
+        "Varanasi (Benares) - Chausatti Ghat",
+        "Gokarna",
+        "Bangalore",
+        "Braj (region)",
+        "cremation ground (smashan) where he lived from 1993",
+        "site of the dhuni (sacred fire)",
+        "location of Shivalingam installation",
+        "smashan (cremation ground), location unspecified",
+        "Govardhan (inferred from broader context)"
+      ]
+    },
+    "n_windows": 89,
+    "n_lineage": 39,
+    "n_events": 780,
+    "n_encounters": 285,
+    "n_places": 230
+  },
+  "metadata": {
+    "model": "deepseek-chat"
+  },
+  "errors": []
+}

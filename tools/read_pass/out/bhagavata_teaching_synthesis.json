@@ -1,0 +1,85 @@
+{
+  "success": false,
+  "data": {
+    "clusters": [],
+    "n_raw_teachings": 1343,
+    "n_clusters": 0,
+    "compression_ratio": 1343.0
+  },
+  "metadata": {
+    "model": "deepseek-v4-pro",
+    "n_raw_teachings": 1343
+  },
+  "errors": [
+    {
+      "code": "bad_json",
+      "message": "Expecting value: line 1 column 1 (char 0)",
+      "batch_start": 0
+    },
+    {
+      "code": "bad_json",
+      "message": "Expecting value: line 1 column 1 (char 0)",
+      "batch_start": 100
+    },
+    {
+      "code": "bad_json",
+      "message": "Expecting value: line 1 column 1 (char 0)",
+      "batch_start": 200
+    },
+    {
+      "code": "bad_json",
+      "message": "Expecting value: line 1 column 1 (char 0)",
+      "batch_start": 300
+    },
+    {
+      "code": "bad_json",
+      "message": "Expecting value: line 1 column 1 (char 0)",
+      "batch_start": 400
+    },
+    {
+      "code": "bad_json",
+      "message": "Expecting value: line 1 column 1 (char 0)",
+      "batch_start": 500
+    },
+    {
+      "code": "bad_json",
+      "message": "Expecting value: line 1 column 1 (char 0)",
+      "batch_start": 600
+    },
+    {
+      "code": "bad_json",
+      "message": "Expecting value: line 1 column 1 (char 0)",
+      "batch_start": 700
+    },
+    {
+      "code": "call_failed",
+      "message": "[Errno 54] Connection reset by peer",
+      "batch_start": 800
+    },
+    {
+      "code": "bad_json",
+      "message": "Expecting value: line 1 column 1 (char 0)",
+      "batch_start": 900
+    },
+    {
+      "code": "bad_json",
+      "message": "Expecting value: line 27 column 1 (char 1209)",
+      "batch_start": 1000
+    },
+    {
+      "code": "bad_json",
+      "message": "Expecting value: line 1 column 1 (char 0)",
+      "batch_start": 1100
+    },
+    {
+      "code": "bad_json",
+      "message": "Expecting value: line 1 column 1 (char 0)",
+      "batch_start": 1200
+    },
+    {
+      "code": "bad_json",
+      "message": "Expecting value: line 1 column 1 (char 0)",
+      "batch_start": 1300
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JokeGuru Voice — Confirm</title>
+<style>
+  :root { --bg:#0d0a1a; --surface:#18133a; --accent:#f59e0b; --accent2:#a855f7;
+          --joke:#fcd34d; --text:#f0e8d0; --muted:#6b5a8a; --border:#2d2060; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:Georgia,serif;
+         min-height:100vh; display:flex; flex-direction:column; align-items:center;
+         justify-content:center; gap:24px; padding:40px 20px; }
+  h1 { color:var(--joke); letter-spacing:2px; font-size:22px; text-align:center; }
+  .sub { color:var(--muted); font-size:13px; text-align:center; max-width:520px; line-height:1.6; }
+  .cards { display:flex; gap:20px; flex-wrap:wrap; justify-content:center; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:16px;
+          padding:24px 28px; width:300px; text-align:center; }
+  .card.locked { border-color:var(--joke); box-shadow:0 0 30px rgba(252,211,77,.12); }
+  .tag { font-size:12px; letter-spacing:1px; color:var(--muted); text-transform:uppercase; }
+  .card.locked .tag { color:var(--joke); }
+  .title { font-size:18px; margin:6px 0 14px; }
+  .line { font-size:12px; font-style:italic; color:var(--muted); margin-bottom:14px; min-height:48px; }
+  button { background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none;
+           border-radius:12px; color:#0d0a1a; font-weight:bold; font-size:15px;
+           padding:12px 20px; cursor:pointer; width:100%; font-family:inherit; }
+  button:hover { opacity:.9; }
+</style>
+</head>
+<body>
+  <h1>🃏 JOKEGURU VOICE — CONFIRM</h1>
+  <div class="sub">The first clone ever made — the one you picked — now locked as JokeGuru. Reference: the single Patanjali clip (not the combo).</div>
+  <div class="cards">
+    <div class="card">
+      <div class="tag">The original</div>
+      <div class="title">First sample</div>
+      <div class="line">"the one you said sounds like JokeGuru"</div>
+      <button onclick="play('jokeguru_first_sample.wav',this)">▶ Play</button>
+    </div>
+    <div class="card locked">
+      <div class="tag">Now live</div>
+      <div class="title">Fresh line, same voice</div>
+      <div class="line">"You want enlightenment? First try finding your keys without enlightenment. Baby steps, seeker."</div>
+      <button onclick="play('jokeguru_fresh.wav',this)">▶ Play</button>
+    </div>
+  </div>
+  <audio id="player"></audio>
+<script>
+  const player=document.getElementById('player'); let cur=null;
+  function play(file, btn){
+    document.querySelectorAll('button').forEach(b=>{ if(b!==btn) b.textContent='▶ Play'; });
+    if(cur===file && !player.paused){ player.pause(); btn.textContent='▶ Play'; return; }
+    player.src='refs/'+file; player.play(); cur=file; btn.textContent='⏸ Playing';
+    player.onended=()=>{ btn.textContent='▶ Play'; };
+  }
+</script>
+</body>
+</html>

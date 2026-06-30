@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guruji Fine-Tune — Verdict</title>
+<style>
+  :root { --bg:#0d0a1a; --surface:#18133a; --accent:#f59e0b; --accent2:#a855f7;
+          --text:#f0e8d0; --muted:#6b5a8a; --border:#2d2060; --good:#34d399; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:Georgia,serif;
+         min-height:100vh; display:flex; flex-direction:column; align-items:center;
+         justify-content:center; gap:24px; padding:40px 20px; }
+  h1 { color:var(--accent); letter-spacing:2px; font-size:22px; text-align:center; }
+  .quote { font-style:italic; color:var(--muted); max-width:540px; text-align:center; line-height:1.7; }
+  .cards { display:flex; gap:20px; flex-wrap:wrap; justify-content:center; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:16px;
+          padding:24px 28px; width:290px; text-align:center; }
+  .card.ft { border-color:var(--good); box-shadow:0 0 34px rgba(52,211,153,.14); }
+  .tag { font-size:12px; letter-spacing:1px; color:var(--muted); text-transform:uppercase; }
+  .card.ft .tag { color:var(--good); }
+  .title { font-size:18px; margin:6px 0 6px; }
+  .desc { font-size:12px; color:var(--muted); margin-bottom:16px; line-height:1.5; }
+  button { background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none;
+           border-radius:12px; color:#0d0a1a; font-weight:bold; font-size:15px;
+           padding:12px 20px; cursor:pointer; width:100%; font-family:inherit; }
+  button:hover { opacity:.9; }
+  .foot { font-size:12px; color:var(--muted); max-width:500px; text-align:center; line-height:1.6; }
+</style>
+</head>
+<body>
+  <h1>THE VERDICT — IS IT HIM?</h1>
+  <div class="quote">"There is no shortcut, seeker. The path is the practice, and the practice is daily."</div>
+  <div class="cards">
+    <div class="card">
+      <div class="tag">Before</div>
+      <div class="title">Voiceprint</div>
+      <div class="desc">Base XTTS, zero-shot. 8 clips averaged. No training — it only mimics.</div>
+      <button onclick="play('guruji_voiceprint_zeroshot.wav',this)">▶ Play</button>
+    </div>
+    <div class="card ft">
+      <div class="tag">After</div>
+      <div class="title">Fine-tuned</div>
+      <div class="desc">Weights reshaped on 20 min of his isolated voice. 6 epochs, eval loss 3.32.</div>
+      <button onclick="play('guruji_finetuned.wav',this)">▶ Play</button>
+    </div>
+  </div>
+  <div class="foot">Same sentence, same conditioning clips. The only difference is whether the model <em>learned</em> him. Your ear decides.</div>
+  <audio id="player"></audio>
+<script>
+  const player=document.getElementById('player'); let cur=null;
+  function play(file, btn){
+    document.querySelectorAll('button').forEach(b=>{ if(b!==btn) b.textContent='▶ Play'; });
+    if(cur===file && !player.paused){ player.pause(); btn.textContent='▶ Play'; return; }
+    player.src='refs/'+file; player.play(); cur=file; btn.textContent='⏸ Playing';
+    player.onended=()=>{ btn.textContent='▶ Play'; };
+  }
+</script>
+</body>
+</html>

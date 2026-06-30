@@ -1,36 +1,187 @@
-# ─────────────────────────────────────────────────────────────────────────────
-# LOCAL DEV ONLY — do NOT run this on the production server.
+# PuranGPT — PRODUCTION compose (version-controlled mirror of /root/docker-compose.yml)
 #
-# Production runs from the ROOT compose at /root/docker-compose.yml (backend +
-# frontend + logto + logto-db/pgvector), NOT from this file. This file used to
-# also define a `pgvector` service with POSTGRES_PASSWORD=postgres; running it on
-# the prod box recreated the shared DB with the wrong password and broke the live
-# backend's scram auth (the a8ab20… password it actually uses). It has been
-# stripped to backend-only to remove that landmine.
+# This is the source of truth for how the production stack is wired. It used to
+# exist ONLY on the Hetzner box, so a server rebuild would have had nothing to
+# recreate the stack from. Now it lives in git.
 #
-# For local dev, point VECTOR_DB_URL at your own Postgres+pgvector instance.
-# ─────────────────────────────────────────────────────────────────────────────
+# ── Secrets ──────────────────────────────────────────────────────────────────
+# NO secrets are inlined here. Every secret is a ${VAR} sourced from a gitignored
+# env file on the server. On the box, run from a directory containing a `.env`
+# with the values (see deploy/.env.prod.example), or:
+#   docker compose --env-file /root/stack.env -f deploy/docker-compose.prod.yml up -d
+#
+# ── Restore a rebuilt server from scratch ────────────────────────────────────
+#   1. git clone both repos to /root/purangpt and /root/purangpt-next
+#   2. cp this file to /root/docker-compose.yml  (or run with -f from the repo)
+#   3. create /root/stack.env from deploy/.env.prod.example with real values
+#   4. create /root/purangpt/.env (backend env) and /root/frontend-secrets.env
+#   5. recreate the external networks if missing:
+#        docker network create coolify || true
+#        docker network create purangpt_default || true
+#   6. ensure the pgvector container exists (it's a SEPARATE compose project,
+#      `purangpt`, providing the purana_verses DB on the purangpt_default network)
+#   7. docker compose --env-file /root/stack.env -f docker-compose.yml up -d --build
+#   8. re-apply the 5432 firewall (DOCKER-USER iptables) — see DEPLOY.md
+#
+# ── Security invariants (see DEPLOY.md) ──────────────────────────────────────
+#   - NO database port published to 0.0.0.0 (Docker bypasses ufw).
+#   - NO secrets inline — env_file / ${VAR} only.
+
+networks:
+  coolify:
+    external: true
+  purangpt_default:
+    external: true
+
 services:
-  purangpt:
-    build: .
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./data:/app/data
+  backend:
+    build:
+      context: .
+    container_name: purangpt_backend
+    env_file:
+      - ./.env            # backend secrets (VECTOR_DB_URL, DEEPSEEK_API_KEY, …)
     environment:
-      - HOST=0.0.0.0
-      - PORT=8000
-      - VECTOR_DB_URL=${VECTOR_DB_URL:-postgresql://postgres:postgres@host.docker.internal:5432/purangpt}
-      - REDIS_URL=redis://redis:6379/0
-      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
-      - GROQ_API_KEY=${GROQ_API_KEY}
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - TOKENIZERS_PARALLELISM=false
+      - HUGGINGFACE_HUB_CACHE=/app/data/.cache
+      - REDIS_URL=redis://purangpt_redis:6379/0
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - default
+      - coolify
+      - purangpt_default
     restart: unless-stopped
+    volumes:
+      - /data/purangpt/data:/app/data
     depends_on:
       - redis
 
+  frontend:
+    build:
+      context: .-next
+      args:
+        NEXT_PUBLIC_API_URL: ""
+        NEXT_PUBLIC_REVENUECAT_APPLE_KEY: ${NEXT_PUBLIC_REVENUECAT_APPLE_KEY}
+        NEXT_PUBLIC_RAZORPAY_KEY_ID: ${NEXT_PUBLIC_RAZORPAY_KEY_ID}
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+    container_name: purangpt_frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    env_file:
+      - /root/frontend-secrets.env  # all runtime secrets — rendered by secrets/sync-to-server.sh
+    environment:
+      - NEXTAUTH_URL=https://purangpt.com
+      - GITHUB_PAT=${GITHUB_PAT}
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=coolify
+      - traefik.http.routers.purangpt-http.rule=Host(`purangpt.com`) || Host(`www.purangpt.com`)
+      - traefik.http.routers.purangpt-http.entrypoints=http
+      - traefik.http.routers.purangpt-http.middlewares=purangpt-redirect
+      - traefik.http.middlewares.purangpt-redirect.redirectscheme.scheme=https
+      - traefik.http.routers.purangpt.rule=Host(`purangpt.com`) || Host(`www.purangpt.com`)
+      - traefik.http.routers.purangpt.entrypoints=https
+      - traefik.http.routers.purangpt.tls=true
+      - traefik.http.routers.purangpt.tls.certresolver=letsencrypt
+      - traefik.http.services.purangpt.loadbalancer.server.port=3000
+      # ── Security middleware chain (order: size-cap → headers → rate-limit) ──
+      # Applied at the public perimeter (this is the only internet-facing router;
+      # the backend has no Traefik router and is network-internal only).
+      - traefik.http.routers.purangpt.middlewares=pg-buf,pg-sec,pg-rl
+      # pg-buf: cap request bodies. 25MB permits real workspace document uploads
+      # (the /api/workspace/upload endpoint does an unbounded file.read()) while
+      # stopping the OOM-on-demand attack from a 100MB+ POST.
+      - traefik.http.middlewares.pg-buf.buffering.maxRequestBodyBytes=26214400
+      - traefik.http.middlewares.pg-buf.buffering.memRequestBodyBytes=2097152
+      # pg-sec: baseline security headers (clickjacking, MIME-sniff, SSL-strip).
+      # No CSP yet — ReactMarkdown + fonts need allowances; add after testing.
+      - traefik.http.middlewares.pg-sec.headers.frameDeny=true
+      - traefik.http.middlewares.pg-sec.headers.contentTypeNosniff=true
+      - traefik.http.middlewares.pg-sec.headers.browserXssFilter=true
+      - traefik.http.middlewares.pg-sec.headers.referrerPolicy=strict-origin-when-cross-origin
+      - traefik.http.middlewares.pg-sec.headers.stsSeconds=63072000
+      - traefik.http.middlewares.pg-sec.headers.stsIncludeSubdomains=true
+      - traefik.http.middlewares.pg-sec.headers.stsPreload=true
+      # pg-rl: per-IP burst limit. Counts REQUESTS, not stream duration — a
+      # long-lived SSE /api/chat connection is one request, so streaming is safe.
+      # average=8/s sustained, burst=20: comfortably above a normal page load
+      # (which fires several /api calls at once) but far below a flood. depth=1
+      # reads the real client IP from the XFF hop Traefik itself appends, which
+      # neutralizes X-Forwarded-For spoofing (an attacker's leftmost XFF is ignored).
+      - traefik.http.middlewares.pg-rl.ratelimit.average=8
+      - traefik.http.middlewares.pg-rl.ratelimit.burst=20
+      - traefik.http.middlewares.pg-rl.ratelimit.period=1s
+      - traefik.http.middlewares.pg-rl.ratelimit.sourcecriterion.ipstrategy.depth=1
+    networks:
+      - default
+      - coolify
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+
+  logto:
+    image: svhd/logto:latest
+    container_name: purangpt_logto
+    depends_on:
+      - logto-db
+    environment:
+      - TRUST_PROXY_HEADER=1
+      - DB_URL=${LOGTO_DB_URL}
+      - ENDPOINT=https://auth.purangpt.com
+      - ADMIN_ENDPOINT=https://admin-auth.purangpt.com
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=coolify
+      - traefik.http.routers.logto-auth-http.rule=Host(`auth.purangpt.com`)
+      - traefik.http.routers.logto-auth-http.entrypoints=http
+      - traefik.http.routers.logto-auth-http.middlewares=logto-auth-redirect
+      - traefik.http.routers.logto-auth-http.service=logto-auth
+      - traefik.http.middlewares.logto-auth-redirect.redirectscheme.scheme=https
+      - traefik.http.routers.logto-auth.rule=Host(`auth.purangpt.com`)
+      - traefik.http.routers.logto-auth.entrypoints=https
+      - traefik.http.routers.logto-auth.tls=true
+      - traefik.http.routers.logto-auth.tls.certresolver=letsencrypt
+      - traefik.http.routers.logto-auth.service=logto-auth
+      - traefik.http.services.logto-auth.loadbalancer.server.port=3001
+      - traefik.http.routers.logto-admin-http.rule=Host(`admin-auth.purangpt.com`)
+      - traefik.http.routers.logto-admin-http.entrypoints=http
+      - traefik.http.routers.logto-admin-http.middlewares=logto-admin-redirect
+      - traefik.http.routers.logto-admin-http.service=logto-admin
+      - traefik.http.middlewares.logto-admin-redirect.redirectscheme.scheme=https
+      - traefik.http.routers.logto-admin.rule=Host(`admin-auth.purangpt.com`)
+      - traefik.http.routers.logto-admin.entrypoints=https
+      - traefik.http.routers.logto-admin.tls=true
+      - traefik.http.routers.logto-admin.tls.certresolver=letsencrypt
+      - traefik.http.routers.logto-admin.service=logto-admin
+      - traefik.http.services.logto-admin.loadbalancer.server.port=3002
+    networks:
+      - default
+      - coolify
+    ports:
+      - 3001:3001
+      - 3002:3002
+
+  logto-db:
+    image: postgres:14-alpine
+    container_name: purangpt_logto_db
+    environment:
+      - POSTGRES_USER=${LOGTO_DB_USER}
+      - POSTGRES_PASSWORD=${LOGTO_DB_PASSWORD}
+      - POSTGRES_DB=${LOGTO_DB_NAME}
+    networks:
+      - default
+    volumes:
+      - /data/logto/db:/var/lib/postgresql/data
+
   redis:
     image: redis:alpine
-    ports:
-      - "6379:6379"
+    container_name: purangpt_redis
+    networks:
+      - default
     restart: unless-stopped

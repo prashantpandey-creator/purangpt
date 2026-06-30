@@ -1,0 +1,161 @@
+{
+  "chapter_summary": "This portion of the Narada Purana narrates the culmination of the sage Mrkandu's austerity. The gods, troubled in mind, are reassured: a true saint (sajjana) — whether amid fortune or misfortune — never harms another even in a dream, for one who cannot guard himself against the inner enemies named the sense-objects (vishaya) cannot find leisure to torment others. The text distinguishes the deluded man (mudhadhi), forever driven by desire (kama), who afflicts others by act, mind, and speech, from the true saint (sattama): selfless, free of envy, unattached (nihshanga), who works for the welfare of the world. The fearless (nihshanka) attain happiness while the fearful (sashanka) are ever in sorrow. Bestowing this assurance and a boon, the flax-flower-hued deity vanishes before the gods, who return contented to heaven. Then Vishnu manifests directly to Mrkandu — formless supreme Brahman, self-luminous, stainless, flax-blossom-hued, yellow-robed, bearing divine weapons. Overwhelmed and weeping with joy, Mrkandu prostrates and pours forth a stotra (hymn) of praise to the supreme, attribute-free, beginningless Lord beyond name and form, the destroyer of remembered affliction, protector of those who take refuge. Pleased by the austerity and the hymn, the four-armed Vishnu, bearer of conch, discus and mace, embraces the sage and offers him any boon. Mrkandu declares himself wholly fulfilled merely by the rare vision (darshana) of the Lord, whom even Brahma and disciplined yogis cannot grasp.",
+  "entities": [
+    {
+      "name": "Mrkandu",
+      "kind": "sage",
+      "aliases": ["Mrkandu Maharishi", "the muni"],
+      "verse_ranges": ["narp_1,4.69", "narp_1,4.78", "narp_1,4.79", "narp_1,4.81", "narp_1,4.82", "narp_1,4.84", "narp_1,4.85", "narp_1,4.88", "narp_1,4.89", "narp_1,4.91"]
+    },
+    {
+      "name": "Vishnu",
+      "kind": "deity",
+      "aliases": ["Hari", "Bhagavan", "Parama Brahman", "Jagannatha", "Devadeva", "Paresha", "Sarveshvara", "the flax-flower-hued one (atasikusumaprabha)", "bearer of conch, discus and mace (shankhachakragadadhara)"],
+      "verse_ranges": ["narp_1,4.76", "narp_1,4.78", "narp_1,4.79", "narp_1,4.80", "narp_1,4.83", "narp_1,4.84", "narp_1,4.85", "narp_1,4.86", "narp_1,4.87", "narp_1,4.88", "narp_1,4.89", "narp_1,4.90", "narp_1,4.91"]
+    },
+    {
+      "name": "the gods (devas / suraganas)",
+      "kind": "deity",
+      "aliases": ["surasattamah", "suraganah"],
+      "verse_ranges": ["narp_1,4.69", "narp_1,4.70", "narp_1,4.75", "narp_1,4.76", "narp_1,4.77"]
+    },
+    {
+      "name": "Brahma",
+      "kind": "deity",
+      "aliases": ["Hiranyagarbha"],
+      "verse_ranges": ["narp_1,4.85", "narp_1,4.92"]
+    },
+    {
+      "name": "Naka (heaven)",
+      "kind": "place",
+      "aliases": ["svarga"],
+      "verse_ranges": ["narp_1,4.77"]
+    },
+    {
+      "name": "sajjana (the true saint / good person)",
+      "kind": "concept",
+      "aliases": ["sattama", "nihshanga (the unattached)"],
+      "verse_ranges": ["narp_1,4.69", "narp_1,4.70", "narp_1,4.72", "narp_1,4.74"]
+    },
+    {
+      "name": "tapas (austerity)",
+      "kind": "practice",
+      "aliases": ["tapasya"],
+      "verse_ranges": ["narp_1,4.69", "narp_1,4.90"]
+    },
+    {
+      "name": "darshana (vision of the Lord)",
+      "kind": "concept",
+      "aliases": ["tvaddarshana"],
+      "verse_ranges": ["narp_1,4.91"]
+    },
+    {
+      "name": "vishaya (sense-objects, the inner enemies)",
+      "kind": "concept",
+      "aliases": ["vishayakhya aratayah", "kamadi (desire and its kin)"],
+      "verse_ranges": ["narp_1,4.71", "narp_1,4.73"]
+    },
+    {
+      "name": "tapatraya (the threefold affliction)",
+      "kind": "concept",
+      "aliases": [],
+      "verse_ranges": ["narp_1,4.72"]
+    },
+    {
+      "name": "stotra (hymn of praise)",
+      "kind": "practice",
+      "aliases": [],
+      "verse_ranges": ["narp_1,4.82", "narp_1,4.83", "narp_1,4.90"]
+    }
+  ],
+  "relationships": [
+    {
+      "src": "the gods (devas / suraganas)",
+      "rel": "are reassured by",
+      "dst": "Vishnu",
+      "verse_ranges": ["narp_1,4.69", "narp_1,4.75", "narp_1,4.76"]
+    },
+    {
+      "src": "Vishnu",
+      "rel": "grants a boon to and then vanishes before",
+      "dst": "the gods (devas / suraganas)",
+      "verse_ranges": ["narp_1,4.76", "narp_1,4.77"]
+    },
+    {
+      "src": "the gods (devas / suraganas)",
+      "rel": "return contented to",
+      "dst": "Naka (heaven)",
+      "verse_ranges": ["narp_1,4.77"]
+    },
+    {
+      "src": "Vishnu",
+      "rel": "manifests directly before",
+      "dst": "Mrkandu",
+      "verse_ranges": ["narp_1,4.78", "narp_1,4.79", "narp_1,4.80"]
+    },
+    {
+      "src": "Mrkandu",
+      "rel": "prostrates before and praises with a stotra",
+      "dst": "Vishnu",
+      "verse_ranges": ["narp_1,4.81", "narp_1,4.82", "narp_1,4.83", "narp_1,4.84", "narp_1,4.85", "narp_1,4.86", "narp_1,4.87"]
+    },
+    {
+      "src": "Vishnu",
+      "rel": "is pleased by the austerity and hymn of",
+      "dst": "Mrkandu",
+      "verse_ranges": ["narp_1,4.88", "narp_1,4.90"]
+    },
+    {
+      "src": "Vishnu",
+      "rel": "embraces with four arms and offers a boon to",
+      "dst": "Mrkandu",
+      "verse_ranges": ["narp_1,4.89"]
+    },
+    {
+      "src": "Mrkandu",
+      "rel": "declares himself fulfilled by the vision of",
+      "dst": "Vishnu",
+      "verse_ranges": ["narp_1,4.91"]
+    },
+    {
+      "src": "Brahma",
+      "rel": "cannot grasp / does not control",
+      "dst": "Vishnu",
+      "verse_ranges": ["narp_1,4.92"]
+    }
+  ],
+  "story": {
+    "title": "Mrkandu's Vision of Vishnu",
+    "arc": "The gods, anxious, are reassured that a true saint never harms anyone; Vishnu grants them a boon and vanishes, sending them home content. Then, won by Mrkandu's tapas, the formless supreme Lord manifests in radiant four-armed form. The weeping sage prostrates and sings a hymn to the attribute-free Brahman. Pleased, Vishnu embraces him and offers any boon — but Mrkandu, overwhelmed, says the rare darshana itself has fulfilled him utterly.",
+    "characters": ["Mrkandu", "Vishnu", "the gods (devas)", "Brahma"],
+    "timeline_note": "Set at the climax of Mrkandu's long austerity; the devas' reassurance precedes Vishnu's direct manifestation to the sage. (In the wider lineage this Mrkandu is father of Markandeya.)",
+    "comic_potential": "The gods nervously fretting that one stern ascetic might somehow torment them — only to be told plainly that a saint busy fighting his own desires has no time to bother anyone — has a gentle ironic humor: the powerful fearing the harmless."
+  },
+  "teachings": [
+    {
+      "teaching": "A true saint, whether in fortune or misfortune, never harms another even in a dream; one who has not even secured his own protection against the inner enemies (the sense-objects) has neither cause nor leisure to hate or torment others.",
+      "lens_note": "In Shailendra Sharma's Kriya framework, the real battlefield is internal: the 'enemies' are the vishayas pulling consciousness outward through the senses. The saint's harmlessness is not moralism but a byproduct of inwardness — energy turned upon mastering one's own restless mind through Kriya has none left over for outward enmity. Ahimsa flows naturally from withdrawn, gathered prana.",
+      "verse_ranges": ["narp_1,4.69", "narp_1,4.70", "narp_1,4.71"]
+    },
+    {
+      "teaching": "The man scorched by the threefold affliction (tapatraya) cannot find the freedom to 'play with' or trouble others; only the deluded one (mudhadhi), forever yoked to desire, afflicts others by deed, mind, and word.",
+      "lens_note": "Sharma reads tapatraya as the ordinary suffering of unstilled consciousness; the deluded mind, bound to kama, leaks its agitation outward as harm. Kriya dissolves the affliction at its root by stilling the breath-and-mind, so the practitioner ceases both to suffer and to project suffering — the cure is interior, not behavioral correction.",
+      "verse_ranges": ["narp_1,4.72", "narp_1,4.73"]
+    },
+    {
+      "teaching": "The selfless one who works for the world's welfare, free of envy and attachment (nihshanga), is called a saint; the fearful (sashanka) are ever sorrowful, while the fearless (nihshanka) attain happiness.",
+      "lens_note": "Fearlessness here is the fruit of established realization, not bravado. In Sharma's lens, fear is the tremor of a consciousness still identified with the perishable body; as Kriya stabilizes awareness in the deathless self, abhaya (fearlessness) and the ease it brings arise spontaneously — the unattached, ego-free state is the natural ground of bliss.",
+      "verse_ranges": ["narp_1,4.74", "narp_1,4.75"]
+    },
+    {
+      "teaching": "The supreme Lord is formless, self-luminous, stainless Brahman beyond name, birth, and the defects of sound — yet out of compassion he assumes a perceptible, radiant form to grace his devotee; he is worshipped as beginningless, the source of Hiranyagarbha and the worlds.",
+      "lens_note": "This is the nirguna-becoming-saguna that Sharma's Kriya holds at its center: the attribute-free absolute (nirañjana, self-prakasha) is what the practitioner ultimately realizes, but it first appears as luminous inner form to the gathered consciousness in deep meditation. The 'vision' is an inner event of awareness reaching the seat of light, not an external apparition.",
+      "verse_ranges": ["narp_1,4.78", "narp_1,4.83", "narp_1,4.84", "narp_1,4.85", "narp_1,4.86"]
+    },
+    {
+      "teaching": "The mere darshana (vision) of the Lord is the supreme fruit — so rare that even Brahma and disciplined, vow-keeping yogis do not attain it; once it is granted, the devotee is wholly fulfilled and asks for nothing more.",
+      "lens_note": "For Sharma the highest 'boon' is not any granted desire but the direct seeing itself — the goal of all sadhana. Mrkandu's refusal to ask for anything mirrors the Kriya ideal: when consciousness merges with the source-light, every craving is extinguished at once, because the only thing the soul ever truly sought has been found. The vision is rare not by divine withholding but because so few still the mind enough to reach it.",
+      "verse_ranges": ["narp_1,4.88", "narp_1,4.89", "narp_1,4.90", "narp_1,4.91", "narp_1,4.92"]
+    }
+  ]
+}

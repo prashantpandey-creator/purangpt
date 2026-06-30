@@ -1,0 +1,370 @@
+{
+  "chapter_summary": "This chapter fragment combines two distinct texts. The first portion is the opening of the Bhagavad Gita (Chapter 1): on the field of dharma at Kurukshetra, the blind king Dhritarashtra asks Sanjaya what his sons and the Pandavas, gathered with a desire for war, are doing. Sanjaya recounts how Duryodhana, seeing the Pandava army arrayed in battle formation, approaches his teacher Drona and enumerates the great warriors on both sides — valiant archers like Bhima, Arjuna, Yuyudhana, Virata, Drupada, Dhrishtaketu, Chekitana, Kashiraja, Kuntibhoja, Purujit, Shaibya, Yudhamanyu, Uttamauja, the sons of Subhadra and Draupadi on the Pandava side, and Bhishma, Karna, Kripa, Ashvatthama, Vikarna, and the son of Somadatta on the Kaurava side. Duryodhana urges all to protect Bhishma; Bhishma roars and blows his conch, followed by a tumultuous din of conches, drums, and horns. Then Krishna (Madhava) and Arjuna (Pandava), seated in a great chariot drawn by white horses, blow their divine conches — Krishna his Panchajanya, Arjuna his Devadatta, and Bhima (Vrikodara) of terrible deeds his great conch Paundra. The second portion (Narada Purana 1,5.15–37) tells of the sage Markandeya, son of Mrikandu — self-possessed, truthful, radiant as the sun, serene, of great knowledge — who performed austerities pleasing to Achyuta (Vishnu). The Lord Jagannatha, propitiated, granted him the boon of composing the Purana-samhita; because Markandeya is the long-lived great devotee, he is remembered as Narayana. When the world became a single ocean, Vishnu (Janardana) did not withdraw his form so as to show Markandeya his own power; the wise sage, full of devotion to Vishnu, floated like a withered leaf upon the terrible waters while Hari slept. The text then expounds the measures of cosmic time — from nimeshas, kashthas, kalas, kshanas, ghatikas, muhurtas, days, fortnights, months, seasons, ayanas, years, divine days and nights, the four yugas, manvantaras, and the day of Brahma (a thousand four-yuga cycles), up to the two parardhas constituting Vishnu's day and night. Markandeya abides through the deluge meditating on the supreme Self near Hari; when the time comes, Vishnu, freed from yoga-nidra, creates the moving and unmoving world in the form of Brahma. Seeing the waters withdrawn and the universe created anew, the astonished and delighted Markandeya bows at Hari's feet and, with folded hands upon his head, praises the ever-blissful one, saluting the thousand-headed Narayana, Vasudeva, Janardana — the unmeasurable, ageless, eternal, imperishable supreme source of the universe.",
+  "entities": [
+    {
+      "name": "Dhritarashtra",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["[1]"]
+    },
+    {
+      "name": "Sanjaya",
+      "kind": "sage",
+      "aliases": ["Samjaya"],
+      "verse_ranges": ["[1]", "[2]"]
+    },
+    {
+      "name": "Duryodhana",
+      "kind": "king",
+      "aliases": ["Duryodhan"],
+      "verse_ranges": ["[2]", "[3]"]
+    },
+    {
+      "name": "Drona",
+      "kind": "sage",
+      "aliases": ["Acharya"],
+      "verse_ranges": ["[2]", "[3]"]
+    },
+    {
+      "name": "Kurukshetra",
+      "kind": "place",
+      "aliases": ["Dharmakshetra"],
+      "verse_ranges": ["[1]"]
+    },
+    {
+      "name": "Bhima",
+      "kind": "king",
+      "aliases": ["Vrikodara", "Bhimakarma"],
+      "verse_ranges": ["[4]", "[10]", "[15]"]
+    },
+    {
+      "name": "Arjuna",
+      "kind": "king",
+      "aliases": ["Pandava", "Dhananjaya"],
+      "verse_ranges": ["[4]", "[14]", "[15]"]
+    },
+    {
+      "name": "Yuyudhana",
+      "kind": "king",
+      "aliases": ["Yuyudhan"],
+      "verse_ranges": ["[4]"]
+    },
+    {
+      "name": "Virata",
+      "kind": "king",
+      "aliases": ["Virat"],
+      "verse_ranges": ["[4]"]
+    },
+    {
+      "name": "Drupada",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["[4]"]
+    },
+    {
+      "name": "Dhrishtaketu",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["[5]"]
+    },
+    {
+      "name": "Chekitana",
+      "kind": "king",
+      "aliases": ["Cekitan"],
+      "verse_ranges": ["[5]"]
+    },
+    {
+      "name": "Kashiraja",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["[5]"]
+    },
+    {
+      "name": "Purujit",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["[5]"]
+    },
+    {
+      "name": "Kuntibhoja",
+      "kind": "king",
+      "aliases": ["Kuntibhoj"],
+      "verse_ranges": ["[5]"]
+    },
+    {
+      "name": "Shaibya",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["[5]"]
+    },
+    {
+      "name": "Yudhamanyu",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["[6]"]
+    },
+    {
+      "name": "Uttamauja",
+      "kind": "king",
+      "aliases": ["Uttamauja"],
+      "verse_ranges": ["[6]"]
+    },
+    {
+      "name": "Bhishma",
+      "kind": "king",
+      "aliases": ["Pitamaha", "Kuruvriddha"],
+      "verse_ranges": ["[8]", "[10]", "[11]", "[12]"]
+    },
+    {
+      "name": "Karna",
+      "kind": "king",
+      "aliases": ["Karṇa"],
+      "verse_ranges": ["[8]"]
+    },
+    {
+      "name": "Kripa",
+      "kind": "sage",
+      "aliases": ["Kripacharya"],
+      "verse_ranges": ["[8]"]
+    },
+    {
+      "name": "Ashvatthama",
+      "kind": "sage",
+      "aliases": [],
+      "verse_ranges": ["[8]"]
+    },
+    {
+      "name": "Vikarna",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["[8]"]
+    },
+    {
+      "name": "Krishna",
+      "kind": "deity",
+      "aliases": ["Madhava", "Hrishikesha"],
+      "verse_ranges": ["[14]", "[15]"]
+    },
+    {
+      "name": "Panchajanya",
+      "kind": "concept",
+      "aliases": [],
+      "verse_ranges": ["[15]"]
+    },
+    {
+      "name": "Devadatta",
+      "kind": "concept",
+      "aliases": [],
+      "verse_ranges": ["[15]"]
+    },
+    {
+      "name": "Paundra",
+      "kind": "concept",
+      "aliases": [],
+      "verse_ranges": ["[15]"]
+    },
+    {
+      "name": "Markandeya",
+      "kind": "sage",
+      "aliases": ["Mrikandu-tanaya", "Mrikanduja", "Narayana (epithet)"],
+      "verse_ranges": ["narp_1,5.15", "narp_1,5.16", "narp_1,5.17", "narp_1,5.19", "narp_1,5.20", "narp_1,5.32", "narp_1,5.34", "narp_1,5.35", "narp_1,5.36"]
+    },
+    {
+      "name": "Vishnu",
+      "kind": "deity",
+      "aliases": ["Achyuta", "Jagannatha", "Hari", "Janardana", "Narayana", "Vasudeva", "Chakrin", "Devadeva"],
+      "verse_ranges": ["narp_1,5.16", "narp_1,5.18", "narp_1,5.19", "narp_1,5.20", "narp_1,5.31", "narp_1,5.32", "narp_1,5.33", "narp_1,5.36", "narp_1,5.37"]
+    },
+    {
+      "name": "Brahma",
+      "kind": "deity",
+      "aliases": ["Vedhas"],
+      "verse_ranges": ["narp_1,5.28", "narp_1,5.29", "narp_1,5.30", "narp_1,5.33"]
+    },
+    {
+      "name": "Purana-samhita",
+      "kind": "text",
+      "aliases": [],
+      "verse_ranges": ["narp_1,5.16"]
+    },
+    {
+      "name": "Yoga-nidra",
+      "kind": "concept",
+      "aliases": ["cosmic sleep"],
+      "verse_ranges": ["narp_1,5.33"]
+    },
+    {
+      "name": "Kalpa",
+      "kind": "concept",
+      "aliases": ["aeon", "day of Brahma"],
+      "verse_ranges": ["narp_1,5.26", "narp_1,5.29"]
+    },
+    {
+      "name": "Manvantara",
+      "kind": "concept",
+      "aliases": [],
+      "verse_ranges": ["narp_1,5.27"]
+    },
+    {
+      "name": "Yuga",
+      "kind": "concept",
+      "aliases": ["four-yuga cycle", "chaturyuga"],
+      "verse_ranges": ["narp_1,5.26", "narp_1,5.27", "narp_1,5.29"]
+    }
+  ],
+  "relationships": [
+    {
+      "src": "Dhritarashtra",
+      "rel": "asks",
+      "dst": "Sanjaya",
+      "verse_ranges": ["[1]"]
+    },
+    {
+      "src": "Duryodhana",
+      "rel": "approaches and addresses",
+      "dst": "Drona",
+      "verse_ranges": ["[2]", "[3]"]
+    },
+    {
+      "src": "Drona",
+      "rel": "is teacher of",
+      "dst": "Drupada",
+      "verse_ranges": ["[3]"]
+    },
+    {
+      "src": "Bhishma",
+      "rel": "guards the army of",
+      "dst": "Duryodhana",
+      "verse_ranges": ["[10]", "[11]"]
+    },
+    {
+      "src": "Bhima",
+      "rel": "guards the army of (Pandavas)",
+      "dst": "Arjuna",
+      "verse_ranges": ["[10]"]
+    },
+    {
+      "src": "Bhishma",
+      "rel": "is grandfather (pitamaha) of",
+      "dst": "Duryodhana",
+      "verse_ranges": ["[12]"]
+    },
+    {
+      "src": "Bhishma",
+      "rel": "blows conch to encourage",
+      "dst": "Duryodhana",
+      "verse_ranges": ["[12]"]
+    },
+    {
+      "src": "Krishna",
+      "rel": "rides chariot with",
+      "dst": "Arjuna",
+      "verse_ranges": ["[14]"]
+    },
+    {
+      "src": "Krishna",
+      "rel": "blows conch Panchajanya",
+      "dst": "Panchajanya",
+      "verse_ranges": ["[15]"]
+    },
+    {
+      "src": "Arjuna",
+      "rel": "blows conch Devadatta",
+      "dst": "Devadatta",
+      "verse_ranges": ["[15]"]
+    },
+    {
+      "src": "Bhima",
+      "rel": "blows conch Paundra",
+      "dst": "Paundra",
+      "verse_ranges": ["[15]"]
+    },
+    {
+      "src": "Markandeya",
+      "rel": "is son of",
+      "dst": "Mrikandu",
+      "verse_ranges": ["narp_1,5.19", "narp_1,5.32"]
+    },
+    {
+      "src": "Markandeya",
+      "rel": "performs austerities to propitiate",
+      "dst": "Vishnu",
+      "verse_ranges": ["narp_1,5.16"]
+    },
+    {
+      "src": "Vishnu",
+      "rel": "grants boon (to compose Purana) to",
+      "dst": "Markandeya",
+      "verse_ranges": ["narp_1,5.16"]
+    },
+    {
+      "src": "Markandeya",
+      "rel": "is remembered by the epithet",
+      "dst": "Narayana",
+      "verse_ranges": ["narp_1,5.17"]
+    },
+    {
+      "src": "Markandeya",
+      "rel": "is great devotee of",
+      "dst": "Vishnu",
+      "verse_ranges": ["narp_1,5.17", "narp_1,5.19"]
+    },
+    {
+      "src": "Vishnu",
+      "rel": "shows his power (does not withdraw form) to",
+      "dst": "Markandeya",
+      "verse_ranges": ["narp_1,5.18", "narp_1,5.19"]
+    },
+    {
+      "src": "Vishnu",
+      "rel": "creates as Brahma",
+      "dst": "Brahma",
+      "verse_ranges": ["narp_1,5.33"]
+    },
+    {
+      "src": "Markandeya",
+      "rel": "bows at the feet of and praises",
+      "dst": "Vishnu",
+      "verse_ranges": ["narp_1,5.34", "narp_1,5.35", "narp_1,5.36"]
+    }
+  ],
+  "story": {
+    "title": "The Conches of Kurukshetra and the Sage Who Outlived the Deluge",
+    "arc": "Two openings of cosmic scale. First, the Gita's overture: a blind king's anxious question unfurls into Duryodhana's roll-call of warriors and the thunder of conches, climaxing as Krishna and Arjuna sound their divine shells — the hush before dharma's war. Second, Markandeya's tale: a devotee so steadfast he floats like a withered leaf on the dissolution-ocean while Vishnu sleeps, witnesses the measure of all time unfold, sees creation reborn from the Lord's awakening, and falls in awe to praise the imperishable source.",
+    "characters": ["Dhritarashtra", "Sanjaya", "Duryodhana", "Drona", "Bhishma", "Krishna", "Arjuna", "Bhima", "Markandeya", "Vishnu", "Brahma"],
+    "timeline_note": "Part one stands at the threshold of the Kurukshetra war (just before the Gita's dialogue). Part two is set across a cosmic dissolution (pralaya) and the subsequent re-creation, framing the immense scale of yuga, manvantara, kalpa, and the parardhas of Vishnu's day.",
+    "comic_potential": "The astronomical time-reckoning — nimeshas piling into kashthas into kalas into the day of Brahma — reads like a deity-grade unit-conversion table; and Markandeya bobbing on the flood waters 'like a withered leaf' while the Lord naps is an unexpectedly vivid image of patient devotion."
+  },
+  "teachings": [
+    {
+      "teaching": "The opening word dharmakshetra ('field of dharma') frames the battlefield itself as a field of righteousness — the outer war is the stage for an inner moral and spiritual struggle.",
+      "lens_note": "In Sharma's Kriya-Yoga commentary the Kurukshetra of the Gita is read as the body-field (kshetra) where the seeker's higher and lower tendencies array against each other; the war is the inner battle resolved through yogic practice, not merely a historical conflict.",
+      "verse_ranges": ["[1]"]
+    },
+    {
+      "teaching": "The divine conches of Krishna (Panchajanya), Arjuna (Devadatta), and Bhima (Paundra) sound forth as the war begins — the divine sound that precedes and animates action.",
+      "lens_note": "The conch-sound corresponds in Sharma's framework to the inner pranava / anahata nada — the unstruck cosmic sound heard in deep Kriya meditation; the divine conch is the awakened life-current announcing the soul's readiness for battle against ignorance.",
+      "verse_ranges": ["[14]", "[15]"]
+    },
+    {
+      "teaching": "Markandeya, through austerity and unwavering devotion to Vishnu, becomes long-lived (cirajivi) and is granted the power to compose the Purana, earning the epithet Narayana himself.",
+      "lens_note": "Sharma reads the chirajivi sage as the yogi who, by stilling the breath and mind, transcends the ordinary span of life — the practitioner whose union with the deathless Self (Narayana) makes him share in the Lord's own immortality.",
+      "verse_ranges": ["narp_1,5.16", "narp_1,5.17"]
+    },
+    {
+      "teaching": "Amid the cosmic dissolution-ocean Markandeya abides, meditating on the supreme Self in the presence of the sleeping Hari, floating unharmed like a withered leaf.",
+      "lens_note": "The deluge near the sleeping Lord is, in Sharma's reading, the inner state of pralaya — the dissolution of mental modifications in samadhi; the yogi who steadies attention on the Atman near the inner Vishnu remains untouched while all outer forms dissolve.",
+      "verse_ranges": ["narp_1,5.20", "narp_1,5.32"]
+    },
+    {
+      "teaching": "The elaborate measure of time — from nimesha to kalpa to the parardhas of Vishnu's day and night — reveals the vastness of cyclic creation and dissolution under the Lord's rhythm.",
+      "lens_note": "Sharma treats cosmic time-cycles as the macrocosmic mirror of the breath-cycle: the in-breath and out-breath of Vishnu (creation and pralaya) correspond to the yogi's inhalation and exhalation; mastering the breath through Kriya is to step out of the wheel of time into the timeless Self.",
+      "verse_ranges": ["narp_1,5.21", "narp_1,5.22", "narp_1,5.23", "narp_1,5.24", "narp_1,5.25", "narp_1,5.26", "narp_1,5.27", "narp_1,5.28", "narp_1,5.29", "narp_1,5.30", "narp_1,5.31"]
+    },
+    {
+      "teaching": "When the appointed time comes, Vishnu, released from yoga-nidra, creates the moving and unmoving world in the form of Brahma; the awed Markandeya then bows and praises the unmeasurable, ageless, eternal, ever-blissful Lord.",
+      "lens_note": "The Lord's awakening from yoga-nidra to create is, for Sharma, the rising of consciousness from the seed-state of samadhi back into manifest awareness; recognizing the one Self (Narayana, Vasudeva) behind both rest and activity is the fruit of the practice — devotion ripening into direct vision.",
+      "verse_ranges": ["narp_1,5.33", "narp_1,5.34", "narp_1,5.35", "narp_1,5.36", "narp_1,5.37"]
+    }
+  ]
+}

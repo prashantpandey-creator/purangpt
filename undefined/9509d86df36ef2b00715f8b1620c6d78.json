@@ -1,0 +1,377 @@
+{
+  "chapter_summary": "This file joins two distinct passages. (1) The opening of the Bhagavad Gita (Mahabharata, Bhishma Parva, ch.1): blind king Dhritarashtra asks Sanjaya what his sons and the Pandavas did upon gathering for war on the sacred field of Kurukshetra. Sanjaya narrates how Duryodhana, seeing the Pandava army arrayed by Drupada's son (Dhrishtadyumna), approaches his teacher Drona and enumerates the great warriors on both sides — the Pandava archers (Bhima, Arjuna, Yuyudhana, Virata, Drupada, Dhrishtaketu, Chekitana, Kashiraja, Purujit, Kuntibhoja, Shaibya, Yudhamanyu, Uttamauja, the sons of Subhadra and Draupadi) and the Kaurava champions (Bhishma, Karna, Kripa, Ashvatthama, Vikarna, Bhurishravas/son of Somadatta). Duryodhana judges his Bhishma-guarded force inadequate and the Bhima-guarded enemy adequate, and asks all to protect Bhishma. Bhishma roars and blows his conch; the Kaurava war-instruments sound. Then Krishna (Madhava/Hrishikesha) and Arjuna (Pandava/Dhananjaya), in a chariot of white horses, blow their divine conches — Krishna the Panchajanya, Arjuna the Devadatta, and Bhima (Vrikodara) the great Paundra. (2) Narada Purana (Brihannaradiya, Purvabhaga), end of ch.4 and start of ch.5: Vishnu (Janardana), pleased with the sage Mrikandu's austerity, grants the boon that He Himself will take birth as Mrikandu's son, then vanishes. Narada asks Sanaka how the Lord became Mrikandu's son. Sanaka tells the sacred tale: Mrikandu marries, becomes a householder, and his chaste devoted wife conceives a portion of Hari's splendor, bearing after ten months a supremely radiant son — Markandeya. The boy grows like the waxing moon, is invested with the sacred thread at age five, and is instructed by his father in Vedic learning, daily Surya worship, brahmacharya, devotion to Hari, keeping company with Vishnu-devotees, ill-will toward none, and welfare of all. Markandeya becomes a great, compassionate, dharma-loving, self-controlled, all-knowing sage, radiant as the sun.",
+  "entities": [
+    {
+      "name": "Dhritarashtra",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["mbh_06.001.001"]
+    },
+    {
+      "name": "Sanjaya",
+      "kind": "sage",
+      "aliases": ["Samjaya"],
+      "verse_ranges": ["mbh_06.001.001", "mbh_06.001.002"]
+    },
+    {
+      "name": "Kurukshetra",
+      "kind": "place",
+      "aliases": ["Dharmakshetra"],
+      "verse_ranges": ["mbh_06.001.001"]
+    },
+    {
+      "name": "Duryodhana",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["mbh_06.001.002", "mbh_06.001.003"]
+    },
+    {
+      "name": "Drona",
+      "kind": "sage",
+      "aliases": ["Acharya"],
+      "verse_ranges": ["mbh_06.001.002", "mbh_06.001.003"]
+    },
+    {
+      "name": "Dhrishtadyumna",
+      "kind": "king",
+      "aliases": ["son of Drupada", "Drupadaputra"],
+      "verse_ranges": ["mbh_06.001.003"]
+    },
+    {
+      "name": "Bhima",
+      "kind": "king",
+      "aliases": ["Vrikodara", "Bhimakarma"],
+      "verse_ranges": ["mbh_06.001.004", "mbh_06.001.010", "mbh_06.001.015"]
+    },
+    {
+      "name": "Arjuna",
+      "kind": "king",
+      "aliases": ["Dhananjaya", "Pandava"],
+      "verse_ranges": ["mbh_06.001.004", "mbh_06.001.014", "mbh_06.001.015"]
+    },
+    {
+      "name": "Yuyudhana",
+      "kind": "king",
+      "aliases": ["Satyaki"],
+      "verse_ranges": ["mbh_06.001.004"]
+    },
+    {
+      "name": "Virata",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["mbh_06.001.004"]
+    },
+    {
+      "name": "Drupada",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["mbh_06.001.004"]
+    },
+    {
+      "name": "Dhrishtaketu",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["mbh_06.001.005"]
+    },
+    {
+      "name": "Chekitana",
+      "kind": "king",
+      "aliases": ["Cekitana"],
+      "verse_ranges": ["mbh_06.001.005"]
+    },
+    {
+      "name": "Kashiraja",
+      "kind": "king",
+      "aliases": ["King of Kashi"],
+      "verse_ranges": ["mbh_06.001.005"]
+    },
+    {
+      "name": "Purujit",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["mbh_06.001.005"]
+    },
+    {
+      "name": "Kuntibhoja",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["mbh_06.001.005"]
+    },
+    {
+      "name": "Shaibya",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["mbh_06.001.005"]
+    },
+    {
+      "name": "Yudhamanyu",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["mbh_06.001.006"]
+    },
+    {
+      "name": "Uttamauja",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["mbh_06.001.006"]
+    },
+    {
+      "name": "Bhishma",
+      "kind": "king",
+      "aliases": ["Pitamaha", "Kuruvriddha", "grandfather of the Kauravas"],
+      "verse_ranges": ["mbh_06.001.008", "mbh_06.001.010", "mbh_06.001.011", "mbh_06.001.012"]
+    },
+    {
+      "name": "Karna",
+      "kind": "king",
+      "aliases": ["Karṇa"],
+      "verse_ranges": ["mbh_06.001.008"]
+    },
+    {
+      "name": "Kripa",
+      "kind": "sage",
+      "aliases": ["Kripacharya", "Samitimjaya"],
+      "verse_ranges": ["mbh_06.001.008"]
+    },
+    {
+      "name": "Ashvatthama",
+      "kind": "sage",
+      "aliases": ["Ashvatthaman"],
+      "verse_ranges": ["mbh_06.001.008"]
+    },
+    {
+      "name": "Vikarna",
+      "kind": "king",
+      "aliases": [],
+      "verse_ranges": ["mbh_06.001.008"]
+    },
+    {
+      "name": "Bhurishravas",
+      "kind": "king",
+      "aliases": ["son of Somadatta", "Saumadatti"],
+      "verse_ranges": ["mbh_06.001.008"]
+    },
+    {
+      "name": "Krishna",
+      "kind": "deity",
+      "aliases": ["Madhava", "Hrishikesha", "Vasudeva"],
+      "verse_ranges": ["mbh_06.001.014", "mbh_06.001.015"]
+    },
+    {
+      "name": "Panchajanya",
+      "kind": "concept",
+      "aliases": [],
+      "verse_ranges": ["mbh_06.001.015"]
+    },
+    {
+      "name": "Devadatta",
+      "kind": "concept",
+      "aliases": [],
+      "verse_ranges": ["mbh_06.001.015"]
+    },
+    {
+      "name": "Paundra",
+      "kind": "concept",
+      "aliases": [],
+      "verse_ranges": ["mbh_06.001.015"]
+    },
+    {
+      "name": "Vishnu",
+      "kind": "deity",
+      "aliases": ["Janardana", "Hari", "Achyuta", "Shri Bhagavan", "Devadeva", "Jagaddhara"],
+      "verse_ranges": ["narp_1,4.93", "narp_1,4.95", "narp_1,4.96", "narp_1,4.97", "narp_1,4.99"]
+    },
+    {
+      "name": "Brahma",
+      "kind": "deity",
+      "aliases": ["Brahman (addressed sage)"],
+      "verse_ranges": ["narp_1,4.92", "narp_1,4.95"]
+    },
+    {
+      "name": "Mrikandu",
+      "kind": "sage",
+      "aliases": ["Mrikandu Rishi"],
+      "verse_ranges": ["narp_1,4.99", "narp_1,5.1", "narp_1,5.4", "narp_1,5.6", "narp_1,5.7"]
+    },
+    {
+      "name": "Narada",
+      "kind": "sage",
+      "aliases": [],
+      "verse_ranges": ["narp_1,5.1", "narp_1,5.3"]
+    },
+    {
+      "name": "Sanaka",
+      "kind": "sage",
+      "aliases": [],
+      "verse_ranges": ["narp_1,5.3"]
+    },
+    {
+      "name": "Markandeya",
+      "kind": "sage",
+      "aliases": ["Markandeya muni", "Bhargava (of Bhrigu's line)"],
+      "verse_ranges": ["narp_1,5.2", "narp_1,5.6", "narp_1,5.13", "narp_1,5.14", "narp_1,5.15"]
+    },
+    {
+      "name": "Bhakti",
+      "kind": "concept",
+      "aliases": ["Vishnu-bhakti", "devotion to Hari"],
+      "verse_ranges": ["narp_1,5.3", "narp_1,5.10", "narp_1,5.12"]
+    },
+    {
+      "name": "Brahmacharya",
+      "kind": "practice",
+      "aliases": [],
+      "verse_ranges": ["narp_1,5.10"]
+    },
+    {
+      "name": "Surya worship",
+      "kind": "practice",
+      "aliases": ["trikala surya arcana"],
+      "verse_ranges": ["narp_1,5.10"]
+    }
+  ],
+  "relationships": [
+    {
+      "src": "Sanjaya",
+      "rel": "narrates_to",
+      "dst": "Dhritarashtra",
+      "verse_ranges": ["mbh_06.001.001", "mbh_06.001.002"]
+    },
+    {
+      "src": "Duryodhana",
+      "rel": "approaches_teacher",
+      "dst": "Drona",
+      "verse_ranges": ["mbh_06.001.002", "mbh_06.001.003"]
+    },
+    {
+      "src": "Dhrishtadyumna",
+      "rel": "son_of",
+      "dst": "Drupada",
+      "verse_ranges": ["mbh_06.001.003"]
+    },
+    {
+      "src": "Dhrishtadyumna",
+      "rel": "disciple_of",
+      "dst": "Drona",
+      "verse_ranges": ["mbh_06.001.003"]
+    },
+    {
+      "src": "Dhrishtadyumna",
+      "rel": "arrayed_army_of",
+      "dst": "Arjuna",
+      "verse_ranges": ["mbh_06.001.003"]
+    },
+    {
+      "src": "Bhishma",
+      "rel": "guards_army_of",
+      "dst": "Duryodhana",
+      "verse_ranges": ["mbh_06.001.010", "mbh_06.001.011"]
+    },
+    {
+      "src": "Bhishma",
+      "rel": "grandfather_of",
+      "dst": "Duryodhana",
+      "verse_ranges": ["mbh_06.001.012"]
+    },
+    {
+      "src": "Bhishma",
+      "rel": "blows_conch",
+      "dst": "Panchajanya",
+      "verse_ranges": ["mbh_06.001.012"]
+    },
+    {
+      "src": "Krishna",
+      "rel": "blows",
+      "dst": "Panchajanya",
+      "verse_ranges": ["mbh_06.001.015"]
+    },
+    {
+      "src": "Arjuna",
+      "rel": "blows",
+      "dst": "Devadatta",
+      "verse_ranges": ["mbh_06.001.015"]
+    },
+    {
+      "src": "Bhima",
+      "rel": "blows",
+      "dst": "Paundra",
+      "verse_ranges": ["mbh_06.001.015"]
+    },
+    {
+      "src": "Krishna",
+      "rel": "charioteer_of",
+      "dst": "Arjuna",
+      "verse_ranges": ["mbh_06.001.014"]
+    },
+    {
+      "src": "Vishnu",
+      "rel": "grants_boon_to",
+      "dst": "Mrikandu",
+      "verse_ranges": ["narp_1,4.95", "narp_1,4.97"]
+    },
+    {
+      "src": "Vishnu",
+      "rel": "incarnates_as_son_of",
+      "dst": "Mrikandu",
+      "verse_ranges": ["narp_1,4.97", "narp_1,5.6"]
+    },
+    {
+      "src": "Markandeya",
+      "rel": "incarnation_of",
+      "dst": "Vishnu",
+      "verse_ranges": ["narp_1,5.6"]
+    },
+    {
+      "src": "Markandeya",
+      "rel": "son_of",
+      "dst": "Mrikandu",
+      "verse_ranges": ["narp_1,5.1", "narp_1,5.6", "narp_1,5.7"]
+    },
+    {
+      "src": "Sanaka",
+      "rel": "narrates_to",
+      "dst": "Narada",
+      "verse_ranges": ["narp_1,5.3"]
+    },
+    {
+      "src": "Mrikandu",
+      "rel": "instructs",
+      "dst": "Markandeya",
+      "verse_ranges": ["narp_1,5.9", "narp_1,5.10", "narp_1,5.13"]
+    }
+  ],
+  "story": {
+    "title": "Two Beginnings: The Conches of Kurukshetra and the Birth of Markandeya",
+    "arc": "Two openings sit side by side. The Gita's first chapter sets the stage of war — a blind king's anxious question, a survey of the assembled armies, Duryodhana's restless doubt despite his champions, and the rising thunder of conches that climaxes with the divine blasts of Krishna and the Pandavas. The Narada Purana passage answers a different question entirely: how the formless Lord consents to be born. Vishnu, won by Mrikandu's austerity, promises to become his son and vanishes; the sage's chaste wife conceives a ray of Hari's splendor and bears Markandeya, who is raised in Vedic discipline and devotion and ripens into a luminous, all-knowing sage.",
+    "characters": ["Dhritarashtra", "Sanjaya", "Duryodhana", "Drona", "Bhishma", "Krishna", "Arjuna", "Bhima", "Vishnu", "Mrikandu", "Markandeya", "Narada", "Sanaka"],
+    "timeline_note": "Two unrelated narrative moments. The Gita passage is the eve of the Kurukshetra war (Mahabharata, Bhishma Parva). The Narada Purana passage is a frame-tale told by Sanaka to Narada about a much earlier age — the birth and upbringing of the chiranjivi sage Markandeya, son of Mrikandu of the Bhrigu line.",
+    "comic_potential": "Duryodhana, surrounded by literally the greatest warriors alive, still nervously rattles off the enemy roster to his old teacher like a student over-preparing for an exam — and then declares HIS side the inadequate one. Meanwhile in the other story, Vishnu agrees to be born just so He doesn't have to break His word to a devotee, then promptly disappears before anyone can ask follow-up questions."
+  },
+  "teachings": [
+    {
+      "teaching": "The battlefield is named dharmakshetra (the field of dharma) before it is named kurukshetra — the place of conflict is first the place of righteous duty.",
+      "lens_note": "In Sharma's Kriya framework, the body is the dharmakshetra: the inner field where the war between scattered tendencies and the disciplined self is fought. The opening verse points the seeker inward — the real Kurukshetra is the sadhaka's own being where every breath is a battle and a duty.",
+      "verse_ranges": ["mbh_06.001.001"]
+    },
+    {
+      "teaching": "The divine conches of Krishna, Arjuna, and Bhima sound only after the human war-instruments — the divine sound answers and overwhelms the mundane clamor.",
+      "lens_note": "For Sharma, the conch (shankha) and its sound prefigure the inner nada — the unstruck primordial sound heard in deep Kriya practice. Krishna as Hrishikesha (lord of the senses) sounding the Panchajanya signals that mastery of the senses precedes the awakening of the inner divine sound.",
+      "verse_ranges": ["mbh_06.001.013", "mbh_06.001.014", "mbh_06.001.015"]
+    },
+    {
+      "teaching": "The Lord takes birth as a devotee's son rather than break His word, declaring 'a noble one never speaks untruth' — divine grace is bound by truth and love for the devotee.",
+      "lens_note": "In Sharma's lens, this is the descent of grace (kripa) made tangible: the formless consciousness consents to take form within the disciplined practitioner's own lineage when austerity is sincere. The boon is not magic but the natural fruit of tapas — sustained inner fire — meeting the Lord halfway.",
+      "verse_ranges": ["narp_1,4.95", "narp_1,4.96", "narp_1,4.97"]
+    },
+    {
+      "teaching": "Markandeya is raised in a complete discipline: investiture of the sacred thread, threefold daily Surya worship, Vedic study, brahmacharya, constant devotion to Hari, company of the holy, ill-will toward none, and the welfare of all.",
+      "lens_note": "This is Sharma's integral sadhana in miniature — outer ritual (sandhya, surya-arghya) wedded to inner continence (brahmacharya as conservation of vital energy) and ceaseless remembrance of the divine. The reigning-in of the senses plus brahmacharya is precisely the conserved tejas that, in Kriya, becomes the luminosity described of the grown Markandeya (radiant as the sun).",
+      "verse_ranges": ["narp_1,5.9", "narp_1,5.10", "narp_1,5.11", "narp_1,5.12", "narp_1,5.15"]
+    },
+    {
+      "teaching": "By mere remembrance of the Lord's abode even the gravest sinners reach the supreme state.",
+      "lens_note": "Sharma reads such remembrance not as casual recollection but as smarana sustained in the meditative current — the continuous inner turning toward the divine that, in Kriya, purifies accumulated karma faster than any expiatory rite.",
+      "verse_ranges": ["narp_1,4.93", "narp_1,4.94"]
+    }
+  ]
+}

@@ -1,0 +1,239 @@
+{
+  "chapter_summary": "Mārkaṇḍeya beholds the play (līlā) of his great lord. The sages question Sūta: it is heard that when the moving and unmoving world was dissolved in the cosmic deluge and all became a single ocean, Hari alone remained — why, when he is the all-devouring one, was Hari himself left over? Curious too, they ask who could be so lazy as to neglect drinking the nectar of Hari's glory. Sūta replies by telling of the greatly blessed sage Mṛkaṇḍu, who performed terrible austerities at the great holy place of Śālagrāma. For ten thousand years he recited the eternal Brahman, fasting, full of forbearance, true to his vow, with conquered senses; seeing all beings as himself, free of desire for sense-objects, devoted to the welfare of all creatures and self-controlled, he practiced this immense penance. Frightened by the heat (power) of his tapas, all the gods led by Indra took refuge in the faultless Nārāyaṇa. Reaching the northern shore of the ocean of milk, the dwellers of heaven praised the lotus-naveled lord of the gods, the world-teacher. The gods extol him as the imperishable, infinite Nārāyaṇa, protector of those who seek refuge, bearer of conch and mace, form of all worlds, cause of the cosmic egg, witness of the worlds, attainable through meditation, slayer of Keśin and Madhu, beyond and within the qualities (nirguṇa and guṇātmaka), formless and possessed of all forms, devoted to brahmins and cows, Kṛṣṇa, Govinda. Pleased by this hymn, the lord who bears conch, discus, and mace becomes manifest before them — lotus-petal-eyed, blazing like ten million suns, adorned with all ornaments, bearing the Śrīvatsa mark, clad in yellow garments, gentle, wearing a golden sacred thread, praised by the best of sages and surrounded by his chief attendants. The hosts of gods, their splendor dimmed by his splendor, joyfully bow in full prostration. Then the pleased lord, with a voice deep as thunder, gladdening the bowing gods led by Indra, speaks: 'I know your mental anguish arisen from Mṛkaṇḍu's tapas. That sage, foremost of the good, does not afflict you, O gods.'",
+  "entities": [
+    {
+      "name": "Mārkaṇḍeya",
+      "kind": "sage",
+      "aliases": [],
+      "verse_ranges": ["narp_1,4.46"]
+    },
+    {
+      "name": "Hari",
+      "kind": "deity",
+      "aliases": ["Viṣṇu", "Nārāyaṇa", "Kṛṣṇa", "Govinda", "Madhava"],
+      "verse_ranges": ["narp_1,4.47", "narp_1,4.48", "narp_1,4.61"]
+    },
+    {
+      "name": "Sūta",
+      "kind": "sage",
+      "aliases": [],
+      "verse_ranges": ["narp_1,4.49", "narp_1,4.50"]
+    },
+    {
+      "name": "the sages (ṛṣis)",
+      "kind": "sage",
+      "aliases": ["ṛṣaya"],
+      "verse_ranges": ["narp_1,4.47", "narp_1,4.48", "narp_1,4.49"]
+    },
+    {
+      "name": "Mṛkaṇḍu",
+      "kind": "sage",
+      "aliases": [],
+      "verse_ranges": ["narp_1,4.50", "narp_1,4.51", "narp_1,4.52", "narp_1,4.69"]
+    },
+    {
+      "name": "Nārāyaṇa",
+      "kind": "deity",
+      "aliases": ["Hari", "Pareśa", "Padmanābha", "Kamalāpati", "Jagadguru", "Govinda", "Kṛṣṇa"],
+      "verse_ranges": ["narp_1,4.53", "narp_1,4.54", "narp_1,4.55", "narp_1,4.64"]
+    },
+    {
+      "name": "the gods (devas)",
+      "kind": "deity",
+      "aliases": ["tridivaukasaḥ", "amaras"],
+      "verse_ranges": ["narp_1,4.53", "narp_1,4.54", "narp_1,4.67", "narp_1,4.68"]
+    },
+    {
+      "name": "Indra",
+      "kind": "deity",
+      "aliases": ["indrapurogama"],
+      "verse_ranges": ["narp_1,4.53", "narp_1,4.68"]
+    },
+    {
+      "name": "Śālagrāma",
+      "kind": "place",
+      "aliases": ["mahātīrtha"],
+      "verse_ranges": ["narp_1,4.50"]
+    },
+    {
+      "name": "Ocean of Milk",
+      "kind": "place",
+      "aliases": ["kṣīrābdhi", "northern shore of the milk-ocean"],
+      "verse_ranges": ["narp_1,4.54"]
+    },
+    {
+      "name": "Keśin",
+      "kind": "demon",
+      "aliases": ["keśihantṛ (object of the slayer epithet)"],
+      "verse_ranges": ["narp_1,4.59"]
+    },
+    {
+      "name": "Madhu",
+      "kind": "demon",
+      "aliases": ["madhuhantṛ (object of the slayer epithet)"],
+      "verse_ranges": ["narp_1,4.59"]
+    },
+    {
+      "name": "Brahman",
+      "kind": "concept",
+      "aliases": ["sanātana brahman", "the eternal Brahman"],
+      "verse_ranges": ["narp_1,4.51"]
+    },
+    {
+      "name": "Tapas (austerity)",
+      "kind": "practice",
+      "aliases": ["tapaḥ", "penance"],
+      "verse_ranges": ["narp_1,4.50", "narp_1,4.51", "narp_1,4.52", "narp_1,4.53", "narp_1,4.69"]
+    },
+    {
+      "name": "Dhyāna (meditation)",
+      "kind": "practice",
+      "aliases": ["dhyāna"],
+      "verse_ranges": ["narp_1,4.58"]
+    },
+    {
+      "name": "Cosmic dissolution (pralaya)",
+      "kind": "concept",
+      "aliases": ["ekārṇava", "single-ocean state"],
+      "verse_ranges": ["narp_1,4.47", "narp_1,4.48"]
+    }
+  ],
+  "relationships": [
+    {
+      "src": "Mārkaṇḍeya",
+      "rel": "beholds the līlā of",
+      "dst": "Hari",
+      "verse_ranges": ["narp_1,4.46"]
+    },
+    {
+      "src": "the sages (ṛṣis)",
+      "rel": "question",
+      "dst": "Sūta",
+      "verse_ranges": ["narp_1,4.47", "narp_1,4.48", "narp_1,4.49"]
+    },
+    {
+      "src": "Hari",
+      "rel": "alone remains during dissolution of",
+      "dst": "Cosmic dissolution (pralaya)",
+      "verse_ranges": ["narp_1,4.47", "narp_1,4.48"]
+    },
+    {
+      "src": "Sūta",
+      "rel": "narrates the story of",
+      "dst": "Mṛkaṇḍu",
+      "verse_ranges": ["narp_1,4.50"]
+    },
+    {
+      "src": "Mṛkaṇḍu",
+      "rel": "performs austerities at",
+      "dst": "Śālagrāma",
+      "verse_ranges": ["narp_1,4.50"]
+    },
+    {
+      "src": "Mṛkaṇḍu",
+      "rel": "recites for ten thousand years",
+      "dst": "Brahman",
+      "verse_ranges": ["narp_1,4.51"]
+    },
+    {
+      "src": "the gods (devas)",
+      "rel": "are frightened by the tapas of",
+      "dst": "Mṛkaṇḍu",
+      "verse_ranges": ["narp_1,4.53"]
+    },
+    {
+      "src": "the gods (devas)",
+      "rel": "take refuge in",
+      "dst": "Nārāyaṇa",
+      "verse_ranges": ["narp_1,4.53"]
+    },
+    {
+      "src": "Indra",
+      "rel": "leads",
+      "dst": "the gods (devas)",
+      "verse_ranges": ["narp_1,4.53", "narp_1,4.68"]
+    },
+    {
+      "src": "the gods (devas)",
+      "rel": "reach and praise the lord at",
+      "dst": "Ocean of Milk",
+      "verse_ranges": ["narp_1,4.54"]
+    },
+    {
+      "src": "the gods (devas)",
+      "rel": "praise (hymn)",
+      "dst": "Nārāyaṇa",
+      "verse_ranges": ["narp_1,4.55", "narp_1,4.56", "narp_1,4.57", "narp_1,4.58", "narp_1,4.59", "narp_1,4.60", "narp_1,4.61", "narp_1,4.62", "narp_1,4.63"]
+    },
+    {
+      "src": "Nārāyaṇa",
+      "rel": "is identified as (alias of)",
+      "dst": "Hari",
+      "verse_ranges": ["narp_1,4.61"]
+    },
+    {
+      "src": "Nārāyaṇa",
+      "rel": "is slayer of",
+      "dst": "Keśin",
+      "verse_ranges": ["narp_1,4.59"]
+    },
+    {
+      "src": "Nārāyaṇa",
+      "rel": "is slayer of",
+      "dst": "Madhu",
+      "verse_ranges": ["narp_1,4.59"]
+    },
+    {
+      "src": "Nārāyaṇa",
+      "rel": "becomes manifest before",
+      "dst": "the gods (devas)",
+      "verse_ranges": ["narp_1,4.64", "narp_1,4.65", "narp_1,4.66"]
+    },
+    {
+      "src": "the gods (devas)",
+      "rel": "bow in full prostration to",
+      "dst": "Nārāyaṇa",
+      "verse_ranges": ["narp_1,4.67"]
+    },
+    {
+      "src": "Nārāyaṇa",
+      "rel": "speaks to and reassures",
+      "dst": "the gods (devas)",
+      "verse_ranges": ["narp_1,4.68", "narp_1,4.69"]
+    }
+  ],
+  "story": {
+    "title": "The Penance of Mṛkaṇḍu and the Gods' Refuge in Nārāyaṇa",
+    "arc": "Sūta, prompted by the sages' wonder about why Hari alone survives the cosmic dissolution, tells of the sage Mṛkaṇḍu, whose ten-thousand-year austerity at Śālagrāma blazes so fiercely that the terrified gods led by Indra flee to the milk-ocean and hymn Nārāyaṇa. Pleased, the lord manifests in radiant glory and reassures them that the sage means them no harm.",
+    "characters": ["Sūta", "the sages", "Mṛkaṇḍu", "the gods (devas)", "Indra", "Nārāyaṇa", "Mārkaṇḍeya"],
+    "timeline_note": "Framed as Sūta's narration to the sages; the inner story spans Mṛkaṇḍu's ten-thousand-year penance, set against the recurring cosmic-dissolution backdrop where Hari alone abides.",
+    "comic_potential": "The gods, mighty as they are, are reduced to panicking refugees fleeing across an ocean because one lean, fasting hermit got too good at meditating — and the lord has to calm them down like a parent assuring frightened children that the quiet old man next door is harmless."
+  },
+  "teachings": [
+    {
+      "teaching": "When the entire moving and unmoving creation dissolves into a single ocean at pralaya, Hari alone remains — the one imperishable ground that the all-devouring dissolution cannot consume.",
+      "lens_note": "In Sharma's Kriya framework this is the witness-consciousness (the 'one who remains') that abides when all phenomenal modifications subside; the dissolution of the moving/unmoving world mirrors the stilling of all vṛtti in deep meditation, where only the unconditioned Self persists.",
+      "verse_ranges": ["narp_1,4.47", "narp_1,4.48"]
+    },
+    {
+      "teaching": "Mṛkaṇḍu's penance is defined not by ritual but by inner conquest: fasting, forbearance, truth to his vow, conquered senses (jitendriya), freedom from craving for sense-objects, and seeing all beings as himself (ātmavat sarvabhūtāni).",
+      "lens_note": "This is precisely the pratyāhāra and yama-niyama foundation Sharma insists must precede real Kriya — mastery of the senses and identification with all beings as the Self is the qualification that makes long meditation fruitful rather than mere endurance.",
+      "verse_ranges": ["narp_1,4.51", "narp_1,4.52"]
+    },
+    {
+      "teaching": "Sustained tapas generates a real, radiant power (tejas) so potent that even the gods are scorched and alarmed by it.",
+      "lens_note": "Sharma teaches that disciplined practice accumulates genuine ojas/tejas — spiritual energy is not metaphor; the 'heat' of austerity is the rising inner force that the lower deities (sense-powers) instinctively resist as it threatens their dominion.",
+      "verse_ranges": ["narp_1,4.53"]
+    },
+    {
+      "teaching": "The Lord is praised as simultaneously nirguṇa (beyond qualities) and guṇātmaka, formless (arūpa) and of all forms (bahurūpa), eldest, pure, attainable through meditation (dhyānagamya).",
+      "lens_note": "For Sharma the goal is reached through dhyāna that holds both poles — meditating on the form to arrive at the formless; the divine is 'dhyānagamya,' confirming that meditation, not argument, is the road, and that the same reality wears form for the seeker and is formless in itself.",
+      "verse_ranges": ["narp_1,4.58", "narp_1,4.60"]
+    },
+    {
+      "teaching": "Sincere praise and refuge-taking (śaraṇāgati) draw the Lord into manifestation: pleased by the hymn, Nārāyaṇa, protector of refuge-seekers, becomes directly visible.",
+      "lens_note": "In Sharma's lineage devotion and surrender are not opposed to yogic effort but complete it — the grace that makes the formless manifest answers the surrendered heart, just as the dimming of the gods' splendor before his shows the ego's light yielding before the realized inner radiance.",
+      "verse_ranges": ["narp_1,4.55", "narp_1,4.64", "narp_1,4.67"]
+    }
+  ]
+}

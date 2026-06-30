@@ -1,0 +1,160 @@
+{
+  "chapter_summary": "This portion of the Brihannaradiya Purana (Purvabhaga, Prathamapada, third adhyaya) is a hymn of praise to Bharatavarsha as the supreme land of action (karmabhumi) and a teaching on righteous conduct, addressed to the sage Narada. It describes the virtues of the worthy brahmana and devotee — one who is forbearing toward cattle, celibate, free of slander, non-acquisitive, worshipped by gods; truthful, pure, grateful, devoted to helping others, honored by gods and demons; and intent on hearing the meaning of the Vedas and Puranas and on the company of the good. It declares that even the gods (Brahma and others), fearing the exhaustion of their merit, praise the soil of Bharata, for it alone is the land where action bears fruit and where liberation can be won — a thing rare even for the gods. One born here who fails to perform dharma is called the lowest of all and is condemned to a terrible hell; one born here who strives to exhaust his own karma is Hari himself in human form. The chapter then turns to the discipline of action: works should be done and dedicated to Hari without craving their fruit, for fruit-bound action leads back to rebirth even from Brahma's world, while desireless offering of action attains the supreme imperishable state. It closes with an all-pervading Vasudeva theology — Vasudeva is the highest dharma, austerity, knowledge, and goal; all the moving and unmoving world from Brahma down to a blade of grass is of the nature of Vasudeva, who alone is Creator, the Ender of the Three Cities, the form of the sacrifice of gods and demons, and this entire cosmic egg — beyond whom nothing else exists; subtler than the subtle and vaster than the vast, by whom this wondrous all is pervaded, and to whom adoration is offered.",
+  "entities": [
+    {
+      "name": "Narada",
+      "kind": "sage",
+      "aliases": ["Nārada", "munīśvara", "mune"],
+      "verse_ranges": ["narp_1,3.60", "narp_1,3.66", "narp_1,3.67", "narp_1,3.78"]
+    },
+    {
+      "name": "Vasudeva",
+      "kind": "deity",
+      "aliases": ["Vāsudeva", "Hari", "Viṣṇu", "Hṛṣīkeśa", "devadeva"],
+      "verse_ranges": ["narp_1,3.72", "narp_1,3.73", "narp_1,3.74", "narp_1,3.78", "narp_1,3.80", "narp_1,3.81", "narp_1,3.82", "narp_1,3.83"]
+    },
+    {
+      "name": "Brahma",
+      "kind": "deity",
+      "aliases": ["brahman", "brahmādya"],
+      "verse_ranges": ["narp_1,3.59", "narp_1,3.69", "narp_1,3.75", "narp_1,3.81"]
+    },
+    {
+      "name": "Shiva",
+      "kind": "deity",
+      "aliases": ["Tripurāntaka", "the Ender of the Three Cities"],
+      "verse_ranges": ["narp_1,3.82"]
+    },
+    {
+      "name": "Bharatavarsha",
+      "kind": "place",
+      "aliases": ["Bhārata", "Bhāratavarṣa", "bhāratabhūbhāga", "karmabhūmi", "land of action"],
+      "verse_ranges": ["narp_1,3.63", "narp_1,3.65", "narp_1,3.67", "narp_1,3.69", "narp_1,3.70", "narp_1,3.71", "narp_1,3.79"]
+    },
+    {
+      "name": "Dharma",
+      "kind": "concept",
+      "aliases": ["righteous conduct", "sadācāra", "svadharma"],
+      "verse_ranges": ["narp_1,3.67", "narp_1,3.76", "narp_1,3.77", "narp_1,3.80"]
+    },
+    {
+      "name": "Niṣkāma Karma",
+      "kind": "practice",
+      "aliases": ["desireless action", "dedication of action to Hari", "offering of works to Vishnu"],
+      "verse_ranges": ["narp_1,3.73", "narp_1,3.74", "narp_1,3.75", "narp_1,3.76", "narp_1,3.77"]
+    },
+    {
+      "name": "Kamadhenu",
+      "kind": "concept",
+      "aliases": ["wish-fulfilling cow"],
+      "verse_ranges": ["narp_1,3.68"]
+    },
+    {
+      "name": "Moksha",
+      "kind": "concept",
+      "aliases": ["paramaṃ padam", "the supreme imperishable state", "liberation"],
+      "verse_ranges": ["narp_1,3.75", "narp_1,3.76"]
+    },
+    {
+      "name": "Vedas and Smritis",
+      "kind": "text",
+      "aliases": ["śruti", "smṛti", "Purāṇa", "vedārtha"],
+      "verse_ranges": ["narp_1,3.62", "narp_1,3.66", "narp_1,3.76"]
+    }
+  ],
+  "relationships": [
+    {
+      "src": "Brahma",
+      "rel": "praises",
+      "dst": "Bharatavarsha",
+      "verse_ranges": ["narp_1,3.69"]
+    },
+    {
+      "src": "Vasudeva",
+      "rel": "is_identical_with",
+      "dst": "Shiva",
+      "verse_ranges": ["narp_1,3.82"]
+    },
+    {
+      "src": "Vasudeva",
+      "rel": "is_identical_with",
+      "dst": "Brahma",
+      "verse_ranges": ["narp_1,3.82"]
+    },
+    {
+      "src": "Vasudeva",
+      "rel": "pervades",
+      "dst": "Bharatavarsha",
+      "verse_ranges": ["narp_1,3.80", "narp_1,3.81", "narp_1,3.83"]
+    },
+    {
+      "src": "human born in Bharata who exhausts his karma",
+      "rel": "is_incarnation_of",
+      "dst": "Vasudeva",
+      "verse_ranges": ["narp_1,3.72"]
+    },
+    {
+      "src": "Niṣkāma Karma",
+      "rel": "is_dedicated_to",
+      "dst": "Vasudeva",
+      "verse_ranges": ["narp_1,3.73", "narp_1,3.74"]
+    },
+    {
+      "src": "Niṣkāma Karma",
+      "rel": "leads_to",
+      "dst": "Moksha",
+      "verse_ranges": ["narp_1,3.75", "narp_1,3.76"]
+    },
+    {
+      "src": "Vasudeva",
+      "rel": "is_pleased_with",
+      "dst": "Dharma",
+      "verse_ranges": ["narp_1,3.78"]
+    },
+    {
+      "src": "Bharatavarsha",
+      "rel": "is",
+      "dst": "Dharma",
+      "verse_ranges": ["narp_1,3.67", "narp_1,3.70"]
+    }
+  ],
+  "story": {
+    "title": "The Glory of Bharatavarsha and the Dedication of Action to Vasudeva",
+    "arc": "Addressing Narada, the speaker exalts Bharatavarsha as the unique land of action where merit and liberation are won — coveted even by the gods who fear their merit's decline. He warns that one born here who neglects dharma is the lowest of beings bound for hell, while one who strives to exhaust his karma is Hari incarnate. The discourse then resolves into the discipline of desireless, Hari-dedicated action as the path to the imperishable state, culminating in a sweeping declaration of Vasudeva as the sole reality pervading and constituting the entire cosmos.",
+    "characters": ["Narada", "Vasudeva (Hari/Vishnu)", "Brahma", "the worthy brahmana", "the gods (divaukasas)"],
+    "timeline_note": "A doctrinal sermon within the Srishti-Bharatakhanda-Prashastya section of the Purvabhaga; no narrative event-sequence, it is teaching addressed to Narada.",
+    "comic_potential": "The vivid image of the fool who abandons the wish-granting Kamadhenu only to go milking the barren arka (swallow-wort) plant — squeezing a poison weed for milk — is a built-in absurdist parable ripe for comic illustration."
+  },
+  "teachings": [
+    {
+      "teaching": "The marks of the worthy one: forbearing toward cattle, celibate, free of slander, non-acquisitive, truthful, pure, grateful, devoted to the welfare of others — such a being is worshipped by gods and demons alike.",
+      "lens_note": "In Sharma's Kriya framework these outer virtues are not moral decoration but the prerequisite stilling of the pranic disturbances (slander, grasping, falsehood) that scatter attention; brahmacarya here is the conservation and upward redirection of energy that Kriya depends on.",
+      "verse_ranges": ["narp_1,3.60", "narp_1,3.61"]
+    },
+    {
+      "teaching": "Bharata is the supreme land of action (karmabhumi), rare even for gods, granting the fruit of all works and liberation; even Brahma and the gods praise it, fearing the exhaustion of their own enjoyment.",
+      "lens_note": "Sharma reads 'karmabhumi' as the embodied human birth itself — the rare condition in which deliberate spiritual technique (kriya) can be applied; the gods' merit-bound heavens correspond to subtle states that still revolve in rebirth, whereas only the human field permits the conscious work that ends the cycle.",
+      "verse_ranges": ["narp_1,3.69", "narp_1,3.70", "narp_1,3.71"]
+    },
+    {
+      "teaching": "One born in Bharata who does not perform dharma is the lowest of all and is cooked in a terrible hell; one who strives to exhaust his own karma is Hari himself concealed in human form.",
+      "lens_note": "For Sharma the one who 'exhausts his own karma' is the practitioner who burns the seed-impressions (samskaras) through inner fire; recognizing such a one as Hari-in-human-form is the doctrine that the realized practitioner becomes identical with the divine consciousness he meditates upon.",
+      "verse_ranges": ["narp_1,3.67", "narp_1,3.72", "narp_1,3.79"]
+    },
+    {
+      "teaching": "Perform works and dedicate their fruit to Hari with devotion, for fruit thus offered is imperishable; fruit-craving action, even up to Brahma's world, returns one to rebirth, while the non-craver of fruit attains the supreme state.",
+      "lens_note": "This is the core of Sharma's Kriya: action offered without craving for fruit (niṣkāma) is the oblation that does not bind; the 'imperishable fruit' is the irreversible inner transformation, as opposed to the perishable astral rewards that pull consciousness back down into incarnation.",
+      "verse_ranges": ["narp_1,3.73", "narp_1,3.74", "narp_1,3.75"]
+    },
+    {
+      "teaching": "Vedic works should be done to please the Lord; whether desireless or with desire, one should perform action according to rule, but abandoning the conduct of one's own stage of life makes one 'fallen.' The brahmana steadfast in good conduct grows by Brahman-radiance and Vishnu is pleased with his devotion.",
+      "lens_note": "Sharma stresses that technique without sustained right living (sadācāra) collapses; the 'brahmatejas' that grows in the disciplined one is the awakened inner luminosity (the glow of the activated subtle centers), and Vishnu's pleasure is the responsive grace that meets disciplined effort.",
+      "verse_ranges": ["narp_1,3.76", "narp_1,3.77", "narp_1,3.78"]
+    },
+    {
+      "teaching": "Vasudeva is the highest dharma, austerity, knowledge, and goal; the whole moving and unmoving world from Brahma to a blade of grass is of his nature; he alone is Creator, Destroyer of the Three Cities, the form of the sacrifice, and this entire cosmic egg — subtler than the subtle, vaster than the vast — beyond whom nothing exists.",
+      "lens_note": "This all-pervading Vasudeva is, in Sharma's reading, the one consciousness realized within in samadhi — not an external object of worship but the substratum the kriya practitioner discovers as his own deepest Self; 'subtler than the subtle and vaster than the vast' names the experiential paradox of that inner infinitude.",
+      "verse_ranges": ["narp_1,3.80", "narp_1,3.81", "narp_1,3.82", "narp_1,3.83"]
+    }
+  ]
+}

@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FunGuru — Cosmic Comedy with Real Wisdom</title>
+<style>
+  :root {
+    --bg: #0d0a1a;
+    --surface: #18133a;
+    --accent: #f59e0b;
+    --accent2: #a855f7;
+    --text: #f0e8d0;
+    --muted: #6b5a8a;
+    --joke: #fcd34d;
+    --wisdom: #c4b5fd;
+    --border: #2d2060;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Georgia', serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: linear-gradient(180deg, #1a123a 0%, transparent 100%);
+  }
+  .logo-ring {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, #f59e0b, #a855f7 70%, #0d0a1a);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 0 20px rgba(245,158,11,0.4);
+    animation: pulse 3s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 20px rgba(245,158,11,.3)} 50%{box-shadow:0 0 35px rgba(168,85,247,.5)} }
+  .header-text h1 { font-size: 22px; color: var(--accent); letter-spacing: 2px; }
+  .header-text p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* Voice toggle in header */
+  .header-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  #voice-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 7px 12px;
+    font-size: 18px;
+    display: flex; align-items: center; gap: 6px;
+    transition: all .2s;
+  }
+  #voice-btn:hover { border-color: var(--accent2); color: var(--wisdom); }
+  #voice-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(245,158,11,.08); }
+  #voice-btn .label { font-size: 11px; font-family: sans-serif; }
+  #voice-status {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: sans-serif;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  #voice-status.visible { opacity: 1; }
+
+  #chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 780px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .msg { display: flex; flex-direction: column; gap: 4px; }
+  .msg.user { align-items: flex-end; }
+  .msg.bot  { align-items: flex-start; }
+
+  .bubble {
+    max-width: 88%;
+    padding: 14px 18px;
+    border-radius: 14px;
+    line-height: 1.7;
+    font-size: 15px;
+  }
+  .user .bubble {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-bottom-right-radius: 4px;
+  }
+  .bot .bubble {
+    background: linear-gradient(135deg, #1e1445 0%, #2a1060 100%);
+    border: 1px solid #3d2080;
+    border-bottom-left-radius: 4px;
+    color: var(--text);
+  }
+  .bot .bubble .joke-line {
+    color: var(--joke);
+    display: block;
+    margin-bottom: 10px;
+    font-style: italic;
+  }
+  .bot .bubble .wisdom-line {
+    color: var(--wisdom);
+    display: block;
+    font-size: 13.5px;
+  }
+
+  .thinking {
+    display: flex; gap: 6px; padding: 14px 18px; align-items: center;
+  }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent2);
+    animation: bounce 1.2s ease-in-out infinite;
+  }
+  .dot:nth-child(2) { animation-delay: .2s; background: var(--accent); }
+  .dot:nth-child(3) { animation-delay: .4s; }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+
+  #empty {
+    margin: auto;
+    text-align: center;
+    color: var(--muted);
+    padding: 40px 20px;
+  }
+  #empty .emoji { font-size: 52px; margin-bottom: 16px; }
+  #empty h2 { font-size: 20px; color: var(--accent); margin-bottom: 8px; letter-spacing: 1px; }
+  #empty p { font-size: 13px; line-height: 1.8; max-width: 340px; margin: 0 auto; }
+  .starter-pills {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    justify-content: center; margin-top: 20px;
+  }
+  .pill {
+    padding: 8px 14px; border-radius: 20px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--muted); font-size: 12px; cursor: pointer; transition: all .2s;
+  }
+  .pill:hover { border-color: var(--accent2); color: var(--wisdom); background: #1e1445; }
+
+  footer {
+    padding: 16px 20px 24px;
+    border-top: 1px solid var(--border);
+    background: linear-gradient(0deg, #12103a 0%, transparent 100%);
+  }
+  .input-row {
+    max-width: 780px; margin: 0 auto;
+    display: flex; gap: 10px; align-items: flex-end;
+  }
+  #input {
+    flex: 1; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 12px;
+    color: var(--text); font-family: inherit; font-size: 14px;
+    padding: 12px 16px; resize: none; line-height: 1.5;
+    max-height: 120px; overflow-y: auto; outline: none; transition: border-color .2s;
+  }
+  #input:focus { border-color: var(--accent2); }
+  #input::placeholder { color: var(--muted); }
+  #send {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    border: none; border-radius: 10px; width: 44px; height: 44px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; transition: opacity .2s; flex-shrink: 0;
+  }
+  #send:disabled { opacity: .4; cursor: not-allowed; }
+  #send:hover:not(:disabled) { opacity: .85; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-ring">🃏</div>
+  <div class="header-text">
+    <h1>FUNGURU</h1>
+    <p>Cosmic comedy. Real wisdom. No refunds.</p>
+  </div>
+  <div class="header-actions">
+    <span id="voice-status"></span>
+    <button id="voice-btn" onclick="toggleVoice()" title="Toggle voice">
+      🔊 <span class="label">VOICE</span>
+    </button>
+  </div>
+</header>
+
+<div id="chat">
+  <div id="empty">
+    <div class="emoji">😂🙏</div>
+    <h2>ASK THE FUNNY ONE</h2>
+    <p>He knows the Puranas. He has seen the cosmos. He has opinions about all of it.</p>
+    <div class="starter-pills">
+      <div class="pill" onclick="ask(this)">What is the meaning of life?</div>
+      <div class="pill" onclick="ask(this)">Why did Shiva destroy the universe?</div>
+      <div class="pill" onclick="ask(this)">Tell me about karma</div>
+      <div class="pill" onclick="ask(this)">What is Maya?</div>
+      <div class="pill" onclick="ask(this)">How to reach moksha?</div>
+      <div class="pill" onclick="ask(this)">Explain the Gita in one joke</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="input-row">
+    <textarea id="input" rows="1" placeholder="Ask FunGuru anything..."></textarea>
+    <button id="send" onclick="sendMsg()">→</button>
+  </div>
+</footer>
+
+<script>
+// ─── VoiceEngine (vanilla JS port of voiceEngine.ts) ───────────────────────
+class VoiceEngine {
+  constructor(ttsBase = 'http://localhost:8123') {
+    this.buf = '';
+    this.queue = Promise.resolve();
+    this.audioCtx = null;
+    this._enabled = false;
+    this.localOk = null; // null = unchecked, true/false = result
+    this.ttsBase = ttsBase;
+  }
+
+  // No artificial pauses — XTTS bakes natural breath into each utterance.
+  // We synthesise whole paragraphs (or long sentence-runs) so prosody flows
+  // across sentences instead of being stitched from cold fragments.
+  static MIN_CHARS = 100; // flush a sentence-run once it’s at least this long
+  // paragraph boundary: blank line
+  static RE_PARA = /^([\s\S]*?)\n\n+/;
+  // sentence boundary: .!?… then space then capital/quote
+  static RE_SENTENCE = /^([\s\S]*?[.!?…])\s+(?=[A-Z”’’’”])/;
+
+  get enabled() { return this._enabled; }
+
+  enable()  { this._enabled = true; }
+  disable() {
+    this._enabled = false;
+    this.buf = '';
+    this.queue = this.queue.then(() => {
+      if (this.audioCtx) { this.audioCtx.close(); this.audioCtx = null; }
+    });
+  }
+
+  pushToken(token) {
+    if (!this._enabled) return;
+    this.buf += token;
+    this._drain();
+  }
+
+  flushFinal() {
+    if (!this._enabled || !this.buf.trim()) return;
+    const text = this.buf.trim();
+    this.buf = '';
+    this._enqueue(text);
+  }
+
+  _drain() {
+    // Prefer whole paragraphs — most natural, prosody spans the sentences.
+    let m = this.buf.match(VoiceEngine.RE_PARA);
+    if (m) {
+      const chunk = m[1].trim();
+      this.buf = this.buf.slice(m[0].length);
+      if (chunk) this._enqueue(chunk);
+      this._drain();
+      return;
+    }
+    // No paragraph break yet but the run is long — flush at a sentence end
+    // so audio starts without waiting for the whole paragraph.
+    m = this.buf.match(VoiceEngine.RE_SENTENCE);
+    if (m && m[1].trim().length >= VoiceEngine.MIN_CHARS) {
+      const chunk = m[1].trim();
+      this.buf = this.buf.slice(m[0].length);
+      this._enqueue(chunk);
+      this._drain();
+    }
+  }
+
+  _enqueue(text) {
+    if (!text.trim()) return;
+    // Pre-fetch: start synthesis NOW so the next chunk is ready before the
+    // current one finishes — gapless playback, no dead air between chunks.
+    const audioP = this._synth(text);
+    this.queue = this.queue.then(() =>
+      this._enabled ? this._play(audioP) : Promise.resolve()
+    );
+  }
+
+  // Synthesise text → decoded buffer (XTTS) or a browser-speech sentinel.
+  async _synth(text) {
+    try {
+      const useLocal = await this._checkLocal();
+      if (!useLocal) return { kind: 'browser', text };
+      let r;
+      try {
+        r = await fetch(this.ttsBase + '/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          // JokeGuru speaks in "Sample 1" — the single-clip comedy voice.
+          body: JSON.stringify({ text, lang: 'en', voice: 'funguru' }),
+          signal: AbortSignal.timeout(30000)
+        });
+      } catch {
+        this.localOk = false;
+        return { kind: 'browser', text };
+      }
+      if (!r.ok) { this.localOk = false; return { kind: 'browser', text }; }
+      const arrayBuf = await r.arrayBuffer();
+      const ctx = this._ctx();
+      const buffer = await ctx.decodeAudioData(arrayBuf);
+      return { kind: 'xtts', buffer };
+    } catch {
+      return { kind: 'browser', text };
+    }
+  }
+
+  async _play(audioP) {
+    let a;
+    try { a = await audioP; } catch { return; }
+    if (!a || !this._enabled) return;
+    if (a.kind === 'browser') return this._playBrowser(a.text);
+    // gapless XTTS playback — no trailing pause; natural breath is in the clip
+    const ctx = this._ctx();
+    await new Promise(resolve => {
+      const src = ctx.createBufferSource();
+      src.buffer = a.buffer;
+      src.connect(ctx.destination);
+      src.onended = () => resolve();
+      src.start();
+    });
+  }
+
+  async _checkLocal() {
+    if (this.localOk !== null) return this.localOk;
+    try {
+      const r = await fetch(this.ttsBase + '/health', {
+        signal: AbortSignal.timeout(1500)
+      });
+      this.localOk = r.ok;
+      setVoiceStatus(this.localOk ? '✓ XTTS voice' : '✓ browser voice');
+    } catch {
+      this.localOk = false;
+      setVoiceStatus('✓ browser voice');
+    }
+    return this.localOk;
+  }
+
+  _playBrowser(text) {
+    return new Promise(resolve => {
+      if (!window.speechSynthesis) { resolve(); return; }
+      const utt = new SpeechSynthesisUtterance(text);
+      utt.rate  = 0.86;
+      utt.pitch = 0.88;
+      utt.onend   = () => resolve();
+      utt.onerror = () => resolve();
+      window.speechSynthesis.speak(utt);
+    });
+  }
+
+  _ctx() {
+    if (!this.audioCtx || this.audioCtx.state === 'closed')
+      this.audioCtx = new AudioContext();
+    return this.audioCtx;
+  }
+}
+
+// ─── App state ───────────────────────────────────────────────────────────────
+const API = 'http://localhost:8000/api/chat';
+let busy  = false;
+const voice = new VoiceEngine();
+
+const chat  = document.getElementById('chat');
+const input = document.getElementById('input');
+const send  = document.getElementById('send');
+const empty = document.getElementById('empty');
+const voiceBtn = document.getElementById('voice-btn');
+
+function setVoiceStatus(msg) {
+  const el = document.getElementById('voice-status');
+  el.textContent = msg;
+  el.classList.add('visible');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('visible'), 3000);
+}
+
+function toggleVoice() {
+  if (voice.enabled) {
+    voice.disable();
+    voiceBtn.classList.remove('active');
+    setVoiceStatus('voice off');
+  } else {
+    voice.enable();
+    voiceBtn.classList.add('active');
+    setVoiceStatus('connecting…');
+    // probe immediately so the model starts warming up
+    voice._checkLocal();
+  }
+}
+
+function ask(el) {
+  input.value = el.textContent;
+  sendMsg();
+}
+
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+});
+input.addEventListener('input', () => {
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+});
+
+function addMsg(role, text) {
+  if (empty) empty.style.display = 'none';
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  if (role === 'user') {
+    bubble.textContent = text;
+  } else {
+    bubble.innerHTML = '<span class="joke-line"></span><span class="wisdom-line"></span>';
+  }
+  div.appendChild(bubble);
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return bubble;
+}
+
+function addThinking() {
+  const div = document.createElement('div');
+  div.className = 'msg bot';
+  div.id = 'thinking';
+  div.innerHTML = '<div class="thinking"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function removeThinking() {
+  const t = document.getElementById('thinking');
+  if (t) t.remove();
+}
+
+async function sendMsg() {
+  const q = input.value.trim();
+  if (!q || busy) return;
+  busy = true;
+  send.disabled = true;
+  input.value = '';
+  input.style.height = 'auto';
+
+  addMsg('user', q);
+  addThinking();
+
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: q, mode: 'funguru', verbosity: 'balanced' })
+    });
+
+    removeThinking();
+    const bubble  = addMsg('bot', '');
+    const jokeEl  = bubble.querySelector('.joke-line');
+    const wisdomEl= bubble.querySelector('.wisdom-line');
+
+    const reader = res.body.getReader();
+    const dec    = new TextDecoder();
+    let buf = '', fullText = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data:')) continue;
+        try {
+          const ev = JSON.parse(line.slice(5).trim());
+          if (ev.type === 'token' && ev.content) {
+            fullText += ev.content;
+            // push to voice engine
+            voice.pushToken(ev.content);
+            // update display — joke above first paragraph break, wisdom below
+            const parts = fullText.split(/\n\n+/);
+            if (parts.length >= 2) {
+              jokeEl.textContent  = parts[0];
+              wisdomEl.textContent= parts.slice(1).join('\n\n');
+            } else {
+              jokeEl.textContent = fullText;
+            }
+            chat.scrollTop = chat.scrollHeight;
+          }
+        } catch {}
+      }
+    }
+
+    if (!fullText.includes('\n\n')) {
+      jokeEl.textContent = fullText;
+    }
+
+    // flush any remaining text to voice
+    voice.flushFinal();
+
+  } catch (e) {
+    removeThinking();
+    voice.flushFinal();
+    const bubble = addMsg('bot', '');
+    bubble.querySelector('.joke-line').textContent  = 'Even FunGuru cannot reach the backend. The cosmos is on a break.';
+    bubble.querySelector('.wisdom-line').textContent= 'Check that the server is running on :8000.';
+  }
+
+  busy = false;
+  send.disabled = false;
+  input.focus();
+}
+</script>
+</body>
+</html>

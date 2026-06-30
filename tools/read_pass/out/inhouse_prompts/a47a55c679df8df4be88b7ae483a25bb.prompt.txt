@@ -1,0 +1,419 @@
+You are a scholar of the Puranas performing a deep comprehension read.
+Read this chapter and extract its full structure as JSON matching the schema.
+
+Rules:
+- Use the verse markers in the text (e.g. bhp_01.01.001) to fill verse_ranges.
+- Capture cross-references: when a being is an avatar/alias of another, record it.
+- entities.kind one of: deity, sage, king, demon, concept, place, practice, text.
+- Be faithful to the text; do not invent events not present.
+
+## Interpretive lens — Shailendra Sharma's Kriya-Yoga commentary
+Read the chapter THROUGH this lens. Where a teaching echoes it, say what
+it means in Sharma's framework (use the teaching.lens_note field).
+<<<
+1-1 
+vFk izFkeks·/;k;% 
+Chapter 1 
+ 
+/k`rjk"Vª mokp 
+/keZ{ks=s dq#{ks=s leosrk ;q;qRlo% A 
+ekedk% ik.Mok’pSo fdedqoZr lat;AA 1AA 
+ 
+Dḥrṭarạ̄ṣtra uvāca 
+ 
+ 
+dharmaḳsetre kuruḳsetre 
+samavetā yuyutsavạh 
+māmakạ̄h pạ̄ṇdavāś cai ‘va 
+kimakurvata samjaya [1] 
+Translation – Dḥrṭarạ̄ṣtra said, “Oh Samjaya!
+---
+i ‘va 
+kimakurvata samjaya [1] 
+Translation – Dḥrṭarạ̄ṣtra said, “Oh Samjaya! What did my sons and the sons of 
+Pandu, who have gathered on the sacred land of Kurukśetra with a desire of war, 
+do?”  
+lat; mokp 
+n`"V~ok rq ikaMokuhda O;w<a nq;ksZ/kuLrnkA 
+vkpk;Zeqil³~xE; jktk opueczohr~AA 2AA 
+i';Srka ikaMqiq=k.kkekpk;Z egrha pewe~A 
+O;w<ka nzqiniq=s.k ro f’k";s.k /kherkAA 3AA 
+ 
+ 
+samjaya uvāca 
+ 
+ḍṛstvā tu pạ̄ṇdavānīkam 
+vyụdhanm duryodhanastadā 
+ācāryamupasamgamya 
+rājā vacanamabravīt [2] 
+ 
+ 
+paśyai‘tām pạ̄ṇduptrạ̄nām  
+ācārya mahatīm camūm 
+vyụ̄dhām drupadaputrẹna 
+tavaśịsyẹna dhīmatā [3] 
+Translation — Samjay said, “Upon viewing the army of Pạ̄ndavas in a battle 
+formation, king Duryodhan approached ācārya and said, ‘ Oh!
+---
+̣ndavas in a battle 
+formation, king Duryodhan approached ācārya and said, ‘ Oh! Ācārya, please look 
+at this great army of Pạ̄ndavas which your intelligent disciple, the son of Drupad 
+has arranged in the battle formation.’ ”  
+v= 'kwjk egs"oklk HkhektqZulek ;qf/kA 
+;q;q/kkuks fojkV’p nzqin’p egkjFk%AA4AA 
+ 
+atra śūrā mahẹsvāsā 
+bhīmārjunasamā yudhi 
+yuyudhāno virạ̄taśca 
+drupadaśca mahārathạh [4] 
+ 
+ 
+ 
+1-2 
+Translation — Here, in this battlefield, are valiant great archers like Bhima and 
+Arjuna. Yuyudhān, Virāt and the great warrior Drupada are here.
+---
+like Bhima and 
+Arjuna. Yuyudhān, Virāt and the great warrior Drupada are here. /k`"Vdsrq’psfdrku% dkf’kjkt’p oh;Zoku~A 
+iq#ftRdqfUrÒkst’p 'kSC;’p ujiq³~xo%AA 5AA 
+ 
+dḥṛṣtaketuścekitānạh 
+kāśirājasca vīryavān  
+purujitkuntibhojaśca 
+śaibyaśca narapumgavạh [5] 
+Translation — Dḥṛstaketu, Cekitān, mighty Kashirāj, Kuntibhoj-Purujit and the 
+great Śaibya are here.
+---
+etu, Cekitān, mighty Kashirāj, Kuntibhoj-Purujit and the 
+great Śaibya are here. ;q/kkeU;q’p foØkUr mÙkekStk’p oh;ZokuA 
+lkSÒnzks nzkSins;k’p loZ ,o egkjFkk%AA6AA 
+ 
+yudhāmanyuśca vikrānta 
+uttamaujāśca vīryavān 
+saubhadro draupadeyāśca 
+sarva eva mahārathạ̄h [6] 
+Translation — Valorous Yudhāmanyu, mighty Uttamoujā, sons of Subhadra and 
+Draupadi, they are all great warriors. vLekda rq fof’k"Bk ;s rkfécks/k f}tksÙkeA 
+uk;dk ee lSU;L; laKkFkZa rkUczohfe rsAA7AA 
+ 
+asmākam tu viśịṣtā ye 
+tānnibodha dvijottama 
+nāyakā mama sainyasya 
+samjñārtham tān bravīmi te [7] 
+Translation — Oh!
+---
+ottama 
+nāyakā mama sainyasya 
+samjñārtham tān bravīmi te [7] 
+Translation — Oh! The great brahmana! Please know the main warriors who are 
+on our side. I shall narrate their names for your knowledge.
+---
+n warriors who are 
+on our side. I shall narrate their names for your knowledge. ÒokUÒh"e’p d.kZ’p Ñi’p lfefrat;%A 
+v’oRFkkek fod.kZ’p lkSenfÙkLrFkSo pAA8AA 
+vU;s p cgo% 'kwjk enFksZ R;Drthfork%A 
+ukuk’kL=izgj.kk% losZ ;q)fo’kkjnk%AA9AA 
+ 
+bhavānbhị̄smaśca kaṛnaśca 
+ḳrpaśca samitimjayạh 
+aśvatthāmā vikaṛnaśca 
+saumadattistathai‘va ca [8] 
+ 
+ 
+anye ca bahavạh śūrā 
+madarthe tyaktajīvitạh  
+nānāśastrapraharạnạ̄h 
+sarve yuddhaviśāradạ̄h [9] 
+ 
+ 
+ 
+1-3 
+Translation — Yourself, Bhiśma the great, Kaṛna, Ḳrpācārya the victor 
+(conqueror), similarly Aśhvatthāmā, Vikaṛna, and the son of Somadatta, and also 
+many others who would lay down their lives for me.
+---
+e son of Somadatta, and also 
+many others who would lay down their lives for me. They are all equipped with 
+various arms and weapons and are proficient in the art of warfare. vi;kZIra rnLekda cya Òh"ekfHkjf{kre~A 
+i;kZIra fRonesrs"kka cya ÒhekfÒjf{kre~AA10AA 
+ 
+aparyāptam tadasmākam 
+balam bhị̄smābhiraḳsitam 
+paryāptam tvidametẹsām 
+balam bhīmābhiraḳsitam [10] 
+Translation — Our force that is guarded by Bhị̄sma is wanting1 but their force 
+guarded by Bhima is thorough2.
+---
+s guarded by Bhị̄sma is wanting1 but their force 
+guarded by Bhima is thorough2. v;us"kq p losZ"kq ;FkkÒkxeofLFkrk%A 
+Òh"eesokfÒj{kUrq ÒoUr% loZ ,o fgAA11AA 
+ 
+ayanẹsu ca sarvẹsu 
+yathābhāgamavasthitạ̄h 
+bhị̄smamevā‘bhiraḳsantu  
+bhavantạh sarva eva hi [11] 
+Translation — Hence please keep guard at all entries of the formation, keeping 
+everyone’s respective places and protect Bhị̄sma in every manner.
+---
+tion, keeping 
+everyone’s respective places and protect Bhị̄sma in every manner. rL; latu;Ug"kZa dq#o`)% firkeg%A 
+flagukna fou|ksPpS% 'ka³~[ka n/ekS izrkioku~AA12AA 
+ 
+tasy samjanayanhaṛsam 
+kuruṿrddhạh pitāmahạh 
+simhanādam vinadyo‘ccaịh 
+śạnkham dadhmau pratāpavān [12] 
+Translation — Then Bhị̄sma, the mighty veteran grandfather of Kauravas, 
+enhanced their spirit by roaring like a lion and blew a conch.
+---
+her of Kauravas, 
+enhanced their spirit by roaring like a lion and blew a conch. rr% 'k³~[kk’p Òs;Z’p i.kokudxkseq[kk%A 
+lglSokH;gU;Ur l 'kCnLrqeqyks·Òor~AA13AA 
+ 
+tatạh śankhāśca bheryaśca 
+pạnavānakagomukhạ̄h 
+sahasai‘vā‘bhyahanyanta 
+sa śabdastumulo‘bhavat [13] 
+Translation — After this, conches, drums, various tabors were blown and horns 
+started sounding at once. Their sound was frightening.
+---
+ors were blown and horns 
+started sounding at once. Their sound was frightening. rr% 'osrSgZ;s;qZDrs egfr L;Unus fLFkrkSA 
+                                   
+1 Lacking in quality or quantity  
+2 Complete  
+ 
+ 
+ 
+1-4 
+ek/ko% ik.Mo’pSo fnO;kS 'k³[kkS izn/erq%AA14AA 
+ 
+tatạh śvetairhayairyukte 
+mahati syandane sthitau 
+mādhavạh pạ̄ṇdavaścai‘va 
+divyau sankhau pradadhmatụh [14] 
+Translation — Then Madhava and Pạ̄ndava, seated in a huge chariot pulled by 
+white horses, also blew their divine conches.
+---
+eated in a huge chariot pulled by 
+white horses, also blew their divine conches. ikŒptU;a â"khds’kks nsonÙka /kuat;%A 
+ikS.Mªa n/ekS egk’k³~[ka ÒhedekZ o`dksnj%AA15AA    
+ 
+pāñcajanyam ḥṛsīkeśo 
+devadattam dhanamjayạh 
+paụṇdram dadhmau mahāśankham 
+bhīmakarmā ṿrkodarạh [15] 
+Translation — Ḥrshikeśa blew Pāncajan
+>>>
+
+## Chapter: Gheranda Samhita — Chapter 0 (part 2)
+<<<
+dhārayed ardhayāmaṃ tu cālayed adhavartmanā
+eṣā dhautiḥ parā gopyā na prakāśyā kadācana // GhS_1.22
+nābhimagnajale sthitvā śaktināḍīṃ vimarjayet
+kārābhyāṃ kṣālayen nāḍīṃ yāvan malavisarjanam // GhS_1.23
+tāvat prakṣālya nāḍīṃ ca udare veśayet punaḥ
+kārābhyāṃ kṣālayen nāḍīṃ yāvan malavisarjanam // GhS_1.23
+tāvat prakṣālya nāḍīṃ ca udare veśayet punaḥ
+idaṃ prakṣālanaṃ gopyaṃ devānām api durlabham
+kevalaṃ dhautimātreṇa devadeho bhaved dhruvam // GhS_1.24
+yām ārdhadhāraṇāśaktiṃ yāvan na sādhayen naraḥ
+kevalaṃ dhautimātreṇa devadeho bhaved dhruvam // GhS_1.24
+yām ārdhadhāraṇāśaktiṃ yāvan na sādhayen naraḥ
+bahiṣkṛtaṃ mahādhautī tāvan naiva tu jāyate // GhS_1.25
+dantamūlaṃ jihvāmūlaṃ randhraṃ ca karṇayugmayoḥ
+kapālarandhraṃ pañceti dantadhautirvidhīyate // GhS_1.26
+dantamūlaṃ jihvāmūlaṃ randhraṃ ca karṇayugmayoḥ
+kapālarandhraṃ pañceti dantadhautirvidhīyate // GhS_1.26
+khadireṇa rasenātha mṛttikayā ca śuddhayā
+mārjayed dantamūlaṃ ca yāvat kilbiṣam āharet // GhS_1.27
+dantamūlaṃ parā dhautir yogināṃ yogasādhane
+mārjayed dantamūlaṃ ca yāvat kilbiṣam āharet // GhS_1.27
+dantamūlaṃ parā dhautir yogināṃ yogasādhane
+nityaṃ kuryāt prabhāte ca dantarakṣāya yogavit
+dantamūlaṃ dhāraṇādikāryeṣu yogināṃ yataḥ // GhS_1.28
+athātaḥ saṃpravakṣyāmi jihvāśodhanakāraṇam
+dantamūlaṃ dhāraṇādikāryeṣu yogināṃ yataḥ // GhS_1.28
+athātaḥ saṃpravakṣyāmi jihvāśodhanakāraṇam
+jarāmaraṇarogādīn nāśayed dīrghalambikā // GhS_1.29
+tarjanīmadhyamānāmā aṅgulitrayayogataḥ
+veśayed galamadhye tu mārjayel lambikāmalam
+tarjanīmadhyamānāmā aṅgulitrayayogataḥ
+veśayed galamadhye tu mārjayel lambikāmalam
+śanaiḥ śanair mārjayitvā kaphadoṣaṃ nivārayet // GhS_1.30
+mārjayen navanītena dohayec ca punaḥ punaḥ
+tadagraṃ lauhayantreṇa karṣayitvā punaḥ punaḥ // GhS_1.31
+mārjayen navanītena dohayec ca punaḥ punaḥ
+tadagraṃ lauhayantreṇa karṣayitvā punaḥ punaḥ // GhS_1.31
+nityaṃ kuryāt prayatnena raver udayake 'stake
+evaṃ kṛte tu nitye ca lambikā dīrghatāṃ gatā // GhS_1.32
+tarjanyaṅgulyagrayogān mārjayet karṇarandhrayoḥ
+evaṃ kṛte tu nitye ca lambikā dīrghatāṃ gatā // GhS_1.32
+tarjanyaṅgulyagrayogān mārjayet karṇarandhrayoḥ
+nityam abhyāsayogena nādāntaraṃ prakāśanam // GhS_1.33
+vṛddhāṅguṣṭhena dakṣeṇa mardayed bhālarandhrakam
+evam abhyāsayogena kaphadoṣaṃ nivārayet // GhS_1.34
+vṛddhāṅguṣṭhena dakṣeṇa mardayed bhālarandhrakam
+evam abhyāsayogena kaphadoṣaṃ nivārayet // GhS_1.34
+nāḍī nirmalatāṃ yāti divyadṛṣṭiḥ prajāyate
+nidrānte bhojanānte ca divānte ca dine dine // GhS_1.35
+hṛddhautiṃ trividhāṃ kuryād daṇḍavamanavāsasā // GhS_1.36
+nidrānte bhojanānte ca divānte ca dine dine // GhS_1.35
+hṛddhautiṃ trividhāṃ kuryād daṇḍavamanavāsasā // GhS_1.36
+rambhādaṇḍaṃ hariddaṇḍaṃ vetradaṇḍaṃ tathaiva ca
+hṛnmadhye cālayitvā tu punaḥ pratyāharec chanaiḥ // GhS_1.37
+kaphapittaṃ tathā kledaṃ recayed ūrdhvavartmanā
+hṛnmadhye cālayitvā tu punaḥ pratyāharec chanaiḥ // GhS_1.37
+kaphapittaṃ tathā kledaṃ recayed ūrdhvavartmanā
+daṇḍadhautividhānena hṛdrogaṃ nāśayed dhruvam // GhS_1.38
+bhojanānte pibed vāri ākarṇapūritaṃ sudhīḥ
+ūrdhvadṛṣṭiṃ kṣaṇaṃ kṛtvā taj jalaṃ vamayet punaḥ
+bhojanānte pibed vāri ākarṇapūritaṃ sudhīḥ
+ūrdhvadṛṣṭiṃ kṣaṇaṃ kṛtvā taj jalaṃ vamayet punaḥ
+nityam abhyāsayogena kaphapittaṃ nivārayet // GhS_1.39
+ekonaviṃśatiḥ hastaḥ pañcaviṃśati vai tathā
+caturaṅgulavistāraṃ sūkṣmavastraṃ śanair graset
+ekonaviṃśatiḥ hastaḥ pañcaviṃśati vai tathā
+caturaṅgulavistāraṃ sūkṣmavastraṃ śanair graset
+punaḥ pratyāhared etat procyate dhautikarmakam // GhS_1.40
+gulmajvaraplīhākuṣṭhakaphapittaṃ vinaśyati
+ārogyaṃ balapuṣṭiś ca bhavet tasya dine dine // GhS_1.41
+gulmajvaraplīhākuṣṭhakaphapittaṃ vinaśyati
+ārogyaṃ balapuṣṭiś ca bhavet tasya dine dine // GhS_1.41
+apānakrūratā tāvad yāvanmūlaṃ na śodhayet
+tasmāt sarvaprayatnena mūlaśodhanam ācaret // GhS_1.42
+pītamūlasya daṇḍena madhyamāṅgulināpi vā
+tasmāt sarvaprayatnena mūlaśodhanam ācaret // GhS_1.42
+pītamūlasya daṇḍena madhyamāṅgulināpi vā
+yatnena kṣālayed guhyaṃ vāriṇā ca punaḥ punaḥ // GhS_1.43
+vārayet koṣṭhakāṭhinyam āmājīrṇaṃ nivārayet
+kāraṇaṃ kāntipuṣṭyoś ca dīpanaṃ vahnimaṇḍalam // GhS_1.44
+>>>
+
+Return ONLY valid JSON matching this schema:
+{
+ "type": "object",
+ "properties": {
+  "chapter_summary": {
+   "type": "string"
+  },
+  "entities": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string"
+     },
+     "kind": {
+      "type": "string"
+     },
+     "aliases": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "verse_ranges": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    },
+    "required": [
+     "name",
+     "kind",
+     "verse_ranges"
+    ]
+   }
+  },
+  "relationships": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "src": {
+      "type": "string"
+     },
+     "rel": {
+      "type": "string"
+     },
+     "dst": {
+      "type": "string"
+     },
+     "verse_ranges": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    },
+    "required": [
+     "src",
+     "rel",
+     "dst",
+     "verse_ranges"
+    ]
+   }
+  },
+  "story": {
+   "type": "object",
+   "properties": {
+    "title": {
+     "type": "string"
+    },
+    "arc": {
+     "type": "string"
+    },
+    "characters": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "timeline_note": {
+     "type": "string"
+    },
+    "comic_potential": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "title",
+    "arc"
+   ]
+  },
+  "teachings": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "teaching": {
+      "type": "string"
+     },
+     "lens_note": {
+      "type": "string"
+     },
+     "verse_ranges": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    },
+    "required": [
+     "teaching",
+     "verse_ranges"
+    ]
+   }
+  }
+ },
+ "required": [
+  "chapter_summary",
+  "entities",
+  "relationships",
+  "story",
+  "teachings"
+ ]
+}

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voice Samples — Verify</title>
+<style>
+  :root { --bg:#0d0a1a; --surface:#18133a; --accent:#f59e0b; --accent2:#a855f7;
+          --text:#f0e8d0; --muted:#6b5a8a; --border:#2d2060; --good:#34d399; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:Georgia,serif;
+         min-height:100vh; padding:36px 20px; display:flex; flex-direction:column;
+         align-items:center; gap:30px; }
+  h1 { color:var(--accent); letter-spacing:2px; font-size:22px; }
+  .section { width:100%; max-width:680px; }
+  .section h2 { font-size:16px; letter-spacing:1px; margin-bottom:4px; }
+  .section .sub { font-size:12px; color:var(--muted); margin-bottom:16px; }
+  .joke h2 { color:#fcd34d; }
+  .guru h2 { color:var(--accent2); }
+  .row { display:flex; align-items:center; gap:14px; background:var(--surface);
+         border:1px solid var(--border); border-radius:12px; padding:12px 16px;
+         margin-bottom:10px; }
+  .row.big { border-color:#fcd34d; }
+  .play { background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none;
+          border-radius:10px; color:#0d0a1a; font-weight:bold; font-size:14px;
+          padding:9px 16px; cursor:pointer; font-family:inherit; flex-shrink:0;
+          min-width:84px; }
+  .play:hover { opacity:.9; }
+  .info { flex:1; min-width:0; }
+  .info .name { font-size:14px; margin-bottom:2px; }
+  .info .meta { font-size:11px; color:var(--muted);
+                white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .badge { font-size:10px; padding:2px 8px; border-radius:10px; flex-shrink:0;
+           background:rgba(52,211,153,.12); color:var(--good); border:1px solid rgba(52,211,153,.3); }
+  .badge.yt { background:rgba(168,85,247,.12); color:#c4b5fd; border-color:rgba(168,85,247,.3); }
+</style>
+</head>
+<body>
+  <h1>VOICE SAMPLES — VERIFY</h1>
+
+  <div class="section joke">
+    <h2>JokeGuru voice — "Sample 1"</h2>
+    <div class="sub">The single clip that drives FunGuru. This is the exact reference.</div>
+    <div class="row big">
+      <button class="play" onclick="play('jokeguru_ref.wav',this)">▶ Play</button>
+      <div class="info">
+        <div class="name">jokeguru_ref.wav</div>
+        <div class="meta">Patanjali + Govardhan combined · the comedy voice</div>
+      </div>
+      <span class="badge">in use</span>
+    </div>
+  </div>
+
+  <div class="section guru">
+    <h2>Real Guruji voice — 8-clip voiceprint</h2>
+    <div class="sub">XTTS averages all 8. Each was speaker-gated as pure Guruji (sim = match to his voiceprint).</div>
+    <div id="vp-rows"></div>
+  </div>
+
+  <audio id="player"></audio>
+<script>
+  const LABELS = [
+    {file:"vp_00.wav", origin:"downloads", sim:1.0,    dur:16.0, title:"Downloads (personal recordings)"},
+    {file:"vp_01.wav", origin:"downloads", sim:1.0,    dur:16.0, title:"Downloads (personal recordings)"},
+    {file:"vp_02.wav", origin:"youtube",   sim:0.836,  dur:9.15, title:"ब्रह्मप्रेत - सत्य कथा (ghost story)"},
+    {file:"vp_03.wav", origin:"youtube",   sim:0.796,  dur:11.9, title:"पुनर्जीवित होने की कथा (true story)"},
+    {file:"vp_04.wav", origin:"youtube",   sim:0.833,  dur:12.2, title:"शिष्यों के प्रश्न (disciples' questions)"},
+    {file:"vp_05.wav", origin:"youtube",   sim:0.797,  dur:13.7, title:"गुरु परम्परा, खेचरी, लाहिड़ी महाशय"},
+    {file:"vp_06.wav", origin:"youtube",   sim:0.790,  dur:12.9, title:"कुण्डलिनी शक्ति क्या है"},
+    {file:"vp_07.wav", origin:"youtube",   sim:0.791,  dur:11.2, title:"रासायनिक क्रिया से सोना"},
+  ];
+  const rows = document.getElementById('vp-rows');
+  LABELS.forEach(l => {
+    const r = document.createElement('div'); r.className='row';
+    const badge = l.origin==='downloads' ? 'pristine' : 'youtube';
+    const cls = l.origin==='downloads' ? 'badge' : 'badge yt';
+    r.innerHTML = `
+      <button class="play">▶ Play</button>
+      <div class="info">
+        <div class="name">${l.file} &nbsp;·&nbsp; sim ${l.sim} &nbsp;·&nbsp; ${l.dur}s</div>
+        <div class="meta">${l.title}</div>
+      </div>
+      <span class="${cls}">${badge}</span>`;
+    r.querySelector('button').onclick = function(){ play(l.file, this); };
+    rows.appendChild(r);
+  });
+
+  const player = document.getElementById('player');
+  let cur = null;
+  function play(file, btn){
+    document.querySelectorAll('.play').forEach(b=>{ if(b!==btn) b.textContent='▶ Play'; });
+    if (cur === file && !player.paused){ player.pause(); btn.textContent='▶ Play'; return; }
+    player.src = 'refs/' + file; player.play();
+    cur = file; btn.textContent='⏸ Playing';
+    player.onended = ()=>{ btn.textContent='▶ Play'; };
+  }
+</script>
+</body>
+</html>

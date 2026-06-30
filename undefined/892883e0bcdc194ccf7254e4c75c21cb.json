@@ -1,0 +1,125 @@
+{
+  "chapter_summary": "This chapter combines two segments. The first is the opening of the Bhagavad Gita (Mahabharata, Bhishma Parva): on the field of Kurukshetra, the blind king Dhritarashtra asks Sanjaya what his sons and the Pandavas did once gathered for war. Sanjaya recounts how Duryodhana, seeing the Pandava army arrayed by Drupada's son, approaches his teacher Drona and enumerates the great warriors on both sides — Bhima, Arjuna, Yuyudhana, Virata, Drupada, Dhrishtaketu, Chekitana, Kashiraja, Purujit, Kuntibhoja, Shaibya, Yudhamanyu, Uttamaujas, the sons of Subhadra and Draupadi on the Pandava side; and Bhishma, Karna, Kripa, Ashvatthama, Vikarna and Somadatta's son on the Kaurava side. Duryodhana urges all to protect Bhishma. Bhishma roars and blows his conch, drums and horns sound, then Krishna (Madhava) and Arjuna in their white-horsed chariot blow their divine conches Panchajanya and Devadatta, and Bhima (Vrikodara) blows the great conch Paundra. The second segment is from the Brihannaradiya (Narada) Purana, Purvabhaga, first pada: Narada's hymn of praise to Vishnu — the infinite, imperishable, all-pervading Narayana whose name purifies even great sinners and grants liberation, beheld by yogis within the self and by Sankhyas as the all-filling Hari. Sages led by Sanandana attain bliss hearing it. Then Narada asks Sanaka how the primeval Lord created Brahma and the others; Sanaka answers: from the imperishable Narayana the whole moving and unmoving world is pervaded; Mahavishnu, self-luminous, took the threefold form (Brahma, Rudra/Shiva, Vishnu) through the division of the gunas — the creator from the right side, Rudra the destroyer in the middle, the preserver Vishnu from the left. His supreme Shakti, of the nature of being and non-being, is called vidya and avidya: perceiving the world as separate from Mahavishnu is avidya, the cause of sorrow and samsara; perceiving all as one is vidya, which destroys samsara. All this universe arises from Vishnu's power, and just as space appears divided by limiting conditions (upadhis), so does the whole world.",
+  "entities": [
+    { "name": "Dhritarashtra", "kind": "king", "aliases": [], "verse_ranges": ["bg_1.1"] },
+    { "name": "Sanjaya", "kind": "sage", "aliases": ["Samjaya"], "verse_ranges": ["bg_1.1", "bg_1.2"] },
+    { "name": "Duryodhana", "kind": "king", "aliases": ["Duryodhan"], "verse_ranges": ["bg_1.2", "bg_1.3"] },
+    { "name": "Drona", "kind": "sage", "aliases": ["Acharya"], "verse_ranges": ["bg_1.2", "bg_1.3"] },
+    { "name": "Dhrishtadyumna", "kind": "king", "aliases": ["son of Drupada", "Drupadaputra"], "verse_ranges": ["bg_1.3"] },
+    { "name": "Bhima", "kind": "king", "aliases": ["Bhimakarma", "Vrikodara"], "verse_ranges": ["bg_1.4", "bg_1.10", "bg_1.15"] },
+    { "name": "Arjuna", "kind": "king", "aliases": ["Dhananjaya", "Pandava"], "verse_ranges": ["bg_1.4", "bg_1.14", "bg_1.15"] },
+    { "name": "Yuyudhana", "kind": "king", "aliases": ["Yuyudhan", "Satyaki"], "verse_ranges": ["bg_1.4"] },
+    { "name": "Virata", "kind": "king", "aliases": ["Virat"], "verse_ranges": ["bg_1.4"] },
+    { "name": "Drupada", "kind": "king", "aliases": ["Drupad"], "verse_ranges": ["bg_1.4"] },
+    { "name": "Dhrishtaketu", "kind": "king", "aliases": ["Dhrstaketu"], "verse_ranges": ["bg_1.5"] },
+    { "name": "Chekitana", "kind": "king", "aliases": ["Cekitana"], "verse_ranges": ["bg_1.5"] },
+    { "name": "Kashiraja", "kind": "king", "aliases": ["Kashiraj", "King of Kashi"], "verse_ranges": ["bg_1.5"] },
+    { "name": "Purujit", "kind": "king", "aliases": [], "verse_ranges": ["bg_1.5"] },
+    { "name": "Kuntibhoja", "kind": "king", "aliases": ["Kuntibhoj"], "verse_ranges": ["bg_1.5"] },
+    { "name": "Shaibya", "kind": "king", "aliases": ["Saibya"], "verse_ranges": ["bg_1.5"] },
+    { "name": "Yudhamanyu", "kind": "king", "aliases": [], "verse_ranges": ["bg_1.6"] },
+    { "name": "Uttamaujas", "kind": "king", "aliases": ["Uttamauja"], "verse_ranges": ["bg_1.6"] },
+    { "name": "Abhimanyu", "kind": "king", "aliases": ["Saubhadra", "son of Subhadra"], "verse_ranges": ["bg_1.6"] },
+    { "name": "Draupadeyas", "kind": "king", "aliases": ["sons of Draupadi"], "verse_ranges": ["bg_1.6"] },
+    { "name": "Bhishma", "kind": "king", "aliases": ["Bhisma", "Pitamaha", "grandfather of the Kauravas", "Kuruvriddha"], "verse_ranges": ["bg_1.8", "bg_1.10", "bg_1.11", "bg_1.12"] },
+    { "name": "Karna", "kind": "king", "aliases": ["Karn"], "verse_ranges": ["bg_1.8"] },
+    { "name": "Kripacharya", "kind": "sage", "aliases": ["Kripa", "Krpa", "Samitimjaya"], "verse_ranges": ["bg_1.8"] },
+    { "name": "Ashvatthama", "kind": "sage", "aliases": ["Asvatthama"], "verse_ranges": ["bg_1.8"] },
+    { "name": "Vikarna", "kind": "king", "aliases": ["Vikarn"], "verse_ranges": ["bg_1.8"] },
+    { "name": "Bhurishrava", "kind": "king", "aliases": ["Saumadatti", "son of Somadatta"], "verse_ranges": ["bg_1.8"] },
+    { "name": "Krishna", "kind": "deity", "aliases": ["Madhava", "Hrishikesha", "Hrsikesa"], "verse_ranges": ["bg_1.14", "bg_1.15"] },
+    { "name": "Kurukshetra", "kind": "place", "aliases": ["dharmakshetra", "the sacred land of Kurukshetra"], "verse_ranges": ["bg_1.1"] },
+    { "name": "Pandavas", "kind": "king", "aliases": ["sons of Pandu", "Panduputras"], "verse_ranges": ["bg_1.1", "bg_1.3"] },
+    { "name": "Kauravas", "kind": "king", "aliases": ["sons of Dhritarashtra", "mamakah"], "verse_ranges": ["bg_1.1", "bg_1.12"] },
+    { "name": "Panchajanya", "kind": "concept", "aliases": ["the conch of Krishna"], "verse_ranges": ["bg_1.15"] },
+    { "name": "Devadatta", "kind": "concept", "aliases": ["the conch of Arjuna"], "verse_ranges": ["bg_1.15"] },
+    { "name": "Paundra", "kind": "concept", "aliases": ["the great conch of Bhima"], "verse_ranges": ["bg_1.15"] },
+    { "name": "Narada", "kind": "sage", "aliases": ["composer of the hymn"], "verse_ranges": ["narp_1,2.46-narp_1,2.57", "narp_1,3.1"] },
+    { "name": "Sanaka", "kind": "sage", "aliases": ["Sri Sanaka"], "verse_ranges": ["narp_1,3.1", "narp_1,3.2-narp_1,3.11"] },
+    { "name": "Sanatkumara", "kind": "sage", "aliases": [], "verse_ranges": ["narp_1,2.56"] },
+    { "name": "Sanandana", "kind": "sage", "aliases": ["Sanandana and others"], "verse_ranges": ["narp_1,2.56"] },
+    { "name": "Vishnu", "kind": "deity", "aliases": ["Narayana", "Hari", "Mahavishnu", "Purushottama", "Ishvara", "Adideva", "the imperishable one"], "verse_ranges": ["narp_1,2.46-narp_1,2.57", "narp_1,3.2", "narp_1,3.3", "narp_1,3.5", "narp_1,3.6", "narp_1,3.9", "narp_1,3.10", "narp_1,3.11"] },
+    { "name": "Brahma", "kind": "deity", "aliases": ["Prajapati", "the creator"], "verse_ranges": ["narp_1,3.1", "narp_1,3.4", "narp_1,3.5"] },
+    { "name": "Rudra", "kind": "deity", "aliases": ["Shiva", "Ishana", "the destroyer", "jagadantakara"], "verse_ranges": ["narp_1,3.4", "narp_1,3.5"] },
+    { "name": "Vidya", "kind": "concept", "aliases": ["knowledge", "perception of oneness"], "verse_ranges": ["narp_1,3.6", "narp_1,3.8"] },
+    { "name": "Avidya", "kind": "concept", "aliases": ["ignorance", "perception of separateness", "cause of sorrow"], "verse_ranges": ["narp_1,3.6", "narp_1,3.7", "narp_1,3.11"] },
+    { "name": "Maya", "kind": "concept", "aliases": ["Shakti", "the supreme power of Vishnu", "upadhi"], "verse_ranges": ["narp_1,3.6", "narp_1,3.9", "narp_1,3.11"] },
+    { "name": "Yoga", "kind": "practice", "aliases": ["the path of the yogis", "establishing the self in the self"], "verse_ranges": ["narp_1,2.50"] },
+    { "name": "Sankhya", "kind": "practice", "aliases": ["the path of the Sankhyas"], "verse_ranges": ["narp_1,2.51"] },
+    { "name": "Brihannaradiya Purana", "kind": "text", "aliases": ["Narada Purana", "Sri Brihannaradiya Purana"], "verse_ranges": ["narp_1,2.56", "narp_1,3.1"] }
+  ],
+  "relationships": [
+    { "src": "Dhritarashtra", "rel": "asks_about_the_war_to", "dst": "Sanjaya", "verse_ranges": ["bg_1.1"] },
+    { "src": "Sanjaya", "rel": "narrates_the_battlefield_to", "dst": "Dhritarashtra", "verse_ranges": ["bg_1.2"] },
+    { "src": "Duryodhana", "rel": "approaches_and_speaks_to", "dst": "Drona", "verse_ranges": ["bg_1.2", "bg_1.3"] },
+    { "src": "Dhrishtadyumna", "rel": "disciple_of", "dst": "Drona", "verse_ranges": ["bg_1.3"] },
+    { "src": "Dhrishtadyumna", "rel": "arrayed_the_army_of", "dst": "Pandavas", "verse_ranges": ["bg_1.3"] },
+    { "src": "Bhishma", "rel": "grandfather_of", "dst": "Kauravas", "verse_ranges": ["bg_1.12"] },
+    { "src": "Duryodhana", "rel": "orders_protection_of", "dst": "Bhishma", "verse_ranges": ["bg_1.11"] },
+    { "src": "Bhishma", "rel": "blows_conch_to_rally", "dst": "Kauravas", "verse_ranges": ["bg_1.12"] },
+    { "src": "Krishna", "rel": "blows_conch", "dst": "Panchajanya", "verse_ranges": ["bg_1.15"] },
+    { "src": "Arjuna", "rel": "blows_conch", "dst": "Devadatta", "verse_ranges": ["bg_1.15"] },
+    { "src": "Bhima", "rel": "blows_conch", "dst": "Paundra", "verse_ranges": ["bg_1.15"] },
+    { "src": "Krishna", "rel": "is_charioteer_of", "dst": "Arjuna", "verse_ranges": ["bg_1.14"] },
+    { "src": "Narada", "rel": "composed_hymn_of_praise_to", "dst": "Vishnu", "verse_ranges": ["narp_1,2.46-narp_1,2.55"] },
+    { "src": "Sanandana", "rel": "attained_bliss_hearing_the_hymn_with", "dst": "Narada", "verse_ranges": ["narp_1,2.56"] },
+    { "src": "Narada", "rel": "asks_about_creation_to", "dst": "Sanaka", "verse_ranges": ["narp_1,3.1"] },
+    { "src": "Sanaka", "rel": "explains_creation_to", "dst": "Narada", "verse_ranges": ["narp_1,3.2-narp_1,3.11"] },
+    { "src": "Vishnu", "rel": "manifests_as_threefold_form", "dst": "Brahma", "verse_ranges": ["narp_1,3.3", "narp_1,3.4"] },
+    { "src": "Vishnu", "rel": "manifests_as_threefold_form", "dst": "Rudra", "verse_ranges": ["narp_1,3.3", "narp_1,3.4"] },
+    { "src": "Brahma", "rel": "born_from_right_side_of", "dst": "Vishnu", "verse_ranges": ["narp_1,3.4"] },
+    { "src": "Rudra", "rel": "born_from_middle_of", "dst": "Vishnu", "verse_ranges": ["narp_1,3.4"] },
+    { "src": "Maya", "rel": "is_power_of", "dst": "Vishnu", "verse_ranges": ["narp_1,3.6", "narp_1,3.9"] },
+    { "src": "Avidya", "rel": "is_aspect_of", "dst": "Maya", "verse_ranges": ["narp_1,3.7", "narp_1,3.9"] },
+    { "src": "Vidya", "rel": "destroys", "dst": "Avidya", "verse_ranges": ["narp_1,3.8", "narp_1,3.9"] }
+  ],
+  "story": {
+    "title": "The Conches of Kurukshetra and the Hymn of Narada",
+    "arc": "Two movements. First, the Gita's curtain-rise: a blind king's anxious question, his son's nervous roll-call of enemy and allied champions, and the thunder of conches that opens the war, climaxing in the divine conches of Krishna, Arjuna and Bhima. Second, the Narada Purana's metaphysical interlude: Narada's ecstatic hymn to the formless Vishnu, followed by Sanaka's cosmogony explaining how the One Lord became the threefold Brahma-Rudra-Vishnu and how vidya and avidya bind or free the soul.",
+    "characters": ["Dhritarashtra", "Sanjaya", "Duryodhana", "Drona", "Bhishma", "Krishna", "Arjuna", "Bhima", "Narada", "Sanaka", "Vishnu"],
+    "timeline_note": "The Gita segment is the literal first moment of the Kurukshetra war (Bhishma Parva). The Narada Purana segment is a frame-dialogue (Sanatkumara-Narada and Narada-Sanaka) on creation, outside historical time.",
+    "comic_potential": "Duryodhana, ostensibly boasting, betrays his nerves — he runs to his teacher to recite the enemy's lineup like an anxious student, and even his praise of his own side ('protect Bhishma!') reads as fear dressed as bravado. The whiplash from war-drums straight into Narada's serene metaphysics is its own dry joke."
+  },
+  "teachings": [
+    {
+      "teaching": "Kurukshetra is named 'dharmakshetra' — the field of dharma — the very battlefield is the ground where righteousness is decided.",
+      "lens_note": "In Sharma's Kriya framework the body itself is the kshetra; the inner battlefield is where the seeker confronts conflicting tendencies, and dharma is realised through disciplined practice within the self, not on an outer plain.",
+      "verse_ranges": ["bg_1.1"]
+    },
+    {
+      "teaching": "Krishna takes the role of charioteer to Arjuna — the Lord seated with the disciple in one chariot drawn by white horses.",
+      "lens_note": "For Sharma the chariot is the body and Krishna the inner guru/consciousness who steers the senses; the white horses are the purified pranas guided by the indwelling master — the guru-disciple bond enacted within.",
+      "verse_ranges": ["bg_1.14"]
+    },
+    {
+      "teaching": "The divine conches (Panchajanya, Devadatta, Paundra) sound above the ordinary war-clamor, filling heaven and earth.",
+      "lens_note": "Sharma reads the conch-sound as the inner unstruck sound (nada/anahata) heard in meditation — the divine resonance that overpowers the noise of the senses once pranayama is established.",
+      "verse_ranges": ["bg_1.12", "bg_1.13", "bg_1.15"]
+    },
+    {
+      "teaching": "The mere hearing or remembrance of the Lord's name purifies even the greatest sinners and leads to liberation.",
+      "lens_note": "In Sharma's Kriya lens the 'name' is the seed-sound internalised in practice; remembrance (smarana) is the continuous inner repetition that burns karmic residue — purification follows sustained attention on the divine vibration, not ritual alone.",
+      "verse_ranges": ["narp_1,2.48", "narp_1,2.49"]
+    },
+    {
+      "teaching": "Yogis, with karma destroyed, behold the knowledge-form of the Lord by establishing the self within the self (atmany atmanam adhaya).",
+      "lens_note": "This is the core Kriya instruction for Sharma: place attention at the seat of the Self, withdraw it from outward objects, and the knowledge-form (jnana-rupa) of the divine is directly perceived — realisation is the interiorisation of consciousness.",
+      "verse_ranges": ["narp_1,2.50", "narp_1,2.51"]
+    },
+    {
+      "teaching": "The one imperishable Narayana takes a threefold form — Brahma the creator, Rudra/Shiva the destroyer, Vishnu the preserver — through the division of the three gunas.",
+      "lens_note": "Sharma frames the trimurti as the three guna-modes operating within the practitioner; creation, sustenance and dissolution are continuous inner processes, and the Kriya aim is to rise above the gunas to the single source from which the three emanate.",
+      "verse_ranges": ["narp_1,3.2", "narp_1,3.3", "narp_1,3.4", "narp_1,3.5"]
+    },
+    {
+      "teaching": "Perceiving the world as separate from the Lord is avidya, the cause of sorrow and bondage; perceiving all as one (sarvaika-bhavana buddhi) is vidya, which destroys samsara.",
+      "lens_note": "For Sharma this is the experiential pivot of Kriya: avidya is the dualistic mind the practice dissolves; vidya is the unitive cognition that arises when seer, seen and seeing collapse (jnatr-jneya upadhi destroyed) — liberation is a shift of perception cultivated in meditation, not an external escape.",
+      "verse_ranges": ["narp_1,3.6", "narp_1,3.7", "narp_1,3.8", "narp_1,3.9"]
+    },
+    {
+      "teaching": "Just as space appears divided by limiting adjuncts (upadhis), the whole world appears divided though it arises wholly from Vishnu's single power.",
+      "lens_note": "Sharma uses the space-and-upadhi analogy to teach that the apparent multiplicity of bodies and minds is only limiting conditioning over one undivided consciousness; Kriya removes the upadhis (identification with body, breath, thought) so the unbroken space of the Self is recognised.",
+      "verse_ranges": ["narp_1,3.10", "narp_1,3.11"]
+    }
+  ]
+}

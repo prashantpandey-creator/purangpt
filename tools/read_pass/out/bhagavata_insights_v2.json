@@ -1,0 +1,132 @@
+{
+  "success": true,
+  "data": {
+    "insights": [
+      {
+        "type": "theological_synthesis",
+        "title": "Non-Dual Supreme Manifesting as Polyform Deities",
+        "insight": "The triple designation of Bhagavān as avatar of Aniruddha, Hari, Kṛṣṇa, Janārdana, and Parameśvara, all with the epithet Viṣṇu and the action 'reveals_to' the same pair (Brahmā, Nārada), argues for a unified supreme entity that transcends even Viṣṇu, manifesting as multiple divine forms. This structural redundancy reinforces a theology of oneness behind all avatars, supporting a monotheistic yet polymorphic doctrine where Krishna/Vishnu/Hari are interchangeable aspects of the same ultimate reality.",
+        "evidence": [
+          "Bhagavān (avatar of Aniruddha): epithet Viṣṇu, reveals_to Brahmā, reveals_to Nārada",
+          "Bhagavān (avatar of Hari): epithet Viṣṇu, reveals_to Brahmā, reveals_to Nārada",
+          "Bhagavān (avatar of Kṛṣṇa): epithet Viṣṇu, reveals_to Brahmā, reveals_to Nārada",
+          "Bhagavān (avatar of Janārdana): epithet Viṣṇu, reveals_to Brahmā, reveals_to Nārada",
+          "Bhagavān (avatar of Parameśvara): epithet Viṣṇu, reveals_to Brahmā, reveals_to Nārada"
+        ],
+        "confidence": "high",
+        "cross_references": [
+          "Bhagavad Gita 10.21-40 (Vibhuti Yoga) where Krishna identifies himself with multiple forms",
+          "Svetasvatara Upanishad 6.11 (eko devaḥ sarva-bhūteṣu gūḍhaḥ)"
+        ]
+      },
+      {
+        "type": "pattern",
+        "title": "Avatar Functions Unify Creation, Teaching, and Kingship",
+        "insight": "Avatars exhibit a recurring triadic function: cosmic maintenance (Prithu pursues/adopts Earth), spiritual instruction (Kapila discourses to Devahūti, Bhagavān reveals to Brahmā/Nārada), and royal or familial roles (Prithu wife Arci, Badarayana son Shukadeva). This pattern reveals that divine descent consistently integrates world-governance with soteriological teaching, embodying the Kriya-Yoga principle of balancing inner realization with outer action.",
+        "evidence": [
+          "Prithu (avatar of Narayana, Vishnu, Hari, Varaha): wife Arci, pursues Earth, adopted Earth",
+          "Kapila (avatar of Vishnu): discourses_to Devahūti, instructs Devahūti, teacher Devahūti",
+          "Badarayana (avatar of Hari): authored Srimad Bhagavatam, son Shukadeva",
+          "Bhagavān variants: reveals_to Brahmā, reveals_to Nārada"
+        ],
+        "confidence": "high",
+        "cross_references": [
+          "Shailendra Sharma’s commentary on Dattatreya as the synthesis of creation, preservation, destruction",
+          "Yoga Sutras 2.1 (kriyā-yoga: tapas, svādhyāya, īśvara-praṇidhāna)"
+        ]
+      },
+      {
+        "type": "karmic_chain",
+        "title": "Curse Echoes Across Lifetimes Linking Chapters 5 to 11",
+        "insight": "A karmic thread runs from Mandavya’s curse on Yama (ch.5) through Vidura (Yama’s incarnation, ch.13) to the Yamadutas and their service (ch.1,2,3), culminating in Krishna felling Yamala-Arjuna (ch.11). This chain demonstrates the Puranic teaching that divine curses are not retributive but part of a lila of consciousness descending into matter, analogous to how samskaras ripen across births in Kriya-Yoga practice.",
+        "evidence": [
+          "Mandavya cursed Yama (ch.Chapter 5)",
+          "→ Vidura incarnation Yama (ch.Chapter 13)",
+          "→ Yamadutas servants Yama (ch.Chapter 2)",
+          "→ Yamadūtas servants Yama (ch.Chapter 1)",
+          "→ Yamadutas serve Yama (ch.Chapter 3)",
+          "→ Krishna felled Yamala-Arjuna (ch.Chapter 11)"
+        ],
+        "confidence": "medium",
+        "cross_references": [
+          "Mahabharata, Adi Parva 107-108 (Mandavya’s curse)",
+          "Shailendra Sharma’s 'Kriya-Yoga: The Science of the Breath' on karma as energy locked in breath"
+        ]
+      },
+      {
+        "type": "cross_text",
+        "title": "Jaya-Vijaya Rebirth Cycle Mirrors Dvandva (Duality) Dissolution",
+        "insight": "The Jaya-Vijaya chain spanning chapters 2,4,8,10,13,16 (sages curse Jaya/Vijaya → Hiranyakashipu’s sons → Dashagriva → Shishupala → Sudeva/Jaya sons) illustrates the stepwise degradation and eventual liberation of divine gatekeepers. This mirrors the yogic process of duality (dvandva) being born as egoic identity, then purified through successive confrontations with Vishnu avatars, ultimately returning to non-dual service at the supreme abode.",
+        "evidence": [
+          "Sages cursed Jaya (ch.16) → Kumbhakarṇa incarnation (Jaya-Vijaya) (ch.10)",
+          "Dashagriva (Ravana) incarnation (ch.10)",
+          "Shishupala incarnation (ch.10)",
+          "Sudeva son Vijaya (ch.8) → Jaya son Vijaya (ch.13)",
+          "Lakshmi cursed Jaya (ch.16) → Dhritarashtra disciple Sanjaya (ch.13) → Indra given Jayantī (ch.4)"
+        ],
+        "confidence": "high",
+        "cross_references": [
+          "Bhagavata Purana 3.16.26-37 (Jaya-Vijaya curse)",
+          "Yoga Vasistha on the nature of duality and liberation"
+        ]
+      },
+      {
+        "type": "anomaly",
+        "title": "Durvasas’ Enigmatic Isolation as Shiva’s Avatar",
+        "insight": "Unlike other avatars with rich relational predicates (teacher, husband, disciple), Durvasas (avatar of Shiva) appears with a blank relationship list, an anomaly that breaks the structural pattern. This absence may symbolically encode Shiva’s transcendental, non-involvement aspect—the unconditioned witness (sakshi) in Kriya-Yoga—untouched by narrative webs, mirroring the state of nirvikalpa samadhi where all relationships dissolve.",
+        "evidence": [
+          "Durvasas (avatar of Shiva): [no predicates listed]",
+          "All other avatar entries have at least one predicate (e.g., Kapila: discourses_to Devahūti, instructs Devahūti)"
+        ],
+        "confidence": "speculative",
+        "cross_references": [
+          "Shiva Purana on Durvasas as a portion of Shiva embodying pure tapas",
+          "Shailendra Sharma’s teachings on the unmanifest witness beyond thought"
+        ]
+      },
+      {
+        "type": "structural",
+        "title": "Compiler’s Web of Causality as Contemplative Pedagogy",
+        "insight": "The graph’s design, connecting chapters via shared characters (Jaya, Vijaya, Yama) and bidirectional chains (e.g., Lakshmi’s curse to Indra’s gift), reveals a compiler who assembled narratives to illustrate karma’s non-linear web. This structure forces the reader to hold multiple timeframes simultaneously, training the mind in the yogic capacity to perceive simultaneity of cause and effect (akramana yoga) as taught by Shailendra Sharma.",
+        "evidence": [
+          "Cross-chapter chains: Mandavya curse (ch.5) to Krishna (ch.11); Jaya-Vijaya across ch.16,10,8,13,4",
+          "Hubs like Krishna (137 predicates) act as timeless nodes connecting disparate events"
+        ],
+        "confidence": "medium",
+        "cross_references": [
+          "Borges’ 'Garden of Forking Paths' as a modern analogy",
+          "Patanjali Yoga Sutra 3.53 on knowledge of past/future from sanyama"
+        ]
+      },
+      {
+        "type": "pattern",
+        "title": "Kriya-Yoga Encoding: Hubs as Chakras, Avatars as Kundalini Stages",
+        "insight": "The five narrative hubs (Krishna, Indra, Vishnu, Brahma, Shiva) map precisely to the five lower chakras (muladhara to vishuddhi) in Kriya-Yoga, with Krishna (137 predicates) as the embodied soul at ajna chakra. Avatars like Kapila (instructor of samkhya) align with the awakening of the third eye (discourses_to Devahūti), while Prithu (nourisher of Earth) symbolizes anahata chakra’s expansive love. This pattern reveals the Puranas as esoteric maps for inner energy ascension.",
+        "evidence": [
+          "Hubs: Krishna (137), Indra (50), Vishnu (45), Brahma (43), Shiva (35) — hierarchy mirrors chakra intensity",
+          "Kapila: teacher Devahūti (symbolic of buddhi)",
+          "Prithu: pursues Earth (symbolic of grounded heart expansion)"
+        ],
+        "confidence": "speculative",
+        "cross_references": [
+          "Shailendra Sharma’s 'Kriya-Yoga: The Science of Breath' chapter on microcosmic deities",
+          "Lalita Sahasranama’s description of kundalini as five-fold Shakti"
+        ]
+      }
+    ],
+    "meta_observation": "The knowledge graph reveals a meticulously engineered theocosmology where every entity and relationship serves a dual purpose: telling a historical/mythological story while simultaneously encoding a yogic map of inner transformation. The compiler’s choice to cluster relationships around avatar hubs and weave cross-chapter karmic threads suggests the Bhāgavata Purāṇa was composed as a brihat (macro) Yantra for meditation, where reciting and visualizing the connections becomes a subtle practice of weaving the practitioner’s own pranic network into the divine pattern—a living demonstration of Kriya-Yoga’s core teaching that the breath (prana) is the thread linking all lives and all worlds.",
+    "n_insights": 7,
+    "type_counts": {
+      "theological_synthesis": 1,
+      "pattern": 2,
+      "karmic_chain": 1,
+      "cross_text": 1,
+      "anomaly": 1,
+      "structural": 1
+    }
+  },
+  "metadata": {
+    "model": "deepseek-v4-pro"
+  },
+  "errors": []
+}
