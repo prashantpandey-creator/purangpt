@@ -1,0 +1,131 @@
+{
+  "_system": "Samanvaya (समन्वय) — Harmonious Multi-Agent Coordination via Vedic Layer Architecture",
+  "_principle": "Git tells you a file was touched. Samanvaya tells you whether the touch matters to your work.",
+  "_layers": {
+    "manas": {
+      "function": "Retrieval, search, indexing",
+      "scope": [
+        "indexer/",
+        "search.py",
+        "hybrid_search"
+      ]
+    },
+    "buddhi": {
+      "function": "Synthesis, reasoning, prompts",
+      "scope": [
+        "buddhi.py",
+        "UNIFIED_SYSTEM prompt",
+        "main.py synthesis block"
+      ]
+    },
+    "mahat": {
+      "function": "Graph, relationships, RAM keys",
+      "scope": [
+        "graph_memory.py",
+        "recall.py",
+        "guruji_ram.json",
+        "graph_manifest.json"
+      ]
+    },
+    "purusa": {
+      "function": "Query understanding, intent, lens",
+      "scope": [
+        "query_processor.py expansion",
+        "build_seeker_context"
+      ]
+    },
+    "brahman": {
+      "function": "Corpus, embeddings, training data",
+      "scope": [
+        "data/chunks/",
+        "embeddings",
+        "raw texts"
+      ]
+    }
+  },
+  "_granthis": {
+    "brahma": "declare — intent visible, no code written yet",
+    "vishnu": "publish — code on branch, visible for review",
+    "rudra": "merge — verified, merged to main, work complete"
+  },
+  "active": {
+    "session-s014-buddhi": {
+      "layer": "buddhi",
+      "since": "2026-06-30T01:15:00Z",
+      "touches": [
+        "backend/buddhi.py",
+        "backend/main.py:1956-1994",
+        "tools/buddhi_demo.py"
+      ],
+      "granthi": "rudra"
+    },
+    "session-s011-mahat": {
+      "layer": "mahat",
+      "since": "2026-06-30T02:30:00Z",
+      "touches": [
+        "backend/graph_memory.py",
+        "backend/main.py:1936-1949",
+        "tools/read_pass/out/guruji_ram.json"
+      ],
+      "granthi": "vishnu"
+    },
+    "session-s009-manas": {
+      "layer": "manas",
+      "since": "2026-06-30T03:00:00Z",
+      "touches": [
+        "indexer/search.py",
+        "backend/main.py:1747-1800"
+      ],
+      "granthi": "brahma"
+    },
+    "session-s015-purusa": {
+      "layer": "purusa",
+      "since": "2026-06-30T03:45:00Z",
+      "touches": [
+        "backend/query_processor.py:340-400"
+      ],
+      "granthi": "brahma"
+    },
+    "demo-agent-002": {
+      "layer": "mahat",
+      "since": "2026-06-30T00:47:18Z",
+      "touches": [
+        "tools/samanvaya/agent.py:10-50",
+        "tools/samanvaya/check.py"
+      ],
+      "granthi": "brahma"
+    },
+    "demo-agent-003": {
+      "layer": "buddhi",
+      "since": "2026-06-30T00:48:21Z",
+      "touches": [
+        "tools/samanvaya/agent.py:1-30",
+        "tools/samanvaya/check.py"
+      ],
+      "granthi": "brahma"
+    },
+    "demo-agent-004": {
+      "layer": "buddhi",
+      "since": "2026-06-30T00:48:36Z",
+      "touches": [
+        "backend/main.py:1950-1970"
+      ],
+      "granthi": "brahma"
+    }
+  },
+  "completed": [
+    "session-s012-void-manifest",
+    "session-s005-mood-tracking",
+    "demo-agent-001"
+  ],
+  "lineage": {
+    "backend/buddhi.py": "session-s014 (buddhi)",
+    "backend/main.py:1956-1994": "session-s014 (buddhi)",
+    "backend/query_processor.py": "session-s015 (purusa)",
+    "backend/main.py:340-400": "session-s005 (buddhi)",
+    "tools/void_manifest/": "session-s012 (brahman)",
+    "tools/samanvaya/agent.py": "demo-agent-001 (buddhi)",
+    "tools/samanvaya/mediator.py": "demo-agent-001 (buddhi)",
+    "tools/samanvaya/README.md": "demo-agent-001 (buddhi)"
+  }
+}
