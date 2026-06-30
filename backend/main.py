@@ -1854,18 +1854,23 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                 logger.warning("RAG search failed: %s", e)
             t_rag = time.time() - t_rag0
 
-        # 2. Sanskrit corpus search (runs when RAG runs — same relevance gate)
-        if not skip_rag and state.gretil_corpus:
+        # 2. Sanskrit corpus search — scholar-gated. GRETIL scans 56M chars of raw
+        # IAST text via regex; 5-8s of latency that only matters when the seeker
+        # explicitly wants original Sanskrit or the vector search returned nothing.
+        # Default: skipped. Scholar keywords / empty pgvector → enabled.
+        _gretil_signals = ['original sanskrit', 'iast', 'raw text', 'manuscript',
+                           'devanagari', 'sanskrit text', 'exact wording', 'gretil',
+                           '/gretil', '/sanskrit']
+        _want_gretil = (any(s in query_lower for s in _gretil_signals)
+                        or (not rag_context and not skip_rag))
+        if not skip_rag and state.gretil_corpus and _want_gretil:
             t_gretil0 = time.time()
-            # Parallel multi-variant GRETIL search based on the expansion
             search_tasks = [
                 asyncio.to_thread(search_sanskrit, term, max_results=8)
-                for term in expansion.gretil_search_terms
+                for term in expansion.gretil_search_terms[:2]  # cap: canonical + devanagari only
             ]
             if search_tasks:
                 batch_results = await asyncio.gather(*search_tasks, return_exceptions=True)
-                
-                # Merge and deduplicate by reference (e.g. "samkhya_karika, Verse 12")
                 seen_refs = set()
                 for res_list in batch_results:
                     if isinstance(res_list, list):
@@ -1882,15 +1887,12 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                 )
                 rag_context += f"\n\n## Sanskrit Corpus (GRETIL — Primary Source)\n{skt_ctx}"
             elif skt_results and rag_context:
-                # Append GRETIL alongside vector results for richer context
                 skt_ctx = "\n".join(
                     f"[GRETIL: {r['text_name']} / {r['edition']}]\n"
                     f"Reference: {r['reference']}\n{r['excerpt'][:600]}"
                     for r in skt_results[:3]
                 )
                 rag_context += f"\n\n## Additional Sanskrit Primary Sources (GRETIL)\n{skt_ctx}"
-
-        if not skip_rag and state.gretil_corpus:
             t_gretil = time.time() - t_gretil0
 
         # Panel shows ONLY clickable sources. GRETIL skt_results have no resolvable
