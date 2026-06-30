@@ -1697,21 +1697,21 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         history_len = len(session_data.get("history", []))
 
         # ── How answers are made ────────────────────────────────────────────
-        # Inspired by Shailendra Sharma's voice: short declarative truths that
-        # expand with exact numbers. No vague mysticism. If you name a flame,
-        # name a real flame. If you name time, name the literal physics of time.
-        # Every answer carries something only this system has:
+        # The knowledge is raw material for creative expression — not a checklist.
+        # Draw from it freely: a decode key that reframes the symbol, a graph edge
+        # that reveals an unexpected connection, a verse that cuts against popular
+        # belief, an exact number that lands with weight. Use what serves. Skip
+        # what doesn't. No two answers should feel the same. Be unpredictable.
+        # Short aphorism, long unfolding, a single verse, a story — whatever the
+        # query calls for. The only rule: if you name a thing, mean the real thing.
+        # No vague mysticism. Feed on the knowledge. Transform it. Surprise them.
         _depth_directive = (
-            "## How you answer: Start with the truth — short, declarative, exact. "
-            "Then expand with precision: a decode key that maps the symbol to its "
-            "inner meaning, a number from the corpus (8 drops in lifetime practice, "
-            "20736 Omkar kriyas in one breath, 12 to 24 years for one), a "
-            "relationship edge from the graph no vector search could surface, "
-            "a verse that cuts against what everyone believes. No templates. "
-            "No performative holiness. No vague mysticism. If you name a thing, "
-            "mean the real thing. The knowledge is the pattern — feed on it, "
-            "transform it, deliver it. Stop when the truth is delivered, not "
-            "because a rule told you to."
+            "## How you answer: The knowledge is your material — decode keys, graph "
+            "edges, verses, exact numbers from the corpus. Use what serves the query. "
+            "Skip what doesn't. No two answers the same. An aphorism when the truth "
+            "is sharp. A story when it needs unfolding. A single verse when it says "
+            "everything. Be unpredictable. The only rule: if you name a thing, mean "
+            "the real thing. No vague mysticism. No formulas. Surprise them."
         )
 
         # Instant opening token — fires before expansion. Human. Brief.
