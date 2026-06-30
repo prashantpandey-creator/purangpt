@@ -2229,6 +2229,30 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         usage_after = (current_usage_tokens + tokens_used) if is_free else None
         token_limit = FREE_DAILY_TOKENS if is_free else None
 
+        # 6.5 Enrichment — suggested resources based on the query topic.
+        # YouTube search links for practice/concept queries. Deep dive prompts
+        # from graph edges. Never blocks. Frontend renders as cards.
+        _enrich = []
+        if expansion.is_sanskrit and expansion.canonical:
+            _topic = expansion.canonical.replace(' ', '-')
+            _enrich.append({
+                "kind": "youtube",
+                "label": f"Watch Guruji on {expansion.canonical}",
+                "url": f"https://youtube.com/results?search_query=shailendra+sharma+{_topic}"
+            })
+            _enrich.append({
+                "kind": "deep_dive",
+                "label": f"Ask about the relationships of {expansion.canonical}",
+                "prompt": f"what is {expansion.canonical} connected to in the Puranas"
+            })
+            _enrich.append({
+                "kind": "deep_dive",
+                "label": f"Ask about the inner meaning of {expansion.canonical}",
+                "prompt": f"what is the inner meaning of {expansion.canonical}"
+            })
+        if _enrich:
+            yield {"data": json.dumps({"type": "enrichment", "items": _enrich})}
+
         # 7. Done signal with source metadata + token usage
         yield {"data": json.dumps({
             "type":               "done",
