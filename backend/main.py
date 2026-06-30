@@ -1924,31 +1924,19 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                 logger.warning("RAG search failed: %s", e)
             t_rag = time.time() - t_rag0
 
-        # 2.5 Web fetch — agentic tool. Fires when the seeker pastes a URL OR
-        # explicitly asks to search/look up/fetch. Runs as background task with
-        # 3s timeout. Content injected as supplementary context — never citable.
+        # 2.5 Web fetch — URL resolution only. Fires when the seeker pastes a
+        # URL in their query. Auto-fetches and injects content as supplementary
+        # context. No web search — the system's value is in the texts and graph.
         _urls_in_query = re.findall(r'https?://[^\s]{5,}', actual_query)
-        _web_signals = ['search the web', 'look this up', 'look up', 'fetch this',
-                        'web search', 'search online', '/web', '/fetch', '/lookup']
-        _want_web = bool(_urls_in_query) or any(s in query_lower for s in _web_signals)
         _web_task = None
-        if _want_web and state.http_client:
-            _web_urls = _urls_in_query or []
-            if not _web_urls and any(s in query_lower for s in _web_signals):
-                # No URL given but asked to search — extract the search query
-                _search_q = actual_query
-                for s in _web_signals:
-                    _search_q = _search_q.replace(s, '').strip()
-                _web_urls = [f"https://en.wikipedia.org/wiki/{_search_q.replace(' ', '_')}"]
+        if _urls_in_query and state.http_client:
             async def _fetch_web():
                 _fetched = []
-                for url in _web_urls[:2]:
+                for url in _urls_in_query[:2]:
                     try:
                         async with state.http_client.get(url, timeout=aiohttp.ClientTimeout(total=5)) as resp:
                             if resp.status == 200:
                                 text = await resp.text()
-                                # Crude extract: first 2000 chars of visible text
-                                import html as _html
                                 text = re.sub(r'<[^>]+>', ' ', text[:10000])
                                 text = re.sub(r'\s+', ' ', text).strip()[:2000]
                                 _fetched.append(f"[Web: {url}]\n{text}")
