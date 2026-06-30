@@ -70,3 +70,4 @@ keys.txt
 secrets/*.dec
 secrets/*.dec.*
 secrets/*.plain.*
+demos/

@@ -492,6 +492,47 @@ class AppState:
 state = AppState()
 
 
+def _op_weight(query_lower: str) -> float:
+    """Return a semantic weight (0.0–1.0) for hybrid search from the query intent.
+
+    Higher → more vector similarity. Lower → more keyword/BM25.
+    Single dispatch table — no module, no imports, no Sanskrit names."""
+    # Citation: exact verse lookups need keyword precision
+    if any(s in query_lower for s in (
+        "cite", "citation", "reference", "verse", "source",
+        "what exactly does", "according to the text", "exact words",
+        "which verse", "where in the", "chapter and verse",
+    )):
+        return 0.40
+    # Reasoning: multi-step logic needs broad semantic coverage
+    if any(s in query_lower for s in (
+        "why", "how does", "explain the logic", "reason",
+        "what is the relationship", "compare", "contrast",
+    )):
+        return 0.70
+    # Counsel: practical guidance, lighter vector to stay grounded
+    if any(s in query_lower for s in (
+        "should i", "what should", "how to live", "advice",
+        "guidance", "struggling", "path", "sadhana",
+    )):
+        return 0.40
+    # Meditation / contemplation
+    if any(s in query_lower for s in (
+        "meditation", "meditate", "practice", "breathe",
+        "mantra", "japa", "contemplat", "silence",
+    )):
+        return 0.35
+    # Scholar / deep analysis
+    if any(s in query_lower for s in (
+        "commentary", "analysis", "deep dive", "explain in detail",
+        "significance of", "symbolism",
+    )):
+        return 0.45
+    # Detailed queries → heavier vector
+    if len(query_lower.split()) > 25:
+        return 0.70
+    # Default: balanced
+    return 0.75
 
 
 # ── GRETIL Corpus Loader ───────────────────────────────────────────────────
@@ -1668,29 +1709,9 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         if _greeting:
             yield {"data": json.dumps({"type": "token", "content": _greeting})}
 
-        # ── Sanskrit IR compilation ────────────────────────────────────────
-        # English query → structured Sanskrit instruction block. The IR
-        # determines operation routing (search / reason / cite / counsel)
-        # and the semantic weight for hybrid search. Fast heuristic path
-        # (<1ms); falls back to LLM compiler for ambiguous queries.
-        from backend.sanskrit_ir import compile_query as compile_sanskrit_ir, get_semantic_weight
-        t_sir0 = time.time()
-        sir = compile_sanskrit_ir(actual_query, request.language or "en")
-        sir_op = sir["op"]
-        sir_weight = get_semantic_weight(sir_op, sir["confidence"])
-        t_sir = time.time() - t_sir0
-        logger.info(
-            "Sanskrit IR: %s (%s) | topic=%s | confidence=%.2f | weight=%.2f | %.0fms",
-            sir_op.code, sir_op.english, sir["topic"],
-            sir["confidence"], sir_weight, t_sir * 1000
-        )
-        yield {"data": json.dumps({
-            "type": "sanskrit_ir",
-            "kriya": sir_op.code,
-            "english": sir_op.english,
-            "topic": sir["topic"],
-            "confidence": sir["confidence"],
-        })}
+        # Operation-tuned semantic weight for hybrid search.
+        sir_weight = _op_weight(actual_query.lower())
+        logger.info("Query op weight: %.2f", sir_weight)
 
         # 0 & 1. Query Rewriting and Expansion (Merged for performance)
         history_len = len(session_data.get("history", []))
