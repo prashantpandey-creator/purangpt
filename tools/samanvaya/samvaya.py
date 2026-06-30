@@ -1,24 +1,33 @@
 #!/usr/bin/env python3
 """
-Samanvaya — AI-Native Multi-Agent Coordination.
+Samanvaya — AI-Native Recursive Code Evolution.
 
-ONE tool. Three things:
+ONE tool. Six things:
   safe    — "Can I touch this file right now?"
   resolve — "Resolve all conflicts automatically via LLM."
   watch   — "Watch and resolve continuously. Zero human touchpoints."
   status  — "Who is working on what?"
+  evolve  — "Record a new generation of code evolution."
+  lineage — "Show the full evolutionary tree."
 
 The system: Agents declare what they're working on before touching code.
 If two agents touch the same file at different layers (different kinds of work)
 → SAFE, proceed. Git merges mechanically.
 If two agents touch the same file at the SAME layer → LLM resolves automatically.
-No human resolves a conflict. Ever.
+
+The bigger picture: Code is never "done." Each deployment is a generation.
+The agent observes metrics, learns, improves, deploys again. Forever.
+The lineage IS the memory of the system — not who wrote code, but WHY,
+what it observed, and what it produced. Each generation parents the next.
 
 Usage:
   python tools/samanvaya/samvaya.py safe --file backend/main.py
   python tools/samanvaya/samvaya.py status
   python tools/samanvaya/samvaya.py resolve
   python tools/samanvaya/samvaya.py watch
+  python tools/samanvaya/samvaya.py evolve --layer buddhi --intent "..." --change "..."
+  python tools/samanvaya/samvaya.py outcome --id gen-0001 --status stable --metrics "..."
+  python tools/samanvaya/samvaya.py lineage
 """
 
 import json
@@ -343,6 +352,123 @@ def cmd_watch():
 # MAIN
 # ═══════════════════════════════════════════════════════════════
 
+# ═══════════════════════════════════════════════════════════════
+# EVOLVE: Record a generation in the recursive lineage
+# ═══════════════════════════════════════════════════════════════
+
+def cmd_evolve(args):
+    """Record a new generation of code evolution.
+
+    Each generation has:
+      - parents: what it was built from (prior generation IDs)
+      - layer: which cognitive layer drove this change
+      - intent: what the agent was trying to achieve
+      - change: what files and lines were modified
+      - outcome: metrics, errors, feedback (filled after deploy)
+
+    The codebase is never 'done.' Each generation observes, learns, deploys.
+    The lineage IS the memory of the system."""
+    data = json.loads(MANIFEST.read_text())
+    generations = data.setdefault("generations", [])
+
+    gen_id = args.get("id", f"gen-{len(generations):04d}")
+    layer = args.get("layer", "")
+    intent = args.get("intent", "")
+    parent = args.get("parent", f"gen-{len(generations) - 1:04d}" if generations else "genesis")
+    change = args.get("change", "")
+    observed = args.get("observed", "")
+
+    entry = {
+        "id": gen_id,
+        "parent": parent,
+        "layer": layer,
+        "intent": intent,
+        "observed": observed,
+        "change": change,
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "outcome": None,  # filled after deploy: {"metrics": {...}, "errors": 0, "status": "stable"}
+    }
+
+    # If this is the first generation, it's genesis
+    if not generations and gen_id == f"gen-{len(generations):04d}":
+        entry["parent"] = "genesis"
+
+    generations.append(entry)
+    data["_current_generation"] = gen_id
+    MANIFEST.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+
+    print(f"🌱 Generation recorded: {gen_id}")
+    print(f"   Parent:  {entry['parent']}")
+    print(f"   Layer:   {layer} ({LAYER_LABELS.get(layer, layer)})")
+    print(f"   Intent:  {intent[:120]}")
+    print(f"   Change:  {change[:120]}")
+    if observed:
+        print(f"   Observed: {observed[:120]}")
+    print(f"")
+    print(f"   Next: deploy → observe metrics → samvaya.py outcome --id {gen_id}")
+
+
+def cmd_outcome(args):
+    """Record the outcome of a deployed generation.
+
+    After deploy, the agent observes metrics, errors, user feedback.
+    This closes the feedback loop for this generation."""
+    data = json.loads(MANIFEST.read_text())
+    generations = data.get("generations", [])
+
+    gen_id = args.get("id", "")
+    for g in generations:
+        if g["id"] == gen_id:
+            g["outcome"] = {
+                "metrics": args.get("metrics", ""),
+                "errors": args.get("errors", "0"),
+                "status": args.get("status", "stable"),
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            }
+            MANIFEST.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+            print(f"✅ {gen_id} outcome recorded: {g['outcome']['status']}")
+            print(f"   Metrics: {g['outcome']['metrics'][:120]}")
+            return
+
+    print(f"❌ Generation '{gen_id}' not found.")
+
+
+def cmd_lineage(_args):
+    """Show the evolutionary lineage — the full recursive history of the codebase.
+
+    Each generation is a node in the tree. genesis → gen-0001 → gen-0002 → ...
+    This is code with memory. Not who wrote it. Why it was written.
+    What it observed. What it produced."""
+    data = json.loads(MANIFEST.read_text())
+    generations = data.get("generations", [])
+
+    if not generations:
+        print("No generations recorded yet.")
+        print("Run: samvaya.py evolve --layer buddhi --intent '...' --change '...'")
+        return
+
+    print(f"{'GEN':<10} {'PARENT':<10} {'LAYER':<10} {'INTENT':<50} {'OUTCOME'}")
+    print("-" * 120)
+    for g in generations:
+        intent = g.get("intent", "")[:48]
+        outcome = g.get("outcome", {})
+        if outcome:
+            status = outcome.get("status", "?")
+            errors = outcome.get("errors", "?")
+            outcome_str = f"{status} (errors: {errors})"
+        else:
+            outcome_str = "pending"
+        print(f"{g['id']:<10} {g.get('parent','?')[:8]:<10} {g.get('layer','?'):<10} {intent:<50} {outcome_str}")
+
+    # Show the tree
+    if len(generations) > 1:
+        print(f"\n🌳 Evolutionary tree ({len(generations)} generations):")
+        for g in generations:
+            prefix = "  " if g["parent"] != "genesis" else ""
+            branch = "├─" if g != generations[-1] else "└─"
+            print(f"{prefix}{branch} {g['id']} [{g.get('layer','?')}] {g.get('intent','')[:80]}")
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print(__doc__)
@@ -372,6 +498,12 @@ if __name__ == "__main__":
         cmd_resolve()
     elif cmd == "watch":
         cmd_watch()
+    elif cmd == "evolve":
+        cmd_evolve(args)
+    elif cmd == "outcome":
+        cmd_outcome(args)
+    elif cmd == "lineage":
+        cmd_lineage(args)
     else:
-        print(f"Unknown: {cmd}. Valid: safe, status, resolve, watch")
+        print(f"Unknown: {cmd}. Valid: safe, status, resolve, watch, evolve, outcome, lineage")
         sys.exit(1)

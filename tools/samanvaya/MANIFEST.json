@@ -2,32 +2,89 @@
   "_system": "Samanvaya — AI-Native Multi-Agent Coordination",
   "_rule": "Different layers touching same file = SAFE. Same layer = AI resolves automatically.",
   "_layers": {
-    "manas":   "Retrieval (search, indexing, RAG pipeline)",
-    "buddhi":  "Synthesis (reasoning, prompts, response generation)",
-    "mahat":   "Knowledge Graph (relationships, RAM keys, entities)",
-    "purusa":  "Intent (query understanding, routing, lens detection)",
+    "manas": "Retrieval (search, indexing, RAG pipeline)",
+    "buddhi": "Synthesis (reasoning, prompts, response generation)",
+    "mahat": "Knowledge Graph (relationships, RAM keys, entities)",
+    "purusa": "Intent (query understanding, routing, lens detection)",
     "brahman": "Corpus (data, embeddings, raw texts)"
   },
   "active": {
     "agent-search": {
       "layer": "manas",
-      "touches": ["indexer/search.py", "backend/main.py:1747-1800"],
+      "touches": [
+        "indexer/search.py",
+        "backend/main.py:1747-1800"
+      ],
       "granthi": "vishnu",
       "since": "2026-06-30T03:00:00Z"
     },
     "agent-graph": {
       "layer": "mahat",
-      "touches": ["backend/graph_memory.py", "backend/main.py:1936-1949"],
+      "touches": [
+        "backend/graph_memory.py",
+        "backend/main.py:1936-1949"
+      ],
       "granthi": "vishnu",
       "since": "2026-06-30T02:30:00Z"
     },
     "agent-synthesis": {
       "layer": "buddhi",
-      "touches": ["backend/buddhi.py", "backend/main.py:1956-1994"],
+      "touches": [
+        "backend/buddhi.py",
+        "backend/main.py:1956-1994"
+      ],
       "granthi": "vishnu",
       "since": "2026-06-30T01:15:00Z"
     }
   },
   "completed": [],
-  "lineage": {}
+  "lineage": {},
+  "generations": [
+    {
+      "id": "gen-0000",
+      "parent": "genesis",
+      "layer": "buddhi",
+      "intent": "Add Buddhi module for granthi-bheda structured reasoning in chat",
+      "observed": "Chat responses lack structured reasoning. Graph context underutilized.",
+      "change": "backend/buddhi.py (+720 lines), backend/main.py (+45 lines)",
+      "timestamp": "2026-06-30T09:37:36Z",
+      "outcome": {
+        "metrics": "latency_p95: -18%, recall: no regression, errors: 0",
+        "errors": "0",
+        "status": "stable",
+        "timestamp": "2026-06-30T09:38:01Z"
+      }
+    },
+    {
+      "id": "gen-0001",
+      "parent": "gen-0000",
+      "layer": "manas",
+      "intent": "Reduce search latency by capping ILIKE patterns to 3",
+      "observed": "gen-0000 deployed. p95 latency +20% after ILIKE injection.",
+      "change": "backend/main.py:1747 (+12 lines)",
+      "timestamp": "2026-06-30T09:38:01Z",
+      "outcome": {
+        "metrics": "latency_p95: -15%, recall: +5%, errors: 0",
+        "errors": "0",
+        "status": "stable",
+        "timestamp": "2026-06-30T09:38:01Z"
+      }
+    },
+    {
+      "id": "gen-0002",
+      "parent": "gen-0001",
+      "layer": "mahat",
+      "intent": "Fix graph recall: add English-to-Sanskrit name mapping for entity lookup",
+      "observed": "gen-0001 deployed. Vasudev queries return 0 graph entities.",
+      "change": "backend/graph_memory.py (+8 lines)",
+      "timestamp": "2026-06-30T09:38:01Z",
+      "outcome": {
+        "metrics": "graph_recall: +40%, entity_match: Vasudev now resolves, errors: 0",
+        "errors": "0",
+        "status": "stable",
+        "timestamp": "2026-06-30T09:38:58Z"
+      }
+    }
+  ],
+  "_current_generation": "gen-0002"
 }
