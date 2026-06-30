@@ -191,6 +191,12 @@ export function SacredGeometryLoader() {
   const spiralRefs = useRef<(SVGPolylineElement | null)[]>([]);
   const svgWrapRef = useRef<HTMLDivElement>(null);
 
+  // Only render after client mount — random particle positions
+  // differ between SSR and hydration, causing attribute mismatches.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  if (!mounted) return null;
+
   const particles = useMemo(() => makeParticles(55), []);
 
   useEffect(() => {
