@@ -53,7 +53,7 @@ def _find_rsa_key(jwks: dict, kid: str) -> dict:
     return {}
 
 # Guest limits
-GUEST_DAILY_LIMIT = int(os.getenv("GUEST_DAILY_LIMIT", "10"))  # conservative default
+GUEST_DAILY_LIMIT = int(os.getenv("GUEST_DAILY_LIMIT", "50"))  # 50 msg/day resets midnight UTC
 MAX_QUERY_LENGTH  = int(os.getenv("MAX_QUERY_LENGTH", "2000"))  # chars; ~500 tokens
 
 

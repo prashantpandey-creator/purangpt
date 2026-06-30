@@ -100,7 +100,7 @@ MAX_HISTORY   = 100  # messages kept in session memory
 INTERNAL_SERVICE_KEY = os.getenv("INTERNAL_SERVICE_KEY", "")
 
 
-from backend.auth import get_current_user, require_auth, require_role, get_guest_id, check_guest_rate_limit, consume_guest_unit, increment_guest_usage, validate_query
+from backend.auth import get_current_user, require_auth, require_role, get_guest_id, check_guest_rate_limit, consume_guest_unit, increment_guest_usage, validate_query, GUEST_DAILY_LIMIT
 from backend.db_client import update_profile, get_admin_stats, get_all_users, encrypt_keys, decrypt_keys, increment_usage, check_rate_limit, consume_message_unit, check_research_limit, increment_research_usage, FREE_DAILY_TOKENS
 
 from backend.session_manager import SessionManager
@@ -1582,7 +1582,7 @@ async def get_user_limits(req: Request, user: Optional[dict] = Depends(get_curre
             "role": "guest", 
             "messages_remaining": rem, 
             "research_remaining": 0,
-            "max_messages": 10,
+            "max_messages": GUEST_DAILY_LIMIT,
             "max_research": 0
         }
     else:
@@ -1655,13 +1655,13 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         guest_id = get_guest_id(req)
         allowed, rem = await asyncio.to_thread(consume_guest_unit, guest_id)
         if not allowed:
-            raise HTTPException(429, "Guest rate limit exceeded. Please sign in to continue.")
+            raise HTTPException(429, f"You've used all {GUEST_DAILY_LIMIT} free messages for today. Resets at midnight UTC. Sign in for more.")
     else:
         allowed, rem, current_usage_tokens = await asyncio.to_thread(
             check_rate_limit, user.get("id"), user.get("role", "free"), is_byok
         )
         if not allowed:
-            raise HTTPException(429, "You've used all your free tokens for today. Upgrade to Pro for unlimited access.")
+            raise HTTPException(429, f"Daily limit reached. {rem} remaining. Resets at midnight UTC. Upgrade to Pro for unlimited.")
     if not any_llm_configured():
         raise HTTPException(503, "No LLM credentials configured")
 
@@ -2224,7 +2224,7 @@ async def _gate_unauthed_llm(req: Request):
     guest_id = get_guest_id(req)
     allowed, _ = await asyncio.to_thread(consume_guest_unit, guest_id)
     if not allowed:
-        raise HTTPException(429, "Daily limit reached for anonymous use. Please sign in.")
+        raise HTTPException(429, f"You've used all {GUEST_DAILY_LIMIT} free messages for today. Resets at midnight UTC. Sign in for more.")
 
 
 @app.post("/api/sanskrit-search")
