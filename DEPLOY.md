@@ -7,14 +7,14 @@
 
 - **Two repos, one deploy path each, both via GitHub Actions on `main`.**
   - Backend  → `prashantpandey-creator/purangpt`      → `.github/workflows/deploy.yml`
-  - Frontend → `prashantpandey-creator/purangpt-next` → `.github/workflows/deploy.yml`
+  - Frontend → `frontend/` in this monorepo → `.github/workflows/deploy.yml`
 - **`main` is the only deploy branch.** `develop` is dead — never deploy from it.
 - The **production stack compose is version-controlled** at
   `deploy/docker-compose.prod.yml` (the sanitized mirror of the server's
   `/root/docker-compose.yml`). It owns: backend, frontend, logto, logto-db. The
   pgvector DB (`purangpt-pgvector-1`) is a SEPARATE compose project (`purangpt`)
   reached via the external `purangpt_default` network. Secrets are NOT inline —
-  they come from gitignored env files (`/root/stack.env`, `/root/purangpt/.env`,
+  they come from gitignored env files (`/root/stack.env`, `/root/purangpt-monorepo/.env`,
   `/root/frontend-secrets.env`); template in `deploy/.env.prod.example`.
   > Server cutover (pending): replace `/root/docker-compose.yml` with this file +
   > create `/root/stack.env` from the template, so the live file matches git.
@@ -59,7 +59,7 @@ This stack had accreted **three** overlapping deploy mechanisms fighting each ot
 ## Server facts
 
 - Backend dir: `/root/purangpt`        (must be on `main`)
-- Frontend dir: `/root/purangpt-next`  (on `main`)
+- Frontend dir: `/root/purangpt-monorepo/frontend`  (on `main`)
 - Root compose: `/root/docker-compose.yml`  ← production source of truth
 - Frontend server-side secrets: `/root/frontend-secrets.env` (gitignored, injected
   via the frontend service `env_file:` — see `purangpt-next/CLAUDE-secrets.md`).
@@ -82,7 +82,7 @@ Capacitor wraps the web frontend into a native iOS app (no rewrite). Lives in
 `purangpt-next` (the Capacitor config + `@logto/capacitor`), not the backend.
 
 ```bash
-cd purangpt-next
+cd frontend
 npx cap sync ios     # copy web build into the iOS bundle after each change
 npx cap open ios     # open Xcode → select device → Run
 ```

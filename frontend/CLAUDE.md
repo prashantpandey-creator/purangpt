@@ -69,9 +69,9 @@ Google access tokens expire in ~1h. The `purangpt_session` cookie stores a `refr
   - The merge is pushed with `GITHUB_TOKEN`, which (by GitHub design) does **not**
     re-trigger the workflow, so there is no deploy loop. **No extra secrets**
     beyond those already listed in `deploy.yml`.
-- **Instant Hot Reload (PM2)** *(optional manual bypass)*: The server has `pm2` running `next dev --port 3000` (see `ecosystem.config.js`). To push instantaneous changes bypassing Docker, `rsync` your files directly to `/root/purangpt-next` using the local SSH key.
+- **Instant Hot Reload (PM2)** *(optional manual bypass)*: The server has `pm2` running `next dev --port 3000` (see `ecosystem.config.js`). To push instantaneous changes bypassing Docker, `rsync` your files directly to `/root/purangpt-monorepo/frontend` using the local SSH key.
   ```bash
-  rsync -avz -e "ssh -i ~/.ssh/purangpt_hetzner -o StrictHostKeyChecking=no" --exclude node_modules --exclude .git --exclude .next . root@204.168.176.229:/root/purangpt-next
+  rsync -avz -e "ssh -i ~/.ssh/purangpt_hetzner -o StrictHostKeyChecking=no" --exclude node_modules --exclude .git --exclude .next . root@204.168.176.229:/root/purangpt-monorepo/frontend
   ```
 
 ### CI / PR Autofix & Autodeploy Workflow

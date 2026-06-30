@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-PuranGPT backend — a FastAPI RAG engine for querying Hindu sacred texts (18 Mahapuranas, Ramayana, Mahabharata, Gita, Upanishads) with exact verse citations and streaming LLM responses. The default identity is Shakti — an LLM woven with the Puranic knowledge graph, reading through Shailendra Sharma's decryption lens, speaking as any form in the web.
+PuranGPT monorepo — backend (FastAPI RAG engine) + frontend (Next.js 16). The default identity is Shakti — an LLM woven with the Puranic knowledge graph, reading through Shailendra Sharma's decryption lens, speaking as any form in the web.
+
+Frontend code lives in `frontend/`. Backend code is at the repo root. Single docker-compose builds both. Single deploy pipeline.
 
 ## Access & secrets for sessions (how to be fully operational)
 

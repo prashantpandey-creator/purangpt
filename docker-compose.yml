@@ -11,10 +11,10 @@
 #   docker compose --env-file /root/stack.env -f deploy/docker-compose.prod.yml up -d
 #
 # ── Restore a rebuilt server from scratch ────────────────────────────────────
-#   1. git clone both repos to /root/purangpt and /root/purangpt-next
+#   1. git clone the monorepo to /root/purangpt-monorepo
 #   2. cp this file to /root/docker-compose.yml  (or run with -f from the repo)
 #   3. create /root/stack.env from deploy/.env.prod.example with real values
-#   4. create /root/purangpt/.env (backend env) and /root/frontend-secrets.env
+#   4. create .env (backend env) and frontend/.env.local
 #   5. recreate the external networks if missing:
 #        docker network create coolify || true
 #        docker network create purangpt_default || true
@@ -56,7 +56,7 @@ services:
       - purangpt_default
     restart: unless-stopped
     volumes:
-      - /data/purangpt/data:/app/data
+      - /data/purangpt-monorepo/data:/app/data
     depends_on:
       - redis
 

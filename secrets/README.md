@@ -1,7 +1,7 @@
 # secrets/ — encrypted backup of record
 
 > **How deploys actually get secrets:** the backend deploy uses **GitHub
-> Repository Secrets** (`.github/workflows/deploy.yml` renders `/root/purangpt/.env`
+> Repository Secrets** (`.github/workflows/deploy.yml` renders `/root/purangpt-monorepo/.env`
 > from `${{ secrets.* }}`). That is the source of truth for deployment — NOT this
 > directory. To change a deployed secret, update it in GitHub
 > (`gh secret set NAME --repo prashantpandey-creator/purangpt`) and redeploy.
@@ -62,7 +62,7 @@ On every deploy the workflow SSHes to Hetzner and — after `git reset --hard` +
 `git clean -fd` — installs `sops` (if missing) and renders the secrets:
 
 ```bash
-SOPS_AGE_KEY="$SOPS_AGE_KEY" sops -d secrets/prod.env > /root/purangpt/.env   # chmod 600
+SOPS_AGE_KEY="$SOPS_AGE_KEY" sops -d secrets/prod.env > /root/purangpt-monorepo/.env   # chmod 600
 ```
 
 It aborts the deploy if the rendered `.env` still contains `REPLACE_ME`, so
@@ -79,9 +79,9 @@ placeholder secrets can never reach production.
    services:
      backend:
        env_file:
-         - ./purangpt/.env
+         - ./.env
    ```
 
-> The workflow deliberately writes to **`/root/purangpt/.env`**, not `/root/.env`,
+> The workflow deliberately writes to **`/root/purangpt-monorepo/.env`**, not `/root/.env`,
 > to avoid clobbering the combined host env used by the logto/frontend services.
 > `.env` is git-ignored, so the decrypted file never re-enters version control.
