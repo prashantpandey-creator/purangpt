@@ -1839,32 +1839,45 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                     graph_gretil_patterns=_graph_gretil or None,
                 )
 
-                # Multi-hop comparison
+                # Multi-hop comparison — background task. Fires an LLM call to find
+                # what's missing from the retrieved passages, then searches for it.
+                # Runs async so it never blocks the main response. Results merged
+                # later if they arrive before the LLM finishes streaming.
+                _multi_hop_task = None
                 comp_signals = ["difference between", "compared to", "according to both", "various traditions", "vs"]
                 if any(s in query_lower for s in comp_signals):
-                    comp_ctx = build_rag_context(results)
-                    comp_prompt = f"What key concept is missing from these passages to answer '{actual_query}'? One phrase only.\nPassages:\n{comp_ctx}"
+                    async def _multi_hop():
+                        try:
+                            comp_ctx = build_rag_context(results)
+                            comp_prompt = f"What key concept is missing from these passages to answer '{actual_query}'? One phrase only.\nPassages:\n{comp_ctx}"
+                            missing = await call_llm_once([{"role": "user", "content": comp_prompt}], temperature=0.0)
+                            missing = missing.strip(' "\'.')
+                            if missing and len(missing) > 2 and len(missing) < 30 and missing.lower() not in actual_query.lower():
+                                logger.info("Multi-hop comparison missing concept: %s", missing)
+                                missing_expansion = await state.query_processor.expand(missing)
+                                missing_results = await state.searcher.hybrid_search(
+                                    query=missing_expansion.original,
+                                    top_k=5,
+                                    embed_phrase=missing_expansion.embed_phrase,
+                                    semantic_weight=weight,
+                                    corpus_type="scripture",
+                                )
+                                seen_ids = {r.get('id') for r in results if r.get('id')}
+                                for mr in missing_results:
+                                    if mr.get('id') not in seen_ids:
+                                        results.append(mr)
+                                        seen_ids.add(mr.get('id'))
+                        except Exception as e:
+                            logger.warning("Multi-hop comparison failed: %s", e)
+                    _multi_hop_task = asyncio.create_task(_multi_hop())
+
+                # Await multi-hop with a 1.5s grace window. If it finished, merge results.
+                # If not, proceed without it — the main retrieval already covers the query.
+                if _multi_hop_task is not None:
                     try:
-                        missing = await call_llm_once([{"role": "user", "content": comp_prompt}], temperature=0.0)
-                        missing = missing.strip(' "\'.')
-                        if missing and len(missing) > 2 and len(missing) < 30 and missing.lower() not in actual_query.lower():
-                            logger.info("Multi-hop comparison missing concept: %s", missing)
-                            missing_expansion = await state.query_processor.expand(missing)
-                            missing_results = await state.searcher.hybrid_search(
-                                query=missing_expansion.original,
-                                top_k=5,
-                                embed_phrase=missing_expansion.embed_phrase,
-                                semantic_weight=weight,
-                                corpus_type="scripture",
-                            )
-                            # merge and deduplicate
-                            seen_ids = {r.get('id') for r in results if r.get('id')}
-                            for mr in missing_results:
-                                if mr.get('id') not in seen_ids:
-                                    results.append(mr)
-                                    seen_ids.add(mr.get('id'))
-                    except Exception as e:
-                        logger.warning("Multi-hop comparison failed: %s", e)
+                        await asyncio.wait_for(_multi_hop_task, timeout=1.5)
+                    except (asyncio.TimeoutError, Exception):
+                        pass  # didn't finish in time — proceed with what we have
 
                 # A citation the seeker sees must be CLICKABLE or not shown at all.
                 # Keep only scripture results with a resolvable chunk_id (the reader opens
