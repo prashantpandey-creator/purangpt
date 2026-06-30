@@ -141,9 +141,16 @@ def _is_trivial(query: str) -> bool:
         return True
     if ql in _TRIVIAL:
         return True
-    # all stop-words → nothing to retrieve on
     toks = [t for t in re.split(r"\W+", ql) if t]
-    return bool(toks) and all(t in _STOP_WORDS for t in toks)
+    if not toks:
+        return True
+    # all stop-words → nothing to retrieve on
+    if all(t in _STOP_WORDS for t in toks):
+        return True
+    # all tokens are trivial words ("hi hello", "ok thanks", "yes cool")
+    if all(t in _TRIVIAL for t in toks):
+        return True
+    return False
 
 
 # ── Troll / abuse patterns ─────────────────────────────────────────────────

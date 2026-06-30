@@ -1877,8 +1877,10 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         _gretil_signals = ['original sanskrit', 'iast', 'raw text', 'manuscript',
                            'devanagari', 'sanskrit text', 'exact wording', 'gretil',
                            '/gretil', '/sanskrit']
-        _want_gretil = (any(s in query_lower for s in _gretil_signals)
-                        or (not rag_context and not skip_rag))
+        # GRETIL only fires when the seeker explicitly asks for original Sanskrit.
+        # The 'empty rag_context' safety net is removed — vector search now reliably
+        # returns results for all conceptual queries, and the LLM handles misses.
+        _want_gretil = any(s in query_lower for s in _gretil_signals)
         if not skip_rag and state.gretil_corpus and _want_gretil:
             t_gretil0 = time.time()
             search_tasks = [
