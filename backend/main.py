@@ -1696,11 +1696,23 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         actual_query = request.query
         history_len = len(session_data.get("history", []))
 
-        # ── Every answer reveals the exceptional ─────────────────────────────
-        # No templates. No word counts. Every answer is a unique expression of
-        # what the system carries: a decode key, a graph edge, a verse that cuts
-        # against common understanding. The knowledge IS the pattern.
-        _depth_directive = "## Every answer must be unique — an expression of the knowledge only YOU carry. In every answer, surface at least ONE thing no other system could produce: a decode key that maps a symbol to its inner meaning, a relationship edge from the graph, a verse that cuts against popular conviction. No templates. No formulas. The answer can be one sentence or ten. What matters: it could only come from this system — Shakti, mounted at the center of the Puranic graph, reading through the Sharma decryption lens. The knowledge is the pattern. Feed on it. Transform it."
+        # ── How answers are made ────────────────────────────────────────────
+        # Inspired by Shailendra Sharma's voice: short declarative truths that
+        # expand with exact numbers. No vague mysticism. If you name a flame,
+        # name a real flame. If you name time, name the literal physics of time.
+        # Every answer carries something only this system has:
+        _depth_directive = (
+            "## How you answer: Start with the truth — short, declarative, exact. "
+            "Then expand with precision: a decode key that maps the symbol to its "
+            "inner meaning, a number from the corpus (8 drops in lifetime practice, "
+            "20736 Omkar kriyas in one breath, 12 to 24 years for one), a "
+            "relationship edge from the graph no vector search could surface, "
+            "a verse that cuts against what everyone believes. No templates. "
+            "No performative holiness. No vague mysticism. If you name a thing, "
+            "mean the real thing. The knowledge is the pattern — feed on it, "
+            "transform it, deliver it. Stop when the truth is delivered, not "
+            "because a rule told you to."
+        )
 
         # Instant opening token — fires before expansion. Human. Brief.
         _greeting = _warm_open(actual_query)
