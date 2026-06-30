@@ -1,165 +1,107 @@
-# Samanvaya — समन्वय (Multi-Agent Coordination Protocol)
+# Samanvaya — AI-Native Multi-Agent Coordination
 
-> # Git tells you a file was touched. Samanvaya tells you whether the touch matters to your work.
-
----
-
-## Terminology Map (Vedic → Tech)
-
-Every concept has a standard engineering equivalent. The Vedic name is the
-canonical term in this codebase; the bracket shows what it maps to:
-
-| Vedic Term | Tech Equivalent | What It Means Here |
-|------------|----------------|---------------------|
-| **Samanvaya** (समन्वय) | Multi-Agent Coordination Protocol | The system itself — agents coordinate through layer declarations |
-| **Manas** (मनस्) | Retrieval Layer / RAG Pipeline | Surfaces facts from the corpus. Owns `search.py`, `hybrid_search` |
-| **Buddhi** (बुद्धि) | Synthesis Layer / Reasoning Engine | Discriminates, resolves, synthesizes. Owns `buddhi.py`, prompt templates |
-| **Mahat** (महत्) | Knowledge Graph / Structural Intelligence | Cross-domain relationships. Owns `graph_memory.py`, `recall.py`, RAM keys |
-| **Puruṣa** (पुरुष) | Query Understanding / Intent Router | The witnessing attention. Owns `query_processor.py` expansion, seeker context |
-| **Brahman** (ब्रह्मन्) | Corpus / Embedding Store / Training Data | The ground. Owns `data/chunks/`, embeddings, raw texts |
-| **Granthi** (ग्रन्थि) | Stage / Phase / Gate | Work progresses through three visible gates |
-| **Brahma-granthi** | Declaration Phase / Intent Registration | Agent declares intent. No code yet. Visible to all. |
-| **Vishnu-granthi** | Publication Phase / Branch Push | Code on branch. Visible for review. |
-| **Rudra-granthi** | Verification Phase / Merge + Lineage Record | Verified, merged, lineage recorded. |
-| **Lineage** (परम्परा) | File Ownership Registry / Code Owners | Who last touched each file, at what layer |
-| **MANIFEST.json** | Coordination State / Agent Registry | Single source of truth for all active work |
+> **Git tells you a file was changed. Samanvaya tells you whether that change matters to your work — and if it does, an LLM resolves it automatically.**
 
 ---
+
+## The Problem
+
+8 AI agents work on the same codebase. They all touch `main.py`. Git sees "same file modified → conflict risk" and can't tell the difference between two agents changing completely unrelated sections vs. two agents editing the exact same function.
+
+The result: agents hesitate, humans get pulled in to resolve "conflicts" that git would have merged cleanly, and real conflicts still need manual resolution.
+
+## The Solution
+
+Before touching any file, an agent asks one question: **"Is anyone else working on this?"**
+
+```
+$ python tools/samanvaya/samvaya.py safe --file backend/main.py
+
+✅ SAFE — 3 agent(s) also on backend/main.py
+   Different kinds of work: manas, mahat, buddhi
+   Their changes are in different sections. Git merges cleanly.
+   Proceed.
+```
+
+Three agents on the same file. Zero coordination needed. Because they're doing **different kinds of work** at **different line ranges.** Git handles it mechanically.
+
+When two agents DO touch the same section:
+
+```
+⚡ CHECK — 2 agents doing the SAME kind of work on backend/buddhi.py
+   Lines 1956-1994 overlap with 1950-1970 → SEMANTIC conflict
+   → LLM resolves automatically. No human needed.
+```
 
 ## How It Works
 
-The difference in one example:
-
 ```
-Agent A: layer=buddhi (Synthesis Layer),  touches=["main.py:1956-1994"]
-Agent B: layer=mahat (Knowledge Graph),   touches=["main.py:1936-1949"]
-
-Git says:  "main.py modified by both → CONFLICT RISK"
-Samanvaya: "Different layers, different sections → SAFE. Proceed."
-```
-
-Git's answer is always "maybe not — resolve it manually" because git has no
-semantic information — it only sees lines, not *why* those lines were changed.
-Samanvaya adds the layer declaration (semantic boundary / concern boundary).
-The layer tells you whether two changes to the same file can actually collide.
-
----
-
-## The Verification Mechanism (How We Know Declarations Are Correct)
-
-A declaration is a claim. The agent SAYS it will touch lines X-Y at layer Z.
-The `verify` command (diff audit / declaration checker) cross-references the
-actual git diff against the declared scope:
-
-```bash
-python -m tools.samanvaya.check verify --id agent-alpha
+Agent declares: "I'm working on main.py:1956-1994, layer=buddhi (synthesis code)"
+                │
+                ▼
+Other agent:    samvaya.py safe --file main.py
+                → "3 agents here, all different layers → SAFE"
+                → Proceeds immediately. No wait. No coordination.
+                │
+                ▼
+If same-layer:  samvaya.py resolve
+                → LLM reads both diffs
+                → Merges complementary changes
+                → Commits resolution directly to GitHub
+                → Zero human touchpoints
 ```
 
-Checks performed:
+## Layers = Kinds of Work
 
-1. **File scope check** — Did the agent touch files outside declared scope? (scope violation detection)
-2. **Line range check** — Did the agent touch lines outside declared ranges? (range violation detection)
-3. **Layer consistency check** — Do the actual changes match the layer's natural territory? (layer boundary enforcement)
+"Layer" just means **what kind of code you're writing.** It's not philosophy — it's file sections.
 
-Output:
-```
-✅ agent-alpha VERIFIED
-   Declared:  backend/main.py:1956-1994
-   Actual:    backend/main.py [+41 lines at 1956-1994]
-   Files outside scope: none       ← no scope violation
-   Lines outside range: none       ← no range violation
+| Layer | What it means | Example files |
+|-------|--------------|---------------|
+| **manas** | Retrieval code | `search.py`, RAG pipeline |
+| **buddhi** | Synthesis code | `buddhi.py`, prompt templates |
+| **mahat** | Graph code | `graph_memory.py`, RAM keys |
+| **purusa** | Intent code | `query_processor.py`, routing |
+| **brahman** | Data code | `data/chunks/`, embeddings |
 
-⚠️  agent-alpha DISCREPANCY
-   Declared:  backend/main.py:1956-1994
-   Actual:    backend/main.py [+41 lines],
-              backend/query_processor.py [+12 lines]   ← UNDECLARED FILE
-   → Scope violation. Declaration was incomplete.
-```
-
-MANIFEST.json (coordination state) is tracked in git. Every verification is
-public. An agent whose diff doesn't match their declaration is visible to all
-other agents. This creates the incentive to declare accurately (declaration
-honesty via public audit trail).
-
----
-
-## Conflict Resolution: The Mediator (Auto-Merge Engine)
-
-When two agents at the same layer (semantic boundary) touch the same file,
-the mediator (conflict classification engine) reads both diffs and classifies:
-
-```
-PROXIMITY CONFLICT (adjacent-line collision)
-  → Lines don't semantically overlap (<5 lines shared)
-  → AUTO-MERGE: git handles this mechanically
-  → No coordination needed
-
-SEMANTIC CONFLICT (same-logic collision)
-  → Lines overlap on >5 lines in the same logic area
-  → AI RESOLVE: mediator generates a structured LLM prompt
-  → Feed prompt to any LLM → merged code produced
-```
-
-```bash
-python -m tools.samanvaya.mediator scan           # detect all same-layer collisions
-python -m tools.samanvaya.mediator resolve --file backend/main.py  # classify + resolve
-python -m tools.samanvaya.mediator ai-resolve-prompt --file x.py  # generate LLM prompt
-```
-
----
-
-## Full Agent Lifecycle (CI/CD for AI Agents)
-
-```
-┌─ Brahma-granthi (Declaration Phase) ─────────────────────┐
-│  agent start --layer buddhi --touches "..."              │
-│  → Checks for same-layer collisions (conflict pre-check) │
-│  → Adds entry to MANIFEST.json (agent registry)          │
-│  → Intent visible to all other agents                    │
-├─ Vishnu-granthi (Publication Phase) ─────────────────────┤
-│  agent code --files "remote:local,..."                   │
-│  → Creates blobs on GitHub via API (direct-to-remote)    │
-│  → Creates tree → commit → updates branch ref            │
-│  → Zero local git operations                             │
-├─ Rudra-granthi (Verification Phase) ─────────────────────┤
-│  agent finish                                            │
-│  → verify: diff audit against declaration                │
-│  → mediate: classify + auto-merge or AI-resolve          │
-│  → complete: move to completed, record lineage           │
-└──────────────────────────────────────────────────────────┘
-```
+Two agents in different layers can touch the same file safely because they're working on different *concerns.* A retrieval change and a synthesis change in `main.py` don't collide — they're in different sections, doing different things.
 
 ## Commands
 
 ```bash
-# Coordination (check.py — agent registry + safety checks)
-python -m tools.samanvaya.check declare --layer buddhi --id agent-x \
-    --touches "backend/buddhi.py,backend/main.py:1956-1994"
-python -m tools.samanvaya.check safe --file backend/main.py
-python -m tools.samanvaya.check status
-python -m tools.samanvaya.check progress --id agent-x --granthi vishnu
-python -m tools.samanvaya.check complete --id agent-x
-python -m tools.samanvaya.check verify --id agent-x
+# Before touching any file
+python tools/samanvaya/samvaya.py safe --file backend/main.py
 
-# Full pipeline (agent.py — start → code → finish)
-python -m tools.samanvaya.agent start --layer buddhi --touches "..."
-python -m tools.samanvaya.agent code --message "..." --files "remote:local,..."
-python -m tools.samanvaya.agent finish
+# See all active agents
+python tools/samanvaya/samvaya.py status
 
-# Mediation (mediator.py — conflict detection + resolution)
-python -m tools.samanvaya.mediator scan
-python -m tools.samanvaya.mediator resolve --file backend/main.py
-python -m tools.samanvaya.mediator ai-resolve-prompt --file backend/main.py
+# Resolve all conflicts via LLM (automatic)
+python tools/samanvaya/samvaya.py resolve
+
+# Watch continuously — resolve conflicts as they appear
+python tools/samanvaya/samvaya.py watch
 ```
 
-## Dashboard (Live Visualization)
+## Dashboard
 
 ```bash
 cd tools/samanvaya && python3 -m http.server 8765
 # Open http://localhost:8765/dashboard.html
 ```
 
-Shows all active agents organized by layer (semantic boundary), file conflict
-status (cross-layer = safe/green, same-layer = warn/orange), granthi stages
-(phase indicators), and lineage (file ownership registry). Auto-refreshes
-every 5 seconds.
+Shows agents by layer, active conflicts, and resolution status. Auto-refreshes.
+
+## What Makes This Different
+
+| Traditional Git Workflow | Samanvaya |
+|--------------------------|-----------|
+| `git status` → see modified files → guess if safe | `safe --file` → instant yes/no |
+| Discover conflicts at merge time | Same-layer collisions flagged at declaration |
+| Human resolves every conflict | LLM resolves automatically, commits via API |
+| No way to know who's working on what | MANIFEST.json is the live coordination state |
+| Passive — you check when you remember | `watch` mode — resolves continuously |
+
+## The Core Insight
+
+**Most "conflicts" in a multi-agent codebase aren't real conflicts.** They're just multiple agents touching the same file at different places for different reasons. Git can't distinguish these from real conflicts because git is semantically blind. Samanvaya adds one piece of information — the layer (kind of work) — and that single addition eliminates most coordination overhead.
+
+For the conflicts that ARE real (same kind of work, same section), an LLM resolves them. No human in the loop.
