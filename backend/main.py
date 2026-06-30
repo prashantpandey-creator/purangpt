@@ -1881,13 +1881,22 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                             logger.warning("Multi-hop comparison failed: %s", e)
                     _multi_hop_task = asyncio.create_task(_multi_hop())
 
-                # Await multi-hop with a 1.5s grace window. If it finished, merge results.
-                # If not, proceed without it — the main retrieval already covers the query.
+                # Await multi-hop with a 1.5s grace window.
                 if _multi_hop_task is not None:
                     try:
                         await asyncio.wait_for(_multi_hop_task, timeout=1.5)
                     except (asyncio.TimeoutError, Exception):
-                        pass  # didn't finish in time — proceed with what we have
+                        pass
+
+                # Await web fetch — inject fetched content as supplementary context.
+                if _web_task is not None:
+                    try:
+                        _fetched = await asyncio.wait_for(_web_task, timeout=3.0)
+                        if _fetched:
+                            rag_context += "\n\n## Web context (supplementary — not citable)\n"
+                            rag_context += "\n\n---\n".join(_fetched)
+                    except (asyncio.TimeoutError, Exception):
+                        pass
 
                 # A citation the seeker sees must be CLICKABLE or not shown at all.
                 # Keep only scripture results with a resolvable chunk_id (the reader opens
@@ -1915,7 +1924,40 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                 logger.warning("RAG search failed: %s", e)
             t_rag = time.time() - t_rag0
 
-        # 2. Sanskrit corpus search — scholar-gated. GRETIL scans 56M chars of raw
+        # 2.5 Web fetch — agentic tool. Fires when the seeker pastes a URL OR
+        # explicitly asks to search/look up/fetch. Runs as background task with
+        # 3s timeout. Content injected as supplementary context — never citable.
+        _urls_in_query = re.findall(r'https?://[^\s]{5,}', actual_query)
+        _web_signals = ['search the web', 'look this up', 'look up', 'fetch this',
+                        'web search', 'search online', '/web', '/fetch', '/lookup']
+        _want_web = bool(_urls_in_query) or any(s in query_lower for s in _web_signals)
+        _web_task = None
+        if _want_web and state.http_client:
+            _web_urls = _urls_in_query or []
+            if not _web_urls and any(s in query_lower for s in _web_signals):
+                # No URL given but asked to search — extract the search query
+                _search_q = actual_query
+                for s in _web_signals:
+                    _search_q = _search_q.replace(s, '').strip()
+                _web_urls = [f"https://en.wikipedia.org/wiki/{_search_q.replace(' ', '_')}"]
+            async def _fetch_web():
+                _fetched = []
+                for url in _web_urls[:2]:
+                    try:
+                        async with state.http_client.get(url, timeout=aiohttp.ClientTimeout(total=5)) as resp:
+                            if resp.status == 200:
+                                text = await resp.text()
+                                # Crude extract: first 2000 chars of visible text
+                                import html as _html
+                                text = re.sub(r'<[^>]+>', ' ', text[:10000])
+                                text = re.sub(r'\s+', ' ', text).strip()[:2000]
+                                _fetched.append(f"[Web: {url}]\n{text}")
+                    except Exception:
+                        pass
+                return _fetched
+            _web_task = asyncio.create_task(_fetch_web())
+
+        # 3. Sanskrit corpus search — scholar-gated. GRETIL scans 56M chars of raw
         # IAST text via regex; 5-8s of latency that only matters when the seeker
         # explicitly wants original Sanskrit or the vector search returned nothing.
         # Default: skipped. Scholar keywords / empty pgvector → enabled.
