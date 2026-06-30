@@ -1,0 +1,48 @@
+name: Aurom — Community Discussion Bot
+
+# Aurom seeds the Community with a fresh, scripture-grounded discussion topic.
+# Runs weekly; can also be triggered manually from the Actions tab.
+#
+# Required repository secret:
+#   AUROM_CRON_SECRET  — must match the AUROM_CRON_SECRET env var on the server.
+# Optional repository variable:
+#   AUROM_BASE_URL     — defaults to https://purangpt.com
+
+on:
+  schedule:
+    # 02:30 UTC ≈ 08:00 IST every Monday. Change to "30 2 * * *" for a daily
+    # cadence if preferred.
+    - cron: "30 2 * * 1"
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Why are you triggering Aurom manually?"
+        required: false
+        default: "manual"
+
+jobs:
+  post-topic:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Aurom topic generation
+        env:
+          SECRET: ${{ secrets.AUROM_CRON_SECRET }}
+          BASE_URL: ${{ vars.AUROM_BASE_URL }}
+        run: |
+          set -e
+          BASE="${BASE_URL:-https://purangpt.com}"
+          if [ -z "$SECRET" ]; then
+            echo "::error::AUROM_CRON_SECRET repository secret is not set."
+            exit 1
+          fi
+          echo "Asking Aurom to post a new discussion at $BASE ..."
+          HTTP_CODE=$(curl -s -o /tmp/aurom_resp.json -w "%{http_code}" \
+            -X POST "$BASE/api/community/aurom/generate" \
+            -H "Authorization: Bearer $SECRET")
+          echo "HTTP $HTTP_CODE"
+          cat /tmp/aurom_resp.json || true
+          echo
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::Aurom generation failed (HTTP $HTTP_CODE)."
+            exit 1
+          fi

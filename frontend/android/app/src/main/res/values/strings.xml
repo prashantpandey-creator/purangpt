@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PuranGPT</string>
+    <string name="title_activity_main">PuranGPT</string>
+    <string name="package_name">com.fcpuru95.purangpt</string>
+    <string name="custom_url_scheme">com.fcpuru95.purangpt</string>
+</resources>

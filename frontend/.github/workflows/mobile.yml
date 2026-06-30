@@ -1,0 +1,134 @@
+name: Mobile Build (Capacitor)
+
+# Builds installable mobile artifacts from the Capacitor projects.
+#
+#  - Android: always builds a debug APK (installable for testing) and a release
+#    AAB (for Play Store upload). The release AAB is signed only when keystore
+#    secrets are present; otherwise it is built unsigned.
+#  - iOS: compiled unsigned on macOS to validate the project builds. Signing &
+#    App Store upload require Apple certificates and are intentionally left to a
+#    manual/Fastlane step. Runs only on manual dispatch or version tags to keep
+#    macOS minutes down.
+#
+# The app runs in remote-URL mode (the WebView loads https://purangpt.com), so
+# `npm run cap:sync:*` generates a tiny placeholder webDir instead of a full
+# Next.js export — see scripts/cap-webdir.mjs.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - claude/mobile-deployment-purnagpt-t9wzql
+    paths:
+      - "android/**"
+      - "ios/**"
+      - "capacitor.config.ts"
+      - "scripts/cap-webdir.mjs"
+      - "package.json"
+      - ".github/workflows/mobile.yml"
+    tags:
+      - "v*"
+
+jobs:
+  android:
+    name: Android (APK + AAB)
+    runs-on: ubuntu-latest
+    # Surfaced at job level so the "Configure release signing" step can gate on
+    # whether a keystore secret was provided (secrets can't be read in `if:`).
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Sync Capacitor (Android)
+        run: npm run cap:sync:android
+
+      - name: Configure release signing
+        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' }}
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -e
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/release.keystore
+          cat > android/keystore.properties <<EOF
+          storeFile=release.keystore
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          keyPassword=$ANDROID_KEY_PASSWORD
+          EOF
+          echo "Release signing configured."
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug --no-daemon
+        working-directory: android
+
+      - name: Build release AAB
+        run: ./gradlew bundleRelease --no-daemon
+        working-directory: android
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: purangpt-android-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Upload release AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: purangpt-android-release-aab
+          path: android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
+
+  ios:
+    name: iOS (unsigned build)
+    runs-on: macos-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync Capacitor (iOS)
+        run: npm run cap:sync:ios
+
+      - name: Build (unsigned) to validate compile
+        run: |
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build

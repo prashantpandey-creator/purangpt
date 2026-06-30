@@ -1,0 +1,17 @@
+# ── Build output ──────────────────────────────────────────────────────────────
+.next/
+out/
+node_modules/
+
+# ── Secrets & local config ────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── IDE & OS noise ────────────────────────────────────────────────────────────
+.git/
+.gitignore
+.DS_Store
+*.swp
+*.log
+Thumbs.db

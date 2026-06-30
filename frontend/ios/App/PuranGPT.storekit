@@ -1,0 +1,73 @@
+{
+  "identifier" : "PuranGPTStoreKit",
+  "nonRenewingSubscriptions" : [],
+  "products" : [],
+  "settings" : {
+    "_applicationUsername" : "",
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+      { "current" : null, "enabled" : false, "name" : "Load Products" },
+      { "current" : null, "enabled" : false, "name" : "In-App Purchase" },
+      { "current" : null, "enabled" : false, "name" : "In-App Purchase Transactions" },
+      { "current" : null, "enabled" : false, "name" : "In-App Purchase Restoration" },
+      { "current" : null, "enabled" : false, "name" : "In-App Purchase Receipt" },
+      { "current" : null, "enabled" : false, "name" : "In-App Purchase Price Consent" }
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "22170114",
+      "localizations" : [],
+      "name" : "PuranGPT Pro",
+      "performanceData" : {},
+      "products" : [
+        {
+          "adHocOfferEnabled" : false,
+          "displayPrice" : "9.99",
+          "familyShareable" : true,
+          "groupNumber" : 1,
+          "internalID" : "1000000001",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Unlimited queries, complete citations, 10+ languages, priority support",
+              "displayName" : "PuranGPT Pro Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Pro Monthly",
+          "subscriptionGroupID" : "22170114",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOfferEnabled" : false,
+          "displayPrice" : "99.99",
+          "familyShareable" : true,
+          "groupNumber" : 2,
+          "internalID" : "1000000002",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Unlimited queries, complete citations, 10+ languages, priority support",
+              "displayName" : "PuranGPT Pro Annual",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Pro Annual",
+          "subscriptionGroupID" : "22170114",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 2,
+    "minor" : 0
+  }
+}
