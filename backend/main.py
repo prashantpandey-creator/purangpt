@@ -1072,45 +1072,25 @@ async def call_llm_once(messages: List[dict], temperature: float = 0.2, req_mode
 
 
 def format_history(history: List[dict]) -> str:
-    """Format conversation history with a rolling character window."""
+    """Format conversation history so the LLM remembers who it's talking to.
+    Keeps the last few exchanges — enough to call back naturally, not a dump."""
     if not history:
         return "(No previous conversation)"
 
-    # Take up to last 20 messages, but enforce a rolling character limit
-    max_chars = 8000
+    max_chars = 6000
     current_chars = 0
     lines = []
 
     for msg in reversed(history[-10:]):
-        role = "User" if msg["role"] == "user" else "PuranGPT"
+        role = "Seeker" if msg["role"] == "user" else "Shakti"
         content = msg['content']
-
-        # INTELLIGENT FIX: Retain ONLY the Summary part of PuranGPT's previous answers.
-        # This gives the LLM context of what the user was already told, but completely
-        # strips out the heavy Sanskrit citations and quotes that cause RAG overfitting.
-        if role == "PuranGPT":
-            if "### 📋 Summary" in content:
-                # Extract just the summary section
-                parts = content.split("### 📋 Summary")
-                if len(parts) > 1:
-                    summary_part = parts[1].split("### 📚 Citations")[0].strip()
-                    # Keep only the first 250 characters of the summary just to be safe
-                    if len(summary_part) > 250:
-                        summary_part = summary_part[:250] + "..."
-                    content = f"(Summary of previous answer): {summary_part}"
-                else:
-                    continue # Couldn't parse, drop it
-            else:
-                # If no summary header found, keep a tiny snippet
-                if len(content) > 100:
-                    content = content[:100] + "..."
-                content = f"(Summary of previous answer): {content}"
-
-        line = f"**{role}**: {content}"
-
+        # Keep a brief excerpt of each previous response for continuity
+        if role == "Shakti":
+            if len(content) > 200:
+                content = content[:200] + "..."
+        line = f"{role}: {content}"
         if current_chars + len(line) > max_chars:
             break
-
         lines.insert(0, line)
         current_chars += len(line)
 
