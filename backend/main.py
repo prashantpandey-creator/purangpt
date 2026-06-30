@@ -1683,6 +1683,30 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         if _greeting:
             yield {"data": json.dumps({"type": "token", "content": _greeting})}
 
+        # ── Sanskrit IR compilation ────────────────────────────────────────
+        # English query → structured Sanskrit instruction block. The IR
+        # determines operation routing (search / reason / cite / counsel)
+        # and the semantic weight for hybrid search. Fast heuristic path
+        # (<1ms); falls back to LLM compiler for ambiguous queries.
+        from backend.sanskrit_ir import compile_query as compile_sanskrit_ir, get_semantic_weight
+        t_sir0 = time.time()
+        sir = compile_sanskrit_ir(actual_query, request.language or "en")
+        sir_op = sir["op"]
+        sir_weight = get_semantic_weight(sir_op, sir["confidence"])
+        t_sir = time.time() - t_sir0
+        logger.info(
+            "Sanskrit IR: %s (%s) | topic=%s | confidence=%.2f | weight=%.2f | %.0fms",
+            sir_op.code, sir_op.english, sir["topic"],
+            sir["confidence"], sir_weight, t_sir * 1000
+        )
+        yield {"data": json.dumps({
+            "type": "sanskrit_ir",
+            "kriya": sir_op.code,
+            "english": sir_op.english,
+            "topic": sir["topic"],
+            "confidence": sir["confidence"],
+        })}
+
         # 0 & 1. Query Rewriting and Expansion (Merged for performance)
         history_len = len(session_data.get("history", []))
 
@@ -1759,16 +1783,11 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         if not skip_rag and state.searcher and state.index_ready:
             t_rag0 = time.time()
             try:
-                # Determine adaptive semantic weight
-                scholar_signals = ['cite', 'citation', 'reference', 'verse', 'source', 'what exactly does', 'according to the text', 'exact words']
-                has_scholar_signal = any(s in query_lower for s in scholar_signals)
-                
-                if has_scholar_signal:
-                    weight = 0.6
-                elif expansion.is_sanskrit and not expansion.english_gloss:
-                    weight = 0.5
-                else:
-                    weight = 0.75
+                # Semantic weight from Sanskrit IR — the compiled operation
+                # determines how much vector vs keyword matching to apply.
+                # Citation-heavy ops (प्रमाणय) lean keyword; reasoning ops
+                # (तर्कय) lean vector for broader semantic coverage.
+                weight = sir_weight
 
                 # Scripture channel — citable sources only (excludes Guruji darshans).
                 # This is what fills the sources panel and [1][2] citations.
