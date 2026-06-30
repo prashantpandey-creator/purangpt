@@ -1758,11 +1758,11 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         sources = []
         rag_context = ""
         skt_results = []
+        query_lower = actual_query.lower()
         if not skip_rag and state.searcher and state.index_ready:
             t_rag0 = time.time()
             try:
                 # Determine adaptive semantic weight
-                query_lower = actual_query.lower()
                 scholar_signals = ['cite', 'citation', 'reference', 'verse', 'source', 'what exactly does', 'according to the text', 'exact words']
                 has_scholar_signal = any(s in query_lower for s in scholar_signals)
                 
