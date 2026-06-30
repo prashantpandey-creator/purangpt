@@ -1662,7 +1662,8 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         # 0 & 1. Query Rewriting and Expansion (Merged for performance)
         actual_query = request.query
         history_len = len(session_data.get("history", []))
-        
+
+        t0 = time.time()
         if history_len > 0 and len(actual_query) < 40:
             history_str = "\n".join([f"{m['role']}: {m['content']}" for m in session_data["history"][-2:]])
             expansion = await state.query_processor.expand_with_history(actual_query, history_str)
@@ -1670,6 +1671,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             logger.info("Query merged rewritten: %r -> %r", request.query, actual_query)
         else:
             expansion = await state.query_processor.expand(actual_query)
+        t_exp = time.time() - t0
 
         logger.info("Query: %r | Detected: %s | Skrt: %s | Engagement: %s | Canonical: %s | Synonyms: %s",
                     actual_query, expansion.detected_lang, expansion.is_sanskrit,
@@ -1701,6 +1703,10 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         # graph context + personality. Guruji's natural directness handles the empty
         # knowledge context in character — no template redirects.
         skip_rag = (expansion.engagement != "full")
+        t_rag = 0.0
+        t_gretil = 0.0
+        t_graph = 0.0
+        t_buddhi = 0.0
 
         # Stream the latent space representation (the 384-dimensional thought vector).
         # Skip when RAG is skipped — no retrieval means no vector neighbourhood to show.
@@ -1727,6 +1733,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         rag_context = ""
         skt_results = []
         if not skip_rag and state.searcher and state.index_ready:
+            t_rag0 = time.time()
             try:
                 # Determine adaptive semantic weight
                 query_lower = actual_query.lower()
@@ -1835,9 +1842,11 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                         )
             except Exception as e:
                 logger.warning("RAG search failed: %s", e)
+            t_rag = time.time() - t_rag0
 
         # 2. Sanskrit corpus search (runs when RAG runs — same relevance gate)
         if not skip_rag and state.gretil_corpus:
+            t_gretil0 = time.time()
             # Parallel multi-variant GRETIL search based on the expansion
             search_tasks = [
                 asyncio.to_thread(search_sanskrit, term, max_results=8)
@@ -1870,6 +1879,9 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                     for r in skt_results[:3]
                 )
                 rag_context += f"\n\n## Additional Sanskrit Primary Sources (GRETIL)\n{skt_ctx}"
+
+        if not skip_rag and state.gretil_corpus:
+            t_gretil = time.time() - t_gretil0
 
         # Panel shows ONLY clickable sources. GRETIL skt_results have no resolvable
         # chunk_id (in-memory corpus, not in the reader DB), so they stay in rag_context
@@ -1949,18 +1961,22 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         # off / no entity match / any error) leaves rag_context untouched, so chat is
         # byte-identical to today when disabled. No new template slot → no KeyError-500.
         if build_graph_context is not None:
+            t_graph0 = time.time()
             try:
                 graph_block = build_graph_context(request.query)
                 if graph_block:
                     rag_context = (graph_block + "\n\n" + rag_context) if rag_context else graph_block
             except Exception as _e:  # never let graph memory break a chat turn
                 logger.warning("graph_memory injection skipped: %s", _e)
+            if build_graph_context is not None:
+                t_graph = time.time() - t_graph0
 
         # Buddhi layer — synthesize Manas (RAG) + Mahat (graph) into a structured
         # teaching via 3-stage granthi-bheda. Flag-gated OFF (BUDDHI_ENABLED=1) and
         # fail-graceful: any failure falls back to raw rag_context unchanged.
         buddhi_meta = None
         if buddhi_synthesize is not None and os.getenv("BUDDHI_ENABLED", "").strip().lower() in ("1", "true", "yes", "on"):
+            t_buddhi0 = time.time()
             try:
                 buddhi_result = buddhi_synthesize(
                     query=request.query,
@@ -1983,11 +1999,18 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                                 buddhi_result.provider)
             except Exception as _e:
                 logger.warning("buddhi synthesis failed, using raw context: %s", _e)
+            if buddhi_synthesize is not None:
+                t_buddhi = time.time() - t_buddhi0
 
         # Emit Buddhi metadata as an SSE event so the frontend can show
         # lens + confidence if desired.
         if buddhi_meta:
             yield {"data": json.dumps({"type": "buddhi", **buddhi_meta})}
+
+        logger.info("query timing: expand=%.2fs rag=%.2fs gretil=%.2fs graph=%.2fs buddhi=%.2fs total=%.2fs | %r",
+                    t_exp, t_rag, t_gretil, t_graph, t_buddhi,
+                    t_exp + t_rag + t_gretil + t_graph + t_buddhi,
+                    request.query[:80])
 
         system_text = prompt_tpl.format(
             language_instruction=combined_directives,
