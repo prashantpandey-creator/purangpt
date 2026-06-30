@@ -36,7 +36,7 @@ networks:
 services:
   backend:
     build:
-      context: ./purangpt
+      context: .
     container_name: purangpt_backend
     env_file:
       - ./.env            # backend secrets (VECTOR_DB_URL, DEEPSEEK_API_KEY, …)
