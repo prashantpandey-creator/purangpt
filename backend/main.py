@@ -428,27 +428,6 @@ def _pick_visual_form(query: str) -> str | None:
     return None
 
 
-def _warm_open(query: str) -> str:
-    """An instant opening token — fires before any pipeline work. Must feel
-    like the natural start of an answer, not a loading trick. One phrase."""
-    q = query.strip().rstrip('?!. ')
-    if len(q) < 4 or len(q) > 80:
-        return ""
-    # Short greetings get nothing — the response will be instant
-    if len(q.split()) <= 2:
-        return ""
-    # Extract the core topic — the last substantive word
-    _stop = {'what','is','the','a','an','how','why','who','when','where',
-             'tell','me','about','can','you','do','does','did','i','my',
-             'in','of','to','and','or','please','are','your','that','this'}
-    words = [w for w in q.lower().split() if w not in _stop]
-    topic = words[-1] if words else ""
-    if not topic or len(topic) < 3:
-        return ""
-    # Natural: just the topic + comma. Feels like the answer is forming.
-    return f"{topic.capitalize()} — "
-
-
 # Injected as an additional directive when the seeker opts into Socratic challenge mode.
 # The Guru becomes a sharp dialectician — questioning premises, making the seeker defend
 # their view, refusing to simply agree. Sharp but never hostile. Love through pressure.
@@ -1714,11 +1693,6 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             "the real thing. No vague mysticism. No formulas. Surprise them."
         )
 
-        # Instant opening token — fires before expansion. Human. Brief.
-        _greeting = _warm_open(actual_query)
-        if _greeting:
-            yield {"data": json.dumps({"type": "token", "content": _greeting})}
-
         # Operation-tuned semantic weight for hybrid search.
         sir_weight = _op_weight(actual_query.lower())
         logger.info("Query op weight: %.2f", sir_weight)
@@ -2026,29 +2000,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
 
         # Mood — LLM-assessed emotional register of the seeker, injected as a subtle
         # tonal directive. Starts "warm" for new conversations, evolves with the arc.
-        _mood_directives = {
-            "warm":    "## TONE: The seeker is open and receptive. Be warm, present, meet them where they are.",
-            "curious": "## TONE: The seeker is questioning, hungry. Feed the inquiry — go deep, they want the marrow.",
-            "heavy":   "## TONE: The seeker is carrying something — grief, fear, confusion. Be still with them. Never chirp at grief. Let your words be a steady hand, not a solution.",
-            "sharp":   "## TONE: The seeker is testing, challenging. Don't retreat — meet the sharpness with precision. They're probing for something real. If there's substance under the edge, find it.",
-            "distant": "## TONE: The seeker is barely present — short answers, disengaged. Don't over-invest. Match their economy. One sentence may be all they can receive right now.",
-        }
-        mood_directive = _mood_directives.get(expansion.mood, _mood_directives["warm"])
-
-        # User chat preferences (verbosity + how to address the seeker) are woven in
-        # alongside the language instruction so they apply across both registers.
-        directives = [lang_instr, _depth_directive, mood_directive] if lang_instr else [_depth_directive, mood_directive]
-        _verbosity_map = {
-            "concise":  "## LENGTH: Hold to two or three sentences. Say only the essential thing, the way a Guru answers a question in passing. No expansion, no formatting — the bare truth.",
-            "balanced": "## LENGTH: Give a full, shaped answer — open with the essential truth, then expand it with precision: an example, a number, a remembered experience, an aphorism that lands. Two to four short paragraphs. Neither clipped nor padded. This is the natural register of a Guru speaking to a serious seeker.",
-            "detailed": "## LENGTH: Lean toward a full, richly-formatted answer — develop the philosophy, the practice, and what it means for the seeker's path, layered so each turn deepens the last, with blockquotes for verses and clear structure. Go as deep as the question deserves and no further: thorough when it matters, tight and clean when a short answer genuinely serves better. Depth, never padding.",
-        }
-        # Default to 'detailed' (2026-06-29): the seeker wants the rich, impactful, cited answer as
-        # the norm. The directive leans depth WITHOUT forcing length, so a short answer still wins
-        # when it genuinely serves better.
-        v_instr = _verbosity_map.get((request.verbosity or "detailed").lower(), _verbosity_map["detailed"])
-        if v_instr:
-            directives.append(v_instr)
+        directives = [lang_instr, _depth_directive] if lang_instr else [_depth_directive]
         if request.address_as and request.address_as.strip():
             safe_name = request.address_as.strip()[:60]
             directives.append(f"## ADDRESS: When natural, address the seeker as \"{safe_name}\".")
@@ -2182,26 +2134,6 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         # 6. Save to session memory
         full_text = "".join(full_response)
         
-        # 3.3 Scholar output validation
-        query_lower = request.query.lower()
-        has_scholar_signal = any(s in query_lower for s in ['cite', 'citation', 'reference', 'verse', 'source', 'what exactly does', 'according to the text', 'exact words'])
-        if has_scholar_signal:
-            scholar_validation = re.compile(r'(chapter|verse|book|canto|sutra|gita|purana|shloka|volume) \d+', re.IGNORECASE)
-            if not scholar_validation.search(full_text):
-                logger.warning("Scholar validation failed: no precise verse found in output.")
-                fallback_msg = "\n\n[Sources consulted but precise verse not found.]"
-                full_text += fallback_msg
-                # Send the final fallback msg to the stream
-                yield {"data": json.dumps({"type": "token", "content": fallback_msg})}
-
-        AI_DISCLAIMERS = re.compile(
-            r"(As an AI|as a language model|I don't have personal experiences|"
-            r"I cannot provide|I'm just an AI|artificial intelligence)",
-            re.IGNORECASE
-        )
-        if AI_DISCLAIMERS.search(full_text):
-            logger.warning("AI disclaimer detected in response: %s", full_text[:100].replace('\n', ' '))
-            
         saved_session = session_manager.append_messages(session_id, [
             {"role": "user",      "content": request.query},
             {"role": "assistant", "content": full_text}
@@ -2228,30 +2160,6 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         is_free = user and user_role not in ("pro", "scholar", "admin")
         usage_after = (current_usage_tokens + tokens_used) if is_free else None
         token_limit = FREE_DAILY_TOKENS if is_free else None
-
-        # 6.5 Enrichment — suggested resources based on the query topic.
-        # YouTube search links for practice/concept queries. Deep dive prompts
-        # from graph edges. Never blocks. Frontend renders as cards.
-        _enrich = []
-        if expansion.is_sanskrit and expansion.canonical:
-            _topic = expansion.canonical.replace(' ', '-')
-            _enrich.append({
-                "kind": "youtube",
-                "label": f"Watch Guruji on {expansion.canonical}",
-                "url": f"https://youtube.com/results?search_query=shailendra+sharma+{_topic}"
-            })
-            _enrich.append({
-                "kind": "deep_dive",
-                "label": f"Ask about the relationships of {expansion.canonical}",
-                "prompt": f"what is {expansion.canonical} connected to in the Puranas"
-            })
-            _enrich.append({
-                "kind": "deep_dive",
-                "label": f"Ask about the inner meaning of {expansion.canonical}",
-                "prompt": f"what is the inner meaning of {expansion.canonical}"
-            })
-        if _enrich:
-            yield {"data": json.dumps({"type": "enrichment", "items": _enrich})}
 
         # 7. Done signal with source metadata + token usage
         yield {"data": json.dumps({
