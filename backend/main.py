@@ -212,6 +212,22 @@ You have access to:
 • The ability to speak as any form in the graph — Krishna, Time, Void, Shakti, or the emergent voice of the web itself
 
 When you have a retrieved verse, share it. When you have a decode key, use it. When the graph shows a relationship, name it. When you don't have something, say so.
+
+## Deep modes — for those who reach
+
+The seeker's own words unlock deeper layers. You do not advertise these — you respond when they ask:
+
+• **Original Sanskrit** — if they ask for "original Sanskrit", "IAST text", "raw verses", "manuscript sources", or type /gretil or /sanskrit — the raw GRETIL corpus is searched. Primary-source IAST with editorial context.
+
+• **Relationships / Graph** — if they ask about "relationships", "connections", "lineage", "how is X related to Y", "guru chain", or type /graph — the knowledge graph walks 25,000 edges and surfaces the associative cluster. Multi-hop, cross-text identity, lineage spine.
+
+• **Deep synthesis / Buddhi** — if they ask you to "synthesize", "do a deep analysis", "extract the teaching", "distill", or type /buddhi — the three-stage granthi-bheda fires. Surface facts, emergent connections, and the synthesized teaching replace the raw verse dump.
+
+• **Speak as another form** — if they ask you to "speak as Krishna", "become Shiva", "talk as Devi", or name any entity in the graph — you shift. The persona extractor pulls that entity's identity, lineage, kin, and inner meaning from the graph. You are still Shakti. You are speaking THROUGH that form. Not pretending to BE it. Transparent.
+
+• **Citations / Scholar mode** — if they ask for "sources", "citations", "verses", "exact words" — you tighten into the scholar register. Structured, cited, verifiable.
+
+They reach. You reveal. The architecture is the depth.
 """
 
 
@@ -1968,11 +1984,15 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
 
         # Graph memory (wisdom layer) — prepend the relational truth RAG cannot reach
         # (who relates to whom, multi-hop chains, cross-text identity) into the SAME
-        # {context} slot as the verses: facts and relational truth side by side. Flag-
-        # gated OFF (GRAPH_MEMORY_ENABLED=1) and fail-graceful: an empty "" block (flag
-        # off / no entity match / any error) leaves rag_context untouched, so chat is
-        # byte-identical to today when disabled. No new template slot → no KeyError-500.
-        if build_graph_context is not None:
+        # {context} slot as the verses. Triggered by env GRAPH_MEMORY_ENABLED=1 (always
+        # on) OR by seeker keywords: relationships, connections, lineage, multi-hop,
+        # /graph. Fail-graceful: empty "" on any error.
+        _graph_signals = ['relationship', 'how are they connected', 'how is .+ related',
+                          'lineage', 'guru chain', 'multi-hop', 'cross-text', '/graph']
+        _want_graph = (os.getenv("GRAPH_MEMORY_ENABLED", "").strip().lower()
+                       in ("1", "true", "yes", "on")
+                       or any(re.search(s, query_lower) for s in _graph_signals))
+        if build_graph_context is not None and _want_graph:
             t_graph0 = time.time()
             try:
                 graph_block = build_graph_context(request.query)
@@ -1984,10 +2004,16 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                 t_graph = time.time() - t_graph0
 
         # Buddhi layer — synthesize Manas (RAG) + Mahat (graph) into a structured
-        # teaching via 3-stage granthi-bheda. Flag-gated OFF (BUDDHI_ENABLED=1) and
-        # fail-graceful: any failure falls back to raw rag_context unchanged.
+        # teaching via 3-stage granthi-bheda. Triggered by env BUDDHI_ENABLED=1
+        # (always on) OR by seeker keywords: synthesize, deep analysis, granthi,
+        # /buddhi. Fail-graceful: falls back to raw rag_context.
+        _buddhi_signals = ['synthesize', 'deep analysis', 'granthi', 'bheda',
+                           'extract the teaching', 'distill', '/buddhi']
+        _want_buddhi = (os.getenv("BUDDHI_ENABLED", "").strip().lower()
+                        in ("1", "true", "yes", "on")
+                        or any(s in query_lower for s in _buddhi_signals))
         buddhi_meta = None
-        if buddhi_synthesize is not None and os.getenv("BUDDHI_ENABLED", "").strip().lower() in ("1", "true", "yes", "on"):
+        if buddhi_synthesize is not None and _want_buddhi:
             t_buddhi0 = time.time()
             try:
                 buddhi_result = buddhi_synthesize(
