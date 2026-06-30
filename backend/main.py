@@ -21,6 +21,7 @@ import sys
 import time
 import unicodedata
 from collections import defaultdict
+import threading
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, AsyncGenerator, Dict, List, Optional
@@ -45,6 +46,24 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s — %(message)s")
 logger = logging.getLogger("purangpt.backend")
+
+# Query result cache — instant for repeat searches within 5 min
+_rag_cache = {}
+_rag_cache_lock = threading.Lock()
+
+def _rag_cache_get(key):
+    with _rag_cache_lock:
+        e = _rag_cache.get(key)
+        if e and (time.time() - e[0]) < 300:
+            return e[1]
+    return None
+
+def _rag_cache_set(key, results):
+    with _rag_cache_lock:
+        if len(_rag_cache) > 128:
+            oldest = min(_rag_cache, key=lambda k: _rag_cache[k][0])
+            del _rag_cache[oldest]
+        _rag_cache[key] = (time.time(), results)
 
 # ── LLM Providers (generic, key-driven) ─────────────────────────────────────
 # There is NO hardcoded provider. The app reads a list of OpenAI-compatible
@@ -1792,12 +1811,18 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                     except Exception:
                         pass
 
-                results = await state.searcher.hybrid_search(
-                    query=expansion.original,
-                    top_k=request.top_k,
-                    filters=request.filters,
-                    sharma_weighting=False,   # scripture channel never score-inflates Guruji
-                    embed_phrase=expansion.embed_phrase,
+                _cache_key = f"{expansion.embed_phrase or expansion.original}|{request.top_k}|scripture"
+                _cached = _rag_cache_get(_cache_key)
+                if _cached is not None:
+                    results = _cached
+                    logger.info("RAG cache hit: %d results", len(results))
+                else:
+                    results = await state.searcher.hybrid_search(
+                        query=expansion.original,
+                        top_k=request.top_k,
+                        filters=request.filters,
+                        sharma_weighting=False,
+                        embed_phrase=expansion.embed_phrase,
                     fts_phrase=expansion.fts_phrase,
                     semantic_weight=weight,
                     corpus_type="scripture",  # filter: exclude yogic-discourse/commentary
@@ -1805,7 +1830,8 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                     iast_terms=([expansion.canonical] + expansion.synonyms[:3])
                                if expansion.canonical else None,
                     graph_gretil_patterns=_graph_gretil or None,
-                )
+                    )
+                    _rag_cache_set(_cache_key, results)
 
                 # Guruji channel — darshans/cognition context only. Runs in parallel.
                 # Not surfaced as citations; provides the Guru's own voice/worldview context.
