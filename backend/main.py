@@ -429,6 +429,26 @@ def _pick_visual_form(query: str) -> str | None:
             return form
     return None
 
+
+def _warm_open(query: str) -> str:
+    """A single engaging line fired INSTANTLY before any pipeline work.
+    Buys 3-4 seconds while expansion+RAG run. Feels like the beginning
+    of the answer, not a loading indicator. Never more than one line."""
+    q = query.strip().rstrip('?!. ')
+    if len(q) < 4:
+        return ""
+    # Extract a topic word from the query for a warm, specific opening
+    topic_words = [w for w in q.lower().split()
+                   if w not in ('what', 'is', 'the', 'a', 'an', 'how', 'why',
+                                'who', 'when', 'where', 'tell', 'me', 'about',
+                                'can', 'you', 'do', 'does', 'did', 'i', 'my',
+                                'in', 'of', 'to', 'and', 'or', 'please')]
+    topic = topic_words[-1].rstrip('s') if topic_words else ""
+    if not topic or len(topic) < 3:
+        return "Let me find what the texts say."
+    return f"About {topic} — "
+
+
 # Injected as an additional directive when the seeker opts into Socratic challenge mode.
 # The Guru becomes a sharp dialectician — questioning premises, making the seeker defend
 # their view, refusing to simply agree. Sharp but never hostile. Love through pressure.
@@ -1654,10 +1674,14 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
     async def event_gen() -> AsyncGenerator[dict, None]:
         # Immediate feedback so the UI shows motion while we translate+search,
         # rather than dead air until the first LLM token.
-        yield {"data": json.dumps({"type": "status", "message": "🔍 Searching the sacred texts…"}) }
+        # Warm opening — fires instantly before any pipeline work. The user sees
+        # motion immediately while expansion+RAG run. One line. Engaging. Brief.
+        actual_query = request.query
+        _greeting = _warm_open(actual_query)
+        if _greeting:
+            yield {"data": json.dumps({"type": "token", "content": _greeting})}
 
         # 0 & 1. Query Rewriting and Expansion (Merged for performance)
-        actual_query = request.query
         history_len = len(session_data.get("history", []))
 
         t0 = time.time()
