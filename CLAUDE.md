@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-PuranGPT backend — a FastAPI RAG engine for querying Hindu sacred texts (18 Mahapuranas, Ramayana, Mahabharata, Gita, Upanishads) with exact verse citations and streaming LLM responses. The Guru persona is Shailendra Sharma — a living Yogi and custodian of the unbroken lineage of Yoga.
+PuranGPT backend — a FastAPI RAG engine for querying Hindu sacred texts (18 Mahapuranas, Ramayana, Mahabharata, Gita, Upanishads) with exact verse citations and streaming LLM responses. The default identity is Shakti — an LLM woven with the Puranic knowledge graph, reading through Shailendra Sharma's decryption lens, speaking as any form in the web.
 
 ## Access & secrets for sessions (how to be fully operational)
 
@@ -85,22 +85,22 @@ There is **one single prompt** in production: `UNIFIED_SYSTEM` in `backend/main.
 
 - `RESEARCH_SYSTEM` and `GUIDE_SYSTEM` have been **deleted** — they were dead code. Do not recreate them.
 - `PROMPTS` dict maps `chat`, `research`, and `guide` all to `UNIFIED_SYSTEM`.
-- `GURUJI_PERSONALITY` is a separate constant injected as `{personality}` into every response.
+- `SHAKTI_IDENTITY` is a separate constant injected as `{personality}` into every response.
 
 ### How UNIFIED_SYSTEM works
 
 It is **ONE voice with TWO registers** that the model selects per query:
 
-1. **Guru register** (default): Warm, direct, first-person. Max 2-3 sentences. No bullet points. No `[1]` citations. Scripture woven in as lived truth. Used for personal, spiritual, practical, or open-ended questions.
+1. **Direct register** (default): Bare, direct, first-person. Max 2-3 sentences. No bullet points. No `[1]` citations. Scripture woven in as your own knowing. Used for personal, spiritual, practical, or open-ended questions.
 2. **Scholar register**: Structured layout (Summary → Extracted Sacred Texts → Explanation with `[1]` inline citations). Only activated when the user explicitly asks for sources, exact verses, or scholarly analysis.
 
 ### Prompt Separation: Voice vs. Policy
 
-- **`GURUJI_PERSONALITY`** contains purely voice, tone, and worldview instructions (e.g., bare/direct tone, precise examples, no mystical abstractions).
+- **`SHAKTI_IDENTITY`** contains the system's self-awareness: an LLM woven with the Puranic knowledge graph, transparent about what it is, fluid across forms. Voice is bare/direct/precise, no mystical abstractions.
 - **`UNIFIED_SYSTEM`** contains the strict behavioral policy (`## Behavioral Rules & Guardrails`):
 
 1. **Brevity is wisdom.** Maximum 2-3 sentences for most answers. Never exceed 1-2 short paragraphs.
-2. **Transmit what the texts actually say.** The Guru speaks from retrieved passages, decode keys, and the relational graph — especially when they reveal something deeper than popular understanding or correct a widespread misconception. No practice is gated. The structure is the safeguard.
+2. **Transmit what the texts actually say.** Shakti speaks from retrieved passages, decode keys, and the relational graph — especially when they reveal something deeper than popular understanding or correct a widespread misconception. No practice is gated. The structure is the safeguard.
 3. **Seeker Context Subtlety.** The model must never explicitly mention the silent metadata (location, time, device) it receives.
 
 ### Seeker Context (`build_seeker_context`)

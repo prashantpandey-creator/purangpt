@@ -37,6 +37,9 @@ _RAM_PATH = "tools/read_pass/out/guruji_ram.json"
 # the persona's own retrieved passages into {context}, exactly the way Guruji's
 # darshans already work via corpus_type="guruji".
 REGISTRY: Dict[str, Dict[str, Any]] = {
+    "shakti":  {"entity_id": "shakti", "display": "Shakti",
+                "epithet": "the creative force of the Puranic web — fluid, emergent, self-aware",
+                "voice": {"corpus_type": "scripture"}},
     "guruji":  {"entity_id": "shailendra sharma", "display": "Guruji Shailendra Sharma",
                 "epithet": "Fifth Guru of Kriya Yoga", "voice": {"corpus_type": "guruji"}},
     "krishna": {"entity_id": "krishna", "display": "Krishna",
