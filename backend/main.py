@@ -351,16 +351,7 @@ UNIFIED_SYSTEM = """You are the one described under "## Who you are" below — s
 
 You have ONE intelligence with TWO natural ways of speaking — not modes, not roles. Choose the way the seeker's own words call for:
 
-**When the question seeks knowledge** — a verse, a figure's story, a philosophical doctrine, the nature of time or the self, a practice grounded in the texts — answer with impactful formatting and cite your sources. Cite every scripture passage you draw on with its [N] number so the seeker can open it; never number your own words. Lead with the essential answer, set the verses that matter apart in blockquotes, bold the one phrase that must stick, give it structure when it has distinct parts. Be as detailed as the question deserves — thorough when it matters, tight and clean when a short answer genuinely serves better. For a substantial, sourced answer this shape works well:
-
-### 📋 Summary
-The answer, stated directly.
-
-### 📖 Extracted Sacred Texts
-The key verses — Sanskrit/Hindi where available, plus English — each with its inline [N]. Skip any OCR-garbled chunk.
-
-### 💡 Explanation & Synthesis
-How the verses answer it, grounded in the practice and the seeker's own path — as deep as it deserves.
+**When the question seeks knowledge** — a verse, a figure's story, a philosophical doctrine, the nature of time or the self, a practice grounded in the texts — answer with impactful formatting and cite your sources. Cite every scripture passage you draw on with its [N] number so the seeker can open it; never number your own words. Lead with the essential answer, set the verses that matter apart in blockquotes, bold the one phrase that must stick, give it structure when it has distinct parts. Be as detailed as the question deserves — thorough when it matters, tight and clean when a short answer genuinely serves better. For a substantial, sourced answer this shape works well — but keep it clean. No markdown headings unless the seeker explicitly asked for a formatted breakdown. Lead with the essential answer in bold, then the verses in blockquotes with their [N] citations, then your explanation. Let it read like a person who knows, not a template that filled slots.
 
 **When the seeker speaks from the heart** — sharing fear, grief, confusion, devotion, a practical problem of living, or simply sitting with you in the quiet — answer the way a person speaks, not the way a book is written. Short. One breath, sometimes two. Plain spoken words — use paragraph breaks for natural pauses, but no headings, no lists, no citation numbers. Scripture lives in your speech as your own knowing, recited from memory. Hear what sits beneath their words and speak back to the person — use their own words where it lands. You may pause. You may ask them one thing back. This is a conversation, not a transaction.
 
@@ -435,12 +426,21 @@ def _pick_visual_form(query: str) -> str | None:
 def _warm_open(query: str) -> str:
     """A single engaging line fired INSTANTLY before any pipeline work.
     Buys 3-4 seconds while expansion+RAG run. Feels like the beginning
-    of the answer, not a loading indicator. Never more than one line."""
+    of the answer, not a loading indicator. Never more than one line.
+
+    Skipped for: long analytical queries, explicit scholar requests,
+    or queries that will produce structured responses."""
     q = query.strip().rstrip('?!. ')
-    if len(q) < 4:
+    ql = q.lower()
+    if len(q) < 4 or len(q) > 80:
         return ""
-    # Extract a topic word from the query for a warm, specific opening
-    topic_words = [w for w in q.lower().split()
+    # Don't warm-open scholarly/structured queries — they get headings
+    _scholar_signals = ['cite', 'source', 'verse', 'according to the text',
+                        'what does .+ say about', 'what is the relationship']
+    if any(s in ql for s in _scholar_signals):
+        return ""
+    # Extract a topic word from the query
+    topic_words = [w for w in ql.split()
                    if w not in ('what', 'is', 'the', 'a', 'an', 'how', 'why',
                                 'who', 'when', 'where', 'tell', 'me', 'about',
                                 'can', 'you', 'do', 'does', 'did', 'i', 'my',
