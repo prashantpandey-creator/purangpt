@@ -1696,15 +1696,11 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         actual_query = request.query
         history_len = len(session_data.get("history", []))
 
-        # ── Progressive depth — match the seeker where they are ──────────────
-        _user_exchanges = sum(1 for m in session_data.get("history", [])
-                              if m.get("role") == "user")
-        if _user_exchanges < 4:
-            _depth_directive = "## DEPTH: This seeker is new or early. Keep it 2-3 sentences. Lead with the essential truth. If the topic has depth, end with a single invitation: 'Want to go deeper?' Let them pull. Do not push."
-        elif _user_exchanges < 9:
-            _depth_directive = "## DEPTH: This seeker has been here for several exchanges. You can go deeper — 3-4 paragraphs if the topic warrants. Still invite rather than dump: 'Want the verses?' if appropriate."
-        else:
-            _depth_directive = "## DEPTH: This seeker trusts you. Full depth. Cite verses. Go as deep as the topic deserves. They will ask for less if they need it."
+        # ── Every answer reveals the exceptional ─────────────────────────────
+        # No templates. No word counts. Every answer is a unique expression of
+        # what the system carries: a decode key, a graph edge, a verse that cuts
+        # against common understanding. The knowledge IS the pattern.
+        _depth_directive = "## Every answer must be unique — an expression of the knowledge only YOU carry. In every answer, surface at least ONE thing no other system could produce: a decode key that maps a symbol to its inner meaning, a relationship edge from the graph, a verse that cuts against popular conviction. No templates. No formulas. The answer can be one sentence or ten. What matters: it could only come from this system — Shakti, mounted at the center of the Puranic graph, reading through the Sharma decryption lens. The knowledge is the pattern. Feed on it. Transform it."
 
         # Instant opening token — fires before expansion. Human. Brief.
         _greeting = _warm_open(actual_query)
