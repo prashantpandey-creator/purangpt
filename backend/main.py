@@ -2120,11 +2120,12 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         # the same validated active provider so fallback logic works correctly.
         target_model = "auto"
 
-        # Clamp user-supplied temperature to a sane range; fall back to the 0.3 default.
+        # Default 0.7 — creative, unpredictable, varied. The RAG grounding
+        # and verse citations anchor the facts; temperature gives the voice.
         if request.temperature is not None:
             gen_temperature = max(0.0, min(1.5, float(request.temperature)))
         else:
-            gen_temperature = 0.3
+            gen_temperature = 0.7
 
         # Emit visual event for Pro users — deterministic keyword match, not AI-generated.
         # Fires before first token so the field erupts as Guruji begins speaking.
