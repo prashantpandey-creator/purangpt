@@ -57,8 +57,9 @@ logger = logging.getLogger("purangpt.backend")
 #
 # Each provider: env var for the key, base_url, and default model.
 _PROVIDER_DEFS = [
-    {"name": "deepseek",   "env": "DEEPSEEK_API_KEY",   "base_url": "https://api.deepseek.com",            "model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat")},
+    {"name": "groq",       "env": "GROQ_API_KEY",       "base_url": "https://api.groq.com/openai/v1",      "model": os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")},
     {"name": "gemini",     "env": "GEMINI_API_KEY",     "base_url": "https://generativelanguage.googleapis.com/v1beta/openai", "model": os.getenv("GEMINI_MODEL", "gemini-2.5-flash")},
+    {"name": "deepseek",   "env": "DEEPSEEK_API_KEY",   "base_url": "https://api.deepseek.com",            "model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat")},
     {"name": "openrouter", "env": "OPENROUTER_API_KEY", "base_url": "https://openrouter.ai/api/v1",        "model": os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-flash")},
     {"name": "together",   "env": "TOGETHER_API_KEY",   "base_url": "https://api.together.xyz/v1",         "model": os.getenv("TOGETHER_MODEL", "meta-llama/Llama-3.3-70B-Instruct-Turbo")},
     {"name": "openai",     "env": "OPENAI_API_KEY",     "base_url": "https://api.openai.com/v1",           "model": os.getenv("OPENAI_MODEL", "gpt-4o-mini")},
