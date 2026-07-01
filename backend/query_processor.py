@@ -369,9 +369,17 @@ class SanskritQueryProcessor:
             return "Sanskrit (Roman)"
         return "English"
 
+    _expand_cache: dict = {}
+    _EXPAND_CACHE_MAX = 256
+    _EXPAND_CACHE_TTL = 600
     async def expand(self, query: str) -> QueryExpansion:
         """Main entry point. Returns a QueryExpansion for any query. Never raises."""
         query = query.strip()
+        import time as _time
+        cache_key = query.lower()[:120]
+        cached = self._expand_cache.get(cache_key)
+        if cached and (_time.time() - cached[0]) < self._EXPAND_CACHE_TTL:
+            return cached[1]
 
         if not query or _is_trivial(query):
             return QueryExpansion(
