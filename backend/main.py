@@ -1778,6 +1778,10 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         # graph context + personality. Guruji's natural directness handles the empty
         # knowledge context in character — no template redirects.
         skip_rag = (expansion.engagement != "full")
+        # Guruji mode: LLM speaks from its own scripture knowledge. No embeddings.
+        _guruji_mode = os.getenv("GURUJI_MODE", "").strip() in ("1", "true", "yes")
+        if _guruji_mode:
+            skip_rag = True  # Let the LLM cite from training memory
         yield {"data": json.dumps({"type": "token", "content": "॥ "})}  # instant ack
         # Instant dictionary preview — user reads this while LLM generates
         if expansion.canonical and expansion.canonical != actual_query and len(expansion.canonical) > 1:
