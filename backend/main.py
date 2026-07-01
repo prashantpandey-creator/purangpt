@@ -1824,7 +1824,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             # ── Guruji light RAG: ILIKE keyword verse fetch ───────────
             if _guruji_mode:
                 try:
-                    _qterms = [expansion.canonical] if expansion.canonical else [actual_query]
+                    _qterms = expansion.fts_phrase.split(" OR ") if expansion.fts_phrase else [actual_query]
                     _qterms += expansion.synonyms[:3] if expansion.synonyms else []
                     _ilike = ['%' + t + '%' for t in _qterms if t and len(t) > 1]
                     if _ilike:
@@ -1837,6 +1837,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                             results.append({'id': _r['id'], 'content': _r['content'], 'text_name': _meta.get('text_name', ''), 'score': 1.0})
                         logger.info('Guruji ILIKE: %d verses (%.2fs)', len(results), time.time() - t_rag0)
                     sources = [r for r in results if r.get('id')][:5]
+                    rag_context = build_rag_context(results[:10])  # feed ILIKE verses into prompt
                     guruji_results = []
                     t_rag = time.time() - t_rag0
                 except Exception as e:
