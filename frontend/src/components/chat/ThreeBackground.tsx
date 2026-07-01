@@ -228,8 +228,6 @@ export default function ThreeBackground({
     ? `${Math.round(centerY / (typeof window !== 'undefined' ? window.innerHeight : 900) * 100)}%`
     : "45%";
 
-  if (glFailed) return null;
-
   return (
     <>
     {/* CSS fallback layer — always renders even if WebGL fails */}
