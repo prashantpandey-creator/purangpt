@@ -222,7 +222,11 @@ class HybridSearcher:
 
         # Reuse the master-preloaded model if present; otherwise load on demand
         # (e.g. dev / `run.py` path that doesn't go through the gunicorn hook).
-        self._embed_model = self._shared_model or self.preload_model()
+        import os as _os
+        if _os.getenv(GURUJI_MODE, ).strip() in (1, true, yes):
+            self._embed_model = None
+        else:
+            self._embed_model = self._shared_model or self.preload_model()
 
         self._initialized = True
         logger.info("HybridSearcher initialized ✓")
