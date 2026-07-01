@@ -1778,6 +1778,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         # graph context + personality. Guruji's natural directness handles the empty
         # knowledge context in character — no template redirects.
         skip_rag = (expansion.engagement != "full")
+        yield {"data": json.dumps({"type": "token", "content": "॥ "})}  # instant ack
         t_rag = 0.0
         t_gretil = 0.0
         t_graph = 0.0
