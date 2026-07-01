@@ -14,6 +14,7 @@ import { LanguageProvider } from "@/context/LanguageContext";
 
 import { SoundProvider } from "@/components/SoundProvider";
 import { SiteStructuredData } from "@/components/seo/StructuredData";
+import PersistentBackground from "@/components/chat/PersistentBackground";
 
 const marcellus = Marcellus({
   variable: "--font-marcellus",
@@ -140,6 +141,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${geist.variable} ${marcellus.variable} ${quicksand.variable} font-sans antialiased bg-black text-[#e8e1d4]`}
       >
+        <PersistentBackground />
         <SoundProvider />
         <SiteStructuredData />
         <LanguageProvider>

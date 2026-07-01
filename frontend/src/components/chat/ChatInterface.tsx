@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import ThreeBackground, { type BackgroundPhase } from "./ThreeBackground";
 import { YantraLoader } from "./YantraLoader";
 import { motion, AnimatePresence, useReducedMotion, useMotionValue, useSpring } from "framer-motion";
 import { transitionSoft, tap, EASE_OUT_SOFT } from "@/lib/motion";
@@ -1288,18 +1287,6 @@ export function ChatInterface({ conversationId, initialQuery, defaultMode, onMod
 
   return (
     <div className="relative h-full w-full overflow-hidden">
-      {/* Unified Three.js background — replaces DarshanVoid + DeepFieldOrb + MorphicField + ConsumeFibers */}
-      <ThreeBackground
-        phase={
-          isStreaming ? "thinking"
-          : speech.listening ? "listening"
-          : suggestionsLoading && messages.length === 0 ? "thinking"
-          : "resting"
-        }
-        reduceMotion={!!reducedMotion}
-        latentVector={latentVector}
-        centerY={messages.length === 0 ? emptyBinduPaddingTop + emptyBinduSize / 2 : undefined}
-      />
       <div
         className="relative z-10 flex h-full flex-col overflow-hidden"
         style={{

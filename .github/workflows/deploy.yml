@@ -63,3 +63,12 @@ jobs:
           docker compose --env-file /root/stack.env build --no-cache backend frontend
           docker compose --env-file /root/stack.env up -d backend frontend
           docker image prune -f
+          # ── Post-deploy verification ─────────────────────────────────────
+          echo "::group::🔍 Verifying deploy"
+          bash /root/purangpt-next/scripts/verify-deploy.sh https://purangpt.com "$(git -C /root/purangpt-next rev-parse --short HEAD)" || {
+            echo "::error::Deploy verification failed"
+            echo "::endgroup::"
+            exit 1
+          }
+          echo "::endgroup::"
+          echo "✓ Deploy verified"
