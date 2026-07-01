@@ -226,7 +226,7 @@ export default function ThreeBackground({
 
   const voidCenter = centerY != null
     ? `${Math.round(centerY / (typeof window !== 'undefined' ? window.innerHeight : 900) * 100)}%`
-    : "45%";
+    : "50%";
 
   return (
     <>
