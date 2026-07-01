@@ -180,7 +180,7 @@ function BinduShader({ phase }: { phase: string; reduceMotion: boolean }) {
     try {
       if (!materialRef.current) return;
       const m = materialRef.current;
-      m.uniforms.u_t.value = state.clock.elapsedTime;
+      m.uniforms.u_t.value = state.clock.elapsedTime * 0.5;
       m.uniforms.u_res.value.set(size.width, size.height);
       const thinking = phase === "thinking" ? 1.0 : 0.0;
       const speaking = phase === "listening" || phase === "speaking" ? 1.0 : 0.0;

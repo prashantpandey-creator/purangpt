@@ -206,7 +206,7 @@ export function SacredGeometryLoader() {
     let raf: number;
 
     const tick = () => {
-      a += 0.4;
+      a += 0.2;
       yPhase = (yPhase + 0.009) % (Math.PI * 2);
       xPhase = (xPhase + 0.0055) % (Math.PI * 2);
 
