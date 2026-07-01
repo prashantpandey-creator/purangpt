@@ -1784,7 +1784,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         # Always inject graph context — even in normal mode. Never raw LLM knowledge.
         _want_graph = True  # graph is the primary knowledge source, always on
         if _guruji_mode:
-            skip_rag = False  # verse fetch via ILIKE below
+            skip_rag = True   # ILIKE runs independently outside gate
         yield {"data": json.dumps({"type": "token", "content": "॥ "})}  # instant ack
         # Instant dictionary preview — user reads this while LLM generates
         if expansion.canonical and expansion.canonical != actual_query and len(expansion.canonical) > 1:
@@ -1819,6 +1819,28 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         rag_context = ""
         skt_results = []
         query_lower = actual_query.lower()
+
+        if _guruji_mode and state.searcher:
+            t_rag0 = time.time()
+            try:
+                _qterms = expansion.fts_phrase.split(" OR ") if expansion.fts_phrase else [actual_query]
+                _qterms += expansion.synonyms[:3] if expansion.synonyms else []
+                _ilike = ["%" + t + "%" for t in _qterms if t and len(t) > 1]
+                if _ilike:
+                    sql = "SELECT id, content, metadata FROM purana_verses WHERE content ILIKE ANY($1::text[]) ORDER BY id LIMIT 20"
+                    async with state.searcher._pool.acquire() as _c:
+                        _rows = await _c.fetch(sql, _ilike)
+                    results = []
+                    for _r in _rows:
+                        _meta = json.loads(_r["metadata"]) if isinstance(_r["metadata"], str) else _r["metadata"]
+                        results.append({"id": _r["id"], "content": _r["content"], "text_name": _meta.get("text_name", ""), "score": 1.0})
+                    logger.info("Guruji ILIKE: %d verses (%.2fs)", len(results), time.time() - t_rag0)
+                sources = [r for r in results if r.get("id")][:5]
+                rag_context = build_rag_context(results[:10])
+                t_rag = time.time() - t_rag0
+            except Exception as e:
+                logger.warning("Guruji ILIKE failed: %s", e)
+
         if not skip_rag and state.searcher and (state.index_ready or _guruji_mode):
             t_rag0 = time.time()
             # ── Guruji light RAG: ILIKE keyword verse fetch ───────────
