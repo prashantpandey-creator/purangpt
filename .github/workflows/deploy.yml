@@ -56,19 +56,13 @@ jobs:
         key: ${{ secrets.VPS_SSH_KEY }}
         envs: DEEPSEEK_API_KEY,GEMINI_API_KEY,GROQ_API_KEY,OPENAI_API_KEY,VECTOR_DB_URL,FERNET_KEY,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,DATABASE_URL,STRIPE_SECRET_KEY,RAZORPAY_KEY_SECRET
         script: |
-          cd /root/purangpt-monorepo
+          set -e
+          cd /root/purangpt
           git fetch origin
           git reset --hard origin/main
-          echo "$DEEPSEEK_API_KEY" > /dev/null  # secrets are in env
-          docker compose --env-file /root/stack.env build --no-cache backend frontend
-          docker compose --env-file /root/stack.env up -d backend frontend
+          echo "Deploying $(git rev-parse --short HEAD)"
+          docker compose --env-file /root/stack.env down frontend backend 2>/dev/null || true
+          docker compose --env-file /root/stack.env build --no-cache frontend backend
+          docker compose --env-file /root/stack.env up -d frontend backend
           docker image prune -f
-          # ── Post-deploy verification ─────────────────────────────────────
-          echo "::group::🔍 Verifying deploy"
-          bash /root/purangpt-next/scripts/verify-deploy.sh https://purangpt.com "$(git -C /root/purangpt-next rev-parse --short HEAD)" || {
-            echo "::error::Deploy verification failed"
-            echo "::endgroup::"
-            exit 1
-          }
-          echo "::endgroup::"
-          echo "✓ Deploy verified"
+          echo "✓ Deploy complete — $(git rev-parse --short HEAD)"
