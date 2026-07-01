@@ -16,7 +16,8 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             set -ex
-            echo "=== STEP 1: Clone/update repo ==="
+            echo "=== Fluency Bridge Deploy ==="
+
             if [ -d /root/fluency-bridge ]; then
               cd /root/fluency-bridge
               git fetch origin main
@@ -28,26 +29,16 @@ jobs:
               cd fluency-bridge
             fi
 
-            echo "=== STEP 2: Check Docker ==="
-            docker --version
-            docker compose version
-
-            echo "=== STEP 3: Network ==="
             docker network inspect coolify >/dev/null 2>&1 || docker network create coolify
-
-            echo "=== STEP 4: Build ==="
-            docker compose build --no-cache 2>&1
-
-            echo "=== STEP 5: Deploy ==="
+            docker compose build --no-cache
             docker compose down --remove-orphans 2>/dev/null || true
-            docker compose up -d 2>&1
+            docker compose up -d
+            docker image prune -f
 
-            echo "=== STEP 6: Verify ==="
-            sleep 3
-            docker compose ps
-            curl -s -o /dev/null -w "HTTP %{http_code}" http://localhost:8080/ || echo " (may need a moment)"
             echo ""
-
-            echo "=== DONE ==="
-            echo "Public: http://204.168.176.229:8080"
-            echo "Admin:  http://204.168.176.229:8080/admin"
+            echo "=== Deploy complete ==="
+            echo "Public: http://204.168.176.229:8088"
+            echo "Admin:  http://204.168.176.229:8088/admin"
+            sleep 2
+            docker compose ps
+            curl -s -o /dev/null -w "HTTP %{http_code}\n" http://localhost:8088/ || true
