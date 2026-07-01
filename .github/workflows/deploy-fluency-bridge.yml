@@ -19,21 +19,16 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             docker compose down -v 2>/dev/null || true
-
-            # Build just the backend
-            docker compose build --no-cache backend
-            docker compose up -d backend
-            sleep 5
-
+            docker network inspect coolify >/dev/null 2>&1 || docker network create coolify
+            docker compose build --no-cache
+            docker compose up -d
+            sleep 3
             echo "=== STATUS ==="
-            docker ps -a --filter name=fluency_bridge_backend --format '{{.Status}} {{.Image}}'
-
-            echo "=== LOGS ==="
+            docker compose ps
+            echo "=== BACKEND LOGS ==="
             docker logs fluency_bridge_backend 2>&1 || true
-
-            echo "=== CRASH FILES ==="
-            docker cp fluency_bridge_backend:/tmp/stdout.log /tmp/stdout.log 2>/dev/null && cat /tmp/stdout.log || echo "NO STDOUT FILE"
-            docker cp fluency_bridge_backend:/tmp/stderr.log /tmp/stderr.log 2>/dev/null && cat /tmp/stderr.log || echo "NO STDERR FILE"
-
-            echo "=== DOCKER INSPECT ==="
-            docker inspect fluency_bridge_backend --format 'ExitCode: {{.State.ExitCode}} Error: {{.State.Error}} OOM: {{.State.OOMKilled}}'
+            echo "=== TESTS ==="
+            curl -s http://localhost:8088/api/health || echo "HEALTH FAIL"
+            curl -s http://localhost:8088/api/waitlist || echo "API FAIL"
+            echo ""
+            echo "PUBLIC: http://204.168.176.229:8088"
