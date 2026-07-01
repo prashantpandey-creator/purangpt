@@ -1779,6 +1779,9 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         # knowledge context in character — no template redirects.
         skip_rag = (expansion.engagement != "full")
         yield {"data": json.dumps({"type": "token", "content": "॥ "})}  # instant ack
+        # Instant dictionary preview — user reads this while LLM generates
+        if expansion.canonical and expansion.canonical != actual_query and len(expansion.canonical) > 1:
+            yield {"data": json.dumps({"type": "instant_preview", "canonical": expansion.canonical, "devanagari": expansion.devanagari or "", "gloss": expansion.english_gloss or "", "synonyms": expansion.synonyms[:3] if expansion.synonyms else []})}
         t_rag = 0.0
         t_gretil = 0.0
         t_graph = 0.0
