@@ -1836,6 +1836,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                             _meta = json.loads(_r['metadata']) if isinstance(_r['metadata'], str) else _r['metadata']
                             results.append({'id': _r['id'], 'content': _r['content'], 'text_name': _meta.get('text_name', ''), 'score': 1.0})
                         logger.info('Guruji ILIKE: %d verses (%.2fs)', len(results), time.time() - t_rag0)
+                    sources = [r for r in results if r.get('id')][:5]
                     guruji_results = []
                     t_rag = time.time() - t_rag0
                 except Exception as e:
@@ -2050,7 +2051,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
 
         # Grounding quality — follows the LLM's engagement decision.
         # No deterministic pattern lists. The query processor LLM is the sole gate.
-        if skip_rag:
+        if skip_rag and not _guruji_mode:
             grounding_quality = "brief" if expansion.engagement == "brief" else "redirect"
             all_sources = []
         elif len(sources) > 0:
