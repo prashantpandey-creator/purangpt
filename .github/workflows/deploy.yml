@@ -61,8 +61,8 @@ jobs:
           git fetch origin
           git reset --hard origin/main
           echo "Deploying $(git rev-parse --short HEAD)"
-          docker compose --env-file /root/stack.env down frontend backend 2>/dev/null || true
+          docker rm -f purangpt_frontend purangpt_backend purangpt_redis 2>/dev/null || true
           docker compose --env-file /root/stack.env build --no-cache frontend backend
-          docker compose --env-file /root/stack.env up -d frontend backend
+          docker compose --env-file /root/stack.env up -d frontend backend redis
           docker image prune -f
           echo "✓ Deploy complete — $(git rev-parse --short HEAD)"
