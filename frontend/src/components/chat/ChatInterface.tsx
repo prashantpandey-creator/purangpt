@@ -976,6 +976,8 @@ export function ChatInterface({ conversationId, initialQuery, defaultMode, onMod
     // as soon as the seeker sends — not only when the stream completes.
     renameFromFirstMessage(conversationId);
 
+    const assistantId = crypto.randomUUID();
+
     // For signed-in users: check if a very similar conversation already exists.
     if (user) {
       const similar = findSimilarConversation(messageText, conversationId);
@@ -1296,6 +1298,7 @@ export function ChatInterface({ conversationId, initialQuery, defaultMode, onMod
         }
         reduceMotion={!!reducedMotion}
         latentVector={latentVector}
+        centerY={messages.length === 0 ? emptyBinduPaddingTop + emptyBinduSize / 2 : undefined}
       />
       <div
         className="relative z-10 flex h-full flex-col overflow-hidden"
@@ -2408,12 +2411,29 @@ export function ChatInterface({ conversationId, initialQuery, defaultMode, onMod
             )}
           </AnimatePresence>
         </div>
-        <p
-          className="mt-3 hidden text-center uppercase tracking-[0.18em] sm:block"
-          style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#7c3aed' }}
-        >
-          {getTranslation(language, "ui.enter_hint")}
-        </p>
+        {!user && (
+          <button
+            onClick={() => openSignInModal()}
+            className="mt-3 mx-auto hidden sm:block text-center tracking-[0.06em] px-4 py-1.5 rounded-lg border transition-colors"
+            style={{
+              fontFamily: 'var(--font-ui)',
+              fontSize: 12,
+              color: '#e8b63f',
+              borderColor: 'rgba(232,182,63,0.25)',
+              background: 'rgba(232,182,63,0.05)',
+            }}
+          >
+            {getTranslation(language, "ui.sign_in_up")}
+          </button>
+        )}
+        {user && (
+          <p
+            className="mt-3 hidden text-center uppercase tracking-[0.18em] sm:block"
+            style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: '#7c3aed' }}
+          >
+            {getTranslation(language, "ui.enter_hint")}
+          </p>
+        )}
       </div>
 
       {/* Sanskrit dictionary card — opened by tapping a highlighted term. */}
