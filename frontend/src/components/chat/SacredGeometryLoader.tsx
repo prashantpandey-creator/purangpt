@@ -241,7 +241,7 @@ export function SacredGeometryLoader() {
 
   // SSR renders nothing — all geometry uses Math trig which differs between
   // Node.js and browser at the 14th decimal. Only render after client mount.
-  if (!mounted) return <div style={{ minHeight: 380 }} />;
+  if (!mounted) return null;
 
   // Yantra size — 150px (75% of the original 200), a tighter focal instrument.
   const YANTRA = 150;
