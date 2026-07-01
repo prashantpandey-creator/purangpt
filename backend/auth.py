@@ -103,42 +103,37 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Security(securi
     except Exception:
         pass
 
-    jwks = get_jwks()
+    # Google OAuth first — the frontend uses direct Google sign-in. Google
+    # access tokens are opaque strings, not JWTs, so JWKS verification would
+    # waste ~2s on a dead Logto fetch before falling through. Check Google first.
+    # Only tokens that LOOK like JWTs (two dots) try the Logto path — those
+    # are legacy sessions from before the auth migration.
+    is_jwt = token.count(".") == 2
 
-    # Try Logto JWT verification first
+    if not is_jwt:
+        return _verify_google_token(token)
+
+    # Legacy Logto JWT path — only reached for tokens that look like JWTs.
+    # The Logto container is deliberately not running (frontend no longer
+    # issues Logto tokens), but old sessions in localStorage may still exist.
+    jwks = get_jwks()
     if jwks:
         try:
-            # Decode the unverified header to get the key ID (kid)
             unverified_header = jwt.get_unverified_header(token)
             kid = unverified_header.get("kid")
             rsa_key = _find_rsa_key(jwks, kid)
-
-            # Unknown kid usually means Logto rotated its signing keys since we cached
-            # the JWKS — force a refresh once before rejecting.
             if not rsa_key:
                 jwks = get_jwks(force=True)
                 rsa_key = _find_rsa_key(jwks, kid)
-
             if rsa_key:
-                # Verify signature + issuer. Audience verification stays optional: standard
-                # Logto access tokens carry the API resource indicator in `aud`, but the
-                # opaque/userinfo tokens used here may not — so we gate on iss + signature
-                # and only enforce aud when explicitly turned on. Issuer check defaults ON
-                # (the live Logto issuer is https://auth.purangpt.com/oidc) but can be
-                # disabled via DISABLE_JWT_ISSUER_CHECK without a redeploy if it ever
-                # mismatches (e.g. endpoint change).
                 verify_aud = bool(os.getenv("ENFORCE_JWT_AUDIENCE"))
                 verify_iss = not os.getenv("DISABLE_JWT_ISSUER_CHECK")
                 payload = jwt.decode(
-                    token,
-                    rsa_key,
-                    algorithms=["RS256"],
+                    token, rsa_key, algorithms=["RS256"],
                     issuer=LOGTO_ISSUER if verify_iss else None,
                     audience=LOGTO_API_RESOURCE_INDICATOR if verify_aud else None,
                     options={"verify_aud": verify_aud, "verify_iss": verify_iss},
                 )
-
-                # Logto token `sub` is the user ID
                 user_id = payload.get("sub")
                 if user_id:
                     from backend.db_client import create_profile_if_not_exists
@@ -146,16 +141,12 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Security(securi
                     profile = create_profile_if_not_exists(user_id, email)
                     role = profile.get("role", "free") if profile else "free"
                     return {"id": user_id, "role": role, "email": email}
-
         except jwt.ExpiredSignatureError:
-            logger.warning("Logto token expired; trying Google fallback")
-        except jwt.JWTClaimsError:
-            logger.warning("Logto JWT claims error; trying Google fallback")
+            logger.info("Legacy Logto token expired — falling back to Google")
         except Exception:
-            pass  # Not a Logto JWT — fall through to Google check
+            pass
 
-    # Fall back to Google access_token verification (direct Google OAuth users).
-    # Google access tokens are opaque strings (not JWTs), so JWKS fails above.
+    # Final fallback: try Google even for JWT-looking tokens that failed Logto
     return _verify_google_token(token)
 
 
