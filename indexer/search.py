@@ -323,16 +323,20 @@ class HybridSearcher:
             if secondary_embed_phrase:
                 phrases.append(f"query: {secondary_embed_phrase}")
 
-            embs = await loop.run_in_executor(
-                None,
-                lambda: self._embed_model.encode(phrases, show_progress_bar=False),
-            )
-            primary_emb = embs[0].tolist() if hasattr(embs[0], "tolist") else list(embs[0])
-            emb_str = "[" + ",".join(map(str, primary_emb)) + "]"
-            sec_emb_str = None
-            if secondary_embed_phrase:
-                sec_emb = embs[1].tolist() if hasattr(embs[1], "tolist") else list(embs[1])
-                sec_emb_str = "[" + ",".join(map(str, sec_emb)) + "]"
+            if self._embed_model is not None:
+                embs = await loop.run_in_executor(
+                    None,
+                    lambda: self._embed_model.encode(phrases, show_progress_bar=False),
+                )
+                primary_emb = embs[0].tolist() if hasattr(embs[0], "tolist") else list(embs[0])
+                emb_str = "[" + ",".join(map(str, primary_emb)) + "]"
+                sec_emb_str = None
+                if secondary_embed_phrase:
+                    sec_emb = embs[1].tolist() if hasattr(embs[1], "tolist") else list(embs[1])
+                    sec_emb_str = "[" + ",".join(map(str, sec_emb)) + "]"
+            else:
+                emb_str = None
+                sec_emb_str = None
 
             # Build filter JSON
             pg_filter = {}
@@ -357,7 +361,7 @@ class HybridSearcher:
                 fts_query = query
             fetch_k = top_k * 6 if corpus_type else top_k * 4
 
-            async def _fetch(emb_s: str, fk: int):
+            async def _fetch(emb_s, fk: int):
                 async with self._pool.acquire() as conn:
                     return await conn.fetch(
                         'SELECT id, content, metadata, similarity '
