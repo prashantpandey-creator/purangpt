@@ -50,7 +50,7 @@ def _load_clusters():
         return _clusters
     try:
         import json as _json
-        _cp = os.path.join(os.path.dirname(_GRAPH_PATH), "graph_clusters.json")
+        _cp = "/app/data/graph_clusters.json"
         if not os.path.exists(_cp):
             logger.warning("No cluster file at %s — run cluster_graph.py first", _cp)
             return None

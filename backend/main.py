@@ -157,7 +157,7 @@ except Exception:  # pragma: no cover - import-environment guard
 # tools/rag_vs_graph_bench). Flag-gated OFF (GRAPH_MEMORY_ENABLED=1) and fail-graceful:
 # its block degrades to "" on any error, so chat is byte-identical to today when off.
 try:
-    from backend.graph_memory import build_graph_context, get_graph_ilike_patterns
+    from backend.graph_memory import build_graph_context, _load_clusters, _cluster_entity_map, get_graph_ilike_patterns
 except Exception:  # pragma: no cover - import-environment guard
     build_graph_context = None
     get_graph_ilike_patterns = None
@@ -1627,6 +1627,29 @@ async def safe_sse_stream(generator):
                 yield {"data": json.dumps(item)}
         else:
             yield {"data": str(item)}
+
+
+@app.get("/api/clusters")
+async def get_clusters(q: str = "", limit: int = 10):
+    """Return matching clusters for a query or top clusters."""
+    clusters = _load_clusters()
+    if not clusters:
+        return {"clusters": [], "error": "clusters not loaded"}
+    if q:
+        # Match query against cluster labels
+        matches = []
+        ql = q.lower()
+        for cid, cinfo in clusters.items():
+            label = cinfo.get("label", "").lower()
+            top = [e.lower() for e in cinfo.get("top_entities", [])]
+            if ql in label or any(ql in t for t in top):
+                matches.append({**cinfo, "cluster_id": cid})
+        matches.sort(key=lambda x: x.get("size", 0), reverse=True)
+        return {"clusters": matches[:limit], "query": q}
+    # Return top clusters by size
+    top = sorted(clusters.items(), key=lambda x: x[1].get("size", 0), reverse=True)
+    return {"clusters": [{**cinfo, "cluster_id": cid} for cid, cinfo in top[:limit]]}
+
 
 @app.post("/api/chat")
 async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depends(get_current_user)):
