@@ -16,18 +16,10 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             set -ex
-            echo "=== Fluency Bridge Deploy ==="
-
-            if [ -d /root/fluency-bridge ]; then
-              cd /root/fluency-bridge
-              git fetch origin main
-              git reset --hard origin/main
-              git clean -fd
-            else
-              cd /root
-              git clone https://github.com/prashantpandey-creator/fluency-bridge.git
-              cd fluency-bridge
-            fi
+            cd /root/fluency-bridge
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fd
 
             docker network inspect coolify >/dev/null 2>&1 || docker network create coolify
             docker compose build --no-cache
@@ -35,10 +27,15 @@ jobs:
             docker compose up -d
             docker image prune -f
 
-            echo ""
-            echo "=== Deploy complete ==="
-            echo "Public: http://204.168.176.229:8088"
-            echo "Admin:  http://204.168.176.229:8088/admin"
-            sleep 2
+            echo "=== Container status ==="
             docker compose ps
-            curl -s -o /dev/null -w "HTTP %{http_code}\n" http://localhost:8088/ || true
+            echo ""
+            echo "=== Backend logs ==="
+            docker logs fluency_bridge_backend --tail 20
+            echo ""
+            echo "=== Test backend directly ==="
+            sleep 2
+            docker exec fluency_bridge_frontend wget -q -O - http://backend:8080/api/waitlist || echo "FAILED to reach backend"
+            echo ""
+            echo "=== Done ==="
+            echo "Public: http://204.168.176.229:8088"
