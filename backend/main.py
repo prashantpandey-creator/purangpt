@@ -1837,6 +1837,29 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                     logger.info("Guruji ILIKE: %d verses (%.2fs)", len(results), time.time() - t_rag0)
                 sources = [r for r in results if r.get("id")][:5]
                 rag_context = build_rag_context(results[:10])
+                # ── Witness Stage: LLM judge picks the 5 most relevant verses ──
+                if len(results) > 5:
+                    _cands, _idmap = [], {}
+                    for _i, _r in enumerate(results):
+                        _txt = _r['content'][:250].replace(chr(10), ' ')
+                        _cid = '[%d]' % _i
+                        _idmap[_cid] = _r
+                        _cands.append(_cid + ' ' + _txt)
+                    _jp = 'Query: ' + actual_query + '\n\nPick the 5 MOST relevant verses. Return ONLY IDs like: [0],[3],[12]\n\n' + '\n'.join(_cands)
+                    try:
+                        _resp = await call_llm_once([{'role': 'user', 'content': _jp}], temperature=0.0, req_model='auto')
+                        import re as _re
+                        _best = []
+                        for _m in _re.findall(r'\[(\d+)\]', _resp)[:5]:
+                            _r = _idmap.get('[' + _m + ']')
+                            if _r: _best.append(_r)
+                        if _best:
+                            results = _best
+                            logger.info('Witness: LLM judge picked %d/%d relevant verses', len(_best), len(_cands))
+                    except Exception as _je:
+                        logger.warning('Witness judge fallback: %s', _je)
+                sources = [r for r in results if r.get('id')][:5]
+                rag_context = build_rag_context(results[:10])
                 t_rag = time.time() - t_rag0
             except Exception as e:
                 logger.warning("Guruji ILIKE failed: %s", e)
