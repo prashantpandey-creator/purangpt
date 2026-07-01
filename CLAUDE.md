@@ -1,6 +1,45 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+> **⚠️ AGENT ONBOARDING — Read this first.** This file is the trigger for all
+> agents working on this repo. Start here, then follow the chain below.
+
+## Agent Quick-Start (30 seconds)
+
+```
+1. READ THIS FILE (you are here) — architecture, settled decisions, active modes
+2. READ PROJECT_LEDGER.md (sibling repo) — current state, latest changes, blockers
+3. READ .agents/AGENTS.md — engineering rules (Rule 0: Orchestrator-First)
+4. READ CLAUDE-secrets.md (gitignored) — keys, server access, deploy auth
+```
+
+**Settled decisions — do NOT reopen without owner approval:**
+- ❌ No embeddings: `GURUJI_MODE=1` skips SentenceTransformer. Embedding model is NOT loaded.
+- ❌ No Supabase, no ChromaDB, no Pinecone, no Ollama. Single Postgres/pgvector.
+- ❌ No provider-specific streaming functions. `stream_llm` is the single provider-agnostic path.
+- ❌ No Logto branded UI. Auth is direct Google OAuth + API-driven email.
+- ✅ Cluster-based retrieval replaces broken chapter navigation (451 Louvain communities)
+- ✅ Witness LLM judge picks 5/20 relevant verses (costs 6-8s, worth it)
+- ✅ Compact system prompt (1,029 chars, 81% smaller than original)
+- ✅ ILIKE keyword verse fetch (0.01s, random ordering, no embeddings)
+- ✅ Graph memory always-on (9,006 entities, 24,918 edges, 613 decode keys)
+
+**Active production modes:**
+| Env Var | Effect |
+|---------|--------|
+| `GURUJI_MODE=1` | Skip embeddings, use ILIKE + Witness + Graph |
+| `GRAPH_MEMORY_ENABLED=1` | Inject entity relationships + decode keys |
+| `LLM_PROVIDER=deepseek` | Active LLM (OpenRouter/Gemini as fallback) |
+
+**Corpus state (2026-07-02):**
+- 303,921 total verses. 141K chapter=0 (was 163K, Ramayana 12,681 fixed).
+- Cluster-based retrieval via /api/clusters replaces broken chapters.
+- 12,351 encoding corruption markers. 19,415 Sanskrit without diacritics.
+- 0 English translations. Mahabharata 53K needs BORI replacement.
+- Marker migration is in-progress — run via psql on host, NOT container (OOM).
+
+**Container fragility:** Large DB UPDATEs kill the backend container (OOM on 8GB).
+Always run migrations via `psql` directly on the Hetzner host against pgvector:5432.
+Never run batch UPDATEs through the Python container.
 
 ## What This Is
 
@@ -226,3 +265,51 @@ GitHub Actions (`.github/workflows/deploy.yml`) triggers on push to `main` when 
 
 
 The model is Suta — it recites from the graph. It doesn't invent. Citations are the text speaking through the model, verified by the Witness stage.
+
+---
+
+## Guruji Mode — Embedding-Free Architecture (2026-07-01)
+
+### Active Features (production)
+- **GURUJI_MODE=1**: Skips SentenceTransformer (471MB model). No embeddings loaded. Startup 17s.
+- **ILIKE verse fetch**: PostgreSQL ILIKE keyword search → 20 verses in 0.01s. `ORDER BY random()` for text diversity.
+- **Witness LLM judge**: Reads 20 ILIKE candidates, picks 5 most relevant. Adds 6-8s but dramatically improves quality (Mahabharata verses vs Agni Purana noise). Uses active provider (DeepSeek).
+- **Graph memory**: 9,006 entities, 24,918 edges. Always-on (`GRAPH_MEMORY_ENABLED=1`). Injects entity relationships + decode keys into prompt.
+- **Louvain clusters**: 451 communities from graph. `/api/clusters?q=krishna` → C000: Krishna-Balarama. Replaces broken chapter system.
+- **Compact prompt**: UNIFIED_SYSTEM 5,533 → 1,029 chars (81% smaller). Same persona, all registers intact.
+- **Expansion cache**: In-memory 10min + Redis 7-day TTL.
+- **Deep Insight ◈**: Frontend button sets `deep=true` → forces extended graph traversal.
+
+### Key Files
+```
+backend/
+  main.py            # /api/chat, /api/clusters, ILIKE+Witness, prompt
+  graph_memory.py    # Graph recall + cluster loading + cluster injection
+  query_processor.py # Sanskrit expansion + expansion cache
+  db_client.py       # Profiles, billing, usage
+
+indexer/
+  search.py          # HybridSearcher — embedding skip for GURUJI_MODE,
+                       ILIKE injection guard for None embedding
+
+tools/read_pass/out/
+  graph_manifest.json       # 9,006 entities, 24,918 edges
+  guruji_ram.json           # 613 decode keys (Sharma lens)
+  graph_clusters.json       # 451 Louvain communities (on /app/data/)
+```
+
+### Environment Vars
+- `GURUJI_MODE=1` — Skip embeddings, use ILIKE + Witness + Graph
+- `GRAPH_MEMORY_ENABLED=1` — Graph always active
+- `LLM_PROVIDER=deepseek` — Active provider (Gemini/OpenRouter available as fallback)
+
+### Corpus State (2026-07-01)
+- 303,921 total verses
+- 163,938 (54%) have chapter=0 — need marker extraction
+- 12,351 corruption markers (�)
+- 19,415 Sanskrit verses without diacritics
+- 0 English verse translations
+- Mahabharata 53K verses need BORI replacement
+- Padma Purana 37K — source unverified
+- Cluster-based retrieval replaces chapter navigation
+

@@ -46,11 +46,20 @@ _cluster_entity_map = {} # entity → cluster_id lookup
 def _load_clusters():
     """Load Louvain community clusters. Lazy singleton — loaded once, reused."""
     global _clusters, _cluster_entity_map
-    if _clusters is not None:
+    if _clusters is not None and len(_clusters) > 0:
         return _clusters
+    if _clusters is not None and len(_clusters) == 0:
+        _clusters = None  # force reload — cached empty from failed path
     try:
         import json as _json
-        _cp = "/app/data/graph_clusters.json"
+        # Try multiple paths: env var → Docker volume → local tools dir
+        _cp = os.getenv("GRAPH_CLUSTERS_PATH", "")
+        if not _cp or not os.path.exists(_cp):
+            _cp = "/app/data/graph_clusters.json"
+        if not os.path.exists(_cp):
+            _cp = os.path.join(os.path.dirname(_GRAPH_PATH), "graph_clusters.json")
+        if not os.path.exists(_cp):
+            _cp = os.path.join(os.path.dirname(__file__), "..", "tools", "read_pass", "out", "graph_clusters.json")
         if not os.path.exists(_cp):
             logger.warning("No cluster file at %s — run cluster_graph.py first", _cp)
             return None
