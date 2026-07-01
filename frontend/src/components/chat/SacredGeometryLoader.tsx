@@ -183,6 +183,8 @@ function FloatingCaption({
  * Honours prefers-reduced-motion.
  */
 export function SacredGeometryLoader() {
+  const [mounted, setMounted] = useState(false);
+
   const ringOuter = useRef<SVGGElement>(null);
   const ringMid = useRef<SVGGElement>(null);
   const hexA = useRef<SVGGElement>(null);
@@ -191,15 +193,13 @@ export function SacredGeometryLoader() {
   const spiralRefs = useRef<(SVGPolylineElement | null)[]>([]);
   const svgWrapRef = useRef<HTMLDivElement>(null);
 
-  // Only render after client mount — random particle positions
-  // differ between SSR and hydration, causing attribute mismatches.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
-  if (!mounted) return null;
-
-  const particles = useMemo(() => makeParticles(55), []);
+  // Particles only on client — Math.sin precision differs between Node.js SSR
+  // and browser JS engines at the 10th decimal, causing hydration mismatches.
+  const [particles, setParticles] = useState<ReturnType<typeof makeParticles>>([]);
+  useEffect(() => { setMounted(true); setParticles(makeParticles(55)); }, []);
 
   useEffect(() => {
+    if (!mounted) return;
     let a = Math.random() * 360;        // already spinning on first frame
     let yPhase = Math.random() * Math.PI * 2;  // already rocking on Y
     let xPhase = Math.PI / 4 + Math.random();  // slight X tilt variation
@@ -239,6 +239,10 @@ export function SacredGeometryLoader() {
     return () => cancelAnimationFrame(raf);
   }, []);
 
+  // SSR renders nothing — all geometry uses Math trig which differs between
+  // Node.js and browser at the 14th decimal. Only render after client mount.
+  if (!mounted) return null;
+
   // Yantra size — 150px (75% of the original 200), a tighter focal instrument.
   const YANTRA = 150;
 
@@ -254,6 +258,7 @@ export function SacredGeometryLoader() {
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none"
         viewBox="0 0 200 200"
+        suppressHydrationWarning
         preserveAspectRatio="xMidYMid slice"
         aria-hidden="true"
         style={{ zIndex: 0 }}

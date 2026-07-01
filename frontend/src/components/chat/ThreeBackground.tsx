@@ -9,7 +9,7 @@
  * No starfield, no light rings, no separate orb — just the Living Void.
  */
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
@@ -17,18 +17,16 @@ import * as THREE from "three";
 // This is the EXACT same visual as the iOS native BinduMetalView.
 // The noise substrate (snoise 3D, fbm) is the same Ashima/webgl-noise lineage.
 
-const BINDU_VS = /* glsl */ `#version 300 es
-in vec2 a_pos;
-out vec2 v_uv;
+const BINDU_VS = /* glsl */ `
+varying vec2 v_uv;
 void main() {
-  v_uv = a_pos * 0.5 + 0.5;
-  gl_Position = vec4(a_pos, 0.0, 1.0);
+  v_uv = position.xy * 0.5 + 0.5;
+  gl_Position = vec4(position.xy, 0.0, 1.0);
 }`;
 
-const BINDU_FS = /* glsl */ `#version 300 es
+const BINDU_FS = /* glsl */ `
 precision highp float;
-in vec2 v_uv;
-out vec4 o;
+varying vec2 v_uv;
 uniform float u_t;
 uniform vec2 u_res;
 uniform float u_lv;
@@ -104,28 +102,28 @@ vec4 composeOrb(vec2 uv, float t, float lv) {
   float openness = clamp(smoothstep(0.30, 0.95, cyc) + lv * 0.7, 0.0, 1.0);
 
   // plasma drawn inward as the void opens (accretion)
-  float2 pull = -(st / r) * openness * 0.16 * smoothstep(0.7, 0.1, r);
+  vec2 pull = -(st / r) * openness * 0.16 * smoothstep(0.7, 0.1, r);
 
   // GRAVITY PULSE — invisible displacement ripple (no colour of its own)
   float gwave  = sin(r * 24.0 - t * 1.15);
   float gwenv  = exp(-r * 1.3) * smoothstep(0.05, 0.20, r);
-  float2 gdisp = (st / r) * gwave * gwenv * 0.032;
-  float2 sp = st + pull + gdisp;
+  vec2 gdisp = (st / r) * gwave * gwenv * 0.032;
+  vec2 sp = st + pull + gdisp;
 
   // formless turbulence — fbm folded through itself twice, advecting in time
-  float3 P  = float3(sp * 1.5, t * 0.09 * fl);
+  vec3 P  = vec3(sp * 1.5, t * 0.09 * fl);
   float a1  = fbm4(P);
-  float3 P2 = P + (1.1 + 0.7 * fl) * float3(a1, fbm4(P + float3(3.1, 1.2, 4.0)), 0.0) + float3(0.0, 0.0, t * 0.04 * fl);
+  vec3 P2 = P + (1.1 + 0.7 * fl) * vec3(a1, fbm4(P + vec3(3.1, 1.2, 4.0)), 0.0) + vec3(0.0, 0.0, t * 0.04 * fl);
   float a2  = fbm4(P2 * 1.25);
-  float3 P3 = P2 + (0.9 + 0.5 * fl) * float3(a2, fbm4(P2 + float3(8.3, 2.8, 0.0)), 0.0);
+  vec3 P3 = P2 + (0.9 + 0.5 * fl) * vec3(a2, fbm4(P2 + vec3(8.3, 2.8, 0.0)), 0.0);
   float f   = fbm4(P3);
   float fil = clamp(1.0 - abs(f * 1.5), 0.0, 1.0); fil = pow(fil, 1.5);
   float dens = smoothstep(0.04, 0.72, a2);
   float energy = fil * dens;
 
   // full-rainbow plasma hue, drifting slowly
-  float3 plasmaHue = pow(rainbow(fract(t * 0.013 + a1 * 0.5)), float3(0.8));
-  float3 col = plasmaHue * energy * 2.8;
+  vec3 plasmaHue = pow(rainbow(fract(t * 0.013 + a1 * 0.5)), vec3(0.8));
+  vec3 col = plasmaHue * energy * 2.8;
   float alpha = energy;
 
   // gravity pulse catches plasma's own light on its crest (tinted by local hue)
@@ -142,34 +140,34 @@ vec4 composeOrb(vec2 uv, float t, float lv) {
   // deep BLACK interior, rare threads of slow-cycling rainbow + distant glints
   float inside = 1.0 - voidMask;
   if (inside > 0.002) {
-    float2 iv = st / max(voidR, 0.06);
+    vec2 iv = st / max(voidR, 0.06);
     float ir = length(iv);
     float zdepth = 0.5 / (ir * ir + 0.15);
-    float3 dp = float3(iv * 1.8, zdepth * 0.4 - t * 0.15);
+    vec3 dp = vec3(iv * 1.8, zdepth * 0.4 - t * 0.15);
     float dneb  = fbm4(dp);
     float dneb2 = fbm4(dp * 2.3 + 5.0);
-    float3 deepCol = float3(0.004, 0.006, 0.014);
-    float3 neon = pow(rainbow(fract(t * 0.016 + dneb2 * 0.6 + zdepth * 0.08)), float3(0.8));
+    vec3 deepCol = vec3(0.004, 0.006, 0.014);
+    vec3 neon = pow(rainbow(fract(t * 0.016 + dneb2 * 0.6 + zdepth * 0.08)), vec3(0.8));
     float tinge = smoothstep(0.60, 0.95, 0.5 + 0.5 * dneb);
     deepCol += neon * tinge * 0.32 * smoothstep(1.15, 0.1, ir);
     deepCol *= smoothstep(1.2, 0.05, ir);
-    float glint = smoothstep(0.74, 0.90, fbm4(float3(iv * 6.0, zdepth * 0.3 - t * 0.2)));
+    float glint = smoothstep(0.74, 0.90, fbm4(vec3(iv * 6.0, zdepth * 0.3 - t * 0.2)));
     deepCol += neon * glint * 0.68 * smoothstep(1.0, 0.3, ir);
     col = mix(col, deepCol, inside);
     alpha = max(alpha, inside * 0.72);
   }
 
-  return float4(col, alpha);
+  return vec4(col, alpha);
 }
 
 void main() {
   float ar = u_res.x / u_res.y;
-  float2 uv = v_uv;
+  vec2 uv = v_uv;
   uv.x *= ar;
-  float4 orb = composeOrb(uv, u_t, u_lv);
+  vec4 orb = composeOrb(uv, u_t, u_lv);
   // premultiply alpha (matches Metal behaviour)
-  float3 outCol = orb.rgb * orb.a;
-  o = float4(outCol, orb.a);
+  vec3 outCol = orb.rgb * orb.a;
+  gl_FragColor = vec4(outCol, orb.a);
 }`;
 
 // ── The full-viewport Bindu orb ───────────────────────────────────────────
@@ -179,14 +177,16 @@ function BinduShader({ phase }: { phase: string; reduceMotion: boolean }) {
   const { size } = useThree();
 
   useFrame((state) => {
-    if (!materialRef.current) return;
-    const m = materialRef.current;
-    m.uniforms.u_t.value = state.clock.elapsedTime;
-    m.uniforms.u_res.value.set(size.width, size.height);
-    const thinking = phase === "thinking" ? 1.0 : 0.0;
-    const speaking = phase === "listening" || phase === "speaking" ? 1.0 : 0.0;
-    const lv = max(thinking, speaking);
-    m.uniforms.u_lv.value += (lv - m.uniforms.u_lv.value) * 0.04;
+    try {
+      if (!materialRef.current) return;
+      const m = materialRef.current;
+      m.uniforms.u_t.value = state.clock.elapsedTime;
+      m.uniforms.u_res.value.set(size.width, size.height);
+      const thinking = phase === "thinking" ? 1.0 : 0.0;
+      const speaking = phase === "listening" || phase === "speaking" ? 1.0 : 0.0;
+      const lv = Math.max(thinking, speaking);
+      m.uniforms.u_lv.value += (lv - m.uniforms.u_lv.value) * 0.04;
+    } catch {} // WebGL shader may fail to compile — silently degrade
   });
 
   return (
@@ -216,10 +216,20 @@ export type BackgroundPhase = "resting" | "thinking" | "listening" | "speaking";
 export default function ThreeBackground({
   phase = "resting",
   reduceMotion = false,
+  centerY,
 }: {
   phase?: BackgroundPhase;
   reduceMotion?: boolean;
+  centerY?: number;
 }) {
+  const [glFailed, setGlFailed] = useState(false);
+
+  const voidCenter = centerY != null
+    ? `${Math.round(centerY / (typeof window !== 'undefined' ? window.innerHeight : 900) * 100)}%`
+    : "45%";
+
+  if (glFailed) return null;
+
   return (
     <>
     {/* CSS fallback layer — always renders even if WebGL fails */}
@@ -228,7 +238,7 @@ export default function ThreeBackground({
         position: "fixed",
         inset: 0,
         zIndex: 0,
-        background: "radial-gradient(ellipse 60% 80% at 50% 50%, rgba(76,29,149,0.15) 0%, rgba(49,30,81,0.10) 40%, #000000 100%)",
+        background: `radial-gradient(ellipse 60% 80% at 50% ${voidCenter}, rgba(76,29,149,0.15) 0%, rgba(49,30,81,0.10) 40%, #000000 100%)`,
       }}
     />
     <Canvas
@@ -239,7 +249,7 @@ export default function ThreeBackground({
         position: "fixed",
         inset: 0,
         zIndex: 0,
-        background: "radial-gradient(ellipse 55% 70% at 50% 45%, rgba(76,29,149,0.25) 0%, rgba(49,30,81,0.18) 35%, rgba(15,8,30,0.30) 65%, #000000 100%)",
+        background: `radial-gradient(ellipse 55% 70% at 50% ${voidCenter}, rgba(76,29,149,0.25) 0%, rgba(49,30,81,0.18) 35%, rgba(15,8,30,0.30) 65%, #000000 100%)`,
       }}
     >
       <BinduShader phase={phase} reduceMotion={reduceMotion} />
