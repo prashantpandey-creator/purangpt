@@ -4121,3 +4121,118 @@ async def graph_find_path(_from: str, to: str):
                 visited.add(nb)
                 q.append((nb, path + [nb]))
     return {"found": False, "path": []}
+
+
+# ── Entity Profile (AI-generated character description from real verses) ─────
+
+_ENTITY_PROFILE_SYSTEM = """You are a scholar of the Puranas writing a character profile. You receive raw Sanskrit verses (romanized IAST) that mention an entity — a deity, sage, king, demon, or concept from the Puranic corpus. Synthesize them into a rich, accurate profile.
+
+Structure your profile with these headings (use ### for each):
+
+### Essence
+One or two sentences capturing who this being IS — their fundamental nature, cosmic role, or defining quality. Not a list of deeds; the distilled identity beneath the stories.
+
+### Form & Appearance
+What the verses reveal about how they look — physical form, color, ornaments, weapons, vehicle, posture, number of heads/arms, what they wear or carry. Be specific: cite the verse markers where a detail appears, e.g. (bhp_01.03.015). If the verses describe multiple forms, note the variation.
+
+### Deeds & Relationships
+The key actions and connections the verses describe — whom they fought, loved, taught, created, or destroyed. Group by relationship type where possible. Include verse markers for major claims.
+
+### Inner Meaning (Guruji's lens)
+If the verses hint at an esoteric or symbolic reading — what this being represents in the inner landscape of yoga and consciousness — state it. If no symbolic reading is apparent from these verses, say so honestly.
+
+Rules:
+- Ground EVERY claim in the actual verses provided. Never invent.
+- When a detail comes from a specific verse, cite its marker inline: (bhp_01.03.015).
+- If the verses are silent on something (e.g., no physical description), say "The provided verses do not describe their appearance."
+- Write in the present tense for eternal beings, past tense for historical kings and sages.
+- Be specific, not vague. "Four arms holding conch, discus, mace, and lotus" beats "divine weapons."
+- Output ONLY the Markdown profile — no preamble, no closing."""
+
+_PROFILE_CACHE: dict[str, str] = {}
+
+
+@app.get("/api/graph/entities/{entity_id}/profile")
+async def graph_entity_profile(entity_id: str, lang: str = "en"):
+    """Stream an AI-generated character profile synthesized from real Puranic verses.
+
+    Uses the graph to find WHERE the entity appears (verse_ranges), fetches the
+    actual Sanskrit text from pgvector, and feeds it to the LLM for a rich,
+    verse-grounded profile. Cached in-memory after first generation."""
+    g = _load_graph()
+    # Resolve alias → canonical
+    canonical = g["alias_to_canonical"].get(entity_id.lower(), entity_id.lower())
+    entity = g["entity_by_id"].get(canonical)
+    if not entity:
+        raise HTTPException(404, f"Entity '{entity_id}' not found in graph")
+
+    ename = entity.get("name", canonical)
+    ekind = entity.get("kind", "untyped")
+    verse_refs = (entity.get("verse_ranges") or [])[:25]
+
+    cache_key = f"profile:{canonical}:{lang}"
+    cached = _PROFILE_CACHE.get(cache_key)
+
+    # Fetch actual verse text from pgvector via chunk IDs
+    verses_text: list[str] = []
+    if state.searcher and state.searcher.is_ready and verse_refs:
+        for ref in verse_refs:
+            try:
+                chunk = await state.searcher.get_chunk_by_id(str(ref))
+                if chunk and chunk.get("text"):
+                    txt = chunk["text"].strip()
+                    if txt and len(txt) > 15:
+                        verses_text.append(f"[{ref}] {txt}")
+            except Exception:
+                continue
+
+    # Fallback: ILIKE search by entity name if verse_ranges didn't resolve
+    if not verses_text and state.searcher and state.searcher.is_ready:
+        try:
+            async with state.searcher._pool.acquire() as conn:
+                pattern = f"%{ename}%"
+                rows = await conn.fetch(
+                    "SELECT id, content FROM purana_verses WHERE content ILIKE $1 LIMIT 15",
+                    pattern
+                )
+                for row in rows:
+                    txt = (row["content"] or "").strip()
+                    if txt and len(txt) > 15:
+                        verses_text.append(f"[{row['id']}] {txt}")
+        except Exception:
+            pass
+
+    if not verses_text:
+        raise HTTPException(404, f"No verses found for {ename}")
+
+    raw_verses = "\n\n".join(verses_text[:20])
+
+    _lang_name = {"en": "English", "hi": "Hindi", "ru": "Russian"}.get((lang or "en").lower(), "English")
+    messages = [
+        {"role": "system", "content": _ENTITY_PROFILE_SYSTEM},
+        {"role": "user", "content": f"Write a character profile for **{ename}** (kind: {ekind}) in {_lang_name} based on these Puranic verses:\n\n{raw_verses}"},
+    ]
+
+    async def gen():
+        if cached:
+            yield {"data": json.dumps({"type": "token", "content": cached})}
+            yield {"data": json.dumps({"type": "done"})}
+            return
+        yield {"data": json.dumps({"type": "status", "message": f"Writing profile for {ename}…"})}
+        acc: list[str] = []
+        try:
+            async for item in stream_llm(messages, temperature=0.4):
+                if isinstance(item, dict):
+                    yield {"data": json.dumps(item)}
+                else:
+                    acc.append(item)
+                    yield {"data": json.dumps({"type": "token", "content": item})}
+            full = "".join(acc).strip()
+            if full and len(full) > 100:
+                _PROFILE_CACHE[cache_key] = full
+        except Exception as e:
+            logger.error("profile generation failed for %s: %s", ename, e)
+            yield {"data": json.dumps({"type": "error", "message": f"Could not generate profile for {ename}."})}
+        yield {"data": json.dumps({"type": "done"})}
+
+    return EventSourceResponse(safe_sse_stream(gen()), headers={"X-Accel-Buffering": "no"})
