@@ -1960,7 +1960,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                 # Filtering HERE — before BOTH builders — keeps the inline [N] numbering and
                 # the source cards in lockstep: every [N] the model emits has a working card.
                 clickable = [r for r in results if _result_chunk_id(r)][:MAX_CITATIONS]
-                sources = build_source_list(clickable)
+                if not _guruji_mode: sources = build_source_list(clickable)
                 rag_context = build_rag_context(clickable)
 
                 # Append Guruji's relevant darshans as cognition context (not citable).
