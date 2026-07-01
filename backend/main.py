@@ -2174,7 +2174,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         quick_full = []
         try:
             yield {"data": json.dumps({"type": "phase", "phase": "light"})}
-            async for item in stream_llm(light_msgs, temperature=min(gen_temperature, 0.6), req_model=target_model):
+            async for item in stream_llm(light_msgs, temperature=min(gen_temperature, 0.6), req_model="gemini:" if os.getenv("GEMINI_API_KEY") else target_model):
                 if await req.is_disconnected():
                     break
                 if isinstance(item, dict):
@@ -2196,7 +2196,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                 followup = list(messages)
                 followup.append({"role": "assistant", "content": "".join(quick_full)})
                 followup.append({"role": "user", "content": f"Add 1-2 verse citations from:\n{cite_ctx}\nKeep it brief — one sentence per citation."})
-                async for item in stream_llm(followup, temperature=0.5, req_model=target_model):
+                async for item in stream_llm(followup, temperature=0.5, req_model="gemini:" if os.getenv("GEMINI_API_KEY") else target_model):
                     if await req.is_disconnected():
                         break
                     if isinstance(item, dict):
