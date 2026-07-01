@@ -1387,7 +1387,7 @@ export function ChatInterface({ conversationId, initialQuery, defaultMode, onMod
                         type="button"
                         onClick={() => toggleExpanded(answer!.id)}
                         aria-expanded={!collapsed}
-                        className="group flex max-w-[85%] flex-col items-center gap-1.5 text-center"
+                        className="group question-chip flex max-w-[85%] flex-col items-center gap-1.5 text-center"
                         style={{ opacity: collapsed ? 0.45 : 0.9, transition: 'opacity 0.4s ease' }}
                       >
                         <span
@@ -1447,7 +1447,7 @@ export function ChatInterface({ conversationId, initialQuery, defaultMode, onMod
                       stream cross-dissolves in on the same envelope. */}
                   <div className="flex w-full max-w-4xl flex-col items-center gap-3">
                     <div
-                      className="answer-manifest w-full px-4 py-4 sm:px-6 sm:py-5"
+                      className="answer-manifest answer-glass w-full px-4 py-4 sm:px-6 sm:py-5"
                       style={{ color: msg.error ? '#f87171' : '#e8e1d4' }}
                     >
                     {msg.pending && !msg.content ? (
