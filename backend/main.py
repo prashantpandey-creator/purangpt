@@ -836,6 +836,11 @@ _BURST_EXEMPT_PREFIXES = ("/api/status", "/api/monitor", "/static", "/favicon")
 _BURST_LIMIT = int(os.getenv("BURST_LIMIT", "8"))
 _BURST_WINDOW = float(os.getenv("BURST_WINDOW", "1"))
 
+# Per-IP concurrent connection cap for streaming endpoints. Prevents a single
+# IP from exhausting all gunicorn workers with long-held SSE connections.
+_MAX_CONCURRENT_STREAMS = int(os.getenv("MAX_CONCURRENT_STREAMS", "4"))
+_concurrent: Dict[str, int] = {}
+
 
 @app.middleware("http")
 async def burst_rate_limit(request: Request, call_next):
@@ -854,6 +859,38 @@ async def burst_rate_limit(request: Request, call_next):
             headers={"Retry-After": "1"},
         )
     return await call_next(request)
+
+
+@app.middleware("http")
+async def concurrency_limit(request: Request, call_next):
+    """Reject streaming requests when an IP already holds too many open connections."""
+    path = request.url.path
+    # Only gate streaming endpoints — short-lived requests don't hold workers
+    if path not in ("/api/chat",):
+        return await call_next(request)
+
+    ip = client_ip_from_scope(dict(request.headers))
+    current = _concurrent.get(ip, 0)
+    if current >= _MAX_CONCURRENT_STREAMS:
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "Server busy — too many concurrent requests. Retry shortly."},
+            headers={"Retry-After": "2"},
+        )
+    _concurrent[ip] = current + 1
+    try:
+        response = await call_next(request)
+        return response
+    finally:
+        cnt = _concurrent.get(ip, 1) - 1
+        if cnt <= 0:
+            _concurrent.pop(ip, None)
+        else:
+            _concurrent[ip] = cnt
+        # Garbage-collect stale entries periodically
+        if len(_concurrent) > 500:
+            _concurrent.clear()
+
 
 if FRONTEND_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
@@ -2678,15 +2715,25 @@ async def get_chapter(text_id: str, chapter: int, limit: int = 500):
 
 
 # ── Illuminate (the reading edition) ───────────────────────────────────────────
-# Turns a chapter's raw verses into a beautiful Markdown edition: each verse numbered,
-# the Sanskrit broken at pada boundaries, a faithful translation beneath (in the
-# seeker's language), speaker attributions for dialogue. Same shape as the guide intro:
-# one LLM pass per (text, chapter, language, offset), cached forever after.
-ILLUMINATE_SYSTEM = """You are formatting a chapter of Hindu scripture into a beautiful, readable edition. You receive raw verses — romanized Sanskrit (IAST), often cluttered with editorial markup ($ & % //, inline markers like bhp_01.01.001, scrape junk). Render them as clean GitHub-flavored Markdown.
+# V2: Three display modes — romanized (IAST, default), devanagari (Devanagari script),
+# translation (translation only, no Sanskrit). Every edition opens with a chapter
+# summary (2-4 sentences: what happens, key themes, who speaks).
+# One LLM pass per (text, chapter, lang, display, offset), cached forever after.
+ILLUMINATE_SYSTEM = """You are formatting a chapter of Hindu scripture into a beautiful, readable edition. You receive raw verses — {script_description}. Render them as clean GitHub-flavored Markdown.
 
-For each verse, in order:
+STEP 1 — Chapter Summary. Read all verses below. Write a 2-4 sentence summary under a ## Chapter Summary heading covering:
+- What happens in this passage (key events, dialogue, revelations)
+- The main themes or teachings
+- Who speaks and to whom
+
+STEP 2 — Format each verse in order. The display mode is: {display_mode}
+- romanized: Sanskrit in *italics* (IAST), then translation beneath
+- devanagari: Sanskrit in *italics* (Devanagari script), then translation beneath
+- translation: Translation ONLY — do NOT include the Sanskrit line. Skip straight to the translation.
+
+For each verse:
 - A bold verse label on its own line: the verse's reference number if discernible (e.g. **1.1**), else a running count.
-- The Sanskrit in *italics*, broken into short lines at natural pada (metrical-foot) boundaries — never one long run. Strip ALL editorial markup and inline markers.
+{sanskrit_instruction}
 - Immediately below, a faithful, flowing translation in {language}. Translate the meaning fully; do not merely transliterate, do not omit.
 
 Rules:
@@ -2695,28 +2742,74 @@ Rules:
 - Be faithful. Translate what is there; never invent verses, events, or numbers.
 - Output ONLY the Markdown — no preamble, no "here is", no closing remark."""
 
+# Pre-built display-mode fragments so we don't string-replace inside the LLM prompt
+# at call time (the entire system content is assembled once per request).
+_ILLUM_DISPLAY = {
+    "romanized": {
+        "script_description": "romanized Sanskrit (IAST), often cluttered with editorial markup ($ & % //, inline markers like bhp_01.01.001, scrape junk)",
+        "sanskrit_instruction": "- The Sanskrit in *italics*, broken into short lines at natural pada (metrical-foot) boundaries — never one long run. Strip ALL editorial markup and inline markers.",
+    },
+    "devanagari": {
+        "script_description": "Devanagari Sanskrit verses, clean and ready to format",
+        "sanskrit_instruction": "- The Sanskrit in *italics*, broken into short lines at natural pada (metrical-foot) boundaries — never one long run.",
+    },
+    "translation": {
+        "script_description": "Sanskrit verses (for context only — you will produce only translations)",
+        "sanskrit_instruction": "- OMIT the Sanskrit line entirely. Start directly with the translation after the verse label.",
+    },
+}
+
 _ILLUMINATE_CACHE: dict[str, str] = {}
 
 @app.get("/api/illuminate/{text_id}/{chapter}")
-async def illuminate_chapter(text_id: str, chapter: int, lang: str = "en", offset: int = 0, limit: int = 24):
-    """Stream a beautifully-formatted, translated Markdown edition of a chapter slice.
+async def illuminate_chapter(text_id: str, chapter: int, lang: str = "en", display: str = "romanized", offset: int = 0, limit: int = 24):
+    """Stream a beautifully-formatted Markdown edition of a chapter slice.
 
-    One LLM pass per (text, chapter, lang, offset), cached in-memory; a cache hit
-    streams instantly. `lang` honors the global language selector (en/hi/ru)."""
+    display modes:
+      - romanized (default) — IAST Sanskrit italicized + translation
+      - devanagari — Devanagari Sanskrit (converted server-side) + translation
+      - translation — translation only, no Sanskrit
+
+    Every edition opens with an LLM-generated chapter summary."""
     if not state.searcher or not state.searcher.is_ready:
         raise HTTPException(503, "Search not ready")
 
     _lang_name = {"en": "English", "hi": "Hindi", "ru": "Russian"}.get((lang or "en").lower(), "English")
+    display = display.lower()
+    if display not in _ILLUM_DISPLAY:
+        display = "romanized"
+
     limit = max(1, min(limit, 40))
-    cache_key = f"{text_id}:{chapter}:{lang}:{offset}:{limit}"
+    cache_key = f"{text_id}:{chapter}:{lang}:{display}:{offset}:{limit}"
 
     all_verses = await state.searcher.get_chapter_verses(text_id, chapter, offset + limit)
     verses = all_verses[offset:offset + limit]
     if not verses:
         raise HTTPException(404, "No verses to illuminate")
-    raw = "\n".join((v.get("text") or "").strip() for v in verses if (v.get("text") or "").strip())
 
-    system_content = ILLUMINATE_SYSTEM.replace("{language}", _lang_name)
+    raw_lines: list[str] = []
+    for v in verses:
+        t = (v.get("text") or "").strip()
+        if not t:
+            continue
+        # Devanagari mode: convert IAST → Devanagari server-side before feeding the LLM
+        if display == "devanagari":
+            from backend.query_processor import _to_devanagari
+            dv = _to_devanagari(t)
+            raw_lines.append(dv if dv else t)  # fall back to IAST if conversion fails
+        else:
+            raw_lines.append(t)
+    raw = "\n".join(raw_lines)
+    if not raw:
+        raise HTTPException(404, "No verses to illuminate")
+
+    dc = _ILLUM_DISPLAY[display]
+    system_content = ILLUMINATE_SYSTEM.format(
+        language=_lang_name,
+        display_mode=display,
+        script_description=dc["script_description"],
+        sanskrit_instruction=dc["sanskrit_instruction"],
+    )
     messages = [
         {"role": "system", "content": system_content},
         {"role": "user", "content": f"Render these raw verses as a beautiful edition in {_lang_name}:\n\n{raw}"},
@@ -3752,3 +3845,279 @@ async def get_library_text_content(text_id: str):
         raise HTTPException(404, "Text not found")
         
     return FileResponse(path=str(text_file_path), media_type="text/plain", filename=text_file_path.name)
+
+
+# ── Graph Explorer API ────────────────────────────────────────────────────────
+# Exposes the Puranic entity graph (9,006 entities, 24,918 edges, 613 decode keys)
+# for the frontend graph explorer at /library/graph. Everything is in-memory,
+# loaded once at startup — zero-latency, no LLM calls.
+
+_GRAPH_CACHE: dict[str, Any] | None = None  # singleton: loaded on first request
+
+
+def _load_graph() -> dict[str, Any]:
+    """Lazy-load the graph manifest + RAM keys. Cached forever after first hit."""
+    global _GRAPH_CACHE
+    if _GRAPH_CACHE is not None:
+        return _GRAPH_CACHE
+    import os as _os
+    from tools.read_pass import recall as _recall
+    from tools.read_pass.recall import Memory as _Memory
+    gp = _os.path.join("tools", "read_pass", "out", "graph_manifest.json")
+    rp = _os.path.join("tools", "read_pass", "out", "guruji_ram.json")
+    mem = _Memory.load(gp, rp)
+    # Build lookup indices
+    entity_by_id: dict[str, dict] = {}
+    edges_by_entity: dict[str, list[dict]] = {}
+    for e in mem.entities:
+        eid = e.get("id", "")
+        if eid:
+            entity_by_id[eid] = e
+    for edge in mem.edges:
+        for side in ("src", "dst"):
+            eid = edge.get(side, "")
+            if eid:
+                edges_by_entity.setdefault(eid, []).append(edge)
+    # Decode key lookup: symbol → meaning
+    key_map: dict[str, str] = {}
+    for k in mem.keys:
+        sym = (k.get("symbol") or "").strip()
+        if sym:
+            key_map[sym.lower()] = k.get("meaning", "")
+
+    # IAST transliteration aliases — same entity stored under alternate spellings.
+    # Canonical → [aliases]. The graph has them as separate nodes because the
+    # extraction pipeline didn't normalize diacritics. We merge at lookup time.
+    _IAST_ALIASES: dict[str, list[str]] = {
+        "vishnu": ["visnu", "viṣṇu"],
+        "shiva": ["siva", "śiva", "śiva"],
+        "daksha": ["daksa", "dakṣa"],
+        "kashyapa": ["kasyapa", "kaśyapa", "kāśyapa"],
+        "purusha": ["purusa", "puruṣa"],
+        "krishna": ["krsna", "kṛṣṇa", "krsṇa"],
+        "ganesha": ["ganesa", "gaṇeśa", "ganeśa"],
+        "lakshmi": ["laksmi", "lakṣmī", "laksmī"],
+        "parvati": ["parvati", "pārvatī"],
+        "sarasvati": ["sarasvati", "sarasvatī"],
+        "hanuman": ["hanuman", "hanumān"],
+        "surya": ["surya", "sūrya"],
+        "bhrigu": ["bhrgu", "bhṛgu"],
+        "angiras": ["angiras", "aṅgiras"],
+        "vashistha": ["vasistha", "vasiṣṭha", "vaśiṣṭha"],
+        "kartikeya": ["kartikeya", "kārttikeya"],
+    }
+    # Build reverse map: alias → canonical
+    alias_to_canonical: dict[str, str] = {}
+    for canonical, aliases in _IAST_ALIASES.items():
+        for a in aliases:
+            alias_to_canonical[a] = canonical
+
+    _GRAPH_CACHE = {
+        "entities": mem.entities,
+        "edges": mem.edges,
+        "keys": mem.keys,
+        "entity_by_id": entity_by_id,
+        "edges_by_entity": edges_by_entity,
+        "key_map": key_map,
+        "alias_to_canonical": alias_to_canonical,
+        "canonical_aliases": _IAST_ALIASES,
+        "total_entities": len(mem.entities),
+        "total_edges": len(mem.edges),
+        "total_keys": len(mem.keys),
+    }
+    return _GRAPH_CACHE
+
+
+@app.get("/api/graph/stats")
+async def graph_stats():
+    """Entity/edge counts, kind distribution, top hubs."""
+    g = _load_graph()
+    kinds: dict[str, int] = {}
+    degree: list[tuple[str, str, int]] = []  # (id, name, degree)
+    for e in g["entities"]:
+        k = (e.get("kind") or "untyped").lower()
+        kinds[k] = kinds.get(k, 0) + 1
+        eid = e.get("id", "")
+        deg = len(g["edges_by_entity"].get(eid, []))
+        if deg > 0:
+            degree.append((eid, e.get("name", eid), deg))
+    degree.sort(key=lambda x: -x[2])
+    return {
+        "total_entities": g["total_entities"],
+        "total_edges": g["total_edges"],
+        "total_keys": g["total_keys"],
+        "kinds": kinds,
+        "top_hubs": degree[:20],
+    }
+
+
+@app.get("/api/graph/entities")
+async def graph_list_entities(
+    kind: str | None = None,
+    q: str | None = None,
+    sort: str = "degree",
+    limit: int = 24,
+    offset: int = 0,
+    min_degree: int = 0,
+):
+    """List entities with optional kind filter, text search, sorting, and degree floor.
+
+    min_degree=3 (default in frontend) hides the 70.7% near-orphans (≤2 edges).
+    Transliteration aliases (Visnu, Siva) are excluded — only canonical forms appear."""
+    g = _load_graph()
+    results: list[dict] = []
+
+    for e in g["entities"]:
+        eid = e.get("id", "")
+        # Skip alias nodes — they're surfaced only via the canonical entity's merged view
+        if eid.lower() in g["alias_to_canonical"]:
+            continue
+        ekind = (e.get("kind") or "untyped").lower()
+        if kind and ekind != kind.lower():
+            continue
+        if q:
+            ql = q.lower()
+            name = (e.get("name") or "").lower()
+            forms = [f.lower() for f in (e.get("all_forms") or [])]
+            if ql not in name and not any(ql in f for f in forms):
+                continue
+        deg = len(g["edges_by_entity"].get(eid, []))
+        if deg < min_degree:
+            continue
+        results.append({
+            "id": eid,
+            "name": e.get("name", eid),
+            "kind": ekind,
+            "all_forms": (e.get("all_forms") or [])[:5],
+            "degree": deg,
+            "has_key": (e.get("name") or "").lower() in g["key_map"],
+        })
+
+    if sort == "degree":
+        results.sort(key=lambda x: -x["degree"])
+    elif sort == "name":
+        results.sort(key=lambda x: x["name"].lower())
+
+    total = len(results)
+    page = results[offset:offset + limit]
+    return {"entities": page, "total": total, "offset": offset, "limit": limit}
+
+
+@app.get("/api/graph/entities/{entity_id}")
+async def graph_get_entity(entity_id: str):
+    """Single entity with full relationships, decode keys, and verse ranges.
+
+    Resolves IAST transliteration aliases (Vishnu/Visnu, Shiva/Siva) transparently —
+    merges edges from all spelling variants into the canonical entity."""
+    g = _load_graph()
+    eid = entity_id.lower()
+
+    # Resolve alias → canonical
+    canonical = g["alias_to_canonical"].get(eid, eid)
+    entity = g["entity_by_id"].get(canonical)
+    if not entity:
+        raise HTTPException(404, f"Entity '{entity_id}' not found in graph")
+
+    # Collect all IDs that map to this canonical (canonical + all its aliases)
+    all_ids = {canonical}
+    all_ids.update(g["canonical_aliases"].get(canonical, []))
+    # Also include any ID that maps TO this canonical
+    for alias, canon in g["alias_to_canonical"].items():
+        if canon == canonical:
+            all_ids.add(alias)
+
+    ename = entity.get("name", canonical)
+
+    # Decode key — check canonical name + all_forms
+    decode = g["key_map"].get(ename.lower(), "")
+    if not decode:
+        for form in entity.get("all_forms", []):
+            decode = g["key_map"].get(form.lower(), "")
+            if decode:
+                break
+
+    # Merge relationships from all spelling variants
+    rels: list[dict] = []
+    seen: set[str] = set()
+    for eid_variant in all_ids:
+        for edge in g["edges_by_entity"].get(eid_variant, []):
+            other_id = edge["dst"] if edge["src"] == eid_variant else edge["src"]
+            # Resolve other side's aliases too — prefer canonical
+            other_canon = g["alias_to_canonical"].get(other_id.lower(), other_id)
+            if other_canon in seen:
+                continue
+            seen.add(other_canon)
+            other = g["entity_by_id"].get(other_canon, g["entity_by_id"].get(other_id, {}))
+            rels.append({
+                "entity_id": other_canon,
+                "name": other.get("name", other_canon),
+                "kind": (other.get("kind") or "untyped").lower(),
+                "relation": edge.get("rel", "related_to"),
+                "direction": "out" if edge["src"] == eid_variant else "in",
+                "verse_ranges": edge.get("verse_ranges", [])[:3],
+            })
+
+    # Sort relationships: direct family first, then by degree
+    family = {"father", "mother", "son", "daughter", "brother", "wife", "husband"}
+    rels.sort(key=lambda r: (0 if r["relation"] in family else 1, r["name"].lower()))
+
+    return {
+        "id": canonical,
+        "name": ename,
+        "kind": (entity.get("kind") or "untyped").lower(),
+        "all_forms": entity.get("all_forms", []),
+        "chapters": (entity.get("chapters") or [])[:10],
+        "verse_ranges": (entity.get("verse_ranges") or [])[:20],
+        "decode_key": decode,
+        "degree": len(rels),
+        "relationships": rels[:30],
+    }
+
+
+@app.get("/api/graph/path")
+async def graph_find_path(_from: str, to: str):
+    """BFS shortest path between two entities. Resolves IAST aliases transparently."""
+    g = _load_graph()
+    _from = g["alias_to_canonical"].get(_from.lower(), _from.lower())
+    to = g["alias_to_canonical"].get(to.lower(), to.lower())
+    if _from not in g["entity_by_id"]:
+        raise HTTPException(404, f"Entity '{_from}' not found")
+    if to not in g["entity_by_id"]:
+        raise HTTPException(404, f"Entity '{to}' not found")
+
+    # Build adjacency
+    adj: dict[str, list[tuple[str, str]]] = {}
+    for edge in g["edges"]:
+        s, d, rel = edge.get("src", ""), edge.get("dst", ""), edge.get("rel", "related_to")
+        if s and d:
+            adj.setdefault(s, []).append((d, rel))
+            adj.setdefault(d, []).append((s, f"← {rel}"))
+
+    # BFS
+    from collections import deque
+    q = deque([(_from, [_from])])
+    visited = {_from}
+    while q:
+        node, path = q.popleft()
+        if node == to:
+            # Resolve path to entity names + edge relations
+            steps: list[dict] = []
+            for i, nid in enumerate(path):
+                e = g["entity_by_id"].get(nid, {})
+                steps.append({
+                    "id": nid,
+                    "name": e.get("name", nid),
+                    "kind": (e.get("kind") or "untyped").lower(),
+                })
+                if i < len(path) - 1:
+                    nxt = path[i + 1]
+                    for nb, rel in adj.get(nid, []):
+                        if nb == nxt:
+                            steps[-1]["via"] = rel
+                            break
+            return {"found": True, "length": len(path) - 1, "path": steps}
+        for nb, rel in adj.get(node, []):
+            if nb not in visited:
+                visited.add(nb)
+                q.append((nb, path + [nb]))
+    return {"found": False, "path": []}

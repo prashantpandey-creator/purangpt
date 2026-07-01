@@ -17,7 +17,7 @@ import os
 
 bind = f"0.0.0.0:{os.getenv('PORT', '8000')}"
 worker_class = "uvicorn.workers.UvicornWorker"
-workers = int(os.getenv("WEB_CONCURRENCY", "2"))
+workers = int(os.getenv("WEB_CONCURRENCY", "4"))
 timeout = 180
 graceful_timeout = 30
 worker_tmp_dir = "/dev/shm"
