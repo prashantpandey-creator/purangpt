@@ -175,3 +175,54 @@ Defined in `backend/main.py` (`PROMPTS` dict), advertised via `GET /api/modes`, 
 GitHub Actions (`.github/workflows/deploy.yml`) triggers on push to `main` when backend files change. It SSHes to Hetzner (`204.168.176.229`), hard-resets the tree, and rebuilds the Docker container. Requires `VPS_SSH_KEY` secret on `prashantpandey-creator/purangpt`.
 
 **Never edit files directly on the server** — it dirties the git tree and silently blocks future deploys.
+
+---
+
+## PuranGPT Architecture — Vyasa Three-Stage Compiler
+
+### Knowledge Sources (FIELD / Kshetra)
+- **Puranic Graph**: 9,006 entities, 24,918 edges (Pancha Lakshana mapped)
+- **Verse Database**: 303,921 verses (pgvector, ILIKE-accessible)
+- **Guruji Darshans**: Sharma decode lens + commentary
+- **Decode Keys**: Cross-textual pattern matching (613 keys)
+
+### Three-Stage Pipeline (KNOWER / Kshetrajna)
+
+
+
+### Two-Path Query Flow
+
+| Mode | Graph Depth | Latency | What happens |
+|------|-------------|---------|-------------|
+| **Normal** | 1-2 hop neighbors | 1-2s | Graph context injected, LLM answers from graph + verses |
+| **Deep Insight (◈)** | 3-5 hop + decode keys | 3-5s | Extended traversal, cross-textual patterns, Samvada format |
+
+**Never**: LLM answers from raw training data. Always graph-grounded.
+
+### Deployment Pipeline
+
+
+
+### Repos
+-  — Python backend (FastAPI + DeepSeek)
+-  — Next.js frontend (TypeScript)
+
+### Key Env Vars
+-  — Skip embeddings, use graph + LLM judge
+-  — Graph memory always active
+-  — LLM picks verses from ILIKE candidates
+
+### Active Caches
+- Expansion: in-memory (10min) + Redis (7 days)
+- RAG results: in-memory (5min TTL, 128 entries)
+
+### Latency Targets
+- Instant ack (॥): <1s
+- Instant preview card: <2s
+- Normal answer: 1-3s TTFT
+- Deep Insight: 3-5s TTFT
+
+### Vyasa Suta Parampara
+
+
+The model is Suta — it recites from the graph. It doesn't invent. Citations are the text speaking through the model, verified by the Witness stage.
