@@ -22,6 +22,7 @@ import time
 import unicodedata
 from collections import defaultdict
 import threading
+import threading
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, AsyncGenerator, Dict, List, Optional
@@ -46,6 +47,24 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s — %(message)s")
 logger = logging.getLogger("purangpt.backend")
+
+# Query result cache — instant for repeat searches within 5 min
+_rag_cache = {}
+_rag_cache_lock = threading.Lock()
+
+def _rag_cache_get(key):
+    with _rag_cache_lock:
+        e = _rag_cache.get(key)
+        if e and (time.time() - e[0]) < 300:
+            return e[1]
+    return None
+
+def _rag_cache_set(key, results):
+    with _rag_cache_lock:
+        if len(_rag_cache) > 128:
+            oldest = min(_rag_cache, key=lambda k: _rag_cache[k][0])
+            del _rag_cache[oldest]
+        _rag_cache[key] = (time.time(), results)
 
 # Query result cache — instant for repeat searches within 5 min
 _rag_cache = {}
@@ -2013,12 +2032,9 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         yield {"data": json.dumps({"type": "sources", "sources": all_sources})}
 
         # 3. Build conversation messages with history
-        # Re-fetch to get the latest state (concurrent requests may have updated it).
         fresh_session = session_manager.get_session(session_id, user_id, guest_id)
         history    = fresh_session.get("history", [])
 
-        # Single adaptive prompt — the LLM self-selects its register (knowledge-seeking
-        # vs heart-speaking) per query. No mode-based prompt switching.
         history_str = format_history_guide(history) if history else ""
         prompt_tpl = UNIFIED_SYSTEM
 
@@ -2147,20 +2163,49 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         if visual_form and user and user.get("role") in ("pro", "scholar", "admin"):
             yield {"data": json.dumps({"type": "visual", "form": visual_form})}
 
-        full_response = []
+        # Phase 1: Quick light answer — starts streaming immediately.
+        # The seeker sees tokens within 3-5s instead of 8-15s.
+        # Phase 2 (citations) follows automatically if RAG found sources.
+        light_msgs = list(messages)  # shallow copy
+        # Add a brevity directive so the light answer stays concise
+        light_msgs.insert(-1, {"role": "system", "content": "Answer briefly in 2-3 lines. Be warm and direct."})
+
+        quick_full = []
         try:
-            async for item in stream_llm(messages, temperature=gen_temperature, req_model=target_model):
+            yield {"data": json.dumps({"type": "phase", "phase": "light"})}
+            async for item in stream_llm(light_msgs, temperature=min(gen_temperature, 0.6), req_model=target_model):
                 if await req.is_disconnected():
                     break
                 if isinstance(item, dict):
                     yield {"data": json.dumps(item)}
                 else:
-                    full_response.append(item)
+                    quick_full.append(item)
                     yield {"data": json.dumps({"type": "token", "content": item})}
         except Exception as e:
-            logger.error("LLM stream error: %s", e)
+            logger.error("Light phase stream error: %s", e)
             yield {"data": json.dumps({"type": "error", "message": str(e)})}
             return
+
+        # Phase 2: If RAG found citable sources, add a brief cited follow-up.
+        # The user already read the light answer — this enriches with verse refs.
+        if sources and len(sources) > 0:
+            try:
+                yield {"data": json.dumps({"type": "phase", "phase": "deep"})}
+                cite_ctx = rag_context[:2500]  # compact
+                followup = list(messages)
+                followup.append({"role": "assistant", "content": "".join(quick_full)})
+                followup.append({"role": "user", "content": f"Add 1-2 verse citations from:\n{cite_ctx}\nKeep it brief — one sentence per citation."})
+                async for item in stream_llm(followup, temperature=0.5, req_model=target_model):
+                    if await req.is_disconnected():
+                        break
+                    if isinstance(item, dict):
+                        yield {"data": json.dumps(item)}
+                    else:
+                        yield {"data": json.dumps({"type": "token", "content": item})}
+            except Exception as e:
+                logger.error("Deep phase stream error: %s", e)
+
+        full_response = quick_full
 
 
         # 6. Save to session memory
