@@ -1811,42 +1811,47 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                     except Exception:
                         pass
 
-                _cache_key = f"{expansion.embed_phrase or expansion.original}|{request.top_k}|scripture"
-                _cached = _rag_cache_get(_cache_key)
-                if _cached is not None:
-                    results = _cached
-                    logger.info("RAG cache hit: %d results", len(results))
-                else:
-                    results = await state.searcher.hybrid_search(
+                async def _fetch_scripture():
+                    _cache_key = f"{expansion.embed_phrase or expansion.original}|{request.top_k}|scripture"
+                    _cached = _rag_cache_get(_cache_key)
+                    if _cached is not None:
+                        logger.info("RAG cache hit: %d results", len(_cached))
+                        return _cached
+                    _r = await state.searcher.hybrid_search(
                         query=expansion.original,
                         top_k=request.top_k,
                         filters=request.filters,
                         sharma_weighting=False,
                         embed_phrase=expansion.embed_phrase,
-                    fts_phrase=expansion.fts_phrase,
-                    semantic_weight=weight,
-                    corpus_type="scripture",  # filter: exclude yogic-discourse/commentary
-                    secondary_embed_phrase=expansion.devanagari_embed_phrase,
-                    iast_terms=([expansion.canonical] + expansion.synonyms[:3])
-                               if expansion.canonical else None,
-                    graph_gretil_patterns=_graph_gretil or None,
+                        fts_phrase=expansion.fts_phrase,
+                        semantic_weight=weight,
+                        corpus_type="scripture",
+                        secondary_embed_phrase=expansion.devanagari_embed_phrase,
+                        iast_terms=([expansion.canonical] + expansion.synonyms[:3])
+                                   if expansion.canonical else None,
+                        graph_gretil_patterns=_graph_gretil or None,
                     )
-                    _rag_cache_set(_cache_key, results)
+                    _rag_cache_set(_cache_key, _r)
+                    return _r
 
-                # Guruji channel — darshans/cognition context only. Runs in parallel.
-                # Not surfaced as citations; provides the Guru's own voice/worldview context.
-                guruji_results = await state.searcher.hybrid_search(
-                    query=expansion.original,
-                    top_k=4,
-                    filters=None,
-                    sharma_weighting=False,
-                    embed_phrase=expansion.embed_phrase,
-                    fts_phrase=expansion.fts_phrase,
-                    semantic_weight=weight,
-                    corpus_type="guruji",
-                    iast_terms=([expansion.canonical] + expansion.synonyms[:3])
-                               if expansion.canonical else None,
-                    graph_gretil_patterns=_graph_gretil or None,
+                async def _fetch_guruji():
+                    return await state.searcher.hybrid_search(
+                        query=expansion.original,
+                        top_k=4,
+                        filters=None,
+                        sharma_weighting=False,
+                        embed_phrase=expansion.embed_phrase,
+                        fts_phrase=expansion.fts_phrase,
+                        semantic_weight=weight,
+                        corpus_type="guruji",
+                        iast_terms=([expansion.canonical] + expansion.synonyms[:3])
+                                   if expansion.canonical else None,
+                        graph_gretil_patterns=_graph_gretil or None,
+                    )
+
+                # Launch scripture + guruji RAG in parallel — cuts RAG time in half
+                results, guruji_results = await asyncio.gather(
+                    _fetch_scripture(), _fetch_guruji()
                 )
 
                 # Multi-hop comparison — background task. Fires an LLM call to find
@@ -1887,6 +1892,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                         await asyncio.wait_for(_multi_hop_task, timeout=1.5)
                     except (asyncio.TimeoutError, Exception):
                         pass
+                _web_task = None  # will be assigned below if URLs found in query
 
                 # Await web fetch — inject fetched content as supplementary context.
                 if _web_task is not None:
@@ -1927,8 +1933,8 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         # 2.5 Web fetch — URL resolution only. Fires when the seeker pastes a
         # URL in their query. Auto-fetches and injects content as supplementary
         # context. No web search — the system's value is in the texts and graph.
-        _urls_in_query = re.findall(r'https?://[^\s]{5,}', actual_query)
         _web_task = None
+        _urls_in_query = re.findall(r"https?://[^s]{5,}", actual_query)
         if _urls_in_query and state.http_client:
             async def _fetch_web():
                 _fetched = []
