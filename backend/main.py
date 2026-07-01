@@ -935,6 +935,7 @@ class ChatRequest(BaseModel):
     verbosity:  Optional[str] = None       # "concise" | "balanced" | "detailed"
     address_as: Optional[str] = None       # what the assistant should call the user
     socratic:   bool = False               # seeker opts into Socratic challenge / dialectic mode
+    deep:       bool = False               # seeker wants deep cross-textual graph insight
     persona:    str = "shakti"              # who is speaking — registry slug (shakti | krishna | shiva | guruji | …)
     truncate_history_from_index: Optional[int] = None
 
