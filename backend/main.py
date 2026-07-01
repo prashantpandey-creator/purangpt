@@ -1819,7 +1819,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         rag_context = ""
         skt_results = []
         query_lower = actual_query.lower()
-        if not skip_rag and state.searcher and state.index_ready:
+        if not skip_rag and state.searcher and (state.index_ready or _guruji_mode):
             t_rag0 = time.time()
             # ── Guruji light RAG: ILIKE keyword verse fetch ───────────
             if _guruji_mode:
