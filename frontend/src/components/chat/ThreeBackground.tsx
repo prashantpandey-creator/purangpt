@@ -236,7 +236,7 @@ export default function ThreeBackground({
         position: "fixed",
         inset: 0,
         zIndex: 0,
-        background: `radial-gradient(ellipse 60% 80% at 50% ${voidCenter}, rgba(76,29,149,0.15) 0%, rgba(49,30,81,0.10) 40%, #000000 100%)`,
+        background: `radial-gradient(ellipse 50% 70% at 50% ${voidCenter}, #000000 0%, rgba(20,10,40,0.85) 25%, rgba(76,29,149,0.12) 55%, rgba(49,30,81,0.06) 75%, #000000 100%)`,
       }}
     />
     <Canvas
@@ -247,7 +247,7 @@ export default function ThreeBackground({
         position: "fixed",
         inset: 0,
         zIndex: 0,
-        background: `radial-gradient(ellipse 55% 70% at 50% ${voidCenter}, rgba(76,29,149,0.25) 0%, rgba(49,30,81,0.18) 35%, rgba(15,8,30,0.30) 65%, #000000 100%)`,
+        background: `radial-gradient(ellipse 45% 65% at 50% ${voidCenter}, #000000 0%, rgba(20,10,40,0.80) 20%, rgba(76,29,149,0.20) 50%, rgba(15,8,30,0.30) 70%, #000000 100%)`,
       }}
     >
       <BinduShader phase={phase} reduceMotion={reduceMotion} />
