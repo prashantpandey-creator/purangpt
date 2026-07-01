@@ -1827,7 +1827,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                 _qterms += expansion.synonyms[:3] if expansion.synonyms else []
                 _ilike = ["%" + t + "%" for t in _qterms if t and len(t) > 1]
                 if _ilike:
-                    sql = "SELECT id, content, metadata FROM purana_verses WHERE content ILIKE ANY($1::text[]) ORDER BY id LIMIT 20"
+                    sql = "SELECT id, content, metadata FROM purana_verses WHERE content ILIKE ANY($1::text[]) ORDER BY random() LIMIT 20"
                     async with state.searcher._pool.acquire() as _c:
                         _rows = await _c.fetch(sql, _ilike)
                     results = []
@@ -1850,7 +1850,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                     _qterms += expansion.synonyms[:3] if expansion.synonyms else []
                     _ilike = ['%' + t + '%' for t in _qterms if t and len(t) > 1]
                     if _ilike:
-                        sql = 'SELECT id, content, metadata FROM purana_verses WHERE content ILIKE ANY(' + '$1::text[]' + ') ORDER BY id LIMIT 20'
+                        sql = 'SELECT id, content, metadata FROM purana_verses WHERE content ILIKE ANY(' + '$1::text[]' + ') ORDER BY random() LIMIT 20'
                         async with state.searcher._pool.acquire() as _c:
                             _rows = await _c.fetch(sql, _ilike)
                         results = []
