@@ -1781,6 +1781,8 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         skip_rag = (expansion.engagement != "full")
         # Guruji mode: LLM speaks from its own scripture knowledge. No embeddings.
         _guruji_mode = os.getenv("GURUJI_MODE", "").strip() in ("1", "true", "yes")
+        # Always inject graph context — even in normal mode. Never raw LLM knowledge.
+        _want_graph = True  # graph is the primary knowledge source, always on
         if _guruji_mode:
             skip_rag = True  # Let the LLM cite from training memory
         yield {"data": json.dumps({"type": "token", "content": "॥ "})}  # instant ack
