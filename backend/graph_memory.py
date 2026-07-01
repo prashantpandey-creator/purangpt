@@ -39,7 +39,31 @@ _RAM_PATH = os.getenv("GRAPH_RAM_PATH", "tools/read_pass/out/guruji_ram.json")
 
 _memory = None          # lazy singleton (recall.Memory) — load once, reuse
 _load_failed = False    # remember a broken load; don't retry it every request
+_clusters = None        # lazy singleton — Louvain communities (Vyasa Pancha Lakshana)
+_cluster_entity_map = {} # entity → cluster_id lookup
 
+
+def _load_clusters():
+    """Load Louvain community clusters. Lazy singleton — loaded once, reused."""
+    global _clusters, _cluster_entity_map
+    if _clusters is not None:
+        return _clusters
+    try:
+        import json as _json
+        _cp = os.path.join(os.path.dirname(_GRAPH_PATH), "graph_clusters.json")
+        if not os.path.exists(_cp):
+            logger.warning("No cluster file at %s — run cluster_graph.py first", _cp)
+            return None
+        with open(_cp) as _f:
+            _data = _json.load(_f)
+        _clusters = _data.get("clusters", {})
+        _cluster_entity_map = _data.get("entity_cluster", {})
+        logger.info("Vyasa clusters loaded: %d communities, %d entities mapped",
+                    len(_clusters), len(_cluster_entity_map))
+        return _clusters
+    except Exception as _e:
+        logger.warning("Cluster load failed: %s", _e)
+        return None
 
 def _enabled(override: Optional[bool]) -> bool:
     """Flag gate. Explicit `enabled=` wins (for tests); else the env, default OFF."""
@@ -239,6 +263,25 @@ def build_graph_context(query: str, *, enabled: Optional[bool] = None) -> str:
         if not env.get("success"):
             return ""
         block = recall.render_context(env.get("data") or {})
+        # ── Vyasa Pancha Lakshana: cluster-aware context ────────────
+        _cl = _load_clusters()
+        if _cl and block:
+            _ent_ids = [e.get("id", "") for e in (env.get("data") or {}).get("entities", [])]
+            _cluster_ids = set()
+            for _eid in _ent_ids:
+                _cid = _cluster_entity_map.get(_eid)
+                if _cid is not None:
+                    _cluster_ids.add(str(_cid))
+            if _cluster_ids:
+                _cluster_lines = []
+                for _cid in sorted(_cluster_ids, key=lambda c: _cl.get(c, {}).get("size", 0), reverse=True)[:3]:
+                    _cinfo = _cl.get(_cid, {})
+                    if _cinfo:
+                        _cluster_lines.append(f"Community {_cinfo.get('label', _cid)} ({_cinfo.get('size', 0)} entities)")
+                if _cluster_lines:
+                    _cluster_ctx = "Belongs to knowledge communities:\n  " + "\n  ".join(_cluster_lines)
+                    block = block + "\n\n" + _cluster_ctx
+                    logger.info("Cluster context: %d communities added", len(_cluster_lines))
         # Lineage spine (the fix): one-hop recall drops the multi-hop guru chain, so
         # surface the REAL transmission line at the TOP — walk guru_of through every
         # recalled figure: Babaji → Lahiri → Tinkori → Satyacharan → Shailendra Sharma.
