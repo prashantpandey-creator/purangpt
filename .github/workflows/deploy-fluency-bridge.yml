@@ -8,8 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Deploy Fluency Bridge to Hetzner
-        uses: appleboy/ssh-action@v1
+      - uses: appleboy/ssh-action@v1
         with:
           host: 204.168.176.229
           username: root
@@ -19,23 +18,22 @@ jobs:
             cd /root/fluency-bridge
             git fetch origin main
             git reset --hard origin/main
-            git clean -fd
+            docker compose down -v 2>/dev/null || true
 
-            docker network inspect coolify >/dev/null 2>&1 || docker network create coolify
-            docker compose build --no-cache
-            docker compose down --remove-orphans 2>/dev/null || true
-            docker compose up -d
-            docker image prune -f
+            # Build just the backend
+            docker compose build --no-cache backend
+            docker compose up -d backend
+            sleep 5
 
-            echo "=== Container status ==="
-            docker compose ps
-            echo ""
-            echo "=== Backend logs ==="
-            docker logs fluency_bridge_backend --tail 20
-            echo ""
-            echo "=== Test backend directly ==="
-            sleep 2
-            docker exec fluency_bridge_frontend wget -q -O - http://backend:8080/api/waitlist || echo "FAILED to reach backend"
-            echo ""
-            echo "=== Done ==="
-            echo "Public: http://204.168.176.229:8088"
+            echo "=== STATUS ==="
+            docker ps -a --filter name=fluency_bridge_backend --format '{{.Status}} {{.Image}}'
+
+            echo "=== LOGS ==="
+            docker logs fluency_bridge_backend 2>&1 || true
+
+            echo "=== CRASH FILES ==="
+            docker cp fluency_bridge_backend:/tmp/stdout.log /tmp/stdout.log 2>/dev/null && cat /tmp/stdout.log || echo "NO STDOUT FILE"
+            docker cp fluency_bridge_backend:/tmp/stderr.log /tmp/stderr.log 2>/dev/null && cat /tmp/stderr.log || echo "NO STDERR FILE"
+
+            echo "=== DOCKER INSPECT ==="
+            docker inspect fluency_bridge_backend --format 'ExitCode: {{.State.ExitCode}} Error: {{.State.Error}} OOM: {{.State.OOMKilled}}'
