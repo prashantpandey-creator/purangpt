@@ -41,6 +41,7 @@ _memory = None          # lazy singleton (recall.Memory) — load once, reuse
 _load_failed = False    # remember a broken load; don't retry it every request
 _clusters = None        # lazy singleton — Louvain communities (Vyasa Pancha Lakshana)
 _cluster_entity_map = {} # entity → cluster_id lookup
+_cluster_regex = None  # pre-compiled for O(n) source text matching
 
 
 def _load_clusters():
@@ -69,6 +70,13 @@ def _load_clusters():
         _cluster_entity_map = _data.get("entity_cluster", {})
         logger.info("Vyasa clusters loaded: %d communities, %d entities mapped",
                     len(_clusters), len(_cluster_entity_map))
+        # Pre-compile word-boundary regex for O(n) entity matching in source text.
+        # Only include entities with len>3 to avoid false positives (e.g. "rama" in "paramatma").
+        global _cluster_regex
+        _names = sorted([re.escape(e) for e in _cluster_entity_map if len(e) > 3], key=len, reverse=True)
+        if _names:
+            _pattern = r'\b(' + '|'.join(_names) + r')\b'
+            _cluster_regex = re.compile(_pattern)
         return _clusters
     except Exception as _e:
         logger.warning("Cluster load failed: %s", _e)

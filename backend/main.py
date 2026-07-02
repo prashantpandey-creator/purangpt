@@ -2152,23 +2152,27 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
         else:
             grounding_quality = "ungrounded"
         # Find dominant cluster from graph context entities
+        # Uses pre-built word-boundary regex for O(n) matching (not O(n*m))
         _dominant_cluster = None
         try:
-            from backend.graph_memory import _cluster_entity_map as _cem
+            from backend.graph_memory import _cluster_entity_map as _cem, _cluster_regex
             _ents_found = set()
             for _s in all_sources:
                 _txt = _s.get("text", "") or _s.get("content", "")
-                # Match known entity names in the source text
-                for _ename in _cem:
-                    if _ename in _txt.lower() and len(_ename) > 3:
+                if not _txt:
+                    continue
+                _txt_lower = _txt.lower()
+                # Single regex pass over the source text — matches all entities at once
+                for _m in _cluster_regex.finditer(_txt_lower):
+                    _ename = _m.group(1)
+                    if _ename in _cem:
                         _ents_found.add(_ename)
             if _ents_found:
-                # Pick the cluster with most entity matches
                 from collections import Counter
                 _cc = Counter(str(_cem[e]) for e in _ents_found)
                 _dominant_cluster = _cc.most_common(1)[0][0]
-        except Exception:
-            pass
+        except Exception as _ce:
+            logger.warning("Cluster matching skipped: %s", _ce)
         yield {"data": json.dumps({"type": "sources", "sources": all_sources, "cluster_id": _dominant_cluster})}
 
         # 3. Build conversation messages with history
