@@ -36,7 +36,7 @@ networks:
 services:
   backend:
     build:
-      context: ./purangpt
+      context: .
     container_name: purangpt_backend
     env_file:
       - ./purangpt/.env            # backend secrets (VECTOR_DB_URL, DEEPSEEK_API_KEY, …)
@@ -121,6 +121,7 @@ services:
     networks:
       - default
       - coolify
+      - purangpt_default
     ports:
       - 3000:3000
     restart: unless-stopped
