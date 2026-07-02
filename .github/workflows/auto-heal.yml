@@ -1,0 +1,55 @@
+name: Auto-Healer
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping API Status
+        run: |
+          curl -f -m 15 https://purangpt.com/api/status
+
+  auto-fix-and-redeploy:
+    needs: health-check
+    if: failure()
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: write
+    steps:
+      - name: Auto-Fix Server State
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 204.168.176.229
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            echo "Running auto-fix on Hetzner..."
+            cd /root/purangpt || exit 1
+            
+            # 1. Fix potential Git corruption
+            rm -f .git/refs/remotes/origin/main
+            git gc --prune=now
+            
+            # 2. Force remove broken containers
+            docker rm -f purangpt_frontend purangpt_backend purangpt_redis 2>/dev/null || true
+            
+            # 3. Clean up disk space
+            docker image prune -af
+            
+            echo "Server state cleaned and ready for redeployment."
+
+      - name: Trigger Redeploy
+        uses: actions/github-script@v6
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy.yml',
+              ref: 'main'
+            });
