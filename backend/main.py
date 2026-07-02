@@ -1746,10 +1746,12 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
     # ── Deep Research Mode ──────────────────────────────────────────────────
     if request.mode == "deep":
         if user:
-            r_allowed, r_rem = check_research_limit(user.get("id"), user.get("role", "free"), is_byok=is_byok)
+            r_allowed, r_rem = await asyncio.to_thread(
+                check_research_limit, user.get("id"), user.get("role", "free"), is_byok=is_byok
+            )
             if not r_allowed:
                 raise HTTPException(403, "Daily deep research limit reached. Please upgrade to Pro or provide your own API key.")
-            increment_research_usage(user.get("id"))
+            await asyncio.to_thread(increment_research_usage, user.get("id"))
         else:
             raise HTTPException(401, "Please sign in to use Deep Research.")
             
@@ -4115,13 +4117,17 @@ async def graph_find_path(_from: str, to: str):
     if to not in g["entity_by_id"]:
         raise HTTPException(404, f"Entity '{to}' not found")
 
-    # Build adjacency
+    # Build adjacency — resolve aliases so edges stored under 'siva' route to 'shiva'
+    alias_map = g["alias_to_canonical"]
+    def _canon(eid: str) -> str:
+        return alias_map.get(eid.lower(), eid)
     adj: dict[str, list[tuple[str, str]]] = {}
     for edge in g["edges"]:
         s, d, rel = edge.get("src", ""), edge.get("dst", ""), edge.get("rel", "related_to")
         if s and d:
-            adj.setdefault(s, []).append((d, rel))
-            adj.setdefault(d, []).append((s, f"← {rel}"))
+            cs, cd = _canon(s), _canon(d)
+            adj.setdefault(cs, []).append((cd, rel))
+            adj.setdefault(cd, []).append((cs, f"← {rel}"))
 
     # BFS
     from collections import deque
@@ -4163,20 +4169,25 @@ _WARM_ENTITIES = [
 
 async def _warm_profiles():
     """Generate profiles for top hub entities at startup. Fire-and-forget —
-    fails silently, never blocks startup. Warms the in-memory cache so the
-    first seeker to browse these entities gets an instant hit."""
+    fails silently, never blocks startup. Calls the profile endpoint via
+    local HTTP so the SSE stream is properly consumed and cache populated."""
     try:
         import asyncio as _asyncio
-        # Small delay — let the server finish startup first
-        await _asyncio.sleep(5)
+        await _asyncio.sleep(8)  # let server fully start
+        port = os.getenv("PORT", "8000")
         for eid in _WARM_ENTITIES:
             try:
-                # Call the profile endpoint logic directly (no HTTP overhead)
-                await graph_entity_profile(eid)
+                async with aiohttp.ClientSession() as sess:
+                    async with sess.get(
+                        f"http://localhost:{port}/api/graph/entities/{eid}/profile",
+                        timeout=aiohttp.ClientTimeout(total=30),
+                    ) as resp:
+                        async for _chunk in resp.content.iter_any():
+                            pass  # drain SSE stream to populate _PROFILE_CACHE
             except Exception:
-                pass  # individual warm failures are fine
+                pass
     except Exception:
-        pass  # entire warm phase failing must never block startup
+        pass
 
 
 _ENTITY_PROFILE_SYSTEM = """You are a scholar of the Puranas writing a character profile. You receive raw Sanskrit verses (romanized IAST) that mention an entity — a deity, sage, king, demon, or concept from the Puranic corpus. Synthesize them into a rich, accurate profile.
