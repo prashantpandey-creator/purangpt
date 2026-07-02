@@ -39,7 +39,7 @@ services:
       context: .
     container_name: purangpt_backend
     env_file:
-      - ./purangpt/.env            # backend secrets (VECTOR_DB_URL, DEEPSEEK_API_KEY, …)
+      - ./.env            # backend secrets (VECTOR_DB_URL, DEEPSEEK_API_KEY, …)
     environment:
       - TOKENIZERS_PARALLELISM=false
       - HUGGINGFACE_HUB_CACHE=/app/data/.cache
