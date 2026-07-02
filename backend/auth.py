@@ -46,8 +46,34 @@ def _verify_google_token(access_token: str) -> Optional[dict]:
         return None
 
 
+def _verify_x_token(access_token: str) -> Optional[dict]:
+    """Verify an X (Twitter) OAuth 2.0 access token via X's /users/me endpoint."""
+    try:
+        resp = requests.get(
+            "https://api.x.com/2/users/me",
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=5,
+        )
+        if not resp.ok:
+            return None
+        data = resp.json().get("data", {})
+        x_id = data.get("id")
+        if not x_id:
+            return None
+        user_id = f"x:{x_id}"
+        email = None  # X OAuth 2.0 doesn't expose email
+        from backend.db_client import create_profile_if_not_exists
+        profile = create_profile_if_not_exists(user_id, email)
+        role = profile.get("role", "free") if profile else "free"
+        return {"id": user_id, "role": role, "email": email,
+                "name": data.get("name"), "username": data.get("username")}
+    except Exception as e:
+        logger.error(f"X token verification failed: {e}")
+        return None
+
+
 def get_current_user(credentials: HTTPAuthorizationCredentials = Security(security)) -> Optional[dict]:
-    """Verify Bearer token. Google OAuth for web, Apple Session for iOS."""
+    """Verify Bearer token. Google OAuth, X OAuth, or Apple Session (iOS)."""
 
     if not credentials:
         return None
@@ -64,8 +90,13 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Security(securi
     except Exception:
         pass
 
-    # Google OAuth — the only web auth provider
-    return _verify_google_token(token)
+    # Google OAuth — default web provider
+    user = _verify_google_token(token)
+    if user:
+        return user
+
+    # X (Twitter) OAuth 2.0 — secondary web provider
+    return _verify_x_token(token)
 
 
 def require_auth(user: Optional[dict] = Depends(get_current_user)) -> dict:
