@@ -202,8 +202,8 @@ def update_profile(user_id: str, data: dict):
         conn.close()
 
 # Free users get this many tokens per day (prompt + completion combined).
-# ~4 chars ≈ 1 token; 50k tokens ≈ 50-100 typical exchanges.
-FREE_DAILY_TOKENS = int(os.getenv("FREE_DAILY_TOKENS", "50000"))
+# ~4 chars ≈ 1 token; 75k tokens ≈ 75-150 typical exchanges.
+FREE_DAILY_TOKENS = int(os.getenv("FREE_DAILY_TOKENS", "75000"))
 
 def check_rate_limit(user_id: str, role: str, is_byok: bool = False) -> tuple[bool, int, int]:
     """Check if the user has exceeded their daily token budget.
@@ -257,7 +257,7 @@ def consume_message_unit(user_id: str, role: str, is_byok: bool = False) -> tupl
     if role in ("pro", "scholar", "admin") or is_byok:
         return True, 999999
 
-    limit = 10  # Free tier daily limit (mirrors check_rate_limit)
+    limit = 50  # Free tier daily message count (mirrors guest GUEST_DAILY_LIMIT)
     conn = get_db_conn()
     if not conn:
         return True, limit  # fail-open
