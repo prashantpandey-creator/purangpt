@@ -152,6 +152,42 @@ def _get_forms_index() -> dict:
     return idx
 
 
+def query_mentions_entities(query: str, min_matches: int = 1) -> list[str]:
+    """Lightweight entity-name check — no recall, just forms-index lookup.
+
+    Returns entity names mentioned in the query. Use this to decide whether to
+    run full graph recall (build_graph_context) or skip it for non-Puranic queries.
+
+    Cost: O(n) in query words — sub-millisecond, zero allocation beyond the list.
+    Never raises.
+    """
+    if not query or not query.strip():
+        return []
+    try:
+        idx = _get_forms_index()
+        if not idx:
+            return []
+        # Extract candidate words from query — same normalization as recall._cue_tokens
+        raw = re.findall(r"[A-Za-zĀ-ſऀ-ॿ]+", query)
+        found: list[str] = []
+        seen: set[str] = set()
+        for w in raw:
+            k = _norm_form(w)
+            if len(k) < 3:
+                continue
+            if k in idx and k not in seen:
+                seen.add(k)
+                # Return the canonical name (first entity matched), not the normalized form
+                entities = idx[k]
+                if entities:
+                    name = entities[0].get("name", "")
+                    if name:
+                        found.append(name)
+        return found
+    except Exception:
+        return []
+
+
 def get_graph_ilike_patterns(
     canonical: str | None,
     synonyms: list[str] | None,

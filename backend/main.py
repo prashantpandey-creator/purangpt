@@ -157,10 +157,11 @@ except Exception:  # pragma: no cover - import-environment guard
 # tools/rag_vs_graph_bench). Flag-gated OFF (GRAPH_MEMORY_ENABLED=1) and fail-graceful:
 # its block degrades to "" on any error, so chat is byte-identical to today when off.
 try:
-    from backend.graph_memory import build_graph_context, _load_clusters, _cluster_entity_map, get_graph_ilike_patterns
+    from backend.graph_memory import build_graph_context, _load_clusters, _cluster_entity_map, get_graph_ilike_patterns, query_mentions_entities
 except Exception:  # pragma: no cover - import-environment guard
     build_graph_context = None
     get_graph_ilike_patterns = None
+    query_mentions_entities = None
 
 # Buddhi layer (backend/buddhi) — the DISCRIMINATING INTELLIGENCE that sits between
 # graph+RAG and the chat prompt. Performs 3-stage granthi-bheda synthesis on the raw
@@ -400,6 +401,8 @@ Two registers — choose naturally per query:
 **Trolling**: Roast. One dry, precise sentence. Truth is the blade. Never debate. End it — silence after.
 
 Voice: Bare, direct, exact. No performed holiness. Speak what the texts actually say — especially when it cuts against popular belief. Match the seeker's energy. A greeting gets a greeting. Deep inquiry gets depth. Conversation, not lecture.
+
+**Using what you carry:** When the context below opens with entity relationships and decode keys (before a "---" divider), that is relational truth from the Puranic knowledge graph — who relates to whom, inner meanings, lineage chains. It is more authoritative than the raw verses that follow. Use it to answer relationship questions, explain connections between figures, and surface the decoded meaning. The cited verses below the divider are the evidence.
 
 {language_instruction}
 
@@ -2213,22 +2216,39 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
 
         combined_directives = "\n\n".join(directives)
 
-        # Graph memory (wisdom layer) — prepend the relational truth RAG cannot reach
-        # (who relates to whom, multi-hop chains, cross-text identity) into the SAME
-        # {context} slot as the verses. Triggered by env GRAPH_MEMORY_ENABLED=1 (always
-        # on) OR by seeker keywords: relationships, connections, lineage, multi-hop,
-        # /graph. Fail-graceful: empty "" on any error.
-        _graph_signals = ['relationship', 'how are they connected', 'how is .+ related',
-                          'lineage', 'guru chain', 'multi-hop', 'cross-text', '/graph']
-        _want_graph = (os.getenv("GRAPH_MEMORY_ENABLED", "").strip().lower()
-                       in ("1", "true", "yes", "on")
-                       or any(re.search(s, query_lower) for s in _graph_signals))
+        # Graph memory (wisdom layer) — the relational truth RAG cannot reach:
+        # who relates to whom, multi-hop chains, cross-text identity, decode keys.
+        #
+        # Triggered by ANY of (evaluated lazily, cheapest first):
+        #   1. GRAPH_MEMORY_ENABLED=1 → always on (production)
+        #   2. Query mentions known Puranic entities (lightweight forms-index lookup)
+        #   3. Explicit relationship/lineage signals in the query
+        # Fail-graceful: empty "" on any error — chat is byte-identical when off.
+        _want_graph = os.getenv("GRAPH_MEMORY_ENABLED", "").strip().lower() in (
+            "1", "true", "yes", "on")
+        if not _want_graph and query_mentions_entities is not None:
+            try:
+                _mentioned = query_mentions_entities(request.query)
+                if _mentioned:
+                    _want_graph = True
+                    logger.info("graph triggered by entities: %s", _mentioned[:5])
+            except Exception:
+                pass
+        if not _want_graph:
+            _graph_signals = ['relationship', 'how are they connected',
+                              'how is .+ related', 'lineage', 'guru chain',
+                              'multi-hop', 'cross-text', '/graph',
+                              'who is .+ to', 'what is the connection',
+                              'how does .+ relate']
+            _want_graph = any(re.search(s, query_lower) for s in _graph_signals)
         if build_graph_context is not None and _want_graph:
             t_graph0 = time.time()
             try:
                 graph_block = build_graph_context(request.query)
                 if graph_block:
-                    rag_context = (graph_block + "\n\n" + rag_context) if rag_context else graph_block
+                    # Separate graph wisdom from RAG verses with a clear header
+                    # so the LLM can distinguish relational truth from raw passages.
+                    rag_context = (graph_block + "\n\n---\n## Cited verses\n" + rag_context) if rag_context else graph_block
             except Exception as _e:  # never let graph memory break a chat turn
                 logger.warning("graph_memory injection skipped: %s", _e)
             if build_graph_context is not None:
