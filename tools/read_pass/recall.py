@@ -283,8 +283,8 @@ def render_context(data: Dict[str, Any], max_entities: int = 12,
     # a good-vs-evil scoreboard, and never preaching "be sattvic" (the doctrine is
     # gunatita: transcend all three). Until then, the meanings ARE the teaching.
 
-    # the associative relationships
     # the associative relationships — with verse citations where available
+    rels = data.get("relationships", [])[:8]
     if rels:
         lines.append("\nHow they relate:")
         for r in rels:
