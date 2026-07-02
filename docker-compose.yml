@@ -11,10 +11,10 @@
 #   docker compose --env-file /root/stack.env -f deploy/docker-compose.prod.yml up -d
 #
 # ── Restore a rebuilt server from scratch ────────────────────────────────────
-#   1. git clone the monorepo to /root/purangpt-monorepo
+#   1. git clone both repos to /root/purangpt and /root/purangpt-next
 #   2. cp this file to /root/docker-compose.yml  (or run with -f from the repo)
 #   3. create /root/stack.env from deploy/.env.prod.example with real values
-#   4. create .env (backend env) and frontend/.env.local
+#   4. create /root/purangpt/.env (backend env) and /root/frontend-secrets.env
 #   5. recreate the external networks if missing:
 #        docker network create coolify || true
 #        docker network create purangpt_default || true
@@ -36,10 +36,10 @@ networks:
 services:
   backend:
     build:
-      context: .
+      context: ./purangpt
     container_name: purangpt_backend
     env_file:
-      - ./.env            # backend secrets (VECTOR_DB_URL, DEEPSEEK_API_KEY, …)
+      - ./purangpt/.env            # backend secrets (VECTOR_DB_URL, DEEPSEEK_API_KEY, …)
     environment:
       - TOKENIZERS_PARALLELISM=false
       - HUGGINGFACE_HUB_CACHE=/app/data/.cache
@@ -56,13 +56,13 @@ services:
       - purangpt_default
     restart: unless-stopped
     volumes:
-      - /data/purangpt-monorepo/data:/app/data
+      - /data/purangpt/data:/app/data
     depends_on:
       - redis
 
   frontend:
     build:
-      context: ./frontend
+      context: ./purangpt-next
       args:
         NEXT_PUBLIC_API_URL: ""
         NEXT_PUBLIC_REVENUECAT_APPLE_KEY: ${NEXT_PUBLIC_REVENUECAT_APPLE_KEY}
@@ -124,60 +124,6 @@ services:
     ports:
       - 3000:3000
     restart: unless-stopped
-
-  logto:
-    image: svhd/logto:latest
-    container_name: purangpt_logto
-    depends_on:
-      - logto-db
-    environment:
-      - TRUST_PROXY_HEADER=1
-      - DB_URL=${LOGTO_DB_URL}
-      - ENDPOINT=https://auth.purangpt.com
-      - ADMIN_ENDPOINT=https://admin-auth.purangpt.com
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=coolify
-      - traefik.http.routers.logto-auth-http.rule=Host(`auth.purangpt.com`)
-      - traefik.http.routers.logto-auth-http.entrypoints=http
-      - traefik.http.routers.logto-auth-http.middlewares=logto-auth-redirect
-      - traefik.http.routers.logto-auth-http.service=logto-auth
-      - traefik.http.middlewares.logto-auth-redirect.redirectscheme.scheme=https
-      - traefik.http.routers.logto-auth.rule=Host(`auth.purangpt.com`)
-      - traefik.http.routers.logto-auth.entrypoints=https
-      - traefik.http.routers.logto-auth.tls=true
-      - traefik.http.routers.logto-auth.tls.certresolver=letsencrypt
-      - traefik.http.routers.logto-auth.service=logto-auth
-      - traefik.http.services.logto-auth.loadbalancer.server.port=3001
-      - traefik.http.routers.logto-admin-http.rule=Host(`admin-auth.purangpt.com`)
-      - traefik.http.routers.logto-admin-http.entrypoints=http
-      - traefik.http.routers.logto-admin-http.middlewares=logto-admin-redirect
-      - traefik.http.routers.logto-admin-http.service=logto-admin
-      - traefik.http.middlewares.logto-admin-redirect.redirectscheme.scheme=https
-      - traefik.http.routers.logto-admin.rule=Host(`admin-auth.purangpt.com`)
-      - traefik.http.routers.logto-admin.entrypoints=https
-      - traefik.http.routers.logto-admin.tls=true
-      - traefik.http.routers.logto-admin.tls.certresolver=letsencrypt
-      - traefik.http.routers.logto-admin.service=logto-admin
-      - traefik.http.services.logto-admin.loadbalancer.server.port=3002
-    networks:
-      - default
-      - coolify
-    ports:
-      - 3001:3001
-      - 3002:3002
-
-  logto-db:
-    image: postgres:14-alpine
-    container_name: purangpt_logto_db
-    environment:
-      - POSTGRES_USER=${LOGTO_DB_USER}
-      - POSTGRES_PASSWORD=${LOGTO_DB_PASSWORD}
-      - POSTGRES_DB=${LOGTO_DB_NAME}
-    networks:
-      - default
-    volumes:
-      - /data/logto/db:/var/lib/postgresql/data
 
   redis:
     image: redis:alpine
