@@ -393,7 +393,7 @@ class HybridSearcher:
             results = []
             for rank, row in enumerate(rows):
                 meta = json.loads(row['metadata']) if isinstance(row['metadata'], str) else row['metadata']
-                score = float(row['similarity'])
+                score = float(row['similarity']) if row['similarity'] is not None else 0.0
                 chunk = {**meta, "id": row['id'], "text": row['content']}
                 results.append(SearchResult(chunk=chunk, score=score, rank=rank))
 
