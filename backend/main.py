@@ -785,6 +785,11 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 Active provider: %s (%s) — Ready at http://localhost:%s",
                 state.active_provider, state.active_model, os.getenv("PORT", "8000"))
 
+    # ── Pre-warm entity profiles for top hubs ──────────────────────────
+    # Fire-and-forget: generates AI profiles for the 10 most-connected entities
+    # in the graph so the first seeker to browse them gets an instant hit.
+    asyncio.create_task(_warm_profiles())
+
     yield
 
     if state.http_client:
@@ -4146,6 +4151,30 @@ async def graph_find_path(_from: str, to: str):
 
 
 # ── Entity Profile (AI-generated character description from real verses) ─────
+
+_WARM_ENTITIES = [
+    "brahma", "vishnu", "krishna", "shiva", "arjuna", "indra", "surya",
+    "rama", "narada", "agni", "durga", "ganesha", "lakshmi", "hanuman",
+]
+
+
+async def _warm_profiles():
+    """Generate profiles for top hub entities at startup. Fire-and-forget —
+    fails silently, never blocks startup. Warms the in-memory cache so the
+    first seeker to browse these entities gets an instant hit."""
+    try:
+        import asyncio as _asyncio
+        # Small delay — let the server finish startup first
+        await _asyncio.sleep(5)
+        for eid in _WARM_ENTITIES:
+            try:
+                # Call the profile endpoint logic directly (no HTTP overhead)
+                await graph_entity_profile(eid)
+            except Exception:
+                pass  # individual warm failures are fine
+    except Exception:
+        pass  # entire warm phase failing must never block startup
+
 
 _ENTITY_PROFILE_SYSTEM = """You are a scholar of the Puranas writing a character profile. You receive raw Sanskrit verses (romanized IAST) that mention an entity — a deity, sage, king, demon, or concept from the Puranic corpus. Synthesize them into a rich, accurate profile.
 

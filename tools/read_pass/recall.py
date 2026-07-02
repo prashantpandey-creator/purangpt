@@ -284,12 +284,16 @@ def render_context(data: Dict[str, Any], max_entities: int = 12,
     # gunatita: transcend all three). Until then, the meanings ARE the teaching.
 
     # the associative relationships
-    rels = data.get("relationships", [])[:8]
+    # the associative relationships — with verse citations where available
     if rels:
         lines.append("\nHow they relate:")
         for r in rels:
             if r.get("src_name") and r.get("dst_name"):
-                lines.append(f"  • {r['src_name']} {r.get('rel','—')} {r['dst_name']}")
+                verse_refs = r.get("verse_ranges", [])[:2]
+                cite = ''
+                if verse_refs:
+                    cite = ' (' + ', '.join(verse_refs) + ')'
+                lines.append(f"  • {r['src_name']} {r.get('rel','—')} {r['dst_name']}{cite}")
 
     return "\n".join(lines)
 
