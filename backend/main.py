@@ -1902,7 +1902,7 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
                         _cands.append(_cid + ' ' + _txt)
                     _jp = 'Query: ' + actual_query + '\n\nPick the 5 MOST relevant verses. Return ONLY IDs like: [0],[3],[12]\n\n' + '\n'.join(_cands)
                     try:
-                        _resp = await call_llm_once([{'role': 'user', 'content': _jp}], temperature=0.0, req_model='auto')
+                        _resp = await call_llm_once([{'role': 'user', 'content': _jp}], temperature=0.0, req_model='openrouter:' if os.getenv('OPENROUTER_API_KEY') else 'auto')
                         import re as _re
                         _best = []
                         for _m in _re.findall(r'\[(\d+)\]', _resp)[:5]:
