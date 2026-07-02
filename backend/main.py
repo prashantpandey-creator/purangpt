@@ -2151,10 +2151,14 @@ async def chat(request: ChatRequest, req: Request, user: Optional[dict] = Depend
             grounding_quality = "partial"
         else:
             grounding_quality = "ungrounded"
-        # Attach cluster IDs to sources for frontend display
+        # Attach cluster IDs — try text_name, purana, then ID prefix
         for _s in all_sources:
-            _ent = _s.get("text_name", "") or _s.get("purana", "") or ""
-            _cid = _cluster_entity_map.get(_ent.lower()) if _ent else None
+            _ent = (_s.get("text_name") or _s.get("purana") or "").lower()
+            _cid = _cluster_entity_map.get(_ent)
+            # Fallback: try ID prefix (e.g. "mahabharata-xxx" → "mahabharata")
+            if _cid is None and _s.get("id"):
+                _pfx = _s["id"].split("-")[0].lower()
+                _cid = _cluster_entity_map.get(_pfx)
             if _cid is not None:
                 _s["cluster_id"] = str(_cid)
         yield {"data": json.dumps({"type": "sources", "sources": all_sources})}
