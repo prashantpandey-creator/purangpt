@@ -892,9 +892,12 @@ async def concurrency_limit(request: Request, call_next):
             _concurrent.pop(ip, None)
         else:
             _concurrent[ip] = cnt
-        # Garbage-collect stale entries periodically
+        # Garbage-collect only stale (zero-count) entries — never clear()
+        # while other requests may still be streaming.
         if len(_concurrent) > 500:
-            _concurrent.clear()
+            stale = [k for k, v in _concurrent.items() if v <= 0]
+            for k in stale:
+                _concurrent.pop(k, None)
 
 
 if FRONTEND_DIR.exists():

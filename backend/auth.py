@@ -114,9 +114,17 @@ def require_role(allowed_roles: list):
 
 
 def get_client_ip(request: Request) -> str:
+    """Return the real client IP. Takes the RIGHTMOST X-Forwarded-For entry
+    (appended by our trusted Traefik proxy), NOT the leftmost (client-forgeable).
+    Falls back to X-Real-IP, then request.client.host."""
     x_forwarded_for = request.headers.get("X-Forwarded-For", "")
     if x_forwarded_for:
-        return x_forwarded_for.split(",")[0].strip()
+        parts = [p.strip() for p in x_forwarded_for.split(",")]
+        # Take the last non-empty entry — the one our own proxy appended.
+        # This matches rate_limiter.client_ip_from_scope behaviour.
+        for p in reversed(parts):
+            if p:
+                return p
     x_real_ip = request.headers.get("X-Real-IP", "")
     if x_real_ip:
         return x_real_ip.strip()
@@ -142,7 +150,13 @@ def validate_query(query: str) -> None:
 
 
 # ── Guest rate limiting ────────────────────────────────────────────────────
-# Kept simple — in-memory counter per guest, resets at midnight UTC.
+# In-memory counter per guest, resets at midnight UTC.
+#
+# LIMITATION: with multiple gunicorn workers, each worker has its own
+# _guest_usage dict (per-process memory). A guest hitting 4 workers can
+# get up to 4× the intended limit. For production, migrate to Redis via
+# the existing rate_limiter.py pattern. For single-worker or dev, this
+# is sufficient.
 
 from datetime import datetime, timezone
 from collections import defaultdict
@@ -166,6 +180,8 @@ def consume_guest_unit(guest_id: str):
     if entry["date"] != today:
         entry["count"] = 0
         entry["date"] = today
+    if entry["count"] >= GUEST_DAILY_LIMIT:
+        return False, 0
     entry["count"] += 1
     return True, max(0, GUEST_DAILY_LIMIT - entry["count"])
 
